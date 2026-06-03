@@ -1,0 +1,249 @@
+import Phaser from 'phaser';
+import { Pokemon, Move } from '../battle/Pokemon';
+import { fetchPokemon, fetchMove } from '../data/PokeAPI';
+
+type BattleState = 'loading' | 'start' | 'playerAction' | 'playerMove' | 'busy' | 'over';
+
+export class BattleScene extends Phaser.Scene {
+  private playerPokemon!: Pokemon;
+  private enemyPokemon!: Pokemon;
+  private state: BattleState = 'loading';
+
+  // UI elements
+  private dialogText!: Phaser.GameObjects.Text;
+  private playerHpBar!: Phaser.GameObjects.Rectangle;
+  private enemyHpBar!: Phaser.GameObjects.Rectangle;
+  private playerHpText!: Phaser.GameObjects.Text;
+  private enemyHpText!: Phaser.GameObjects.Text;
+  private _playerNameText!: Phaser.GameObjects.Text;
+  private _enemyNameText!: Phaser.GameObjects.Text;
+  private _playerSprite!: Phaser.GameObjects.Image;
+  private _enemySprite!: Phaser.GameObjects.Image;
+  private actionPanel!: Phaser.GameObjects.Container;
+  private movePanel!: Phaser.GameObjects.Container;
+
+  private W = 1280;
+  private H = 720;
+
+  constructor() { super('BattleScene'); }
+
+  async create() {
+    this.createBackground();
+    this.dialogText = this.add.text(20, this.H - 90, 'Loading...', {
+      fontSize: '18px', color: '#fff', wordWrap: { width: this.W * 0.6 - 40 }
+    });
+
+    // Fetch two Pokemon from PokéAPI
+    const [bulbData, charData, tackle, ember] = await Promise.all([
+      fetchPokemon('bulbasaur'),
+      fetchPokemon('charmander'),
+      fetchMove('tackle'),
+      fetchMove('ember'),
+    ]);
+
+    this.playerPokemon = new Pokemon(bulbData, 10, [tackle]);
+    this.enemyPokemon  = new Pokemon(charData,  8,  [ember]);
+
+    await Promise.all([
+      this.loadSprite('player-sprite', this.playerPokemon.data.spriteUrl),
+      this.loadSprite('enemy-sprite',  this.enemyPokemon.data.spriteUrl),
+    ]);
+
+    this.createHUDs();
+    this.createSprites();
+    this.createActionPanel();
+    this.createMovePanel();
+
+    this.startBattle();
+  }
+
+  // ── battle flow ──────────────────────────────────────────────────────────
+
+  private startBattle() {
+    this.hideAllPanels();
+    this.typeDialog(`A wild ${this.enemyPokemon.name} appeared!`, () => {
+      this.state = 'playerAction';
+      this.showActionPanel();
+    });
+  }
+
+  private onFight() {
+    if (this.state !== 'playerAction') return;
+    this.state = 'playerMove';
+    this.showMovePanel();
+  }
+
+  private onRun() {
+    if (this.state !== 'playerAction') return;
+    this.typeDialog('Got away safely!', () => { this.state = 'over'; });
+  }
+
+  private onMoveSelected(move: Move) {
+    if (this.state !== 'playerMove') return;
+    if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.showMovePanel()); return; }
+    this.hideAllPanels();
+    this.runTurn(move);
+  }
+
+  private runTurn(playerMove: Move) {
+    this.state = 'busy';
+    this.playerPokemon.useMove(playerMove);
+
+    this.typeDialog(`${this.playerPokemon.name} used ${playerMove.data.name}!`, () => {
+      const dmg = this.enemyPokemon.takeDamage(playerMove, this.playerPokemon);
+      this.animateHpBar('enemy', () => {
+        if (this.enemyPokemon.isKO) {
+          this.typeDialog(`${this.enemyPokemon.name} fainted! You win!`, () => { this.state = 'over'; });
+          return;
+        }
+
+        const enemyMove = this.enemyPokemon.moves[
+          Math.floor(Math.random() * this.enemyPokemon.moves.length)
+        ];
+        this.enemyPokemon.useMove(enemyMove);
+        this.typeDialog(`${this.enemyPokemon.name} used ${enemyMove.data.name}!`, () => {
+          this.playerPokemon.takeDamage(enemyMove, this.enemyPokemon);
+          this.animateHpBar('player', () => {
+            if (this.playerPokemon.isKO) {
+              this.typeDialog(`${this.playerPokemon.name} fainted! You lose!`, () => { this.state = 'over'; });
+              return;
+            }
+            this.state = 'playerAction';
+            this.showActionPanel();
+          });
+        });
+      });
+    });
+  }
+
+  // ── UI creation ──────────────────────────────────────────────────────────
+
+  private createBackground() {
+    // Sky
+    this.add.rectangle(this.W / 2, this.H * 0.3, this.W, this.H * 0.6, 0x87ceeb);
+    // Ground
+    this.add.rectangle(this.W / 2, this.H * 0.72, this.W, this.H * 0.35, 0x90c060);
+    // Dialog box
+    this.add.rectangle(this.W / 2, this.H - 62, this.W, 124, 0x222244).setStrokeStyle(2, 0xffffff);
+  }
+
+  private createHUDs() {
+    const p = this.playerPokemon;
+    const e = this.enemyPokemon;
+
+    // Enemy HUD (top-left)
+    this.add.rectangle(140, 60, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
+    this._enemyNameText = this.add.text(20, 32, `${e.name.toUpperCase()}  Lv.${this.enemyPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this.add.rectangle(140, 72, 220, 12, 0x444444);
+    this.enemyHpBar    = this.add.rectangle(30, 72, 220, 12, 0x44cc44).setOrigin(0, 0.5);
+    this.enemyHpText   = this.add.text(20, 82, `${e.hp}/${e.maxHp}`, { fontSize: '12px', color: '#aaa' });
+
+    // Player HUD (bottom-right)
+    this.add.rectangle(640, 320, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
+    this._playerNameText = this.add.text(516, 292, `${p.name.toUpperCase()}  Lv.${this.playerPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this.add.rectangle(640, 332, 220, 12, 0x444444);
+    this.playerHpBar    = this.add.rectangle(530, 332, 220, 12, 0x44cc44).setOrigin(0, 0.5);
+    this.playerHpText   = this.add.text(516, 342, `${p.hp}/${p.maxHp}`, { fontSize: '12px', color: '#aaa' });
+  }
+
+  private createSprites() {
+    this._enemySprite  = this.add.image(580, 160, 'enemy-sprite').setScale(3);
+    this._playerSprite = this.add.image(220, 280, 'player-sprite').setScale(3).setFlipX(true);
+  }
+
+  private createActionPanel() {
+    this.actionPanel = this.add.container(this.W * 0.62, this.H - 124);
+    const bg = this.add.rectangle(76, 62, 304, 124, 0x111133).setStrokeStyle(1, 0xffffff);
+    this.actionPanel.add(bg);
+
+    const actions = [
+      { label: 'FIGHT',   x: 20,  y: 20,  cb: () => this.onFight() },
+      { label: 'BAG',     x: 170, y: 20,  cb: () => {} },
+      { label: 'POKEMON', x: 20,  y: 70,  cb: () => {} },
+      { label: 'RUN',     x: 170, y: 70,  cb: () => this.onRun() },
+    ];
+
+    for (const a of actions) {
+      const btn = this.add.text(a.x, a.y, a.label, { fontSize: '20px', color: '#fff' })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover',  () => btn.setColor('#ffff00'))
+        .on('pointerout',   () => btn.setColor('#ffffff'))
+        .on('pointerdown',  a.cb);
+      this.actionPanel.add(btn);
+    }
+  }
+
+  private createMovePanel() {
+    this.movePanel = this.add.container(0, this.H - 124);
+    const bg = this.add.rectangle(this.W / 2 - 80, 62, this.W * 0.78, 124, 0x111133).setStrokeStyle(1, 0xffffff);
+    this.movePanel.add(bg);
+
+    const back = this.add.text(this.W - 40, 10, '← BACK', { fontSize: '14px', color: '#aaa' })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); });
+    this.movePanel.add(back);
+
+    const cols = [20, 210];
+    const rows = [20, 70];
+    this.playerPokemon.moves.forEach((move, i) => {
+      const x = cols[i % 2];
+      const y = rows[Math.floor(i / 2)];
+      const btn = this.add.text(x, y,
+        `${move.data.name.toUpperCase()}\nPP ${move.pp}/${move.data.pp}  ${move.data.type.toUpperCase()}`,
+        { fontSize: '16px', color: '#fff', lineSpacing: 4 }
+      ).setInteractive({ useHandCursor: true })
+        .on('pointerover',  () => btn.setColor('#ffff00'))
+        .on('pointerout',   () => btn.setColor('#ffffff'))
+        .on('pointerdown',  () => this.onMoveSelected(move));
+      this.movePanel.add(btn);
+    });
+
+    this.movePanel.setVisible(false);
+  }
+
+  // ── UI helpers ───────────────────────────────────────────────────────────
+
+  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
+  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
+
+  private animateHpBar(who: 'player' | 'enemy', onDone: () => void) {
+    const pokemon = who === 'player' ? this.playerPokemon : this.enemyPokemon;
+    const bar     = who === 'player' ? this.playerHpBar   : this.enemyHpBar;
+    const hpText  = who === 'player' ? this.playerHpText  : this.enemyHpText;
+    const maxW    = 220;
+    const targetW = Math.max(0, (pokemon.hp / pokemon.maxHp) * maxW);
+    bar.fillColor  = pokemon.hp / pokemon.maxHp > 0.5 ? 0x44cc44 : pokemon.hp / pokemon.maxHp > 0.25 ? 0xddcc00 : 0xcc4444;
+
+    this.tweens.add({
+      targets: bar, width: targetW, duration: 600, ease: 'Linear',
+      onUpdate: () => { hpText.setText(`${pokemon.hp}/${pokemon.maxHp}`); },
+      onComplete: onDone,
+    });
+  }
+
+  private typeDialog(text: string, onDone?: () => void) {
+    this.dialogText.setText('');
+    let i = 0;
+    const timer = this.time.addEvent({
+      delay: 30,
+      repeat: text.length - 1,
+      callback: () => {
+        this.dialogText.setText(text.slice(0, ++i));
+        if (i >= text.length) {
+          timer.destroy();
+          if (onDone) this.time.delayedCall(800, onDone);
+        }
+      },
+    });
+  }
+
+  private loadSprite(key: string, url: string): Promise<void> {
+    return new Promise(resolve => {
+      if (this.textures.exists(key)) { resolve(); return; }
+      this.load.image(key, url);
+      this.load.once('complete', resolve);
+      this.load.start();
+    });
+  }
+}

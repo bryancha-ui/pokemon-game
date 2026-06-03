@@ -1,0 +1,354 @@
+import Phaser from 'phaser';
+import { STARTERS, StarterDef, TYPE_COLORS } from '../data/StarterData';
+import { PartySystem } from '../systems/PartySystem';
+
+export class StarterSelectScene extends Phaser.Scene {
+  private selectedIdx = 0;
+  private cards: Phaser.GameObjects.Container[] = [];
+  private flavText!: Phaser.GameObjects.Text;
+  private profText!: Phaser.GameObjects.Text;
+  private confirmPanel!: Phaser.GameObjects.Container;
+  private confirmIdx = 0;
+  private confirming = false;
+  private transitioning = false;  // guard against double-confirm
+
+  private leftKey!: Phaser.Input.Keyboard.Key;
+  private rightKey!: Phaser.Input.Keyboard.Key;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private upKey!: Phaser.Input.Keyboard.Key;
+  private downKey!: Phaser.Input.Keyboard.Key;
+
+  constructor() { super('StarterSelectScene'); }
+
+  preload() {
+    STARTERS.forEach(s => {
+      if (!this.textures.exists(s.spriteKey))
+        this.load.image(s.spriteKey, s.data.spriteUrl);
+    });
+  }
+
+  create() {
+    this.cameras.main.fadeIn(500);
+    this.drawBackground();
+    this.drawProfessor();
+    this.createCards();
+    this.createInfoArea();
+    this.createConfirmPanel();
+    this.setupInput();
+    this.refreshSelection(false);
+
+    // Prof speech bubble — animated
+    this.time.delayedCall(300, () => {
+      this.typewriterText(
+        this.profText,
+        'Prof. Kim: Welcome! Three Pokémon from this region are waiting for a trainer.\nChoose the one who calls to you.',
+        22,
+      );
+    });
+  }
+
+  // ── Background / professor ────────────────────────────────────────────────
+
+  private drawBackground() {
+    const g = this.add.graphics();
+    // Floor
+    g.fillStyle(0xd4c9a8, 1); g.fillRect(0, 0, 800, 500);
+    // Wall
+    g.fillStyle(0xe8e0cc, 1); g.fillRect(0, 0, 800, 160);
+    // Wainscot
+    g.fillStyle(0xc4b898, 1); g.fillRect(0, 155, 800, 8);
+    // Bookshelves left
+    this.drawShelf(g, 10, 20);
+    // Lab bench right
+    g.fillStyle(0x8b7355, 1); g.fillRect(640, 20, 150, 130);
+    g.fillStyle(0x6b5a44, 1); g.fillRect(640, 140, 150, 10);
+    for (let i = 0; i < 3; i++) {
+      g.fillStyle([0xaaddff, 0xffeebb, 0xddffaa][i], 0.9);
+      g.fillEllipse(660 + i * 40, 100, 22, 34);
+      g.fillStyle(0x888888, 1); g.fillRect(668 + i * 40, 116, 6, 20);
+    }
+    this.add.text(720, 50, '🔬', { fontSize: '28px' });
+    // Window
+    g.fillStyle(0x99ddff, 0.5); g.fillRect(330, 10, 140, 100);
+    g.lineStyle(3, 0xffffff, 1); g.strokeRect(330, 10, 140, 100);
+    g.lineBetween(400, 10, 400, 110); g.lineBetween(330, 60, 470, 60);
+    // Title banner
+    g.fillStyle(0x1a3a5c, 0.88); g.fillRect(50, 8, 270, 38);
+    this.add.text(185, 27, "Prof. Kim's Pokémon Lab", {
+      fontSize: '14px', color: '#ffe44e', fontStyle: 'bold',
+    }).setOrigin(0.5);
+  }
+
+  private drawShelf(g: Phaser.GameObjects.Graphics, x: number, y: number) {
+    g.fillStyle(0x7a5c38, 1); g.fillRect(x, y, 120, 130);
+    const bookColors = [0xcc3333, 0x3355cc, 0x33aa44, 0xddaa22, 0xaa33bb, 0x33aacc, 0xdd6622];
+    bookColors.forEach((c, i) => {
+      g.fillStyle(c, 1); g.fillRect(x + 4 + i * 16, y + 8, 13, 50);
+    });
+    g.fillStyle(0x9a7a58, 1); g.fillRect(x, y + 58, 120, 6);
+    bookColors.slice(0, 5).forEach((c, i) => {
+      g.fillStyle(c, 1); g.fillRect(x + 4 + i * 22, y + 68, 18, 55);
+    });
+  }
+
+  private drawProfessor() {
+    // Prof. Kim — drawn character (female scientist)
+    const g = this.add.graphics().setDepth(5);
+    const x = 100, y = 135;
+    g.fillStyle(0x000000, 0.15); g.fillEllipse(x, y + 12, 36, 8);
+    // Lab coat
+    g.fillStyle(0xffffff, 1); g.fillRect(x - 18, y - 22, 36, 35);
+    g.fillStyle(0xdddddd, 1); g.fillRect(x - 2, y - 20, 4, 14);
+    g.fillStyle(0xffffff, 1); g.fillRect(x - 24, y - 20, 8, 22); g.fillRect(x + 16, y - 20, 8, 22);
+    g.fillStyle(0x3355aa, 1); g.fillRect(x - 14, y + 13, 12, 18); g.fillRect(x + 2, y + 13, 12, 18);
+    g.fillStyle(0x222222, 1); g.fillRect(x - 14, y + 31, 10, 5); g.fillRect(x + 4, y + 31, 10, 5);
+    g.fillStyle(0xffcc99, 1); g.fillRect(x - 14, y - 3, 6, 10); g.fillRect(x + 8, y - 3, 6, 10);
+    g.fillStyle(0xffcc99, 1); g.fillRect(x - 10, y - 34, 20, 16);
+    g.fillStyle(0x222222, 1); g.fillRect(x - 10, y - 34, 20, 6);
+    // Glasses
+    g.lineStyle(2, 0x333333, 1);
+    g.strokeRect(x - 8, y - 26, 6, 5); g.strokeRect(x + 2, y - 26, 6, 5);
+    g.lineBetween(x - 2, y - 24, x + 2, y - 24);
+    // Speech bubble
+    const bx = 165, by = 65;
+    g.fillStyle(0xffffff, 0.95); g.fillRoundedRect(bx, by, 460, 75, 10);
+    g.lineStyle(2, 0x334466, 1); g.strokeRoundedRect(bx, by, 460, 75, 10);
+    g.fillStyle(0xffffff, 0.95);
+    g.fillTriangle(bx + 8, by + 65, bx - 18, by + 80, bx + 30, by + 65);
+    this.profText = this.add.text(bx + 12, by + 10, '', {
+      fontSize: '12px', color: '#1a2a4a', wordWrap: { width: 436 }, lineSpacing: 4,
+    }).setDepth(6);
+  }
+
+  // ── Cards ─────────────────────────────────────────────────────────────────
+
+  private createCards() {
+    const positions = [150, 400, 650];
+    STARTERS.forEach((s, i) => {
+      const card = this.buildCard(s, positions[i], 310);
+      card.setInteractive(
+        new Phaser.Geom.Rectangle(-90, -120, 180, 240),
+        Phaser.Geom.Rectangle.Contains,
+      );
+      card.on('pointerdown', () => {
+        this.selectedIdx = i;
+        this.refreshSelection(false);
+      });
+      this.cards.push(card);
+    });
+  }
+
+  private buildCard(s: StarterDef, x: number, y: number): Phaser.GameObjects.Container {
+    const c = this.add.container(x, y).setDepth(10);
+
+    // Card bg
+    const bg = this.add.rectangle(0, 0, 178, 238, 0xf5f0e8).setStrokeStyle(3, 0x334466);
+    c.add(bg);
+
+    // Sprite — fit full image inside card without cropping
+    if (this.textures.exists(s.spriteKey)) {
+      const img = this.add.image(0, -38, s.spriteKey).setOrigin(0.5);
+      const tex  = this.textures.get(s.spriteKey).getSourceImage();
+      const dim  = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      img.setScale(140 / dim);
+      c.add(img);
+    }
+
+    // Name
+    const name = this.add.text(0, 32, s.data.name, {
+      fontSize: '16px', color: '#1a2a4a', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    c.add(name);
+
+    // Type badges
+    const types = [s.data.type1, s.data.type2].filter(Boolean) as string[];
+    types.forEach((t, ti) => {
+      const tx = (types.length === 1 ? 0 : ti === 0 ? -32 : 32);
+      const badge = this.add.rectangle(tx, 56, 56, 18, TYPE_COLORS[t] ?? 0x888888, 1)
+        .setStrokeStyle(1, 0x000000, 0.3);
+      const label = this.add.text(tx, 56, t.toUpperCase(), {
+        fontSize: '9px', color: '#ffffff', fontStyle: 'bold',
+      }).setOrigin(0.5);
+      c.add([badge, label]);
+    });
+
+    // Ability
+    const abil = this.add.text(0, 80, `Ability: ${s.ability}`, {
+      fontSize: '10px', color: '#555555',
+    }).setOrigin(0.5);
+    c.add(abil);
+
+    return c;
+  }
+
+  // ── Info area (bottom) ────────────────────────────────────────────────────
+
+  private createInfoArea() {
+    const g = this.add.graphics().setDepth(8);
+    g.fillStyle(0x1a2a4a, 0.9); g.fillRect(0, 420, 800, 80);
+    g.lineStyle(2, 0x5577aa, 1); g.lineBetween(0, 420, 800, 420);
+    this.flavText = this.add.text(400, 460, '', {
+      fontSize: '12px', color: '#e8e0cc', wordWrap: { width: 760 }, align: 'center',
+    }).setOrigin(0.5).setDepth(9);
+    this.add.text(400, 492, '◀ ▶ to browse     SPACE to choose', {
+      fontSize: '11px', color: '#ffe44e',
+    }).setOrigin(0.5).setDepth(9);
+  }
+
+  // ── Confirm panel ─────────────────────────────────────────────────────────
+
+  private createConfirmPanel() {
+    this.confirmPanel = this.add.container(400, 380).setDepth(50).setVisible(false);
+    const bg = this.add.rectangle(0, 0, 300, 100, 0x0d0d2e, 0.97)
+      .setStrokeStyle(2, 0xffffff);
+    const q = this.add.text(0, -25, '', {
+      fontSize: '14px', color: '#ffffff', align: 'center',
+    }).setOrigin(0.5);
+    const yes = this.add.text(-60, 12, '▶ YES', { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
+    const no  = this.add.text(60,  12, '  NO',  { fontSize: '16px', color: '#888888' }).setOrigin(0.5);
+    this.confirmPanel.add([bg, q, yes, no]);
+    this.confirmPanel.setData('q', q);
+    this.confirmPanel.setData('yes', yes);
+    this.confirmPanel.setData('no', no);
+  }
+
+  // ── Input ─────────────────────────────────────────────────────────────────
+
+  private setupInput() {
+    const kb = this.input.keyboard!;
+    this.leftKey  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+    this.rightKey = kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+    this.spaceKey = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.upKey    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.downKey  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+  }
+
+  update() {
+    if (this.confirming) {
+      if (Phaser.Input.Keyboard.JustDown(this.leftKey) || Phaser.Input.Keyboard.JustDown(this.rightKey)) {
+        this.confirmIdx = this.confirmIdx === 0 ? 1 : 0;
+        this.refreshConfirm();
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.handleConfirm();
+      return;
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.leftKey)) {
+      this.selectedIdx = Math.max(0, this.selectedIdx - 1);
+      this.refreshSelection(true);
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.rightKey)) {
+      this.selectedIdx = Math.min(STARTERS.length - 1, this.selectedIdx + 1);
+      this.refreshSelection(true);
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.openConfirm();
+  }
+
+  // ── Selection refresh ─────────────────────────────────────────────────────
+
+  private refreshSelection(animated: boolean) {
+    const s = STARTERS[this.selectedIdx];
+    this.cards.forEach((card, i) => {
+      const selected = i === this.selectedIdx;
+      const bg = card.list[0] as Phaser.GameObjects.Rectangle;
+      bg.setStrokeStyle(selected ? 4 : 2, selected ? 0xffe44e : 0x334466);
+      bg.setFillStyle(selected ? 0xfffbe8 : 0xf5f0e8);
+      if (animated) {
+        this.tweens.add({
+          targets: card,
+          scaleX: selected ? 1.08 : 1,
+          scaleY: selected ? 1.08 : 1,
+          y: selected ? 300 : 310,
+          duration: 150, ease: 'Back.Out',
+        });
+      } else {
+        card.setScale(selected ? 1.08 : 1);
+        card.setY(selected ? 300 : 310);
+      }
+    });
+    this.flavText.setText(s.flavorA);
+  }
+
+  private openConfirm() {
+    const s = STARTERS[this.selectedIdx];
+    this.confirming = true;
+    this.confirmIdx = 0;
+    const q = this.confirmPanel.getData('q') as Phaser.GameObjects.Text;
+    q.setText(`Choose ${s.data.name}?`);
+    this.confirmPanel.setVisible(true);
+    this.refreshConfirm();
+  }
+
+  private refreshConfirm() {
+    const yes = this.confirmPanel.getData('yes') as Phaser.GameObjects.Text;
+    const no  = this.confirmPanel.getData('no')  as Phaser.GameObjects.Text;
+    yes.setText(this.confirmIdx === 0 ? '▶ YES' : '  YES').setColor(this.confirmIdx === 0 ? '#ffffff' : '#888888');
+    no.setText(this.confirmIdx === 1  ? '▶ NO'  : '  NO').setColor(this.confirmIdx === 1 ? '#ffffff' : '#888888');
+  }
+
+  private handleConfirm() {
+    // Prevent firing twice (e.g. user pressing SPACE again during the delay)
+    if (this.transitioning) return;
+
+    if (this.confirmIdx === 1) {
+      this.confirming = false;
+      this.confirmPanel.setVisible(false);
+      return;
+    }
+
+    this.transitioning = true;
+    this.confirming     = false;
+    this.confirmPanel.setVisible(false);
+
+    // Save chosen starter
+    const chosen = STARTERS[this.selectedIdx];
+    this.registry.set('starterChosen', true);
+    this.registry.set('starterKey',   chosen.spriteKey);
+    this.registry.set('starterName',  chosen.data.name);
+    this.registry.set('starterLevel', 5);
+    this.registry.set('starterExp',   0);
+
+    // Initialise party with starter
+    PartySystem.initFromStarter(this.registry);
+
+    // Rival picks the type that beats the player's type
+    // Water → Grass, Fire → Water, Grass → Fire
+    const RIVAL_IDX: Record<string, number> = {
+      munkain:  1,  // Player Grass → Rival Fire (Vipour)
+      vipour:   2,  // Player Fire  → Rival Water (Onnurian)
+      onnurian: 0,  // Player Water → Rival Grass (Munkain)
+    };
+    const rivalIdx = RIVAL_IDX[chosen.spriteKey] ?? 2;
+    const rival    = STARTERS[rivalIdx];
+    this.registry.set('rivalKey',  rival.spriteKey);
+    this.registry.set('rivalName', rival.data.name);
+
+    this.typewriterText(
+      this.profText,
+      `Prof. Kim: Excellent choice! ${chosen.data.name} is happy to travel with you.\nTake good care of each other!`,
+      22,
+      () => {
+        this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+          this.scene.start('WorldMapScene');
+        });
+      },
+    );
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private typewriterText(target: Phaser.GameObjects.Text, text: string, delay: number, onDone?: () => void) {
+    target.setText('');
+    let i = 0;
+    const ev = this.time.addEvent({
+      delay,
+      repeat: text.length - 1,
+      callback: () => {
+        target.setText(text.slice(0, ++i));
+        if (i >= text.length && onDone) {
+          ev.destroy();
+          this.time.delayedCall(500, onDone); // short pause after last char
+        }
+      },
+    });
+  }
+}
