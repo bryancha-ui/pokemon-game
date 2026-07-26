@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { playBgm } from '../systems/Music';
+import { playBgm, TRACKS } from '../systems/Music';
 
 // ── New-game opening — Professor Song's welcome ──────────────────────────────
 // The very first thing a new game shows: Dr. Song Nam-woo (송남우 교수) steps out
@@ -33,12 +33,22 @@ export class IntroScene extends Phaser.Scene {
 
   preload() {
     if (!this.textures.exists(SONG_KEY)) this.load.image(SONG_KEY, SONG_URL);
+    // Preload the intro theme so it can start instantly and cleanly (no lazy-load gap).
+    if (!this.cache.audio.exists('professorintro') && TRACKS.professorintro) this.load.audio('professorintro', TRACKS.professorintro);
   }
 
   create() {
     this.idx = 0;
-    // Professor Song's opening narration gets its own theme (not the Title or town
-    // music). The town theme starts once the player reaches Waterfall City.
+    // ── Hard-separate Prof. Song's intro music ──────────────────────────────────
+    // Destroy EVERY lingering / queued sound before starting. On mobile the audio
+    // context is locked until the first touch; the Title track's play() call is
+    // queued and then resumes on that first tap — so it can slip in UNDER the intro
+    // theme even after a plain stop(). Destroying the sound objects removes them from
+    // the manager entirely, so nothing can resume. Then start the intro theme alone.
+    this.sound.stopAll();
+    const mgr = this.sound as unknown as { sounds?: Phaser.Sound.BaseSound[] };
+    (mgr.sounds ?? []).slice().forEach((s) => { try { s.destroy(); } catch { /* already gone */ } });
+    this.registry.remove('bgmSound'); this.registry.remove('bgmKey'); this.registry.remove('bgmWanted');
     playBgm(this, 'professorintro');
     this.cameras.main.fadeIn(500);
     this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x080a14, 1);

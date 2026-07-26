@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../utils/SaveManager';
 import { STARTERS } from '../data/StarterData';
-import { playBgm } from '../systems/Music';
+import { playBgm, stopBgm } from '../systems/Music';
 
 export class TitleScene extends Phaser.Scene {
   private selected = 0;
@@ -33,6 +33,7 @@ export class TitleScene extends Phaser.Scene {
     this.hasSave = SaveManager.exists();
     this.cameras.main.fadeIn(900);
     playBgm(this, 'title');   // starts once the browser unlocks audio on first input
+    this.events.once('shutdown', () => stopBgm(this));   // never let the title theme bleed into the next scene
 
     this.drawBackground();
     this.drawStars();
