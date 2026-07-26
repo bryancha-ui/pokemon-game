@@ -7,10 +7,10 @@ import Phaser from 'phaser';
 // a city and its interiors), otherwise the old track stops and the new one starts.
 // Scenes with no BGM call simply leave the current track playing.
 
-const BASE = 'assets/bgm/';
+const BASE = 'assets/bgm/';   // relative so BGM resolves under the GitHub Pages subpath
 export const TRACKS: Record<string, string> = {
   // ── Towns & cities ──
-  waterfall:  BASE + 'bgm_waterfallcity.mp3',   // Waterfall City (world hub)
+  waterfall:  BASE + 'bgm_waterfall2.mp3',   // Waterfall City (world hub)
   pineneedle: BASE + 'bgm_pineneedle.mp3',  // Pine Needle Town
   sudo:       BASE + 'bgm_sudo.mp3',        // Sudo / Capital City
   deptstore:  BASE + 'bgm_deptstore.mp3',   // Department Store
