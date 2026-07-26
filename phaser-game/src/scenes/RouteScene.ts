@@ -581,11 +581,11 @@ export class RouteScene extends Phaser.Scene {
   update(_: number, delta: number) {
     if (this.cutsceneActive) {
       if (this.dialog.isInChoice()) {
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up))   this.dialog.navigateChoice(-1);
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) this.dialog.navigateChoice(1);
-        if (Phaser.Input.Keyboard.JustDown(this.shiftKey))     this.dialog.confirmChoice();
-      } else if (Phaser.Input.Keyboard.JustDown(this.shiftKey)) {
-        this.dialog.advance();
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up))    this.dialog.navigateChoice(-1);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.down))  this.dialog.navigateChoice(1);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.space)) this.dialog.confirmChoice();
+      } else if (Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
+        this.dialog.advance();   // advance with A (SPACE), like every other dialogue
       }
       return;
     }
