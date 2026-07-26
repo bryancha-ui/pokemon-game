@@ -490,7 +490,9 @@ export class WorldMapScene extends Phaser.Scene {
     // During cutscene handle only dialog input
     if (this.cutsceneActive) {
       if (this.cutsceneDialog.isInChoice()) {
-        if (Phaser.Input.Keyboard.JustDown(this.shiftKey)) this.cutsceneDialog.navigateChoice(-1);
+        // Navigate choices with the D-pad (up/down); confirm with A — never the B button.
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)   || Phaser.Input.Keyboard.JustDown(this.wasd.up))   this.cutsceneDialog.navigateChoice(-1);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.wasd.down)) this.cutsceneDialog.navigateChoice(1);
         if (Phaser.Input.Keyboard.JustDown(this.interactKey)) this.cutsceneDialog.confirmChoice();
       } else if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         this.cutsceneDialog.advance();
