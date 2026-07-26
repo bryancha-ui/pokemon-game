@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Pokemon, Move } from '../battle/Pokemon';
+import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 
 type BattleState = 'loading' | 'start' | 'playerAction' | 'playerMove' | 'busy' | 'over';
@@ -81,6 +82,7 @@ export class BattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.showMovePanel()); return; }
+    deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);
   }
@@ -203,8 +205,8 @@ export class BattleScene extends Phaser.Scene {
 
   // ── UI helpers ───────────────────────────────────────────────────────────
 
-  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
-  private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
+  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showMovePanel()   { const onDeck = deckShowMoves(this.playerPokemon.moves, i => this.onMoveSelected(this.playerPokemon.moves[i]), () => { this.state = 'playerAction'; this.showActionPanel(); }); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
 
   private animateHpBar(who: 'player' | 'enemy', onDone: () => void) {

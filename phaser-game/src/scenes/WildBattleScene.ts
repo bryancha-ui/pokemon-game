@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
+import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { playMoveFX } from '../systems/BattleFX';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
@@ -78,7 +79,7 @@ export class WildBattleScene extends Phaser.Scene {
       poongbaek: 'poongbaek', woosa: 'woosa', woonsa: 'woonsa',
     };
     pushBgm(this, LEGEND[wid] ?? 'wild');
-    this.events.once('shutdown', () => popBgm(this));
+    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
 
     this.drawBackground();
     this.createDialogBox();
@@ -407,6 +408,7 @@ export class WildBattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
+    deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);
   }
@@ -707,8 +709,8 @@ export class WildBattleScene extends Phaser.Scene {
   private get px() { return (this.registry.get('routeReturnX') as number) ?? 0; }
   private get py() { return (this.registry.get('routeReturnY') as number) ?? 0; }
 
-  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
-  private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); this.bagPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
 

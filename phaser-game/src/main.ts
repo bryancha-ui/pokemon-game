@@ -132,15 +132,19 @@ import { NosdanHideoutScene } from './scenes/NosdanHideoutScene';
 import { FogboundManorScene } from './scenes/FogboundManorScene';
 import { HamhungNaengmyeonScene } from './scenes/interior/HamhungNaengmyeonScene';
 import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
-import { initTouchControls } from './systems/TouchControls';
+import { setupMobileShell } from './systems/TouchControls';
+
+// On touch devices, split the page DS-style (game on top, control deck below) and
+// mount the game into the top pane so the controls never cover it. ?touch=1 forces it.
+const shell = setupMobileShell(new URLSearchParams(location.search).has('touch'));
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   width: 1280,
   height: 720,
   backgroundColor: '#000000',
+  parent: shell.parent,
   scene: [TitleScene, WorldMapScene, BattleScene, PlayerHomeScene, PokemonCenterScene, RivalHomeScene, StarterSelectScene, RivalBattleScene, MenuScene, RouteScene, WildBattleScene, SeoulScene, TrainerBattleScene, CapitolCityScene, CapitolTowerScene, CapitolGymScene, GymLeaderBattleScene, CapitolPCScene, CapitolPalaceScene, CapitolMarketScene, EvolutionScene, Route2Scene, PineNeedleTownScene, PineNeedlePCScene, PineNeedleStudioScene, PokedexScene, ShopScene, BoxScene, BaekduPassScene, BaekduCityScene, BaekduPCScene, BaekduGymScene, Route3Scene, GeumgangCityScene, GeumgangPCScene, GeumgangGymScene, Route4Scene, HaeanCityScene, HaeanPCScene, HaeanGymScene, SudoLabScene, Route5Scene, ForestCityScene, ForestPCScene, ForestGymScene, ForestShrineScene, FerryScene, JejuPortScene, JejuCityScene, JejuVentsPortScene, JejuPCScene, JejuVentScene, Route6Scene, SunriseCityScene, SunrisePCScene, SunriseGymScene, SunriseCliff1Scene, SunriseCliff2Scene, SunriseCliff3Scene, BaekduCheckpointScene, BaekduSummitScene, ScholarsRoadScene, LeaguePlazaScene, PokemonLeagueScene, RegionMapScene, NorthernColiseumScene, NorthernPlazaScene, PyeongyangCityScene, NorthernReachesScene, SacredPeakScene, DolmoeCityScene, DolmoeGymScene, DolmoeRuinsScene, DolmoePCScene, DolmoeMineScene, SeoraePassScene, OceanScene, MartScene, DeptStoreScene, SeoraeTownScene, SeoraePCScene, SeoraeBuildingScene, SeoraeGymScene, GenderSelectScene, IntroScene, HaenyeoHotSpringScene, HallasanGardensScene, HarborTavernScene, JejuLibraryScene, JejuMarketScene, BeachPavilionScene, SanbangsanShrineScene, CheonjiyeonWaterfallScene, KaesongCityScene, HanRiverParkScene, BikeShopScene, ConvenienceStoreScene, NampoCityScene, WonsanCityScene, HamhungCityScene, ChongjinCityScene, SinuijuCityScene, SamjiyonCityScene, RyesongValleyScene, PokemonLabScene, NampoBeachScene, AhobiryongPassScene, WonsanBeachScene, SijungCoastScene, HamhungMineScene, ChilboHighlandsScene, KaemaPlateauScene, SamjiyonAjitRoadScene, NosdanHideoutScene, FogboundManorScene, HamhungNaengmyeonScene, NorthernBuildingScene],
-  parent: document.body,
   render: {
     powerPreference: 'high-performance',   // prefer the discrete GPU on dual-GPU laptops
     antialias: true,
@@ -152,7 +156,4 @@ const game = new Phaser.Game({
   },
 });
 
-// On phones/tablets, draw an on-screen D-pad + buttons that drive the same keyboard
-// input the game already reads. Add ?touch=1 to force it on for testing on desktop.
-initTouchControls(new URLSearchParams(location.search).has('touch'));
 (window as unknown as { __game: Phaser.Game }).__game = game;

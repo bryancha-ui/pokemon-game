@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
+import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { playMoveFX } from '../systems/BattleFX';
 import { spriteScale } from '../data/SpriteScale';
 import { Pokemon, Move } from '../battle/Pokemon';
@@ -67,7 +68,7 @@ export class RivalBattleScene extends Phaser.Scene {
   create() {
     this.cameras.main.fadeIn(400);
     pushBgm(this, 'rival');
-    this.events.once('shutdown', () => popBgm(this));
+    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
     this.buildPokemon();
     this.drawBackground();
     this.createHUDs();
@@ -370,6 +371,7 @@ export class RivalBattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
+    deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);
   }
@@ -568,8 +570,8 @@ export class RivalBattleScene extends Phaser.Scene {
   // ── UI helpers ────────────────────────────────────────────────────────────
 
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
-  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
-  private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
+  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
 
   private refreshMovePP() {

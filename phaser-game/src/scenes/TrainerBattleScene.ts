@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
+import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { playMoveFX } from '../systems/BattleFX';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
@@ -204,7 +205,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     else if (k.startsWith('champion'))  track = 'champion';    // Champion Hwangeum
     else if (k.startsWith('e4-'))       track = 'elitefour';   // Hanbando League Elite Four
     pushBgm(this, track);
-    this.events.once('shutdown', () => popBgm(this));
+    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
 
     this.drawBackground();
     this.createDialogBox();
@@ -492,8 +493,8 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
-  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
-  private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
+  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
 
   // ── Bag panel (heal / status / revive items — no balls in trainer battles) ──
@@ -587,6 +588,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
+    deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);
   }
