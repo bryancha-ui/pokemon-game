@@ -122,6 +122,13 @@ export function playBgm(scene: Phaser.Scene, key: string): void {
   // once (e.g. the Title theme leaking over Professor Song's intro).
   reg.set('bgmWanted', key);
 
+  // Cut the outgoing (different) track NOW, before the new one lazy-loads — otherwise it
+  // keeps playing during the load and bleeds through (e.g. the Title theme continuing
+  // over Professor Song's intro). Same-track calls already returned above, so this only
+  // fires on a real switch.
+  const outgoing = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
+  if (outgoing) { outgoing.stop(); outgoing.destroy(); reg.remove('bgmSound'); reg.remove('bgmKey'); }
+
   const begin = () => {
     if (reg.get('bgmWanted') !== key) return;   // superseded by a later playBgm/stopBgm — abort
     stopJingle(scene);   // a new track supersedes any lingering victory/badge fanfare
