@@ -341,7 +341,7 @@ export class RivalBattleScene extends Phaser.Scene {
     if (portraits.length) {
       portraits.forEach((p) => p.setAlpha(0));
       this.tweens.add({ targets: portraits, alpha: 1, duration: 300 });
-      this.time.delayedCall(1000, () => this.revealBattle());
+      this.time.delayedCall(3000, () => this.revealBattle());   // hold the trainers on screen for ~3s
     } else {
       this.revealBattle();
     }

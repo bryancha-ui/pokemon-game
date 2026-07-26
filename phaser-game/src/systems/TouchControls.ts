@@ -173,13 +173,13 @@ function buildMoveLayer(): void {
   layer.style.cssText = 'position:absolute;inset:0;display:none;flex-direction:column;padding:calc(var(--u)*0.5);box-sizing:border-box;pointer-events:none;';
   const title = document.createElement('div');
   title.textContent = 'CHOOSE A MOVE';
-  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:calc(var(--u)*1.15);text-align:center;letter-spacing:2px;margin:calc(var(--u)*0.3) 0 calc(var(--u)*0.5);';
+  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:clamp(13px,calc(var(--u)*1),24px);text-align:center;letter-spacing:2px;margin:clamp(2px,calc(var(--u)*0.3),10px) 0 clamp(3px,calc(var(--u)*0.4),12px);flex:0 0 auto;';
   const grid = document.createElement('div');
   grid.className = '__movegrid';
   grid.style.cssText = 'flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:calc(var(--u)*0.5);pointer-events:auto;';
   const back = document.createElement('div');
   back.textContent = '← BACK';
-  back.style.cssText = btnBase + 'margin-top:calc(var(--u)*0.5);height:calc(var(--u)*2.4);border-radius:calc(var(--u)*0.4);font-size:calc(var(--u)*1.1);pointer-events:auto;background:rgba(60,70,100,0.9);';
+  back.style.cssText = btnBase + 'flex:0 0 auto;margin-top:clamp(3px,calc(var(--u)*0.5),12px);height:clamp(30px,calc(var(--u)*2.2),60px);border-radius:calc(var(--u)*0.4);font-size:clamp(13px,calc(var(--u)*0.9),22px);pointer-events:auto;background:rgba(60,70,100,0.9);';
   back.dataset.role = 'back';
   layer.append(title, grid, back);
   moveLayer = layer;
@@ -201,11 +201,13 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
     cell.style.cssText = btnBase +
       `flex-direction:column;border-radius:calc(var(--u)*0.5);border-color:${col};min-width:0;` +
       `background:${dim ? 'rgba(40,40,50,0.85)' : 'rgba(24,30,54,0.95)'};opacity:${dim ? 0.5 : 1};` +
-      'line-height:1.15;padding:calc(var(--u)*0.4);text-align:center;overflow:hidden;';
+      // Fonts are clamped so they never blow up on big/unfolded screens; the name wraps
+      // instead of overflowing, and nothing gets clipped.
+      'line-height:1.1;padding:clamp(3px,calc(var(--u)*0.3),12px);text-align:center;overflow:visible;';
     cell.innerHTML =
-      `<div style="font-weight:800;font-size:calc(var(--u)*1.15)">${m.data.name.toUpperCase()}</div>` +
-      `<div style="font-size:calc(var(--u)*0.8);color:${col};margin-top:calc(var(--u)*0.25)">${m.data.type.toUpperCase()}</div>` +
-      `<div style="font-size:calc(var(--u)*0.8);color:#cbd3e6;margin-top:calc(var(--u)*0.15)">PP ${m.pp}/${m.data.pp}</div>`;
+      `<div style="font-weight:800;font-size:clamp(13px,calc(var(--u)*0.85),22px);line-height:1.05;word-break:break-word;overflow-wrap:anywhere">${m.data.name.toUpperCase()}</div>` +
+      `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:${col};margin-top:clamp(2px,calc(var(--u)*0.2),8px)">${m.data.type.toUpperCase()}</div>` +
+      `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:#cbd3e6;margin-top:clamp(1px,calc(var(--u)*0.1),5px)">PP ${m.pp}/${m.data.pp}</div>`;
     cell.addEventListener('pointerdown', (e) => { e.preventDefault(); onPick(i); });
     grid.append(cell);
   });
