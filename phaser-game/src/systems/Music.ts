@@ -1,0 +1,195 @@
+import Phaser from 'phaser';
+
+// ── Background music ─────────────────────────────────────────────────────────
+// One looping track plays at a time, owned by the game-global sound manager so it
+// carries across scene changes. A scene calls `playBgm(this, key)` in create();
+// if that track is already playing nothing happens (seamless when moving between
+// a city and its interiors), otherwise the old track stops and the new one starts.
+// Scenes with no BGM call simply leave the current track playing.
+
+const BASE = 'assets/bgm/';
+export const TRACKS: Record<string, string> = {
+  // ── Towns & cities ──
+  waterfall:  BASE + 'bgm_waterfallcity.mp3',   // Waterfall City (world hub)
+  pineneedle: BASE + 'bgm_pineneedle.mp3',  // Pine Needle Town
+  sudo:       BASE + 'bgm_sudo.mp3',        // Sudo / Capital City
+  deptstore:  BASE + 'bgm_deptstore.mp3',   // Department Store
+  baekdu:     BASE + 'bgm_baekdu.mp3',      // Baekdu City
+  geumgang:   BASE + 'bgm_geumgang.mp3',    // Geumgang City
+  haean:      BASE + 'bgm_haean.mp3',       // Haean City
+  dolmoe:     BASE + 'bgm_dolmoe.mp3',      // Dolmoe City
+  seorae:     BASE + 'bgm_seorae.mp3',      // Seorae Town
+  sunrise:    BASE + 'bgm_sunrise.mp3',     // Sunrise City
+  forest:     BASE + 'bgm_forest.mp3',      // Forest City
+  jejudo:     BASE + 'bgm_jejudo.mp3',      // Jeju Island
+  // ── Northern 어사대 circuit (post-league) ──
+  pyeongyang: BASE + 'bgm_pyeongyang.mp3',  // Pyeongyang — northern capital
+  kaesong:    BASE + 'bgm_kaesong.mp3',     // Kaesong (개성)
+  nampo:      BASE + 'bgm_nampo.mp3',       // Nampo (남포)
+  wonsan:     BASE + 'bgm_wonsan.mp3',      // Wonsan (원산)
+  hamhung:    BASE + 'bgm_hamhung.mp3',     // Hamhung (함흥)
+  chongjin:   BASE + 'bgm_chongjin.mp3',    // Chongjin (청진)
+  sinuiju:    BASE + 'bgm_sinuiju.mp3',     // Sinuiju (신의주)
+  samjiyon:   BASE + 'bgm_samjiyon.mp3',    // Samjiyon (삼지연)
+  eosa:       BASE + 'bgm_eosa.mp3',        // 어사대장 exam battle (마패 circuit)
+  northplaza: BASE + 'bgm_northplaza.mp3',  // Northern League forecourt
+  northleaguebattle: BASE + 'bgm_northleaguebattle.mp3', // Northern League battle
+  northroute: BASE + 'bgm_northroute.mp3',  // northern field routes
+  railnorth:  BASE + 'bgm_railnorth.mp3',   // the rail north
+  baekducheck: BASE + 'bgm_baekducheck.mp3',// Baekdu checkpoint
+  northreaches: BASE + 'bgm_northreaches.mp3', // Northern Reaches
+  sacredpeak: BASE + 'bgm_sacredpeak.mp3',  // Sacred Peak
+  // Northern (post-game) cities
+  seolhwa:    BASE + 'bgm_seolhwa.mp3',     // Seolhwa City (gate of the north)
+  nunbit:     BASE + 'bgm_nunbit.mp3',      // Nunbit Village
+  cheongun:   BASE + 'bgm_cheongun.mp3',    // Cheongun City
+  baekak:     BASE + 'bgm_baekak.mp3',      // Baekak City (어사대 HQ)
+  hauntedhouse: BASE + 'bgm_hauntedhouse.mp3', // Haunted House
+  headquarternorth: BASE + 'bgm_headquarternorth%20(2).mp3', // 노스단 아지트 (Team North HQ)
+  // ── Routes & field ──
+  route1:     BASE + 'bgm_route1.mp3',
+  route2:     BASE + 'bgm_route2.mp3',
+  route3:     BASE + 'bgm_route3.mp3',
+  route4:     BASE + 'bgm_route4.mp3',
+  route5:     BASE + 'bgm_route5.mp3',
+  route6:     BASE + 'bgm_route6.mp3',
+  baekdupass: BASE + 'bgm_baekdupass.mp3',  // Baekdu Highland Pass
+  baekdupeak: BASE + 'bgm_baekdupeak.mp3',  // Baekdu Peak climb / Cheonji gate
+  scholarsroad: BASE + 'bgm_scholarsroad.mp3', // Scholar's Road (victory road)
+  seoraepass: BASE + 'bgm_seoraepass.mp3',  // Seorae Pass
+  // ── Jeju sea-voyage suite (ferry chapter) ──
+  ferrydusk:  BASE + 'bgm_ferrydusk.mp3',   // Haean Port — Boarding at Dusk
+  ferrynight: BASE + 'bgm_ferrynight.mp3',  // The Night Crossing (calm sailing)
+  ferrystorm: BASE + 'bgm_ferrystorm.mp3',  // The Strait's Fury (storm mini-event)
+  vents:      BASE + 'bgm_vents.mp3',        // Approach to the Vents (eerie volcanic arrival)
+  dolmoemine: BASE + 'bgm_dolmoemine.mp3',  // Dolmoe Mine
+  // ── Battle themes ──
+  wild:       BASE + 'bgm_wild.mp3',
+  trainer:    BASE + 'bgm_trainer.mp3',
+  gymleader:  BASE + 'bgm_gymleader.mp3',
+  rival:      BASE + 'bgm_rival.mp3',
+  suri:       BASE + 'bgm_suri.mp3',        // Team Suri
+  groupnorth: BASE + 'bgm_groupnorth.mp3',  // 노스단 (Group North)
+  elitefour:  BASE + 'bgm_elitefour.mp3',   // Hanbando League Elite Four
+  champion:   BASE + 'bgm_champion.mp3',    // Champion Hwangeum
+  northelite: BASE + 'bgm_northelite.mp3',  // Northern League Elite Four
+  taewang:    BASE + 'bgm_taewang.mp3',     // Northern Champion Taewang
+  sovereign:  BASE + 'bgm_sovereign.mp3',   // 노스단 Sovereign-Claimant
+  // ── Legendary / boss encounters ──
+  nabihalmang: BASE + 'bgm_nabihalmang.mp3',
+  hwanung:    BASE + 'bgm_hwanung.mp3',
+  cheonji:    BASE + 'bgm_cheonji.mp3',     // Spirit of Cheonji
+  dancheong:  BASE + 'bgm_dancheong.mp3',   // The Dancheong Shield
+  poongbaek:  BASE + 'bgm_poongbaek.mp3',   // 풍백 (Wind)
+  woosa:      BASE + 'bgm_woosa.mp3',       // 우사 (Rain)
+  woonsa:     BASE + 'bgm_woonsa.mp3',      // 운사 (Clouds)
+  // ── Utility / interior ──
+  title:      BASE + 'bgm_title.mp3',       // Title screen
+  professorintro: BASE + 'bgm_professorintro.mp3', // Professor Song's opening narration
+  center:     BASE + 'bgm_center.mp3',      // Pokémon Center
+  mart:       BASE + 'bgm_mart.mp3',        // Poké Mart / shop
+  gyminterior: BASE + 'bgm_gyminterior.mp3',// Gym interior (approaching leader)
+  leagueinterior: BASE + 'bgm_leagueinterior.mp3', // League interior
+  halloffame: BASE + 'bgm_halloffame.mp3',  // Hall of Fame
+  evolution:  BASE + 'bgm_evolution.mp3',   // Evolution sequence
+};
+
+// Short, one-shot jingles that play OVER the current music (non-looping).
+export const JINGLES: Record<string, string> = {
+  victory:    BASE + 'bgm_victory.mp3',     // battle victory fanfare
+  badge:      BASE + 'bgm_badge.mp3',       // badge / milestone get
+  heal:       BASE + 'sfx_heal.mp3',        // Pokémon Center healing chime
+};
+
+const VOLUME = 0.35;
+const JINGLE_VOLUME = 0.5;
+
+export function playBgm(scene: Phaser.Scene, key: string): void {
+  const reg = scene.game.registry;
+  if (reg.get('bgmMuted')) return;
+
+  const curKey = reg.get('bgmKey') as string | undefined;
+  const cur    = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
+  if (curKey === key && cur && cur.isPlaying) return;   // this track is already going
+
+  const url = TRACKS[key];
+  if (!url) return;
+
+  const begin = () => {
+    stopJingle(scene);   // a new track supersedes any lingering victory/badge fanfare
+    const prev = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
+    if (prev) { prev.stop(); prev.destroy(); }
+    const snd = scene.sound.add(key, { loop: true, volume: VOLUME });
+    snd.play();
+    reg.set('bgmSound', snd);
+    reg.set('bgmKey', key);
+  };
+
+  if (scene.cache.audio.exists(key)) { begin(); return; }
+  // Lazy-load the track, then start it.
+  scene.load.audio(key, url);
+  scene.load.once(Phaser.Loader.Events.COMPLETE, begin);
+  scene.load.start();
+}
+
+/** Play a temporary track (e.g. a battle theme), remembering the current ambient
+ *  track so `popBgm` can restore it when the battle ends. */
+export function pushBgm(scene: Phaser.Scene, key: string): void {
+  const reg = scene.game.registry;
+  reg.set('bgmPrevKey', (reg.get('bgmKey') as string) ?? '');
+  playBgm(scene, key);
+}
+
+/** Restore the ambient track saved by `pushBgm` (the previous track resumes from
+ *  its start). Safe to call from a scene 'shutdown' handler — the track is cached. */
+export function popBgm(scene: Phaser.Scene): void {
+  const reg = scene.game.registry;
+  const prev = reg.get('bgmPrevKey') as string | undefined;
+  reg.remove('bgmPrevKey');
+  if (prev) playBgm(scene, prev);
+  else stopBgm(scene);
+}
+
+export function stopBgm(scene: Phaser.Scene): void {
+  const reg = scene.game.registry;
+  const cur = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
+  if (cur) { cur.stop(); cur.destroy(); }
+  reg.remove('bgmSound');
+  reg.remove('bgmKey');
+}
+
+/** Stop a currently-playing one-shot jingle (if any). */
+export function stopJingle(scene: Phaser.Scene): void {
+  const reg = scene.game.registry;
+  const j = reg.get('bgmJingle') as Phaser.Sound.BaseSound | undefined;
+  if (j) { j.stop(); j.destroy(); }
+  reg.remove('bgmJingle');
+}
+
+/** Play a short one-shot jingle (victory fanfare, badge get) OVER the current BGM.
+ *  Non-looping; doesn't disturb the ambient/battle track. */
+export function playJingle(scene: Phaser.Scene, key: string): void {
+  if (scene.game.registry.get('bgmMuted')) return;
+  const url = JINGLES[key];
+  if (!url) return;
+  const fire = () => {
+    stopJingle(scene);   // never stack jingles
+    const snd = scene.sound.add(key, { volume: JINGLE_VOLUME });
+    snd.play();
+    scene.game.registry.set('bgmJingle', snd);
+  };
+  if (scene.cache.audio.exists(key)) { fire(); return; }
+  scene.load.audio(key, url);
+  scene.load.once(Phaser.Loader.Events.COMPLETE, fire);
+  scene.load.start();
+}
+
+/** Toggle mute. Returns the new muted state. */
+export function toggleBgmMute(scene: Phaser.Scene): boolean {
+  const reg = scene.game.registry;
+  const muted = !reg.get('bgmMuted');
+  reg.set('bgmMuted', muted);
+  const cur = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
+  if (cur) (cur as Phaser.Sound.WebAudioSound).setMute?.(muted);
+  return muted;
+}

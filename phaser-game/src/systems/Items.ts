@@ -1,0 +1,236 @@
+/**
+ * Items, inventory and money.
+ * Inventory is stored in the registry as a JSON map { itemKey: count }.
+ * Money is a plain registry number 'money'.
+ */
+import Phaser from 'phaser';
+import { TMS } from '../data/TMs';
+
+export type ItemCategory = 'heal' | 'status' | 'revive' | 'ball' | 'hm' | 'ppheal' | 'souvenir';
+
+export interface ItemDef {
+  key:      string;
+  name:     string;
+  icon:     string;
+  price:    number;
+  category: ItemCategory;
+  desc:     string;
+  heal?:    number;        // HP restored (9999 = full)
+  cures?:   string[];      // status keys cured, or ['all']
+  revive?:  number;        // fraction of maxHP restored on revive (0.5, 1)
+  ballRate?: number;       // catch multiplier
+  move?:    string;        // HM/TM: the move it teaches
+  learnTypes?: string[];   // HM/TM: types allowed to learn it (empty = any type)
+  ppRestore?: number;      // PP restored to each move (9999 = fully restore)
+}
+
+export const ITEMS: ItemDef[] = [
+  { key: 'potion',      name: 'Potion',       icon: '🧪', price: 200,  category: 'heal',   desc: 'Restores 20 HP.',          heal: 20 },
+  { key: 'superpotion', name: 'Super Potion', icon: '🧪', price: 700,  category: 'heal',   desc: 'Restores 60 HP.',          heal: 60 },
+  { key: 'hyperpotion', name: 'Hyper Potion', icon: '🧪', price: 1500, category: 'heal',   desc: 'Restores 120 HP.',         heal: 120 },
+  { key: 'maxpotion',   name: 'Max Potion',   icon: '🧪', price: 2500, category: 'heal',   desc: 'Fully restores HP.',       heal: 9999 },
+  { key: 'revive',      name: 'Revive',       icon: '✨', price: 2000, category: 'revive', desc: 'Revives a fainted Pokémon to half HP.', revive: 0.5 },
+  { key: 'maxrevive',   name: 'Max Revive',   icon: '🌟', price: 4000, category: 'revive', desc: 'Revives a fainted Pokémon to full HP.', revive: 1 },
+  { key: 'antidote',    name: 'Antidote',     icon: '💊', price: 100,  category: 'status', desc: 'Cures poison.',            cures: ['psn'] },
+  { key: 'paralyzeheal',name: 'Paralyze Heal',icon: '💊', price: 200,  category: 'status', desc: 'Cures paralysis.',         cures: ['par'] },
+  { key: 'burnheal',    name: 'Burn Heal',    icon: '💊', price: 250,  category: 'status', desc: 'Cures a burn.',            cures: ['brn'] },
+  { key: 'iceheal',     name: 'Ice Heal',     icon: '💊', price: 250,  category: 'status', desc: 'Thaws a frozen Pokémon.',  cures: ['frz'] },
+  { key: 'awakening',   name: 'Awakening',    icon: '💊', price: 250,  category: 'status', desc: 'Wakes a sleeping Pokémon.', cures: ['slp'] },
+  { key: 'fullheal',    name: 'Full Heal',    icon: '💠', price: 600,  category: 'status', desc: 'Cures any status problem.', cures: ['all'] },
+  { key: 'pokeball',    name: 'Poké Ball',    icon: '🔴', price: 200,  category: 'ball',   desc: 'A device for catching Pokémon.', ballRate: 1 },
+  { key: 'greatball',   name: 'Great Ball',   icon: '🔵', price: 600,  category: 'ball',   desc: 'A good ball with a higher catch rate.', ballRate: 1.5 },
+  { key: 'ultraball',   name: 'Ultra Ball',   icon: '🟡', price: 1200, category: 'ball',   desc: 'An ultra-performance catch ball.', ballRate: 2 },
+  { key: 'masterball',  name: 'Master Ball',  icon: '🟣', price: 0,    category: 'ball',   desc: 'The best Ball. Catches any Pokémon without fail.', ballRate: 255 },
+  { key: 'ether',       name: 'Ether',        icon: '🧴', price: 1200, category: 'ppheal', desc: 'Restores 20 PP to each of a Pokémon\'s moves.', ppRestore: 20 },
+  { key: 'elixir',      name: 'Elixir',       icon: '🍶', price: 2500, category: 'ppheal', desc: 'Fully restores the PP of all of a Pokémon\'s moves.', ppRestore: 9999 },
+  { key: 'hm_fly',      name: 'HM01 · Fly',   icon: '✈️', price: 0,    category: 'hm',     desc: 'Teach Fly to a Flying-type Pokémon. Reusable.', move: 'Fly', learnTypes: ['flying'] },
+  // ── Food-court drinks & snacks (Dept. Store 5F) ──
+  { key: 'freshwater',  name: 'Fresh Water',  icon: '💧', price: 200,  category: 'heal',   desc: 'Mountain spring water. Restores 30 HP.',  heal: 30 },
+  { key: 'sodapop',     name: 'Soda Pop',     icon: '🥤', price: 300,  category: 'heal',   desc: 'A fizzy soft drink. Restores 60 HP.',     heal: 60 },
+  { key: 'lemonade',    name: 'Lemonade',     icon: '🍋', price: 400,  category: 'heal',   desc: 'A sweet-tart cooler. Restores 90 HP.',    heal: 90 },
+  { key: 'moomoomilk',  name: 'Moomoo Milk',  icon: '🥛', price: 600,  category: 'heal',   desc: 'Rich, nourishing milk. Restores 120 HP.', heal: 120 },
+  { key: 'lavacookie',  name: 'Lava Cookie',  icon: '🍪', price: 250,  category: 'status', desc: 'A regional treat. Cures any status problem.', cures: ['all'] },
+  // ── Souvenirs (Dept. Store 4F) — mementos, kept for the memory ──
+  { key: 'sv_munkain',  name: 'Munkain Plush',   icon: '🧸', price: 800,  category: 'souvenir', desc: 'A plush of the Grass starter. Impossibly soft.' },
+  { key: 'sv_vipour',   name: 'Vipour Plush',    icon: '🧸', price: 800,  category: 'souvenir', desc: 'A plush of the Fire starter. Warm to the touch.' },
+  { key: 'sv_onnurian', name: 'Onnurian Plush',  icon: '🧸', price: 800,  category: 'souvenir', desc: 'A plush of the Water starter. Faintly damp.' },
+  { key: 'sv_corrpanda',name: 'Corrpanda Doll',  icon: '🐼', price: 1200, category: 'souvenir', desc: 'A doll of Leader Jin\'s shadow-panda ace.' },
+  { key: 'sv_nabi',     name: '나비할망 Charm',    icon: '🦋', price: 2500, category: 'souvenir', desc: 'A dancheong-painted charm of the moth grandmother. Said to bring luck.' },
+  { key: 'sv_jangseung',name: '대장승 Figurine',   icon: '🗿', price: 1500, category: 'souvenir', desc: 'A carved granite figurine of the guardian totem.' },
+  // Gym-leader TMs — reusable, learnable by any Pokémon (see data/TMs.ts).
+  ...TMS.map((tm): ItemDef => ({
+    key: tm.key, name: `TM · ${tm.move}`, icon: '📀', price: tm.price ?? 0, category: 'hm',
+    desc: `Teaches ${tm.move}. Reusable — any Pokémon can learn it.`, move: tm.move, learnTypes: [],
+  })),
+];
+
+const BY_KEY = new Map(ITEMS.map(i => [i.key, i]));
+export function itemDef(key: string): ItemDef | undefined { return BY_KEY.get(key); }
+
+const INV = 'inventory';
+
+export const Inventory = {
+  all(registry: Phaser.Data.DataManager): Record<string, number> {
+    const raw = registry.get(INV) as string | undefined;
+    if (!raw) return {};
+    try { return JSON.parse(raw) as Record<string, number>; } catch { return {}; }
+  },
+  set(registry: Phaser.Data.DataManager, inv: Record<string, number>): void {
+    registry.set(INV, JSON.stringify(inv));
+  },
+  count(registry: Phaser.Data.DataManager, key: string): number {
+    return this.all(registry)[key] ?? 0;
+  },
+  add(registry: Phaser.Data.DataManager, key: string, n = 1): void {
+    const inv = this.all(registry);
+    inv[key] = (inv[key] ?? 0) + n;
+    this.set(registry, inv);
+    // Mirror Poké Ball count to legacy 'pokeballs' for the catch UI
+    if (key === 'pokeball') registry.set('pokeballs', inv[key]);
+  },
+  remove(registry: Phaser.Data.DataManager, key: string, n = 1): boolean {
+    const inv = this.all(registry);
+    if ((inv[key] ?? 0) < n) return false;
+    inv[key] -= n;
+    if (inv[key] <= 0) delete inv[key];
+    this.set(registry, inv);
+    if (key === 'pokeball') registry.set('pokeballs', inv['pokeball'] ?? 0);
+    return true;
+  },
+
+  // ── Money ───────────────────────────────────────────────────────────────
+  money(registry: Phaser.Data.DataManager): number {
+    return (registry.get('money') as number) ?? 0;
+  },
+  addMoney(registry: Phaser.Data.DataManager, n: number): void {
+    registry.set('money', Math.max(0, this.money(registry) + n));
+  },
+  spend(registry: Phaser.Data.DataManager, n: number): boolean {
+    if (this.money(registry) < n) return false;
+    registry.set('money', this.money(registry) - n);
+    return true;
+  },
+
+  /** One-time starter kit + sync legacy pokeballs into the inventory. */
+  ensureInit(registry: Phaser.Data.DataManager): void {
+    if (registry.get('inventoryInit')) {
+      // keep legacy pokeballs count in sync if it grew elsewhere (e.g. Kisun gift)
+      const legacy = (registry.get('pokeballs') as number) ?? 0;
+      const inv = this.all(registry);
+      if ((inv['pokeball'] ?? 0) < legacy) { inv['pokeball'] = legacy; this.set(registry, inv); }
+      return;
+    }
+    registry.set('inventoryInit', true);
+    if (registry.get('money') === undefined) registry.set('money', 3000);
+    const inv = this.all(registry);
+    inv['potion']   = (inv['potion'] ?? 0) + 5;
+    inv['pokeball'] = (inv['pokeball'] ?? 0) + ((registry.get('pokeballs') as number) ?? 0);
+    this.set(registry, inv);
+    registry.set('pokeballs', inv['pokeball'] ?? 0);
+  },
+};
+
+export function formatMoney(n: number): string {
+  return `₩${n.toLocaleString('ko-KR')}`;
+}
+
+import { PartySystem, PartyEntry } from './PartySystem';
+import { buildFromEntry } from './PartyBattle';
+
+export interface UseResult { ok: boolean; message: string; }
+
+/** Whether a Pokémon is allowed to learn an HM/TM move (by type restriction). */
+export function canLearnMove(entry: PartyEntry, def: ItemDef): boolean {
+  if (!def.learnTypes || def.learnTypes.length === 0) return true;
+  const types = [entry.type1, entry.type2].filter(Boolean).map(t => (t as string).toLowerCase());
+  return def.learnTypes.some(lt => types.includes(lt.toLowerCase()));
+}
+
+/**
+ * Teach an HM's move to a party slot. HMs are reusable, so nothing is consumed.
+ */
+export function teachHM(
+  registry: Phaser.Data.DataManager, itemKey: string, slot: number,
+): UseResult {
+  const def = itemDef(itemKey);
+  const mon = PartySystem.get(registry)[slot];
+  if (!def || !def.move || !mon) return { ok: false, message: 'It had no effect.' };
+  if (mon.moves.some(m => m.toLowerCase() === def.move!.toLowerCase())) {
+    return { ok: false, message: `${mon.name} already knows ${def.move}.` };
+  }
+  if (!canLearnMove(mon, def)) {
+    return { ok: false, message: `${mon.name} can't learn ${def.move}.` };
+  }
+  PartySystem.teachMove(registry, slot, def.move);
+  return { ok: true, message: `${mon.name} learned ${def.move}!` };
+}
+
+/**
+ * Try to use a (non-ball) item on a party slot. On success, consumes the item.
+ * Returns a result message for the UI.
+ */
+export function useItemOnSlot(
+  registry: Phaser.Data.DataManager, itemKey: string, slot: number,
+): UseResult {
+  const def = itemDef(itemKey);
+  const party = PartySystem.get(registry);
+  const mon = party[slot];
+  if (!def || !mon) return { ok: false, message: 'It had no effect.' };
+
+  if (def.category === 'heal') {
+    if (mon.hp <= 0) return { ok: false, message: `${mon.name} has fainted — use a Revive first.` };
+    if (mon.hp >= mon.maxHp) return { ok: false, message: `${mon.name}'s HP is already full.` };
+    const before = mon.hp;
+    mon.hp = Math.min(mon.maxHp, mon.hp + (def.heal ?? 0));
+    PartySystem.set(registry, party);
+    Inventory.remove(registry, itemKey, 1);
+    return { ok: true, message: `${mon.name} recovered ${mon.hp - before} HP!` };
+  }
+
+  if (def.category === 'revive') {
+    if (mon.hp > 0) return { ok: false, message: `${mon.name} isn't fainted.` };
+    mon.hp = Math.max(1, Math.floor(mon.maxHp * (def.revive ?? 0.5)));
+    mon.status = 'none';
+    PartySystem.set(registry, party);
+    Inventory.remove(registry, itemKey, 1);
+    return { ok: true, message: `${mon.name} was revived!` };
+  }
+
+  if (def.category === 'ppheal') {
+    // Rebuild to read each move's current + max PP, then top up the entry's stored PP.
+    const built = buildFromEntry(mon);
+    if (!built.moves.some(m => m.pp < m.data.pp)) {
+      return { ok: false, message: `${mon.name}'s PP is already full.` };
+    }
+    const pp: Record<string, number> = { ...(mon.movePP ?? {}) };
+    const amt = def.ppRestore ?? 0;
+    for (const m of built.moves) {
+      pp[m.data.name.toLowerCase()] = amt >= 9999 ? m.data.pp : Math.min(m.data.pp, m.pp + amt);
+    }
+    mon.movePP = pp;
+    PartySystem.set(registry, party);
+    Inventory.remove(registry, itemKey, 1);
+    return { ok: true, message: amt >= 9999 ? `${mon.name}'s PP was fully restored!` : `${mon.name}'s PP was restored!` };
+  }
+
+  if (def.category === 'status') {
+    const cur = mon.status ?? 'none';
+    const curesAll = def.cures?.includes('all');
+    if (cur === 'none' || (!curesAll && !def.cures?.includes(cur))) {
+      return { ok: false, message: `It won't have any effect on ${mon.name}.` };
+    }
+    mon.status = 'none';
+    PartySystem.set(registry, party);
+    Inventory.remove(registry, itemKey, 1);
+    return { ok: true, message: `${mon.name} was cured!` };
+  }
+
+  return { ok: false, message: 'You can only use that in battle.' };
+}
+
+export const STATUS_LABEL: Record<string, string> = {
+  none: 'OK', psn: 'PSN', par: 'PAR', brn: 'BRN', frz: 'FRZ', slp: 'SLP',
+};
+export const STATUS_COLOR: Record<string, number> = {
+  none: 0x44aa44, psn: 0xaa44cc, par: 0xeecc22, brn: 0xff5522, frz: 0x66ccff, slp: 0x8899aa,
+};

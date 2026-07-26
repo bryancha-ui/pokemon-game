@@ -24,3 +24,6 @@ phaser-game/.vite/
 
 # macOS
 .DS_Store
+
+# Local sprite backup (not needed for build/deploy)
+phaser-game/sprite_backup_orig/

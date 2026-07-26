@@ -1,0 +1,357 @@
+import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { DialogBox } from '../ui/DialogBox';
+import { SaveManager } from '../utils/SaveManager';
+import { PartySystem } from '../systems/PartySystem';
+import { DexTracker } from '../systems/DexTracker';
+import { Inventory } from '../systems/Items';
+import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
+
+// ── POST-GAME II — The Sacred Northern Peak (finale) ─────────────────────────────
+// The climb to Hwanung's descent-point. Three sealed shrines each hold one of the
+// Sovereign's attendants — 풍백 (Wind), 우사 (Rain), 운사 (Clouds) — caught in order as
+// you ascend. At the altar, 노스단's new leader makes a last stand; beat them and the
+// three attendants call 환웅 (Hwanung) down from the heavens for the final catch.
+
+const T = { ROCK: 0, WALL: 1, DAIS: 2, BARRIER: 3, PATH: 4, ALTAR: 5, SKY: 6 } as const;
+type Tile = typeof T[keyof typeof T];
+const TILE = 32, COLS = 18, ROWS = 40;
+
+const COLORS: Record<Tile, number> = {
+  [T.ROCK]: 0x4a4a58, [T.WALL]: 0x22222c, [T.DAIS]: 0x6a6a80, [T.BARRIER]: 0x7a6aa0,
+  [T.PATH]: 0x8a8aa0, [T.ALTAR]: 0xcaa84a, [T.SKY]: 0x2a3a6a,
+};
+const SOLID = new Set<Tile>([T.WALL]);
+
+// Each barrier opens once the attendant below it is caught.
+const GATES: Record<number, string> = { 28: 'poongbaek', 20: 'woosa', 12: 'woonsa' };
+
+interface Shrine { key: string; name: string; kr: string; level: number; col: number; row: number; color: number; }
+const SHRINES: Shrine[] = [
+  { key: 'poongbaek', name: 'Poongbaek — The Wind',  kr: '풍백 · 갈바람 능선', level: 80, col: 9, row: 30, color: 0x8fd8ff },
+  { key: 'woosa',     name: 'Woosa — The Rain',      kr: '우사 · 눈물 골짜기', level: 80, col: 9, row: 22, color: 0x4a9ad8 },
+  { key: 'woonsa',    name: 'Woonsa — The Clouds',   kr: '운사 · 운해 정상',   level: 80, col: 9, row: 14, color: 0xd0d8f0 },
+];
+
+const SOVEREIGN = {
+  key: 'nosdan-sovereign', name: '노스단 Sovereign-Claimant', expPool: 11000,
+  pokemon: [
+    { id: 0, level: 82, custom: 'halubang' }, { id: 0, level: 83, custom: 'snoqueen' },
+    { id: 0, level: 83, custom: 'kkaakdang' }, { id: 0, level: 84, custom: 'komodread' },
+    { id: 0, level: 85, custom: 'mperodactyl' }, { id: 0, level: 86, custom: 'noeryong' },
+  ],
+};
+
+export class SacredPeakScene extends Phaser.Scene {
+  private map!: Tile[][];
+  private playerG!: Phaser.GameObjects.Graphics;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private dialog!: DialogBox;
+  private px = 9 * TILE + 16;
+  private py = 37 * TILE + 16;
+  private facing = 1; private walkFrame = 0; private walkTimer = 0;
+  private cutsceneActive = false;
+  private spawnGuard = false;
+  private readonly SPEED = 120;
+  private readonly ALTAR = { col: 9, row: 6 };
+
+  constructor() { super('SacredPeakScene'); }
+
+  private defeated(key: string) { return !!this.registry.get(`trainerDefeated_${key}`); }
+  private got(key: string): boolean {
+    return DexTracker.isCaught(this.registry, key)
+      || PartySystem.get(this.registry).some(e => e.spriteKey === key)
+      || ((this.registry.get('box') as string) ?? '').includes(key);
+  }
+  private get allThree() { return this.got('poongbaek') && this.got('woosa') && this.got('woonsa'); }
+  private get hwanungCaught() { return this.got('hwanwoong'); }
+
+  create() {
+    this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
+    playBgm(this, 'sacredpeak');
+    this.input.keyboard?.resetKeys();
+    this.spawnGuard = true;
+    this.time.delayedCall(600, () => { this.spawnGuard = false; });
+
+    this.px = 9 * TILE + 16; this.py = 37 * TILE + 16;
+    const rx = this.registry.get('sacredPeakReturnX') as number | undefined;
+    const ry = this.registry.get('sacredPeakReturnY') as number | undefined;
+    if (rx !== undefined) { this.px = rx; this.py = ry as number; }
+    this.registry.remove('sacredPeakReturnX'); this.registry.remove('sacredPeakReturnY');
+
+    this.map = buildMap();
+    this.drawMap();
+    this.drawShrines();
+    this.createPlayer();
+    this.setupCamera();
+    this.setupInput();
+    this.createUI();
+    this.cameras.main.fadeIn(400);
+    SaveManager.save(this.registry, this.px, this.py, 'SacredPeakScene');
+
+    if (this.hwanungCaught && !this.registry.get('trueEndDone')) {
+      this.time.delayedCall(400, () => this.runEnding());
+    } else if (!this.registry.get('sacredPeakSeen')) {
+      this.registry.set('sacredPeakSeen', true);
+      this.time.delayedCall(500, () => {
+        this.cutsceneActive = true;
+        this.dialog.show([
+          'Above the Northern Reaches the world falls away into a sea of cloud. Three sealed shrines rise along the ridge to the Sacred Peak, where the oldest myth says the heavens once touched the earth.',
+          '어사대장 Jito: 노스단 is already climbing. Reach the Wind, the Rain and the Clouds before they do. I\'ll hold the lower wards and heal you as you pass. Go, Champion.',
+        ], () => { this.cutsceneActive = false; });
+      });
+    }
+  }
+
+  private barrierOpen(row: number): boolean {
+    const key = GATES[row];
+    return !!key && this.got(key);
+  }
+
+  // ── Map ─────────────────────────────────────────────────────────────────
+  private drawMap() {
+    const g = this.make.graphics({ x: 0, y: 0 });
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const t = this.map[r][c];
+      const open = t === T.BARRIER && this.barrierOpen(r);
+      const draw = open ? T.PATH : t;
+      g.fillStyle(COLORS[draw], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
+      if (draw === T.ROCK) { g.fillStyle(0x3a3a46, 0.7); g.fillRect(c*TILE+3, r*TILE+4, 8, 6); g.fillRect(c*TILE+18, r*TILE+18, 8, 6); }
+      if (draw === T.SKY)  { g.fillStyle(0xffffff, 0.5); g.fillEllipse(c*TILE+16, r*TILE+16, 22, 10); }
+      if (draw === T.PATH) { g.fillStyle(0xb0b0c8, 0.6); g.fillRect(c*TILE+1, r*TILE+1, TILE-2, TILE-2); }
+      if (draw === T.DAIS) { g.fillStyle(0x8888a4, 0.8); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
+      if (t === T.BARRIER && !open) { g.fillStyle(0xc8b8ff, 0.6); for (let i=0;i<4;i++) g.fillRect(c*TILE+3+i*8, r*TILE+2, 3, TILE-4); }
+      if (draw === T.ALTAR) { g.fillStyle(0xffe8a0, 0.8); g.fillRect(c*TILE+5, r*TILE+5, TILE-10, TILE-10); }
+    }
+    const key = '__sacredPeakMap__';
+    if (this.textures.exists(key)) this.textures.remove(key);
+    g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
+    this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
+
+    this.add.text(9 * TILE, 2.4 * TILE, '☀ Altar of the Descent', { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 38.4 * TILE, '↓ Northern Reaches', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+  }
+
+  private drawShrines() {
+    for (const s of SHRINES) {
+      const caught = this.got(s.key);
+      const g = this.add.graphics().setDepth(6);
+      g.setPosition(s.col * TILE + 16, s.row * TILE + 16);
+      // A stone shrine gate; glows if its spirit is still inside.
+      g.fillStyle(0x2a2a34); g.fillRect(-14, -6, 6, 20); g.fillRect(8, -6, 6, 20); g.fillRect(-16, -10, 32, 6);
+      if (!caught) { g.fillStyle(s.color, 0.5); g.fillEllipse(0, 2, 20, 22); }
+      this.add.text(s.col * TILE + 16, s.row * TILE - 18, caught ? `✓ ${s.name}` : s.kr, {
+        fontSize: '8px', color: caught ? '#9fe' : '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+      }).setOrigin(0.5).setDepth(7);
+    }
+    // 노스단's new leader waits at the altar until beaten.
+    if (this.allThree && !this.defeated('nosdan-sovereign')) {
+      const g = this.add.graphics().setDepth(8);
+      drawNpcBody(g, 0x141018, { hair: 0x552266 });
+      g.setPosition(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE + 16);
+      this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, '노스단\nSovereign-Claimant', {
+        fontSize: '8px', color: '#e0a0ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+      }).setOrigin(0.5).setDepth(9);
+    }
+  }
+
+  // ── Player / camera / input ──────────────────────────────────────────────
+  private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
+  private drawChar() {
+    drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerG.setPosition(this.px, this.py);
+  }
+  private setupCamera() {
+    this.cameras.main.setBounds(0, 0, COLS * TILE, ROWS * TILE);
+    this.cameras.main.setZoom(1.7);
+    this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);
+  }
+  private setupInput() {
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.wasd = { up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'), left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D') };
+    this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+  }
+  private createUI() {
+    this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
+    this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
+    this.add.text(this.scale.width / 2, 22, '☀ The Sacred Peak — 환웅의 강림', {
+      fontSize: '13px', color: '#fff', fontStyle: 'bold',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: interact  M: menu', {
+      fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
+    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+  }
+
+  // ── Update ───────────────────────────────────────────────────────────────
+  update(_: number, delta: number) {
+    if (this.cutsceneActive) {
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
+      return;
+    }
+    const dt = delta / 1000; let dx = 0, dy = 0;
+    if (this.cursors.left.isDown  || this.wasd.left.isDown)  { dx = -1; this.facing = 2; }
+    if (this.cursors.right.isDown || this.wasd.right.isDown) { dx =  1; this.facing = 3; }
+    if (this.cursors.up.isDown    || this.wasd.up.isDown)    { dy = -1; this.facing = 1; }
+    if (this.cursors.down.isDown  || this.wasd.down.isDown)  { dy =  1; this.facing = 0; }
+    const moving = dx !== 0 || dy !== 0;
+    if (moving) {
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = this.px + (dx / len) * this.SPEED * dt, ny = this.py + (dy / len) * this.SPEED * dt;
+      if (!this.collides(nx, this.py)) this.px = nx;
+      if (!this.collides(this.px, ny)) this.py = ny;
+      this.walkTimer += delta;
+      if (this.walkTimer > 180) { this.walkFrame ^= 1; this.walkTimer = 0; }
+    } else this.walkFrame = 0;
+    this.drawChar();
+    this.checkShrines();
+    this.checkPeak();
+    this.checkExit();
+  }
+  private collides(x: number, y: number): boolean {
+    const hw = 6;
+    return [[x-hw,y-4],[x+hw,y-4],[x-hw,y+8],[x+hw,y+8]].some(([cx, cy]) => {
+      const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return true;
+      const t = this.map[row][col];
+      if (t === T.BARRIER) return !this.barrierOpen(row);
+      return SOLID.has(t);
+    });
+  }
+
+  private checkShrines() {
+    for (const s of SHRINES) {
+      if (this.got(s.key)) continue;
+      if (Math.hypot(this.px - (s.col * TILE + 16), this.py - (s.row * TILE + 16)) < TILE * 1.5) {
+        this.cutsceneActive = true;
+        this.dialog.show([
+          `A 노스단 squad has forced the ward, nets and cables trained on the thrashing spirit of ${s.name.split(' — ')[0]}.`,
+          '어사대장 Jito: They\'re here. I\'ll scatter them — you reach the spirit! Prove yourself its worthy keeper!',
+          `The 어사대 sweep the 노스단 aside. ${s.kr} stills, turns, and regards you. It will let you try.`,
+        ], () => this.launchCatch(s.key, s.level, 3));
+        return;
+      }
+    }
+  }
+
+  private checkPeak() {
+    if (!this.allThree) return;
+    if (Math.hypot(this.px - (this.ALTAR.col * TILE + 16), this.py - (this.ALTAR.row * TILE + 16)) > TILE * 1.7) return;
+
+    if (!this.defeated('nosdan-sovereign')) {
+      this.cutsceneActive = true;
+      PartySystem.healAll(this.registry);
+      this.dialog.show([
+        '노스단 Sovereign-Claimant: You gathered the three so we wouldn\'t have to. How thoughtful. Hand them over, and Hwanung descends for US — and this broken peninsula finally answers to one throne.',
+        'Rival (arriving at your side, breathless): Yeah, that\'s a no. They chased you all the way up here, and I chased THEM. Go — I\'ve got your back like always.',
+        '어사대장 Jito: The 어사대 hold the peak. Summon the Sovereign, Champion.',
+      ], () => {
+        this.registry.set('trainerName', SOVEREIGN.name);
+        this.registry.set('trainerKey', SOVEREIGN.key);
+        this.registry.set('trainerPokemon', JSON.stringify(SOVEREIGN.pokemon));
+        this.registry.set('trainerExpPool', SOVEREIGN.expPool);
+        this.registry.set('trainerReturnScene', 'SacredPeakScene');
+        this.registry.set('sacredPeakReturnX', this.ALTAR.col * TILE + 16);
+        this.registry.set('sacredPeakReturnY', (this.ALTAR.row + 2) * TILE + 16);
+        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
+      });
+      return;
+    }
+
+    if (!this.hwanungCaught) {
+      this.cutsceneActive = true;
+      this.playDescent();
+    }
+  }
+
+  /** The three attendants call 환웅 down from the heavens for the final catch. */
+  private playDescent() {
+    const W = this.scale.width, H = this.scale.height;
+    const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0).setScrollFactor(0).setDepth(140);
+    this.tweens.add({ targets: flash, alpha: 0.7, duration: 1400, yoyo: true });
+    this.dialog.show([
+      '노스단\'s leader is dragged from the altar. For a moment, the peak is silent.',
+      'Then 풍백, 우사 and 운사 rise from your side of their own accord and take their places around the altar — Wind, Rain and Cloud, wheeling in harmony. The sky splits with light.',
+      '📟 Your Pokédex crackles to life on the altar — Professor Song, patched in from the lab.',
+      'Prof. Song (over the Pokédex, awed): He\'s... actually descending. The Sovereign himself — because YOU called him, because you carry the three. If you\'re ever going to catch a god, it\'s now.',
+      '🌟 환웅 (Hwanung), the Sovereign Who Descended, alights upon the altar and regards you — not as prey, but as the one worthy to summon him.',
+    ], () => this.launchCatch('hwanwoong', 88, 2));
+  }
+
+  private launchCatch(key: string, level: number, catchRate: number) {
+    PartySystem.healAll(this.registry);
+    if (Inventory.count(this.registry, 'masterball') <= 0) Inventory.add(this.registry, 'masterball', 1);
+    this.registry.set('wildId', key);
+    this.registry.set('wildLevel', level);
+    this.registry.set('wildCustom', true);
+    this.registry.set('wildCatchRate', catchRate);
+    this.registry.set('wildReturnScene', 'SacredPeakScene');
+    this.registry.set('sacredPeakReturnX', this.px);
+    this.registry.set('sacredPeakReturnY', this.py);
+    this.cameras.main.fadeOut(600, 255, 255, 255, () => this.scene.start('WildBattleScene'));
+  }
+
+  private checkExit() {
+    if (this.cutsceneActive || this.spawnGuard) return;
+    if (this.py > (ROWS - 1) * TILE) {
+      this.cutsceneActive = true;
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.registry.set('northReachesReturnX', 9 * 32 + 16);
+        this.registry.set('northReachesReturnY', 3 * 32 + 16);
+        this.scene.start('NorthernReachesScene');
+      });
+    }
+  }
+
+  // ── TRUE END ────────────────────────────────────────────────────────────
+  private runEnding() {
+    this.registry.set('trueEndDone', true);
+    this.registry.set('partIIDone', true);
+    this.cutsceneActive = true;
+    PartySystem.healAll(this.registry);
+
+    const W = this.scale.width, H = this.scale.height;
+    const kids: Phaser.GameObjects.GameObject[] = [];
+    kids.push(this.add.rectangle(W / 2, H / 2, W, H, 0x0a1230, 1).setScrollFactor(0).setDepth(150));
+    const stars = this.add.graphics().setScrollFactor(0).setDepth(151);
+    for (let i = 0; i < 80; i++) { stars.fillStyle(0xffffff, Math.random() * 0.7 + 0.2); stars.fillCircle(Math.random() * W, Math.random() * H, Math.random() < 0.2 ? 2 : 1); }
+    kids.push(stars);
+    kids.push(this.add.text(W / 2, 60, '🌟  THE COMPLETE PANTHEON', { fontSize: '24px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
+    kids.push(this.add.text(W / 2, H - 40, '환웅 · 풍백 · 우사 · 운사 · 나비할망 · 천지신령', { fontSize: '15px', color: '#bcd4ff' }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
+
+    this.dialog.show([
+      '노스단 is dismantled for good, its new leader imprisoned alongside Ryeo. The founding myth\'s ancient retinue is united under a single trainer for the first time in millennia.',
+      'Rival (looking up at the clearing sky): You caught a GOD, you know that? An actual god. ...I\'m never going to catch up to you, am I? Good. Wouldn\'t want it any other way.',
+      '어사대장 Jito (bowing, the deepest honour of her order): Four hundred years the 어사대 guarded these peaks against outsiders. Today an outsider guarded them for US. You are no outsider anymore, southerner.',
+      '어사대장 Jito: Carry this 마패. Any 어사대 in any northern city will aid you on sight. The north will remember your name as long as the mountains stand.',
+      'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Hanbando... it\'s in good hands.',
+      '🏆 You hold 환웅, 풍백, 우사, 운사, 나비할망 and the Spirit of Cheonji — the complete mythological pantheon of Hanbando.',
+      '— TRUE END —',
+    ], () => {
+      this.cameras.main.fadeOut(1200, 0, 0, 0, () => {
+        kids.forEach(k => k.destroy());
+        this.registry.set('capitalReturnX', 24 * 32 + 16);
+        this.registry.set('capitalReturnY', 31 * 32 + 16);
+        this.scene.start('CapitolCityScene');
+      });
+    });
+  }
+}
+
+function buildMap(): Tile[][] {
+  const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.SKY) as Tile[]);
+  const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
+    for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
+  };
+  fill(2, ROWS, 5, 13, T.ROCK);            // the ridge climb (sky on either flank)
+  fill(ROWS - 2, ROWS, 7, 11, T.ROCK);     // entry from the Reaches
+  fill(2, 10, 5, 13, T.ROCK);
+  fill(4, 9, 6, 12, T.ALTAR);              // the descent altar
+  for (const r of [30, 22, 14]) fill(r - 1, r + 2, 7, 11, T.DAIS);   // shrine platforms
+  for (const r of [28, 20, 12]) fill(r, r + 1, 5, 13, T.BARRIER);    // sealed wards
+  return m;
+}

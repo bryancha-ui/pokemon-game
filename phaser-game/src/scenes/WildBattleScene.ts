@@ -1,11 +1,20 @@
 import Phaser from 'phaser';
+import { pushBgm, popBgm } from '../systems/Music';
+import { expMultiplierFor } from '../data/NorthernRegion';
+import { playMoveFX } from '../systems/BattleFX';
+import { spriteScale } from '../data/SpriteScale';
+import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move } from '../battle/Pokemon';
-import { STARTERS, TYPE_COLORS } from '../data/StarterData';
+import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
+import { customForm } from '../data/CustomBattle';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
-import { buildFromEntry } from '../systems/PartyBattle';
+import { awardBenchExp } from '../systems/BattleExp';
+import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
+import { DexTracker } from '../systems/DexTracker';
+import { ITEMS, Inventory, itemDef, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 
 type WildState = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'catching' | 'over';
@@ -16,6 +25,7 @@ export class WildBattleScene extends Phaser.Scene {
   private player!: Pokemon;
   private wild!: Pokemon;
   private wildCatchRate = 45;
+  private ballRate = 1;
   private state: WildState = 'loading';
 
   // UI
@@ -25,6 +35,7 @@ export class WildBattleScene extends Phaser.Scene {
   private playerHpText!: Phaser.GameObjects.Text;
   private wildHpText!: Phaser.GameObjects.Text;
   private playerLvText!: Phaser.GameObjects.Text;
+  private playerNameText!: Phaser.GameObjects.Text;
   private wildLvText!: Phaser.GameObjects.Text;
   private wildSprite!: Phaser.GameObjects.Image;
   private playerSprite!: Phaser.GameObjects.Image;
@@ -38,20 +49,37 @@ export class WildBattleScene extends Phaser.Scene {
   private W = 1280;
   private H = 720;
   private activeSlot = 0;  // which party slot is currently battling
+  private participants = new Set<number>([0]);   // all battlers share EXP
 
   constructor() { super('WildBattleScene'); }
 
   preload() {
     if (!this.textures.exists('disguijar'))
-      this.load.image('disguijar', '/assets/disguijar.png');
+      this.load.image('disguijar', 'assets/disguijar.png');
     STARTERS.forEach(s => {
       if (!this.textures.exists(s.spriteKey))
         this.load.image(s.spriteKey, s.data.spriteUrl);
+    });
+    PartySystem.get(this.registry).forEach(e => {
+      if (e.spriteKey && e.spriteUrl && !this.textures.exists(e.spriteKey))
+        this.load.image(e.spriteKey, e.spriteUrl);
     });
   }
 
   async create() {
     this.cameras.main.fadeIn(300);
+    Inventory.ensureInit(this.registry);   // sync legacy Pokéballs into the item system
+    this.registry.set('wildOutcome', 'none');   // set to won/caught/fled on exit (callers may gate on it)
+
+    // Battle theme: the roaming legendaries get their own encounter music; else the wild theme.
+    const wid = String(this.registry.get('wildId') ?? '');
+    const LEGEND: Record<string, string> = {
+      nabihalmang: 'nabihalmang', hwanwoong: 'hwanung', cheonjisin: 'cheonji',
+      poongbaek: 'poongbaek', woosa: 'woosa', woonsa: 'woonsa',
+    };
+    pushBgm(this, LEGEND[wid] ?? 'wild');
+    this.events.once('shutdown', () => popBgm(this));
+
     this.drawBackground();
     this.createDialogBox();
     this.typeDialog('Loading…');
@@ -59,8 +87,8 @@ export class WildBattleScene extends Phaser.Scene {
     this.aKey     = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 
     // M or B opens the menu (party + bag) without interrupting the battle
-    this.input.keyboard!.on('keydown-M', () => this.scene.launch('MenuScene'));
-    this.input.keyboard!.on('keydown-B', () => this.scene.launch('MenuScene'));
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => this.scene.launch('MenuScene'));
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => this.scene.launch('MenuScene'));
 
     await this.buildPokemon();
 
@@ -98,11 +126,22 @@ export class WildBattleScene extends Phaser.Scene {
     const wildLevel  = (this.registry.get('wildLevel')  as number) ?? 5;
     const wildCustom = !!(this.registry.get('wildCustom'));
 
+    // Pokédex: mark this wild Pokémon as seen
+    DexTracker.markSeen(this.registry, wildId);
+
     // Build wild Pokémon
     if (wildCustom && wildId === 'disguijar') {
       this.wild = new Pokemon(DISGUIJAR_DATA, wildLevel, DISGUIJAR_MOVES);
       if (!this.textures.exists('disguijar')) {
-        this.load.image('disguijar', '/assets/disguijar.png');
+        this.load.image('disguijar', 'assets/disguijar.png');
+        await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
+      }
+    } else if (wildCustom && customForm(wildId as string)) {
+      // Any other custom Pokédex Pokémon
+      const cf = customForm(wildId as string)!;
+      this.wild = new Pokemon(cf.data, wildLevel, cf.moves);
+      if (!this.textures.exists(wildId as string)) {
+        this.load.image(wildId as string, cf.data.spriteUrl);
         await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
       }
     } else {
@@ -120,15 +159,21 @@ export class WildBattleScene extends Phaser.Scene {
       this.wild = new Pokemon(data, wildLevel, moves);
     }
 
-    // Build player Pokémon from party slot 0
-    const starterKey   = (this.registry.get('starterKey')  as string) ?? 'vipour';
-    const starterLevel = (this.registry.get('starterLevel') as number) ?? 5;
-    const def = STARTERS.find(s => s.spriteKey === starterKey) ?? STARTERS[1];
-    this.player = new Pokemon(def.data, starterLevel, def.startingMoves);
-    // Restore current HP from party
+    // Build player Pokémon from party slot 0 (party entry is the source of truth)
+    PartySystem.syncSlot0FromStarter(this.registry);
     const party = PartySystem.get(this.registry);
-    if (party.length > 0) this.player['hp'] = Math.min(party[0].hp, this.player.maxHp);
-    this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    // Lead with the first NON-fainted Pokémon so a fainted lead never enters battle.
+    this.activeSlot = Math.max(0, party.findIndex(e => e && e.hp > 0));
+    if (party.length > 0) {
+      this.player = buildFromEntry(party[this.activeSlot]);
+      this.participants = new Set<number>([this.activeSlot]);
+    } else {
+      const starterKey   = (this.registry.get('starterKey')  as string) ?? 'vipour';
+      const starterLevel = (this.registry.get('starterLevel') as number) ?? 5;
+      const def = (findForm(starterKey)) ?? STARTERS[1];
+      this.player = new Pokemon(def.data, starterLevel, def.startingMoves);
+      this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    }
   }
 
   // ── Background ────────────────────────────────────────────────────────────
@@ -136,7 +181,7 @@ export class WildBattleScene extends Phaser.Scene {
   private drawBackground() {
     const g = this.add.graphics();
     g.fillStyle(0x6688bb, 1); g.fillRect(0, 0, this.W, 300);
-    g.fillStyle(0x4a7a3a, 1); g.fillRect(0, 200, this.W, 110);
+    g.fillStyle(0x4a7a3a, 1); g.fillRect(0, 200, this.W, this.H - 320);   // green field down to the dialog box (no black gap)
     g.fillStyle(0x8a9a6a, 1);
     g.fillTriangle(0, 200, 150, 80, 300, 200);
     g.fillTriangle(200, 200, 400, 60, 600, 200);
@@ -162,7 +207,7 @@ export class WildBattleScene extends Phaser.Scene {
 
     // Player HUD — right
     this.add.rectangle(660, 318, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(730, 292, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(660, 320, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(570, 320, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -172,10 +217,14 @@ export class WildBattleScene extends Phaser.Scene {
   // ── Sprites ───────────────────────────────────────────────────────────────
 
   private createSprites() {
+    const wildId = this.registry.get('wildId') as string | number;
     const wKey = this.wild.data.id === 904
       ? 'disguijar'
-      : `wild-${this.registry.get('wildId')}`;
-    const pKey = (this.registry.get('starterKey') as string) ?? 'vipour';
+      : customForm(wildId as string)
+        ? (wildId as string)               // custom Pokédex key
+        : `wild-${wildId}`;                 // PokéAPI
+    const pKey = PartySystem.get(this.registry)[this.activeSlot]?.spriteKey
+               ?? (this.registry.get('starterKey') as string) ?? 'vipour';
 
     this.wildSprite   = this.add.image(900, 60, this.textures.exists(wKey) ? wKey : 'disguijar')
       .setDepth(5).setAlpha(0);
@@ -184,7 +233,7 @@ export class WildBattleScene extends Phaser.Scene {
     const fitImg = (img: Phaser.GameObjects.Image, size: number) => {
       const tex = this.textures.get(img.texture.key).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
-      img.setScale(size / dim);
+      img.setScale((size * spriteScale(img.texture.key)) / dim);
     };
     fitImg(this.wildSprite, 130);
     fitImg(this.playerSprite, 140);
@@ -203,12 +252,12 @@ export class WildBattleScene extends Phaser.Scene {
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
-      delay: 26, repeat: text.length - 1,
+      delay: 12, repeat: text.length - 1,   // faster typewriter for snappier battles
       callback: () => {
         this.dialogText.setText(text.slice(0, ++i));
         if (i >= text.length) {
           ev.destroy();
-          if (onDone) this.time.delayedCall(600, onDone);
+          if (onDone) this.time.delayedCall(280, onDone);
         }
       },
     });
@@ -268,25 +317,65 @@ export class WildBattleScene extends Phaser.Scene {
   // ── Bag panel ─────────────────────────────────────────────────────────────
 
   private createBagPanel() {
-    this.bagPanel = this.add.container(this.W * 0.60, this.H - 120).setDepth(10).setVisible(false);
-    const bg = this.add.rectangle(80, 60, 316, 120, 0x111133).setStrokeStyle(1, 0x5577aa);
-    const back = this.add.text(220, 10, '← BACK', { fontSize: '12px', color: '#aaa' })
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.playerAction());
+    this.bagPanel = this.add.container(0, this.H - 120).setDepth(10).setVisible(false);
+    this.rebuildBagPanel();
+  }
 
-    const ballRow = this.add.container(0, 0);
-    const ballBg  = this.add.rectangle(80, 60, 280, 70, 0x1a1a3a).setStrokeStyle(1, 0x3355aa);
-    const ballLbl = this.add.text(16, 36, '🔴 Pokéball', { fontSize: '16px', color: '#fff' });
-    const ballCnt = this.add.text(200, 36, `×${(this.registry.get('pokeballs') as number) ?? 0}`,
-      { fontSize: '16px', color: '#ffe44e' });
-    const throwBtn = this.add.text(120, 76, 'THROW (A)', { fontSize: '14px', color: '#ffe44e' })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.throwBall());
-    ballRow.add([ballBg, ballLbl, ballCnt, throwBtn]);
+  /** Rebuild the in-battle bag from the current inventory (balls + heals). */
+  private rebuildBagPanel() {
+    this.bagPanel.removeAll(true);
+    const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x111133).setStrokeStyle(1, 0x5577aa);
+    this.bagPanel.add(bg);
+    this.bagPanel.add(this.add.text(this.W - 30, 10, '← BACK', { fontSize: '12px', color: '#aaa' })
+      .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()));
 
-    this.bagPanel.add([bg, back, ballRow]);
-    this.bagPanel.setData('ballCnt', ballCnt);
+    // Show owned balls + healing/status items
+    const inv = Inventory.all(this.registry);
+    const usable = ITEMS.filter(it => (inv[it.key] ?? 0) > 0 &&
+      (it.category === 'ball' || it.category === 'heal' || it.category === 'status' || it.category === 'revive'));
+
+    const cols = [20, 250, 480, 710];
+    usable.slice(0, 8).forEach((def, i) => {
+      const x = cols[i % 4], y = 18 + Math.floor(i / 4) * 50;
+      const r = this.add.rectangle(x + 100, y + 14, 210, 40, def.category === 'ball' ? 0x1a2a4a : 0x1a3a2a)
+        .setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
+      this.bagPanel.add(r);
+      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${def.name}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      this.bagPanel.add(this.add.text(x + 8, y + 20, `×${inv[def.key]}`, { fontSize: '11px', color: '#ffe44e' }));
+      r.on('pointerover', () => r.setFillStyle(def.category === 'ball' ? 0x2a4a7a : 0x2a5a3a));
+      r.on('pointerout',  () => r.setFillStyle(def.category === 'ball' ? 0x1a2a4a : 0x1a3a2a));
+      r.on('pointerdown', () => {
+        if (def.category === 'ball') this.throwBall(def.key);
+        else this.useHealItem(def.key);
+      });
+    });
+  }
+
+  private useHealItem(itemKey: string) {
+    if (this.state !== 'bag') return;
+    const wantFainted = itemDef(itemKey)?.category === 'revive';
+    this.hideAllPanels();
+    openSwitchPanel(
+      this, this.activeSlot,
+      () => this.onBag(),                                   // cancel → back to the bag
+      (slot) => this.useItemOnTarget(itemKey, slot),
+      true,
+      (entry) => wantFainted ? entry.hp <= 0 : entry.hp > 0,
+      wantFainted ? 'Revive which Pokémon?' : 'Use on which Pokémon?',
+    );
+  }
+
+  private useItemOnTarget(itemKey: string, slot: number) {
+    const r = useItemOnSlot(this.registry, itemKey, slot);
+    if (!r.ok) { this.typeDialog(r.message, () => this.onBag()); return; }
+    if (slot === this.activeSlot) {
+      const e = PartySystem.get(this.registry)[this.activeSlot];
+      if (e) this.player.hp = e.hp;
+    }
+    this.hideAllPanels();
+    this.state = 'busy';
+    const finish = () => this.typeDialog(r.message, () => this.enemyTurn(null));   // using an item costs the turn
+    if (slot === this.activeSlot) this.animateHpBar('player', finish); else finish();
   }
 
   // ── Battle flow ───────────────────────────────────────────────────────────
@@ -301,16 +390,15 @@ export class WildBattleScene extends Phaser.Scene {
   private onFight() {
     if (this.state !== 'playerAction') return;
     this.state = 'playerMove';
+    this.refreshMovePanel();   // rebuild so PP counts reflect moves used this battle
     this.showMovePanel();
     this.typeDialog('Choose a move!');
   }
 
   private onBag() {
-    if (this.state !== 'playerAction') return;
+    if (this.state !== 'playerAction' && this.state !== 'bag') return;
     this.state = 'bag';
-    // Update ball count display
-    const cnt = (this.bagPanel.getData('ballCnt') as Phaser.GameObjects.Text);
-    cnt.setText(`×${(this.registry.get('pokeballs') as number) ?? 0}`);
+    this.rebuildBagPanel();
     this.hideAllPanels();
     this.bagPanel.setVisible(true);
     this.typeDialog('Choose an item!');
@@ -328,6 +416,7 @@ export class WildBattleScene extends Phaser.Scene {
     // Run success check (simplified: 50% + speed advantage)
     const runChance = 0.5 + (this.player.spd - this.wild.spd) / 200;
     if (Math.random() < runChance) {
+      this.registry.set('wildOutcome', 'fled');
       this.typeDialog('Got away safely!', () => this.returnToRoute());
     } else {
       this.typeDialog("Can't escape!", () => {
@@ -338,12 +427,14 @@ export class WildBattleScene extends Phaser.Scene {
 
   // ── Pokéball throw ────────────────────────────────────────────────────────
 
-  private throwBall() {
-    if (this.state !== 'bag') return;
-    const balls = (this.registry.get('pokeballs') as number) ?? 0;
-    if (balls <= 0) { this.typeDialog('No Pokéballs left!', () => this.playerAction()); return; }
-
-    this.registry.set('pokeballs', balls - 1);
+  private throwBall(ballKey = 'pokeball') {
+    if (this.state !== 'bag' && this.state !== 'playerAction') return;
+    if (Inventory.count(this.registry, ballKey) <= 0) {
+      this.typeDialog('You have none of that ball!', () => this.onBag());
+      return;
+    }
+    Inventory.remove(this.registry, ballKey, 1);
+    this.ballRate = itemDef(ballKey)?.ballRate ?? 1;
     this.state = 'catching';
     this.hideAllPanels();
 
@@ -393,9 +484,10 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private doCatchShakes(bx: number, by: number) {
-    const catchProb = Math.min(0.95,
+    const catchProb = this.ballRate >= 255 ? 1 : Math.min(0.99,
       (this.wildCatchRate / 255) *
-      ((3 * this.wild.maxHp - 2 * this.wild.hp) / (3 * this.wild.maxHp)),
+      ((3 * this.wild.maxHp - 2 * this.wild.hp) / (3 * this.wild.maxHp)) *
+      this.ballRate,
     );
     const caught = Math.random() < catchProb;
     const shakes = caught ? 3 : Math.floor(Math.random() * 3);
@@ -409,7 +501,8 @@ export class WildBattleScene extends Phaser.Scene {
           } else {
             this.ballGraphic.clear();
             this.wildSprite.setVisible(true);
-            this.typeDialog(`Oh no! ${this.wild.name.toUpperCase()} broke free!`, () => this.playerAction());
+            // A failed catch costs your turn — the wild Pokémon now attacks.
+            this.typeDialog(`Oh no! ${this.wild.name.toUpperCase()} broke free!`, () => this.enemyTurn(null));
           }
         });
         return;
@@ -433,6 +526,7 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private onCaught(bx: number, by: number) {
+    this.registry.set('wildOutcome', 'caught');
     // Sparkle effect
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
@@ -448,6 +542,11 @@ export class WildBattleScene extends Phaser.Scene {
     this.ballGraphic.clear();
 
     // Add to party
+    const wildId  = this.registry.get('wildId') as string | number;
+    const isCust  = !!customForm(wildId as string) || this.wild.data.id === 904;
+    const sprKey  = this.wild.data.id === 904 ? 'disguijar'
+                  : isCust ? (wildId as string)
+                  : `wild-${wildId}`;
     const entry: PartyEntry = {
       name:      this.wild.name,
       level:     this.wild.level,
@@ -455,20 +554,82 @@ export class WildBattleScene extends Phaser.Scene {
       maxHp:     this.wild.maxHp,
       type1:     this.wild.data.type1,
       type2:     this.wild.data.type2,
-      spriteKey: this.wild.data.id === 904 ? 'disguijar' : `wild-${this.registry.get('wildId')}`,
+      spriteKey: sprKey,
       spriteUrl: this.wild.data.spriteUrl,
-      isCustom:  this.wild.data.id === 904,
+      isCustom:  isCust,
       moves:     this.wild.moves.map(m => m.data.name),
+      exp:       0,
     };
 
-    const added = PartySystem.add(this.registry, entry);
-    SaveManager.save(this.registry, this.px, this.py);
+    DexTracker.markCaught(this.registry, this.registry.get('wildId') as string | number);
+    const name = this.wild.name.toUpperCase();
+    const captureExp = Math.round(this.wild.level * 12 * expMultiplierFor(this.registry));   // capture rewards EXP to all battlers too (northern boost applies)
+    const finish = () => this.showExpAndLevelUp(captureExp, () => this.returnToRoute());
 
-    this.typeDialog(
-      added
-        ? `✨ Gotcha! ${this.wild.name.toUpperCase()} was caught!\nAdded to your party!`
-        : `${this.wild.name.toUpperCase()} was caught!\nParty full — stored in the box.`,
-      () => this.returnToRoute(),
+    if (!PartySystem.isFull(this.registry)) {
+      PartySystem.add(this.registry, entry);
+      this.saveAfterCatch();
+      this.typeDialog(`✨ Gotcha! ${name} was caught!\nAdded to your party!`, finish);
+    } else {
+      // Party is full — let the player swap a Pokémon in or send the new one to the PC.
+      this.typeDialog(`✨ Gotcha! ${name} was caught!\nBut your party is full.`,
+        () => this.promptFullParty(entry, finish));
+    }
+  }
+
+  /** Save against the resumable scene the player came from (not the WorldMap default). */
+  private saveAfterCatch() {
+    const sc = (this.registry.get('lastScene') as string)
+      ?? (this.registry.get('wildReturnScene') as string) ?? 'WorldMapScene';
+    const sx = (this.registry.get('lastX') as number) ?? this.px;
+    const sy = (this.registry.get('lastY') as number) ?? this.py;
+    SaveManager.save(this.registry, sx, sy, sc);
+  }
+
+  /** Party-full choice: swap a party member (it goes to the PC) or box the newcomer. */
+  private promptFullParty(entry: PartyEntry, onDone: () => void) {
+    const cx = this.W / 2, cy = this.H / 2;
+    const layer = this.add.container(0, 0).setDepth(60);
+    layer.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.62));
+    layer.add(this.add.rectangle(cx, cy, 500, 200, 0x10142a, 0.99).setStrokeStyle(2, 0x5577aa));
+    layer.add(this.add.text(cx, cy - 58, 'Your party is full!', { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    layer.add(this.add.text(cx, cy - 26, `Swap a Pokémon for ${entry.name.toUpperCase()}, or send it to the PC?`, { fontSize: '13px', color: '#cde' }).setOrigin(0.5));
+
+    const btn = (x: number, label: string, bg: string, onClick: () => void) => {
+      const b = this.add.text(x, cy + 42, label, { fontSize: '15px', color: '#fff', backgroundColor: bg, padding: { x: 14, y: 9 } })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      b.on('pointerdown', onClick);
+      layer.add(b);
+    };
+    btn(cx - 120, '↔  Swap a Pokémon', '#2a5a8a', () => { layer.destroy(true); this.swapForCaught(entry, onDone); });
+    btn(cx + 120, '📦  Send to PC', '#3a6a3a', () => {
+      layer.destroy(true);
+      PartySystem.boxAdd(this.registry, entry);
+      this.saveAfterCatch();
+      this.typeDialog(`${entry.name.toUpperCase()} was sent to the PC.`, onDone);
+    });
+  }
+
+  /** Pick a party member to send to the PC; the caught Pokémon takes its place. */
+  private swapForCaught(entry: PartyEntry, onDone: () => void) {
+    openSwitchPanel(
+      this, -1,
+      () => this.promptFullParty(entry, onDone),   // cancel → back to the choice
+      (idx) => {
+        const party = PartySystem.get(this.registry);
+        const out = party[idx];
+        party[idx] = entry;
+        PartySystem.set(this.registry, party);
+        // If the newcomer took the lead slot, re-point the legacy starter mirror at it,
+        // otherwise the old lead's level (in starterLevel) gets forced back onto it.
+        if (idx === 0) PartySystem.syncStarterFromLead(this.registry);
+        PartySystem.boxAdd(this.registry, out);
+        this.saveAfterCatch();
+        this.typeDialog(`${entry.name.toUpperCase()} joined the party!\n${out.name.toUpperCase()} was sent to the PC.`, onDone);
+      },
+      true,          // allow cancel
+      () => true,    // any of the 6 can be sent out
+      'Send which Pokémon to the PC?',
     );
   }
 
@@ -476,58 +637,67 @@ export class WildBattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
+    // Turn order by Speed (ties broken randomly).
+    const playerFirst = this.player.spd > this.wild.spd
+      || (this.player.spd === this.wild.spd && Math.random() < 0.5);
+    if (playerFirst) {
+      this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction()));
+    } else {
+      this.doWildMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+    }
+  }
+
+  private doPlayerMove(playerMove: Move, onDone: () => void) {
     this.player.useMove(playerMove);
-
+    persistMovePP(this.registry, this.activeSlot, this.player);   // remember PP spent this battle
     this.typeDialog(`${this.player.name.toUpperCase()} used ${playerMove.data.name}!`, () => {
-      if (playerMove.data.power > 0) {
-        const { dmg, critical, effectiveness } = this.wild.takeDamage(playerMove, this.player);
-        this.animateHpBar('wild', () => {
-          let msg = '';
-          if (critical)             msg = 'A critical hit! ';
-          if (effectiveness > 1)    msg += "Super effective!";
-          if (effectiveness < 1 && effectiveness > 0) msg += "Not very effective...";
-          if (effectiveness === 0)  msg = "It had no effect!";
-          void dmg;
-
-          const next = () => {
-            if (this.wild.isKO) {
-              this.typeDialog(`${this.wild.name.toUpperCase()} fainted!`, () => {
-                const gained = this.wild.level * 15;  // 3× increase
-                this.showExpAndLevelUp(gained, () => this.returnToRoute());
-              });
-              return;
-            }
-            this.enemyTurn(null);
-          };
-          if (msg) this.typeDialog(msg, next); else next();
-        });
-      } else {
-        this.typeDialog(`${this.player.name.toUpperCase()} used ${playerMove.data.name}!`,
-          () => this.enemyTurn(null));
-      }
+      if (playerMove.data.power <= 0) { onDone(); return; }
+      const { critical, effectiveness } = this.wild.takeDamage(playerMove, this.player);
+      playMoveFX(this, this.playerSprite, this.wildSprite, playerMove.data, effectiveness, () => {});
+      this.animateHpBar('wild', () => {
+        let msg = '';
+        if (critical)             msg = 'A critical hit! ';
+        if (effectiveness > 1)    msg += 'Super effective!';
+        if (effectiveness < 1 && effectiveness > 0) msg += 'Not very effective...';
+        if (effectiveness === 0)  msg = 'It had no effect!';
+        const after = () => {
+          if (this.wild.isKO) {
+            this.typeDialog(`${this.wild.name.toUpperCase()} fainted!`, () => {
+              this.registry.set('wildOutcome', 'won');
+              const gained = Math.round(this.wild.level * 15 * expMultiplierFor(this.registry));
+              this.showExpAndLevelUp(gained, () => this.returnToRoute());
+            });
+            return;
+          }
+          onDone();
+        };
+        if (msg) this.typeDialog(msg, after); else after();
+      });
     });
   }
 
-  private enemyTurn(_: null) {
+  /** The wild Pokémon attacks (also used standalone after item use / a failed run). */
+  private enemyTurn(_: null) { void _; this.doWildMove(() => this.playerAction()); }
+
+  private doWildMove(onDone: () => void) {
     const available = this.wild.moves.filter(m => m.pp > 0);
     const move = available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0];
     this.wild.useMove(move);
 
     this.typeDialog(`Wild ${this.wild.name.toUpperCase()} used ${move.data.name}!`, () => {
       if (move.data.power > 0) {
-        this.player.takeDamage(move, this.wild);
+        const { effectiveness } = this.player.takeDamage(move, this.wild);
+        playMoveFX(this, this.wildSprite, this.playerSprite, move.data, effectiveness, () => {});
         this.animateHpBar('player', () => {
           PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
           if (this.player.isKO) {
-            this.typeDialog(`${this.player.name.toUpperCase()} fainted!`, () => {
-              this.sendNextOrLose();
-            });
+            this.typeDialog(`${this.player.name.toUpperCase()} fainted!`, () => this.sendNextOrLose());
           } else {
-            this.playerAction();
+            onDone();
           }
         });
       } else {
-        this.playerAction();
+        onDone();
       }
     });
   }
@@ -540,6 +710,7 @@ export class WildBattleScene extends Phaser.Scene {
   private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
   private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); this.bagPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
 
   private animateHpBar(who: 'player' | 'wild', onDone: () => void) {
     const mon   = who === 'player' ? this.player  : this.wild;
@@ -548,14 +719,13 @@ export class WildBattleScene extends Phaser.Scene {
     const ratio = mon.hp / mon.maxHp;
     bar.fillColor = ratio > 0.5 ? 0x44cc44 : ratio > 0.25 ? 0xddcc00 : 0xcc4444;
     this.tweens.add({
-      targets: bar, width: Math.max(0, ratio * HP_W), duration: 450, ease: 'Linear',
+      targets: bar, width: Math.max(0, ratio * HP_W), duration: 260, ease: 'Linear',
       onComplete: () => { label.setText(`${mon.hp}/${mon.maxHp}`); onDone(); },
     });
   }
 
   protected showExpAndLevelUp(expGained: number, onDone: () => void) {
-    // Restore EXP from registry
-    this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    // this.player.exp already carries the active Pokémon's EXP (from buildFromEntry)
     const levelsGained: number[] = [];
     let levelled = this.player.gainExp(expGained);
     while (levelled) {
@@ -563,10 +733,15 @@ export class WildBattleScene extends Phaser.Scene {
       levelled = this.player.gainExp(0);  // check overflow
     }
 
-    // Persist
-    this.registry.set('starterLevel', this.player.level);
-    this.registry.set('starterExp',   this.player.exp);
-    PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+    // Persist level + exp + hp to the active party slot (source of truth)
+    PartySystem.updateSlotProgress(
+      this.registry, this.activeSlot,
+      this.player.level, this.player.exp, this.player.hp, this.player.maxHp,
+    );
+
+    // Every other Pokémon that participated also gains EXP.
+    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, expGained);
+    const after = () => this.playBenchLines(benchLines, onDone);
 
     // Show message
     const expMsg = `${this.player.name.toUpperCase()} gained ${expGained} EXP!`;
@@ -575,13 +750,21 @@ export class WildBattleScene extends Phaser.Scene {
       this.typeDialog(expMsg, () => {
         this.playerLvText.setText(`Lv.${lv}`);
         this.animateHpBar('player', () => {
-          this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${lv}!\nMax HP: ${this.player.maxHp}`, onDone);
+          this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${lv}!\nMax HP: ${this.player.maxHp}`, () => {
+            runLevelUpLearning(this, this.activeSlot, this.player, levelsGained[0] - 1, this.player.level,
+              (t, cb) => this.typeDialog(t, cb), after);
+          });
         });
       });
     } else {
       const needed = this.player.expToNextLevel() - this.player.exp;
-      this.typeDialog(`${expMsg}  (${needed} to next level)`, onDone);
+      this.typeDialog(`${expMsg}  (${needed} to next level)`, after);
     }
+  }
+
+  private playBenchLines(lines: string[], onDone: () => void) {
+    if (lines.length === 0) { onDone(); return; }
+    this.typeDialog(lines[0], () => this.playBenchLines(lines.slice(1), onDone));
   }
 
   // ── Party switching ───────────────────────────────────────────────────────
@@ -600,10 +783,13 @@ export class WildBattleScene extends Phaser.Scene {
   private voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
     this.activeSlot = slotIdx;
+    this.participants.add(slotIdx);
     const party = PartySystem.get(this.registry);
     const entry = party[slotIdx];
     this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
 
+    this.playerNameText.setText(this.player.name.toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -613,7 +799,7 @@ export class WildBattleScene extends Phaser.Scene {
       this.playerSprite.setTexture(entry.spriteKey);
       const tex = this.textures.get(entry.spriteKey).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
-      this.playerSprite.setScale(140 / dim);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
     this.playerSprite.setAlpha(0);
     this.tweens.add({
@@ -636,11 +822,8 @@ export class WildBattleScene extends Phaser.Scene {
       PartySystem.set(this.registry, party);
     }
 
-    // Find next healthy Pokémon after the active slot
-    const nextIdx = party.findIndex((e, i) => i !== this.activeSlot && e.hp > 0);
-
-    if (nextIdx === -1) {
-      // All Pokémon fainted → loss
+    // All Pokémon fainted → loss
+    if (!party.some((e, i) => i !== this.activeSlot && e.hp > 0)) {
       this.typeDialog('You have no more Pokémon!', () => {
         PartySystem.healAll(this.registry);
         this.registry.set('returnX', 10 * 32 + 16);
@@ -650,12 +833,23 @@ export class WildBattleScene extends Phaser.Scene {
       return;
     }
 
-    // Send in the next Pokémon
+    // Let the player choose the next Pokémon (forced switch — no cancel).
+    this.state = 'busy';
+    this.hideAllPanels();
+    this.typeDialog('Choose your next Pokémon!');
+    openSwitchPanel(this, this.activeSlot, () => {}, (idx) => this.sendInChosen(idx), false);
+  }
+
+  private sendInChosen(nextIdx: number) {
+    this.state = 'busy';
     this.activeSlot = nextIdx;
-    const nextEntry = party[nextIdx];
+    this.participants.add(nextIdx);
+    const nextEntry = PartySystem.get(this.registry)[nextIdx];
     this.player = buildFromEntry(nextEntry);
+    this.refreshMovePanel();
 
     // Update HUD
+    this.playerNameText.setText(this.player.name.toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -667,7 +861,7 @@ export class WildBattleScene extends Phaser.Scene {
       this.playerSprite.setTexture(key);
       const tex2 = this.textures.get(key).getSourceImage();
       const dim2 = Math.max((tex2.width as number) || 1, (tex2.height as number) || 1);
-      this.playerSprite.setScale(140 / dim2);
+      this.playerSprite.setScale((140 * spriteScale(key)) / dim2);
     }
     this.playerSprite.setAlpha(0);
     this.tweens.add({
@@ -679,7 +873,8 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private returnToRoute() {
-    SaveManager.save(this.registry, this.px, this.py);
-    this.cameras.main.fadeOut(400, 255, 255, 255, () => this.scene.start('RouteScene'));
+    const back = (this.registry.get('wildReturnScene') as string) ?? 'RouteScene';
+    SaveManager.save(this.registry, this.px, this.py, back);
+    this.cameras.main.fadeOut(400, 255, 255, 255, () => this.scene.start(back));
   }
 }

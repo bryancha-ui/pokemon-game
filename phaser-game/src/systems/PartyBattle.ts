@@ -2,11 +2,37 @@
  * Shared utilities for rebuilding a Pokemon object from a PartyEntry
  * so battle scenes can send in any party member, not just the starter.
  */
+import Phaser from 'phaser';
 import { Pokemon, PokemonData, MoveData } from '../battle/Pokemon';
 import { PokemonType } from '../battle/TypeChart';
-import { PartyEntry } from './PartySystem';
-import { STARTERS } from '../data/StarterData';
+import { PartySystem, PartyEntry } from './PartySystem';
+import { findForm } from '../data/StarterData';
 import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
+import { customForm } from '../data/CustomBattle';
+import { mergeLearnset } from '../data/Learnsets';
+import { TM_MOVE_DATA } from '../data/TMs';
+
+/** Fold any taught TM moves stored on the entry into the computed battle moveset,
+ *  so a TM the player taught actually shows up (and works) in battle. Damaging TMs
+ *  replace the current weakest move; status TMs (0 power) aren't simulated here so
+ *  they're left out of the battle slots. */
+function foldTaughtMoves(moves: MoveData[], entry: PartyEntry): MoveData[] {
+  // A player-curated moveset (from choosing which move to forget for a TM) wins outright.
+  if (entry.battleMoves && entry.battleMoves.length) return entry.battleMoves.slice(0, 4);
+  const have = new Set(moves.map(m => m.name.toLowerCase()));
+  const taught = (entry.moves ?? [])
+    .map(n => TM_MOVE_DATA[n.toLowerCase()])
+    .filter((m): m is MoveData => !!m && m.power > 0 && !have.has(m.name.toLowerCase()));
+  if (taught.length === 0) return moves;
+  const result = [...moves];
+  for (const tm of taught) {
+    if (result.length < 4) { result.push(tm); continue; }
+    let wi = 0;
+    for (let i = 1; i < result.length; i++) if (result[i].power < result[wi].power) wi = i;
+    result[wi] = tm;   // evict the weakest to make room for the taught move
+  }
+  return result.slice(0, 4);
+}
 
 // Small lookup of moves that appear on PokéAPI wild Pokémon
 const KNOWN_MOVES: Record<string, MoveData> = {
@@ -28,6 +54,12 @@ const KNOWN_MOVES: Record<string, MoveData> = {
   'supersonic':  { name: 'Supersonic',  type: 'normal',  category: 'status',   power:  0, accuracy:  55, pp: 20 },
   'confusion':   { name: 'Confusion',   type: 'psychic', category: 'special',  power: 50, accuracy: 100, pp: 25 },
   'mud-slap':    { name: 'Mud Slap',    type: 'ground',  category: 'special',  power: 20, accuracy: 100, pp: 10 },
+  // Dragon line (Dratini → Dragonair → Dragonite skill tree)
+  'twister':       { name: 'Twister',       type: 'dragon', category: 'special',  power: 40,  accuracy: 100, pp: 20 },
+  'dragon breath': { name: 'Dragon Breath', type: 'dragon', category: 'special',  power: 60,  accuracy: 100, pp: 20 },
+  'dragon claw':   { name: 'Dragon Claw',   type: 'dragon', category: 'physical', power: 80,  accuracy: 100, pp: 15 },
+  'dragon pulse':  { name: 'Dragon Pulse',  type: 'dragon', category: 'special',  power: 85,  accuracy: 100, pp: 10 },
+  'outrage':       { name: 'Outrage',       type: 'dragon', category: 'physical', power: 120, accuracy: 100, pp: 10 },
 };
 
 const TACKLE_FALLBACK: MoveData =
@@ -43,26 +75,62 @@ function movesForEntry(entry: PartyEntry): MoveData[] {
   return moves.length ? moves : [TACKLE_FALLBACK];
 }
 
+/** The move NAMES a Pokémon actually fights with at its current level — the same
+ *  level-up learnset the battle uses — merged with any taught HM/utility moves
+ *  already stored on the entry (so Fly, Cut, etc. aren't lost from the display). */
+export function displayMoves(entry: PartyEntry): string[] {
+  const battleMon = buildFromEntry(entry);
+  const names = battleMon.moves.map(m => m.data.name);
+  const seen = new Set(names.map(n => n.toLowerCase()));
+  for (const m of entry.moves ?? []) {   // keep taught HMs / prior moves not in the level kit
+    if (!seen.has(m.toLowerCase())) { names.push(m); seen.add(m.toLowerCase()); }
+  }
+  return names;
+}
+
+/** Refresh a stored entry's display move list to match its current level/form.
+ *  Called after level-ups and evolutions so the menu shows newly-learned moves. */
+export function syncEntryMoves(entry: PartyEntry): void {
+  entry.moves = displayMoves(entry).slice(0, 6);
+}
+
 /** Reconstruct a battle-ready Pokemon from a stored PartyEntry. */
 export function buildFromEntry(entry: PartyEntry): Pokemon {
-  // Starter Pokémon — use exact STARTERS data
-  const starterDef = STARTERS.find(s => s.spriteKey === entry.spriteKey);
-  if (starterDef) {
-    const p = new Pokemon(starterDef.data, entry.level, starterDef.startingMoves);
-    p.hp = entry.hp;
+  // Starter OR evolved form — use exact form data
+  const form = findForm(entry.spriteKey);
+  if (form) {
+    const moves = foldTaughtMoves(mergeLearnset(form.startingMoves, entry.spriteKey, form.data.type1, form.data.type2, entry.level), entry);
+    const p = new Pokemon(form.data, entry.level, moves);
+    p.hp  = Math.min(entry.hp, p.maxHp);
+    p.exp = entry.exp ?? 0;
+    restorePP(p, entry);
     return p;
   }
 
-  // Custom Pokémon (Disguijar)
-  if (entry.spriteKey === 'disguijar' || entry.isCustom) {
-    const p = new Pokemon(DISGUIJAR_DATA, entry.level, DISGUIJAR_MOVES);
-    p.hp = entry.hp;
+  // Custom Pokémon (Disguijar — exact tuned data)
+  if (entry.spriteKey === 'disguijar') {
+    const moves = foldTaughtMoves(mergeLearnset(DISGUIJAR_MOVES, 'disguijar', DISGUIJAR_DATA.type1, DISGUIJAR_DATA.type2, entry.level), entry);
+    const p = new Pokemon(DISGUIJAR_DATA, entry.level, moves);
+    p.hp  = Math.min(entry.hp, p.maxHp);
+    p.exp = entry.exp ?? 0;
+    restorePP(p, entry);
+    return p;
+  }
+
+  // Other custom Pokémon (Pokédex designs)
+  const cf = customForm(entry.spriteKey);
+  if (cf) {
+    const moves = foldTaughtMoves(mergeLearnset(cf.moves, entry.spriteKey, cf.data.type1, cf.data.type2, entry.level), entry);
+    const p = new Pokemon(cf.data, entry.level, moves);
+    p.hp  = Math.min(entry.hp, p.maxHp);
+    p.exp = entry.exp ?? 0;
+    restorePP(p, entry);
     return p;
   }
 
   // PokéAPI caught Pokémon — approximate base stats from stored maxHp
   const approxBase = Math.max(10,
-    Math.round((entry.maxHp - entry.level - 10) * 100 / Math.max(1, entry.level)));
+    Math.round((entry.maxHp - entry.level - 10) * 25 / Math.max(1, entry.level)));
   const data: PokemonData = {
     id:          0,
     name:        entry.name,
@@ -72,7 +140,31 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
     baseAtk:     55, baseDef: 55, baseSpAtk: 55, baseSpDef: 55, baseSpd: 55,
     spriteUrl:   entry.spriteUrl,
   };
-  const p = new Pokemon(data, entry.level, movesForEntry(entry));
-  p.hp = entry.hp;
+  const moves = foldTaughtMoves(mergeLearnset(movesForEntry(entry), entry.spriteKey, data.type1, data.type2, entry.level), entry);
+  const p = new Pokemon(data, entry.level, moves);
+  p.hp  = Math.min(entry.hp, p.maxHp);
+  p.exp = entry.exp ?? 0;
+  restorePP(p, entry);
   return p;
+}
+
+/** Apply the entry's saved remaining-PP to a freshly built Pokémon so PP carries
+ *  across battles (a fresh build otherwise starts every move at full PP). */
+function restorePP(p: Pokemon, entry: PartyEntry): void {
+  if (!entry.movePP) return;
+  for (const m of p.moves) {
+    const saved = entry.movePP[m.data.name.toLowerCase()];
+    if (saved !== undefined) m.pp = Math.max(0, Math.min(m.data.pp, saved));
+  }
+}
+
+/** Persist a battling Pokémon's current remaining-PP back onto its party entry. */
+export function persistMovePP(registry: Phaser.Data.DataManager, slot: number, mon: Pokemon): void {
+  const party = PartySystem.get(registry);
+  const e = party[slot];
+  if (!e) return;
+  const pp: Record<string, number> = { ...(e.movePP ?? {}) };
+  for (const m of mon.moves) pp[m.data.name.toLowerCase()] = m.pp;
+  e.movePP = pp;
+  PartySystem.set(registry, party);
 }

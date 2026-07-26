@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
+import { vanishesAfterDefeat } from '../data/Villains';
 import { DialogBox } from '../ui/DialogBox';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { SaveManager } from '../utils/SaveManager';
@@ -52,6 +55,8 @@ export class CapitolGymScene extends Phaser.Scene {
   constructor() { super('CapitolGymScene'); }
 
   create() {
+
+    playBgm(this, 'gyminterior');
     this.cutsceneActive = false;
     this.input.keyboard?.resetKeys();
 
@@ -63,7 +68,14 @@ export class CapitolGymScene extends Phaser.Scene {
     this.px = 8 * IT + IT / 2;
     this.py = 10 * IT + IT / 2;   // start well above the exit threshold
 
+    // Return to where you were standing before the battle (not the entry).
+    const gpx = this.registry.get('gymPosX') as number | undefined;
+    const gpy = this.registry.get('gymPosY') as number | undefined;
+    if (gpx !== undefined) { this.px = gpx; this.py = gpy as number; }
+    this.registry.remove('gymPosX'); this.registry.remove('gymPosY');
+
     this.drawGym();
+    this.drawLeader();
     this.drawTrainers();
     this.createPlayer();
     this.setupInput();
@@ -135,11 +147,6 @@ export class CapitolGymScene extends Phaser.Scene {
       stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
 
-    // Leader Jin placeholder (shown when all trainers defeated)
-    this.add.text(W / 2, IT * 1.5, '← LEADER JIN →', {
-      fontSize: '9px', color: '#aa66ff',
-    }).setOrigin(0.5).setDepth(5);
-
     const texKey = '__gymMap__';
     if (this.textures.exists(texKey)) this.textures.remove(texKey);
     g.generateTexture(texKey, W, H);
@@ -147,9 +154,35 @@ export class CapitolGymScene extends Phaser.Scene {
     this.add.image(0, 0, texKey).setOrigin(0, 0).setDepth(0);
   }
 
+  // Leader Jin stands at his dais at the top of the hall, guarding the way.
+  private drawLeader() {
+    const x = (this.W * IT) / 2, y = IT * 1.9;
+    const g = this.add.graphics().setDepth(9);
+    g.setPosition(x, y);
+    // Shadow pool
+    g.fillStyle(0x000000, 0.25); g.fillEllipse(0, 15, 22, 7);
+    // Long dark robe
+    g.fillStyle(0x2a1440); g.fillRect(-10, -6, 20, 22);
+    g.fillStyle(0x3a1c5a); g.fillRect(-10, -6, 20, 6);       // shoulders
+    g.fillStyle(0xaa44ff, 0.9); g.fillRect(-2, -4, 4, 16);   // glowing sash
+    // Arms
+    g.fillStyle(0x2a1440); g.fillRect(-13, -4, 4, 12); g.fillRect(9, -4, 4, 12);
+    // Head + hair
+    g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 12);
+    g.fillStyle(0x140820); g.fillRect(-7, -21, 14, 6);
+    g.fillStyle(0x000000); g.fillRect(-4, -14, 2, 2); g.fillRect(2, -14, 2, 2);
+    // Purple aura
+    g.lineStyle(2, 0xaa44ff, 0.5); g.strokeCircle(0, 0, 20);
+
+    this.add.text(x, y - 30, 'LEADER JIN', {
+      fontSize: '9px', color: '#cc88ff', fontStyle: 'bold',
+      backgroundColor: '#00000088', padding: { x: 4, y: 2 },
+    }).setOrigin(0.5).setDepth(10);
+  }
+
   private drawTrainers() {
     for (const tr of this.trainers) {
-      if (tr.defeated) continue;
+      if (tr.defeated && vanishesAfterDefeat(tr.key)) continue;
       const x = tr.col * IT + IT / 2, y = tr.row * IT + IT / 2;
       const g = this.add.graphics().setDepth(10);
       g.setPosition(x, y);
@@ -174,18 +207,9 @@ export class CapitolGymScene extends Phaser.Scene {
   }
 
   private redrawPlayer() {
-    const g = this.playerG; g.clear();
-    const f = this.walkFrame, flip = this.facing === 2;
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 16, 5);
-    const lx = flip ? 3 : -7, rx = flip ? -7 : 3;
-    const ly = f === 0 ? 9 : 6, ry = f === 0 ? 6 : 9;
-    g.fillStyle(0x222222); g.fillRect(lx, ly, 5, 5); g.fillRect(rx, ry, 5, 5);
-    g.fillStyle(0x1a1a6e); g.fillRect(lx + 1, ly - 6, 3, 7); g.fillRect(rx + 1, ry - 6, 3, 7);
-    g.fillStyle(0xcc2222); g.fillRect(-7, -8, 14, 10);
-    g.fillStyle(0xffffff); g.fillRect(-2, -8, 4, 4);
-    g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
-    g.fillStyle(0x1a1008); g.fillRect(-6, -20, 12, 4);
-    g.fillStyle(0x000000); g.fillRect(-3, -14, 2, 2); g.fillRect(1, -14, 2, 2);
+    const g = this.playerG;
+    // Gender-aware body (was a hardcoded red-shirt boy).
+    drawTrainerBody(g, this.facing, this.walkFrame, playerDesign(this.registry));
     g.setPosition(this.px, this.py);
   }
 
@@ -198,6 +222,9 @@ export class CapitolGymScene extends Phaser.Scene {
       left:  this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
       right: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
     };
+    // Open the party/bag menu anytime in the gym
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
   }
 
   update(_: number, delta: number) {
@@ -255,6 +282,7 @@ export class CapitolGymScene extends Phaser.Scene {
           this.registry.set('trainerPokemon',     JSON.stringify(tr.pokemon));
           this.registry.set('trainerExpPool',     tr.expPool);
           this.registry.set('trainerReturnScene', 'CapitolGymScene');
+          this.registry.set('gymPosX', this.px); this.registry.set('gymPosY', this.py);
           this.registry.set('capitalReturnX',     this.px);
           this.registry.set('capitalReturnY',     this.py);
           this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -290,7 +318,7 @@ export class CapitolGymScene extends Phaser.Scene {
 
   private checkExit() {
     // Exit when player walks fully past the bottom wall (below row H-1)
-    if (this.py > (this.H - 1) * IT + IT / 2 && !this.cutsceneActive) {
+    if (this.py > (this.H - 2) * IT && this.px > 6.5 * IT && this.px < 9.5 * IT && !this.cutsceneActive) {
       this.cameras.main.fadeOut(300, 0, 0, 0, () => {
         this.scene.start('CapitolCityScene');
       });

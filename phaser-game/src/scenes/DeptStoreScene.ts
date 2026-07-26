@@ -1,0 +1,397 @@
+import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSprite';
+import { DialogBox } from '../ui/DialogBox';
+import { SaveManager } from '../utils/SaveManager';
+import { Inventory } from '../systems/Items';
+
+// ── Capitol Department Store — 6 floors + elevator ───────────────────────────
+// 1F reception · 2F medicine & grocery · 3F TM corner · 4F souvenirs ·
+// 5F food court · 6F rooftop garden with a balcony over Capitol City.
+
+const TILE = 32, COLS = 15, ROWS = 11;
+
+interface FloorDef {
+  name: string;
+  title?: string;
+  stock?: string[];
+  clerkLabel?: string;
+  clerkColor?: number;
+  greet?: string;
+}
+
+const FLOORS: Record<number, FloorDef> = {
+  1: { name: '1F · Entrance & Reception' },
+  2: { name: '2F · Medicine & Grocery', title: '💊  2F — Medicine & Grocery', clerkLabel: 'Pharmacist', clerkColor: 0x66bbdd,
+       greet: 'Pharmacist: Potions, cures, Poké Balls — all your travelling needs.',
+       stock: ['potion','superpotion','hyperpotion','maxpotion','revive','maxrevive','antidote','fullheal','ether','elixir','pokeball','greatball','ultraball'] },
+  3: { name: '3F · TM Corner', title: '📀  3F — Technical Machines', clerkLabel: 'TM Seller', clerkColor: 0xaa88cc,
+       greet: 'TM Seller: Broaden your team\'s horizons — teach them a new move.',
+       stock: ['tm_bodyslam','tm_brickbreak','tm_shadowclaw','tm_icebeam','tm_flamethrower'] },
+  4: { name: '4F · Souvenirs', title: '🧸  4F — Souvenirs', clerkLabel: 'Gift Clerk', clerkColor: 0xdd88aa,
+       greet: 'Gift Clerk: Take home a little piece of Hanbando!',
+       stock: ['sv_munkain','sv_vipour','sv_onnurian','sv_corrpanda','sv_nabi','sv_jangseung'] },
+  5: { name: '5F · Food Court', title: '🥤  5F — Food Court', clerkLabel: 'Vendor', clerkColor: 0xddaa55,
+       greet: 'Vendor: Fresh drinks and treats — they perk your Pokémon right up!',
+       stock: ['freshwater','sodapop','lemonade','moomoomilk','lavacookie'] },
+  6: { name: '6F · Rooftop Garden', title: '🥤  Rooftop Vending', clerkLabel: 'Vending', clerkColor: 0x88aacc,
+       greet: 'The vending machine hums. Grab a drink and enjoy the view.',
+       stock: ['freshwater','sodapop','lemonade'] },
+};
+
+export class DeptStoreScene extends Phaser.Scene {
+  private playerG!: Phaser.GameObjects.Graphics;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private dialog!: DialogBox;
+  private px = 0; private py = 0;
+  private facing = 1; private walkFrame = 0; private walkTimer = 0;
+  private cutsceneActive = false;
+  private readonly SPEED = 110;
+  private floor = 1;
+  private solids: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  private prompt!: Phaser.GameObjects.Text;
+  // interactables
+  private clerkAt = { col: 5, row: 2 };
+  private elevatorAt = { col: 12, row: 4 };
+  // elevator panel (keyboard-driven)
+  private elevatorOpen = false;
+  private elevatorLayer?: Phaser.GameObjects.Container;
+  private elevatorBtns: { fl: number; txt: Phaser.GameObjects.Text }[] = [];
+  private elevatorSel = 0;
+  private xKey!: Phaser.Input.Keyboard.Key;
+
+  constructor() { super('DeptStoreScene'); }
+
+  create() {
+    this.cutsceneActive = false; this.walkFrame = 0;
+    this.input.keyboard?.resetKeys();
+    this.floor = (this.registry.get('deptFloor') as number) ?? 1;
+    playBgm(this, this.floor === 6 ? 'sudo' : 'deptstore');
+
+    // Spawn: at the elevator when arriving by lift, else at the entrance door (1F).
+    const viaElevator = !!this.registry.get('deptViaElevator');
+    if (viaElevator) {
+      this.px = this.elevatorAt.col * TILE + 16; this.py = (this.elevatorAt.row + 1) * TILE + 16; this.facing = 0;
+    } else {
+      this.px = 7 * TILE + 16; this.py = 9 * TILE + 16; this.facing = 1;
+    }
+    this.registry.remove('deptViaElevator');
+
+    this.solids = [];
+    this.drawFloor();
+    this.createPlayer();
+    this.setupInput();
+    this.cameras.main.setBounds(0, 0, COLS * TILE, ROWS * TILE);
+    this.cameras.main.setZoom(1.7);
+    this.cameras.main.startFollow(this.playerG, true, 0.12, 0.12);
+    this.cameras.main.fadeIn(150);
+    this.dialog = new DialogBox(this, 1280, 720);
+    // Only checkpoint-save on first entry to the store — NOT on every elevator hop
+    // (a full-registry save each floor change is what caused the stutter).
+    if (!viaElevator) SaveManager.save(this.registry, this.px, this.py, 'CapitolCityScene');
+
+    this.prompt = this.add.text(this.scale.width / 2, 44, '', {
+      fontSize: '12px', color: '#fff', backgroundColor: '#000000cc', padding: { x: 6, y: 3 },
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(60).setVisible(false);
+
+    // Returning from a paused sub-scene (a floor's shop / the vending machine) must
+    // release the cutscene lock and clear held keys — otherwise the player comes back
+    // frozen. Registered once; survives pause/resume (create() doesn't re-run on resume).
+    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+      this.cutsceneActive = false;
+      this.prompt.setVisible(false);
+      this.input.keyboard?.resetKeys();
+    });
+  }
+
+  private addSolid(c1: number, r1: number, c2: number, r2: number) {
+    this.solids.push({ x1: c1 * TILE, y1: r1 * TILE, x2: (c2 + 1) * TILE, y2: (r2 + 1) * TILE });
+  }
+
+  private drawFloor() {
+    const g = this.make.graphics({ x: 0, y: 0 });
+    const W = COLS * TILE, H = ROWS * TILE;
+    const rooftop = this.floor === 6;
+
+    if (rooftop) {
+      // Rooftop: sky + a Capitol City skyline seen over the balcony railing.
+      g.fillGradientStyle(0x8ec6e6, 0x8ec6e6, 0xcfe6f2, 0xcfe6f2, 1); g.fillRect(0, 0, W, H * 0.42);
+      g.fillStyle(0x5a6a52); g.fillRect(0, H * 0.42, W, H * 0.58);
+      // distant skyline
+      g.fillStyle(0x6a7a94, 0.9);
+      const sky = [[10,130,60],[70,90,55],[120,150,80],[190,80,50],[240,120,70],[300,100,60],[350,160,90],[420,90,55]];
+      for (const [x, h, w] of sky) { g.fillRect(x, H * 0.42 - h, w, h); g.fillStyle(0xffe488, 0.5); for (let wy = 0; wy < h - 14; wy += 16) g.fillRect(x + 6, H * 0.42 - h + 8 + wy, 6, 8); g.fillStyle(0x6a7a94, 0.9); }
+      // planters
+      g.fillStyle(0x3a5a2a); for (const c of [2, 5, 9, 12]) g.fillRect(c * TILE + 4, 5 * TILE, TILE - 8, TILE - 6);
+    } else {
+      // Interior: walls + tiled floor
+      g.fillStyle(0x8a6a4a); g.fillRect(0, 0, W, H);
+      g.fillStyle(0xe8e4dc); g.fillRect(TILE, TILE, W - 2 * TILE, H - 2 * TILE);
+      for (let r = 1; r < ROWS - 1; r++) for (let c = 1; c < COLS - 1; c++) if ((r + c) % 2 === 0) { g.fillStyle(0xdcd6cc, 1); g.fillRect(c * TILE, r * TILE, TILE, TILE); }
+    }
+
+    // Elevator shaft (right side)
+    g.fillStyle(0x3a3a44); g.fillRect(11 * TILE, 2 * TILE, 2 * TILE, 2 * TILE);
+    g.fillStyle(0x8ab0d0); g.fillRect(11 * TILE + 4, 2 * TILE + 4, 2 * TILE - 8, 2 * TILE - 8);
+    g.fillStyle(0x222); g.fillRect(12 * TILE - 1, 2 * TILE + 4, 2, 2 * TILE - 8);
+    this.addSolid(11, 2, 12, 3);
+
+    // Counter (floors with a clerk) — top-left
+    if (FLOORS[this.floor].stock) {
+      g.fillStyle(0x6a4a2a); g.fillRect(3 * TILE, 2 * TILE, 5 * TILE, TILE); g.fillStyle(0x4a3218); g.fillRect(3 * TILE, 3 * TILE - 4, 5 * TILE, 5);
+      this.addSolid(3, 2, 7, 2);
+    }
+    // 1F reception desk + 5F tables
+    if (this.floor === 1) { g.fillStyle(0xbf7a3a); g.fillRect(3 * TILE, 2 * TILE, 5 * TILE, TILE); this.addSolid(3, 2, 7, 2); }
+    if (this.floor === 5) { g.fillStyle(0xcaa76a); for (const [c, r] of [[3,6],[6,6],[9,6]] as [number,number][]) { g.fillRect(c*TILE+4, r*TILE+4, TILE-8, TILE-8); } }
+
+    // Door (1F only) — bottom centre
+    if (this.floor === 1) { g.fillStyle(0x6b4a28); g.fillRect(7 * TILE, (ROWS - 1) * TILE, TILE, TILE); }
+
+    // Outer walls as solids (interior floors)
+    if (!rooftop) {
+      this.addSolid(0, 0, COLS - 1, 0); this.addSolid(0, 0, 0, ROWS - 1);
+      this.addSolid(COLS - 1, 0, COLS - 1, ROWS - 1);
+      this.addSolid(0, ROWS - 1, 6, ROWS - 1); this.addSolid(8, ROWS - 1, COLS - 1, ROWS - 1);
+    } else {
+      // Rooftop: a railing along the top edge (the balcony) blocks you from the drop.
+      g.fillStyle(0x9a9488); g.fillRect(0, 4 * TILE, W, 8);
+      for (let x = 8; x < W; x += 26) { g.fillStyle(0x7a7468); g.fillRect(x, 4 * TILE, 5, TILE); }
+      this.addSolid(0, 0, COLS - 1, 3);
+      this.addSolid(0, 0, 0, ROWS - 1); this.addSolid(COLS - 1, 0, COLS - 1, ROWS - 1); this.addSolid(0, ROWS - 1, COLS - 1, ROWS - 1);
+    }
+
+    const key = `__dept${this.floor}__`;
+    if (this.textures.exists(key)) this.textures.remove(key);
+    g.generateTexture(key, W, H); g.destroy();
+    this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
+
+    // Floor banner
+    this.add.rectangle(this.scale.width / 2, 20, 360, 30, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
+    this.add.text(this.scale.width / 2, 20, `🏬 Capitol Dept. Store — ${FLOORS[this.floor].name}`, {
+      fontSize: '12px', color: '#fff', fontStyle: 'bold',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: talk / use elevator  M: menu', {
+      fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
+    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+
+    this.drawNPCs();
+  }
+
+  private drawNPCs() {
+    const f = FLOORS[this.floor];
+    // Elevator "call" marker
+    this.add.text(this.elevatorAt.col * TILE + 16, 1.5 * TILE, '🛗', { fontSize: '16px' }).setOrigin(0.5).setDepth(5);
+
+    // Clerk behind the counter (floors that sell)
+    if (f.stock && this.floor !== 6) {
+      const g = this.add.graphics().setDepth(10);
+      g.setPosition(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 16);
+      drawNpcBody(g, f.clerkColor ?? 0x66bbaa, { hair: 0x2a2018 });
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, f.clerkLabel ?? 'Clerk',
+        { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
+    }
+
+    if (this.floor === 1) {
+      const g = this.add.graphics().setDepth(10);
+      g.setPosition(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 16);
+      drawNpcBody(g, 0xcc6688, { hair: 0x2a2018 });
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, 'Receptionist',
+        { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
+      // Directory board
+      this.add.text(2.2 * TILE, 6 * TILE, '📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop',
+        { fontSize: '8px', color: '#334', backgroundColor: '#e8e0d0dd', padding: { x: 4, y: 3 }, lineSpacing: 2 }).setOrigin(0, 0).setDepth(5);
+      this.add.text(7.5 * TILE, 10.2 * TILE, '🚪 exit', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
+    }
+
+    if (this.floor === 6) {
+      // Vending machine (buy drinks)
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 20, '🥤', { fontSize: '20px' }).setOrigin(0.5).setDepth(6);
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 4, 'Vending', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
+      // City-watcher NPC (a gift once)
+      const g = this.add.graphics().setDepth(10);
+      g.setPosition(9 * TILE + 16, 6 * TILE + 16);
+      drawNpcBody(g, 0x5a7a9a, { hair: 0x2a2018 });
+      this.add.text(9 * TILE + 16, 6 * TILE - 8, 'Collector', { fontSize: '8px', color: '#cfe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
+      this.add.text(this.scale.width / 2, 66, '— Balcony over Capitol City —', { fontSize: '11px', color: '#fff', backgroundColor: '#00000066', padding: { x: 6, y: 2 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    }
+  }
+
+  private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.redraw(); }
+  private redraw() { drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry)); this.playerG.setPosition(this.px, this.py); }
+
+  private setupInput() {
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.xKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+    this.wasd = { up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'), left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D') };
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+  }
+
+  update(_: number, delta: number) {
+    if (this.elevatorOpen) {
+      if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.wasd.up)) this.moveElevatorSel(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.wasd.down)) this.moveElevatorSel(1);
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        const fl = this.elevatorBtns[this.elevatorSel]?.fl;
+        this.closeElevator();
+        if (fl !== undefined) this.goToFloor(fl);
+      } else if (Phaser.Input.Keyboard.JustDown(this.xKey)) {
+        this.closeElevator();
+      }
+      return;
+    }
+    if (this.cutsceneActive) {
+      if (this.dialog.isInChoice()) {
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this.dialog.navigateChoice(-1);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) this.dialog.navigateChoice(1);
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.confirmChoice();
+      } else if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
+      return;
+    }
+    const dt = delta / 1000; let dx = 0, dy = 0;
+    if (this.cursors.left.isDown  || this.wasd.left.isDown)  { dx = -1; this.facing = 2; }
+    if (this.cursors.right.isDown || this.wasd.right.isDown) { dx =  1; this.facing = 3; }
+    if (this.cursors.up.isDown    || this.wasd.up.isDown)    { dy = -1; this.facing = 1; }
+    if (this.cursors.down.isDown  || this.wasd.down.isDown)  { dy =  1; this.facing = 0; }
+    if (dx !== 0 || dy !== 0) {
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = this.px + (dx / len) * this.SPEED * dt, ny = this.py + (dy / len) * this.SPEED * dt;
+      if (!this.blocked(nx, this.py)) this.px = nx;
+      if (!this.blocked(this.px, ny)) this.py = ny;
+      this.walkTimer += delta;
+      if (this.walkTimer > 170) { this.walkFrame ^= 1; this.walkTimer = 0; }
+    } else this.walkFrame = 0;
+    this.redraw();
+    this.checkInteract();
+    this.checkExit();
+  }
+
+  private blocked(x: number, y: number): boolean {
+    if (x < 10 || x > COLS * TILE - 10 || y < 10 || y > ROWS * TILE - 6) return true;
+    return this.solids.some(s => x > s.x1 && x < s.x2 && y > s.y1 - 4 && y < s.y2 + 6);
+  }
+
+  private near(col: number, row: number, r = 1.4) {
+    return Math.hypot(this.px - (col * TILE + 16), this.py - (row * TILE + 16)) < TILE * r;
+  }
+
+  private checkInteract() {
+    const f = FLOORS[this.floor];
+    const nearElevator = this.near(this.elevatorAt.col, this.elevatorAt.row + 1, 1.3) || this.near(this.elevatorAt.col, this.elevatorAt.row, 1.3);
+    const nearClerk = (f.stock && this.floor !== 6 && this.near(this.clerkAt.col, this.clerkAt.row + 1, 1.4)) ||
+                      (this.floor === 6 && this.near(this.clerkAt.col, this.clerkAt.row, 1.5));
+    const nearCollector = this.floor === 6 && this.near(9, 6, 1.5);
+    const near1F = this.floor === 1 && this.near(this.clerkAt.col, this.clerkAt.row + 1, 1.4);
+
+    this.prompt.setVisible(false);
+    if (nearElevator) { this.prompt.setText('SPACE — Elevator').setVisible(true); }
+    else if (nearClerk) { this.prompt.setText(this.floor === 6 ? 'SPACE — Vending machine' : 'SPACE — Shop').setVisible(true); }
+    else if (nearCollector) { this.prompt.setText('SPACE — Talk').setVisible(true); }
+    else if (near1F) { this.prompt.setText('SPACE — Info').setVisible(true); }
+
+    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    if (nearElevator) { this.openElevator(); return; }
+    if (nearClerk && f.stock) { this.openShop(f); return; }
+    if (nearCollector) { this.rooftopCollector(); return; }
+    if (near1F) {
+      this.cutsceneActive = true;
+      this.dialog.show(['Receptionist: Welcome to the Capitol Department Store! Take the elevator up — six floors of everything a trainer needs.'],
+        () => { this.cutsceneActive = false; });
+    }
+  }
+
+  private openShop(f: FloorDef) {
+    this.cutsceneActive = true;
+    this.dialog.show([f.greet ?? 'Clerk: What can I get you?'], () => {
+      this.registry.set('deptFloor', this.floor);
+      this.scene.launch('ShopScene', { parentKey: this.scene.key, stock: f.stock, title: f.title });
+      this.scene.pause();
+    });
+  }
+
+  private rooftopCollector() {
+    this.cutsceneActive = true;
+    if (this.registry.get('deptRooftopGift')) {
+      this.dialog.show(["Collector: Best view in the capital, isn't it? The whole city, laid out like a board."], () => { this.cutsceneActive = false; });
+      return;
+    }
+    this.registry.set('deptRooftopGift', true);
+    Inventory.add(this.registry, 'sv_nabi', 1);
+    this.dialog.show([
+      "Collector: You climbed all the way up? Then you appreciate a good view.",
+      "Collector: Here — a 나비할망 charm, from my own collection. May it watch over your road.",
+      "🦋 You received a 나비할망 Charm!",
+    ], () => { this.cutsceneActive = false; });
+  }
+
+  private openElevator() {
+    if (this.elevatorOpen) return;
+    this.cutsceneActive = true;
+    this.elevatorOpen = true;
+    this.elevatorBtns = [];
+    const cx = this.scale.width / 2, cy = this.scale.height / 2;
+    const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(80);
+    layer.add(this.add.rectangle(cx, cy, this.scale.width, this.scale.height, 0x000000, 0.55));
+    layer.add(this.add.rectangle(cx, cy, 320, 380, 0x10142a, 0.99).setStrokeStyle(2, 0x88aacc));
+    layer.add(this.add.text(cx, cy - 158, '🛗  ELEVATOR', { fontSize: '16px', color: '#cfe', fontStyle: 'bold' }).setOrigin(0.5));
+
+    for (let fl = 6, i = 0; fl >= 1; fl--, i++) {
+      const y = cy - 118 + i * 40;
+      const txt = this.add.text(cx, y, `${fl}F · ${FLOORS[fl].name.split('· ')[1]}`, {
+        fontSize: '13px', color: '#fff', backgroundColor: '#24406a', padding: { x: 12, y: 6 },
+      }).setOrigin(0.5);
+      layer.add(txt);
+      this.elevatorBtns.push({ fl, txt });
+    }
+    layer.add(this.add.text(cx, cy + 150, '↑ ↓ select    SPACE go    X cancel', { fontSize: '11px', color: '#9ab' }).setOrigin(0.5));
+    this.elevatorLayer = layer;
+
+    // Start on the first floor that isn't the current one.
+    this.elevatorSel = 0;
+    if (this.elevatorBtns[0].fl === this.floor) this.moveElevatorSel(1);
+    else this.highlightElevator();
+  }
+
+  private moveElevatorSel(dir: number) {
+    const n = this.elevatorBtns.length;
+    do { this.elevatorSel = (this.elevatorSel + dir + n) % n; }
+    while (this.elevatorBtns[this.elevatorSel].fl === this.floor);   // skip the current floor
+    this.highlightElevator();
+  }
+
+  private highlightElevator() {
+    for (let i = 0; i < this.elevatorBtns.length; i++) {
+      const b = this.elevatorBtns[i];
+      const cur = b.fl === this.floor, sel = i === this.elevatorSel;
+      b.txt.setColor(cur ? '#667' : (sel ? '#fff' : '#cdd'));
+      b.txt.setBackgroundColor(cur ? '#161a2a' : (sel ? '#3a72b0' : '#24406a'));
+    }
+  }
+
+  private closeElevator() {
+    this.elevatorLayer?.destroy(true);
+    this.elevatorLayer = undefined;
+    this.elevatorBtns = [];
+    this.elevatorOpen = false;
+    this.cutsceneActive = false;
+  }
+
+  private goToFloor(fl: number) {
+    this.registry.set('deptFloor', fl);
+    this.registry.set('deptViaElevator', true);
+    this.cameras.main.fadeOut(150, 0, 0, 0, () => this.scene.restart());
+  }
+
+  private checkExit() {
+    if (this.floor !== 1) return;
+    if (this.py > (ROWS - 1) * TILE && this.px > 6.4 * TILE && this.px < 8.6 * TILE && !this.cutsceneActive) {
+      this.cutsceneActive = true;
+      this.registry.remove('deptFloor');
+      this.cameras.main.fadeOut(300, 0, 0, 0, () => this.scene.start('CapitolCityScene'));
+    }
+  }
+}

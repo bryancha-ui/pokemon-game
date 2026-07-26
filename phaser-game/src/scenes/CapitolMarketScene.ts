@@ -2,6 +2,7 @@ import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
 
 export class CapitolMarketScene extends BaseInteriorScene {
   protected readonly COLS = 14; protected readonly ROWS = 11;
+  protected bgmKey = 'mart';
   constructor() { super({ key: 'CapitolMarketScene' }); }
 
   protected drawRoom() {
@@ -44,8 +45,10 @@ export class CapitolMarketScene extends BaseInteriorScene {
     this.dialog.show([
       'Merchant: Welcome to the Capitol Central Market!',
       'Merchant: Best items in the whole city, right here.',
-      'Merchant: Buying and selling coming soon — stay tuned!',
-    ]);
+    ], () => {
+      this.scene.launch('ShopScene', { parentKey: this.scene.key });
+      this.scene.pause();
+    });
   }
   protected checkExit() {
     const { y } = this.tile(6, this.ROWS - 1);

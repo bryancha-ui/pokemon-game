@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { STARTERS } from '../data/StarterData';
+import { STARTERS, findForm } from '../data/StarterData';
+import { customForm } from '../data/CustomBattle';
 
 export interface PartyEntry {
   name:     string;
@@ -12,9 +13,22 @@ export interface PartyEntry {
   spriteUrl: string;
   isCustom: boolean;
   moves:    string[];
+  battleMoves?: import('../battle/Pokemon').MoveData[];   // player-curated moveset (TM forget-choice); overrides auto-derived moves
+  movePP?:  Record<string, number>;   // remaining PP per move name (persists across battles; cleared on heal)
+  evoReady?: boolean;   // set on an actual level-up; evolution only triggers when this is true
+  exp?:     number;   // per-slot EXP tracking
+  status?:  string;   // 'none' | 'psn' | 'par' | 'brn' | 'frz' | 'slp'
 }
 
 const KEY = 'party';
+
+/** Recompute maxHp for an entry from its form's base HP (matches Pokemon formula). */
+export function recomputeMaxHp(entry: PartyEntry): number {
+  const baseHp = findForm(entry.spriteKey)?.data.baseHp
+    ?? customForm(entry.spriteKey)?.data.baseHp
+    ?? 50;
+  return Math.floor((baseHp * entry.level) / 25) + entry.level + 10;
+}
 
 export const PartySystem = {
 
@@ -40,22 +54,25 @@ export const PartySystem = {
     // Look up actual types and base HP from StarterData
     const def   = STARTERS.find(s => s.spriteKey === key);
     const baseHp = def?.data.baseHp ?? 45;
-    const maxHp  = Math.floor((baseHp * level) / 100) + level + 10;
+    const maxHp  = Math.floor((baseHp * level) / 25) + level + 10;
     const entry: PartyEntry = {
       name, level, hp: maxHp, maxHp,
       type1:    def?.data.type1  ?? 'normal',
       type2:    def?.data.type2,
       spriteKey: key,
-      spriteUrl: `/assets/${key}.jpg`,
+      spriteUrl: `assets/${key}.jpg`,
       isCustom: true,
       moves: def?.startingMoves.map(m => m.name) ?? [],
+      exp: 0,
     };
     this.set(registry, [entry]);
   },
 
+  /** Add to party; if the party is full (6), store in the PC box instead.
+   *  Returns 'party' or 'box' to tell the caller where it went. */
   add(registry: Phaser.Data.DataManager, entry: PartyEntry): boolean {
     const party = this.get(registry);
-    if (party.length >= 6) return false;
+    if (party.length >= 6) { this.boxAdd(registry, entry); return false; }
     party.push(entry);
     this.set(registry, party);
     return true;
@@ -63,6 +80,52 @@ export const PartySystem = {
 
   isFull(registry: Phaser.Data.DataManager): boolean {
     return this.get(registry).length >= 6;
+  },
+
+  // ── PC Box storage ────────────────────────────────────────────────────────
+  getBox(registry: Phaser.Data.DataManager): PartyEntry[] {
+    const raw = registry.get('box') as string | undefined;
+    if (!raw) return [];
+    try { return JSON.parse(raw) as PartyEntry[]; } catch { return []; }
+  },
+  setBox(registry: Phaser.Data.DataManager, box: PartyEntry[]): void {
+    registry.set('box', JSON.stringify(box));
+  },
+  boxAdd(registry: Phaser.Data.DataManager, entry: PartyEntry): void {
+    const box = this.getBox(registry); box.push(entry); this.setBox(registry, box);
+  },
+
+  /** Swap a party slot with a box slot (or move box→party / party→box). */
+  swapWithBox(registry: Phaser.Data.DataManager, partySlot: number, boxIdx: number): void {
+    const party = this.get(registry);
+    const box   = this.getBox(registry);
+    const p = party[partySlot];
+    const b = box[boxIdx];
+    if (p && b) { party[partySlot] = b; box[boxIdx] = p; }
+    this.set(registry, party); this.setBox(registry, box);
+    if (partySlot === 0) this.syncStarterFromLead(registry);
+  },
+  /** Move a box Pokémon into the party (if room). Returns true on success. */
+  boxToParty(registry: Phaser.Data.DataManager, boxIdx: number): boolean {
+    const party = this.get(registry);
+    if (party.length >= 6) return false;
+    const box = this.getBox(registry);
+    const mon = box.splice(boxIdx, 1)[0];
+    if (!mon) return false;
+    party.push(mon);
+    this.set(registry, party); this.setBox(registry, box);
+    return true;
+  },
+  /** Move a party Pokémon into the box (must keep at least 1 in party). */
+  partyToBox(registry: Phaser.Data.DataManager, partySlot: number): boolean {
+    const party = this.get(registry);
+    if (party.length <= 1) return false;
+    const mon = party.splice(partySlot, 1)[0];
+    if (!mon) return false;
+    this.boxAdd(registry, mon);
+    this.set(registry, party);
+    if (partySlot === 0) this.syncStarterFromLead(registry);   // lead removed → new lead
+    return true;
   },
 
   /** Sync HP of slot 0 (active Pokémon) after battle */
@@ -76,13 +139,118 @@ export const PartySystem = {
     if (party[slot] !== undefined) { party[slot].hp = hp; this.set(registry, party); }
   },
 
+  /** Sync level + exp + hp + maxHp of a slot. The party entry is the source of truth. */
+  updateSlotProgress(
+    registry: Phaser.Data.DataManager,
+    slot: number, level: number, exp: number, hp: number, maxHp: number,
+  ): void {
+    const party = this.get(registry);
+    if (party[slot] === undefined) return;
+    if (level > party[slot].level) party[slot].evoReady = true;   // actually leveled up → allow evolution
+    party[slot].level = level;
+    party[slot].exp   = exp;
+    party[slot].hp    = hp;
+    party[slot].maxHp = maxHp;
+    this.set(registry, party);
+    // Keep legacy starter registry in sync for slot 0
+    if (slot === 0) {
+      registry.set('starterLevel', level);
+      registry.set('starterExp',   exp);
+    }
+  },
+
+  /** Award EXP to a party slot by data (works for benched Pokémon too).
+   *  Applies the same level curve as the live Pokémon class (level² × 3) and
+   *  recomputes HP on level-up. Returns the new level if it leveled, else null. */
+  gainExpForSlot(registry: Phaser.Data.DataManager, slot: number, amount: number):
+    { name: string; leveledTo: number | null } {
+    const party = this.get(registry);
+    const e = party[slot];
+    if (!e) return { name: '', leveledTo: null };
+    e.exp = (e.exp ?? 0) + amount;
+    let leveled = false;
+    while (e.exp >= e.level * e.level * 3 && e.level < 100) {
+      e.exp -= e.level * e.level * 3;
+      e.level += 1;
+      leveled = true;
+    }
+    if (leveled) {
+      e.maxHp = recomputeMaxHp(e);
+      e.hp = e.maxHp;   // level-up fully restores HP
+      e.evoReady = true;   // leveled up → allow evolution
+    }
+    this.set(registry, party);
+    if (slot === 0) { registry.set('starterLevel', e.level); registry.set('starterExp', e.exp); }
+    return { name: e.name, leveledTo: leveled ? e.level : null };
+  },
+
+  /** Make the party member at `index` the lead (slot 0), shifting the rest down.
+   *  Keeps the legacy starter-mirror registry (key/level/exp) pointed at the new lead
+   *  so battle scenes load the correct sprite and syncSlot0FromStarter stays consistent. */
+  setLead(registry: Phaser.Data.DataManager, index: number): void {
+    const party = this.get(registry);
+    if (index <= 0 || index >= party.length) return;
+    const [chosen] = party.splice(index, 1);
+    party.unshift(chosen);
+    this.set(registry, party);
+    registry.set('starterKey',   chosen.spriteKey);
+    registry.set('starterLevel', chosen.level);
+    registry.set('starterExp',   chosen.exp ?? 0);
+  },
+
+  /** Before a battle, ensure slot 0's stored level/exp match the legacy starter registry
+   *  (historical data may be stale). Returns nothing; mutates the party. */
+  syncSlot0FromStarter(registry: Phaser.Data.DataManager): void {
+    const party = this.get(registry);
+    if (party[0] === undefined) return;
+    const level = (registry.get('starterLevel') as number) ?? party[0].level;
+    const exp   = (registry.get('starterExp')   as number) ?? party[0].exp ?? 0;
+    if (party[0].level !== level || party[0].exp !== exp) {
+      party[0].level = level;
+      party[0].exp   = exp;
+      party[0].maxHp = recomputeMaxHp(party[0]);
+      party[0].hp    = Math.min(party[0].hp, party[0].maxHp);
+      this.set(registry, party);
+    }
+  },
+
+  /** Re-point the legacy starter-mirror registry (key/level/exp) at whatever is
+   *  currently in slot 0. Call after any operation that replaces the lead directly
+   *  (e.g. swapping a freshly-caught Pokémon into slot 0), otherwise the stale
+   *  starterLevel gets forced back onto the new lead by syncSlot0FromStarter. */
+  syncStarterFromLead(registry: Phaser.Data.DataManager): void {
+    const p = this.get(registry)[0];
+    if (!p) return;
+    registry.set('starterKey',   p.spriteKey);
+    registry.set('starterLevel', p.level);
+    registry.set('starterExp',   p.exp ?? 0);
+  },
+
   firstHealthy(registry: Phaser.Data.DataManager): PartyEntry | null {
     return this.get(registry).find(p => p.hp > 0) ?? null;
   },
 
   healAll(registry: Phaser.Data.DataManager): void {
     const party = this.get(registry);
-    party.forEach(p => { p.hp = p.maxHp; });
+    party.forEach(p => { p.hp = p.maxHp; p.status = 'none'; delete p.movePP; });   // restore HP, status AND PP
+    this.set(registry, party);
+  },
+
+  /** Does any party member know the given move? */
+  anyKnows(registry: Phaser.Data.DataManager, move: string): boolean {
+    const m = move.toLowerCase();
+    return this.get(registry).some(p => p.moves.some(x => x.toLowerCase() === m));
+  },
+
+  /** Teach a field move (e.g. Fly) to the party member at `index`. Appends the
+   *  move if there's room, otherwise replaces the last slot. No-op if already known. */
+  teachMove(registry: Phaser.Data.DataManager, index: number, move: string): void {
+    const party = this.get(registry);
+    const p = party[index];
+    if (!p) return;
+    if (p.moves.some(x => x.toLowerCase() === move.toLowerCase())) return;
+    if (p.moves.length < 4) p.moves.push(move);
+    else p.moves[3] = move;
     this.set(registry, party);
   },
 };

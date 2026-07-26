@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { STARTERS, StarterDef, TYPE_COLORS } from '../data/StarterData';
 import { PartySystem } from '../systems/PartySystem';
+import { DexTracker } from '../systems/DexTracker';
+import { rivalTrainerName } from '../data/CharacterSprite';
 
 export class StarterSelectScene extends Phaser.Scene {
   private selectedIdx = 0;
@@ -41,7 +43,7 @@ export class StarterSelectScene extends Phaser.Scene {
     this.time.delayedCall(300, () => {
       this.typewriterText(
         this.profText,
-        'Prof. Kim: Welcome! Three Pokémon from this region are waiting for a trainer.\nChoose the one who calls to you.',
+        'Prof. Song: Welcome! Three Pokémon from this region are waiting for a trainer.\nChoose the one who calls to you.',
         22,
       );
     });
@@ -74,7 +76,7 @@ export class StarterSelectScene extends Phaser.Scene {
     g.lineBetween(400, 10, 400, 110); g.lineBetween(330, 60, 470, 60);
     // Title banner
     g.fillStyle(0x1a3a5c, 0.88); g.fillRect(50, 8, 270, 38);
-    this.add.text(185, 27, "Prof. Kim's Pokémon Lab", {
+    this.add.text(185, 27, "Prof. Song's Pokémon Lab", {
       fontSize: '14px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5);
   }
@@ -92,7 +94,7 @@ export class StarterSelectScene extends Phaser.Scene {
   }
 
   private drawProfessor() {
-    // Prof. Kim — drawn character (female scientist)
+    // Prof. Song — drawn character (female scientist)
     const g = this.add.graphics().setDepth(5);
     const x = 100, y = 135;
     g.fillStyle(0x000000, 0.15); g.fillEllipse(x, y + 12, 36, 8);
@@ -310,6 +312,10 @@ export class StarterSelectScene extends Phaser.Scene {
     // Initialise party with starter
     PartySystem.initFromStarter(this.registry);
 
+    // Prof. Song also gives the Pokédex — mark the starter caught
+    DexTracker.grantPokedex(this.registry);
+    DexTracker.markCaught(this.registry, chosen.spriteKey);
+
     // Rival picks the type that beats the player's type
     // Water → Grass, Fire → Water, Grass → Fire
     const RIVAL_IDX: Record<string, number> = {
@@ -320,15 +326,15 @@ export class StarterSelectScene extends Phaser.Scene {
     const rivalIdx = RIVAL_IDX[chosen.spriteKey] ?? 2;
     const rival    = STARTERS[rivalIdx];
     this.registry.set('rivalKey',  rival.spriteKey);
-    this.registry.set('rivalName', rival.data.name);
+    this.registry.set('rivalName', rivalTrainerName(this.registry));   // 'Minhyuk' (male) / 'Soohyun' (female)
 
     this.typewriterText(
       this.profText,
-      `Prof. Kim: Excellent choice! ${chosen.data.name} is happy to travel with you.\nTake good care of each other!`,
+      `Prof. Song: Excellent choice! ${chosen.data.name} is happy to travel with you.\nAnd take this — your very own Pokédex! Press M, open your BAG,\nand select the Pokémon Encyclopedia to study every Pokémon you meet.`,
       22,
       () => {
         this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-          this.scene.start('WorldMapScene');
+          this.scene.start('PokemonLabScene');   // back into the lab — Song is right there
         });
       },
     );

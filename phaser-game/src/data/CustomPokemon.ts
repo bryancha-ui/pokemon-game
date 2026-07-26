@@ -22,7 +22,7 @@ export const DISGUIJAR_DATA: PokemonData = {
   baseSpAtk:   40,
   baseSpDef:   70,
   baseSpd:     95,
-  spriteUrl:   '/assets/disguijar.png',
+  spriteUrl:   'assets/disguijar.png',
 };
 
 export const DISGUIJAR_CATCH_RATE = 204;  // ~80% catch rate (204/255 ≈ 0.80)
@@ -48,7 +48,7 @@ export const CORRPANDA_DATA: PokemonData = {
   baseSpAtk:   55,
   baseSpDef:   55,
   baseSpd:     95,
-  spriteUrl:   '/assets/corrpanda.png',
+  spriteUrl:   'assets/corrpanda.png',
 };
 
 export const CORRPANDA_CATCH_RATE = 30;
@@ -65,18 +65,21 @@ export interface EncounterEntry {
 }
 
 export const OUTDOOR_ENCOUNTERS: EncounterEntry[] = [
-  { id: 'disguijar', weight: 40, minLevel: 4, maxLevel: 8, isCustom: true,  catchRate: 204 }, // ~80% catch rate
-  { id: 74,          weight: 25, minLevel: 3, maxLevel: 7, isCustom: false, catchRate: 255 }, // Geodude
-  { id: 66,          weight: 15, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 180 }, // Machop
-  { id: 21,          weight: 12, minLevel: 3, maxLevel: 6, isCustom: false, catchRate: 255 }, // Spearow
-  { id: 246,         weight:  8, minLevel: 4, maxLevel: 6, isCustom: false, catchRate: 45  }, // Larvitar
+  { id: 'disguijar', weight: 32, minLevel: 4, maxLevel: 8, isCustom: true,  catchRate: 204 }, // ~80% catch rate
+  { id: 'gawlhawk',  weight: 18, minLevel: 4, maxLevel: 8, isCustom: true,  catchRate: 200 }, // Rock/Flying
+  { id: 74,          weight: 22, minLevel: 3, maxLevel: 7, isCustom: false, catchRate: 255 }, // Geodude
+  { id: 66,          weight: 12, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 180 }, // Machop
+  { id: 21,          weight: 10, minLevel: 3, maxLevel: 6, isCustom: false, catchRate: 255 }, // Spearow
+  { id: 246,         weight:  6, minLevel: 4, maxLevel: 6, isCustom: false, catchRate: 45  }, // Larvitar
 ];
 
 export const CAVE_ENCOUNTERS: EncounterEntry[] = [
-  { id: 41,          weight: 40, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 255 }, // Zubat
-  { id: 95,          weight: 20, minLevel: 5, maxLevel: 7, isCustom: false, catchRate: 45  }, // Onix
-  { id: 246,         weight: 20, minLevel: 4, maxLevel: 6, isCustom: false, catchRate: 45  }, // Larvitar
-  { id: 74,          weight: 20, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 255 }, // Geodude
+  { id: 41,          weight: 32, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 255 }, // Zubat
+  { id: 'nosepassx', weight: 18, minLevel: 4, maxLevel: 7, isCustom: true,  catchRate: 200 }, // Nosepass (Rock/Psychic)
+  { id: 'crystbeetle', weight: 14, minLevel: 5, maxLevel: 8, isCustom: true, catchRate: 190 }, // Crystbeetle
+  { id: 95,          weight: 14, minLevel: 5, maxLevel: 7, isCustom: false, catchRate: 45  }, // Onix
+  { id: 246,         weight: 12, minLevel: 4, maxLevel: 6, isCustom: false, catchRate: 45  }, // Larvitar
+  { id: 74,          weight: 10, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 255 }, // Geodude
 ];
 
 export function pickEncounter(table: EncounterEntry[]): EncounterEntry {

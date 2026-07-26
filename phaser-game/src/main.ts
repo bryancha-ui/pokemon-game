@@ -1,9 +1,31 @@
 import Phaser from 'phaser';
+
+// ── On-screen error catcher ──────────────────────────────────────────────────
+// Surfaces any uncaught error / promise rejection as a red banner so problems
+// are visible instead of silently freezing the game.
+function showError(msg: string) {
+  let box = document.getElementById('__err__');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = '__err__';
+    box.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;max-height:40%;overflow:auto;'
+      + 'background:#aa0000;color:#fff;font:12px/1.4 monospace;padding:8px 12px;white-space:pre-wrap;'
+      + 'border-top:2px solid #ff5555;';
+    document.body.appendChild(box);
+  }
+  box.textContent = '⚠ ' + msg + '\n(tap to dismiss)';
+  box.onclick = () => box && box.remove();
+}
+window.addEventListener('error', (e) => showError(`${e.message}\n${e.filename}:${e.lineno}`));
+window.addEventListener('unhandledrejection', (e) =>
+  showError('Promise: ' + (e.reason?.stack || e.reason?.message || String(e.reason))));
+
 import { TitleScene } from './scenes/TitleScene';
 import { WorldMapScene } from './scenes/WorldMapScene';
 import { BattleScene } from './scenes/BattleScene';
 import { PlayerHomeScene } from './scenes/interior/PlayerHomeScene';
 import { PokemonCenterScene } from './scenes/interior/PokemonCenterScene';
+import { PokemonLabScene } from './scenes/interior/PokemonLabScene';
 import { RivalHomeScene } from './scenes/interior/RivalHomeScene';
 import { StarterSelectScene } from './scenes/StarterSelectScene';
 import { RivalBattleScene } from './scenes/RivalBattleScene';
@@ -19,16 +41,118 @@ import { GymLeaderBattleScene } from './scenes/GymLeaderBattleScene';
 import { CapitolPCScene } from './scenes/CapitolPCScene';
 import { CapitolPalaceScene } from './scenes/CapitolPalaceScene';
 import { CapitolMarketScene } from './scenes/CapitolMarketScene';
+import { EvolutionScene } from './scenes/EvolutionScene';
+import { Route2Scene } from './scenes/Route2Scene';
+import { PineNeedleTownScene } from './scenes/PineNeedleTownScene';
+import { PineNeedlePCScene } from './scenes/PineNeedlePCScene';
+import { PineNeedleStudioScene } from './scenes/PineNeedleStudioScene';
+import { PokedexScene } from './scenes/PokedexScene';
+import { ShopScene } from './scenes/ShopScene';
+import { BoxScene } from './scenes/BoxScene';
+import { BaekduPassScene } from './scenes/BaekduPassScene';
+import { BaekduCityScene } from './scenes/BaekduCityScene';
+import { BaekduPCScene } from './scenes/BaekduPCScene';
+import { BaekduGymScene } from './scenes/BaekduGymScene';
+import { Route3Scene } from './scenes/Route3Scene';
+import { GeumgangCityScene } from './scenes/GeumgangCityScene';
+import { GeumgangPCScene } from './scenes/GeumgangPCScene';
+import { GeumgangGymScene } from './scenes/GeumgangGymScene';
+import { Route4Scene } from './scenes/Route4Scene';
+import { HaeanCityScene } from './scenes/HaeanCityScene';
+import { HaeanPCScene } from './scenes/HaeanPCScene';
+import { HaeanGymScene } from './scenes/HaeanGymScene';
+import { SudoLabScene } from './scenes/SudoLabScene';
+import { Route5Scene } from './scenes/Route5Scene';
+import { ForestCityScene } from './scenes/ForestCityScene';
+import { ForestPCScene } from './scenes/ForestPCScene';
+import { ForestGymScene } from './scenes/ForestGymScene';
+import { ForestShrineScene } from './scenes/ForestShrineScene';
+import { FerryScene } from './scenes/FerryScene';
+import { JejuPortScene } from './scenes/JejuPortScene';
+import { JejuCityScene } from './scenes/JejuCityScene';
+import { JejuVentsPortScene } from './scenes/JejuVentsPortScene';
+import { JejuPCScene } from './scenes/JejuPCScene';
+import { JejuVentScene } from './scenes/JejuVentScene';
+import { Route6Scene } from './scenes/Route6Scene';
+import { SunriseCityScene } from './scenes/SunriseCityScene';
+import { SunrisePCScene } from './scenes/SunrisePCScene';
+import { SunriseGymScene } from './scenes/SunriseGymScene';
+import { SunriseCliff1Scene } from './scenes/SunriseCliff1Scene';
+import { SunriseCliff2Scene } from './scenes/SunriseCliff2Scene';
+import { SunriseCliff3Scene } from './scenes/SunriseCliff3Scene';
+import { BaekduCheckpointScene } from './scenes/BaekduCheckpointScene';
+import { BaekduSummitScene } from './scenes/BaekduSummitScene';
+import { ScholarsRoadScene } from './scenes/ScholarsRoadScene';
+import { LeaguePlazaScene } from './scenes/LeaguePlazaScene';
+import { PokemonLeagueScene } from './scenes/PokemonLeagueScene';
+import { RegionMapScene } from './scenes/RegionMapScene';
+import { NorthernColiseumScene } from './scenes/NorthernColiseumScene';
+import { NorthernPlazaScene } from './scenes/NorthernPlazaScene';
+import { PyeongyangCityScene } from './scenes/PyeongyangCityScene';
+import { NorthernReachesScene } from './scenes/NorthernReachesScene';
+import { SacredPeakScene } from './scenes/SacredPeakScene';
+import { DolmoeCityScene } from './scenes/DolmoeCityScene';
+import { DolmoeGymScene } from './scenes/DolmoeGymScene';
+import { DolmoeRuinsScene } from './scenes/DolmoeRuinsScene';
+import { DolmoePCScene } from './scenes/DolmoePCScene';
+import { DolmoeMineScene } from './scenes/DolmoeMineScene';
+import { SeoraePassScene } from './scenes/SeoraePassScene';
+import { OceanScene } from './scenes/OceanScene';
+import { MartScene } from './scenes/MartScene';
+import { DeptStoreScene } from './scenes/DeptStoreScene';
+import { SeoraeTownScene } from './scenes/SeoraeTownScene';
+import { SeoraePCScene } from './scenes/SeoraePCScene';
+import { SeoraeBuildingScene } from './scenes/SeoraeBuildingScene';
+import { SeoraeGymScene } from './scenes/SeoraeGymScene';
+import { GenderSelectScene } from './scenes/GenderSelectScene';
+import { IntroScene } from './scenes/IntroScene';
+import { HaenyeoHotSpringScene } from './scenes/HaenyeoHotSpringScene';
+import { HallasanGardensScene } from './scenes/HallasanGardensScene';
+import { HarborTavernScene } from './scenes/HarborTavernScene';
+import { JejuLibraryScene } from './scenes/JejuLibraryScene';
+import { JejuMarketScene } from './scenes/JejuMarketScene';
+import { BeachPavilionScene } from './scenes/BeachPavilionScene';
+import { SanbangsanShrineScene } from './scenes/SanbangsanShrineScene';
+import { CheonjiyeonWaterfallScene } from './scenes/CheonjiyeonWaterfallScene';
+import { KaesongCityScene } from './scenes/KaesongCityScene';
+import { HanRiverParkScene } from './scenes/HanRiverParkScene';
+import { BikeShopScene } from './scenes/BikeShopScene';
+import { ConvenienceStoreScene } from './scenes/ConvenienceStoreScene';
+import { NampoCityScene, WonsanCityScene, HamhungCityScene, ChongjinCityScene, SinuijuCityScene, SamjiyonCityScene } from './scenes/EosaCities';
+import { RyesongValleyScene } from './scenes/RyesongValleyScene';
+import { NampoBeachScene } from './scenes/NampoBeachScene';
+import { AhobiryongPassScene } from './scenes/AhobiryongPassScene';
+import { WonsanBeachScene } from './scenes/WonsanBeachScene';
+import { SijungCoastScene } from './scenes/SijungCoastScene';
+import { HamhungMineScene } from './scenes/HamhungMineScene';
+import { ChilboHighlandsScene } from './scenes/ChilboHighlandsScene';
+import { KaemaPlateauScene } from './scenes/KaemaPlateauScene';
+import { SamjiyonAjitRoadScene } from './scenes/SamjiyonAjitRoadScene';
+import { NosdanHideoutScene } from './scenes/NosdanHideoutScene';
+import { FogboundManorScene } from './scenes/FogboundManorScene';
+import { HamhungNaengmyeonScene } from './scenes/interior/HamhungNaengmyeonScene';
+import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
+import { initTouchControls } from './systems/TouchControls';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   width: 1280,
   height: 720,
   backgroundColor: '#000000',
-  scene: [TitleScene, WorldMapScene, BattleScene, PlayerHomeScene, PokemonCenterScene, RivalHomeScene, StarterSelectScene, RivalBattleScene, MenuScene, RouteScene, WildBattleScene, SeoulScene, TrainerBattleScene, CapitolCityScene, CapitolTowerScene, CapitolGymScene, GymLeaderBattleScene, CapitolPCScene, CapitolPalaceScene, CapitolMarketScene],
+  scene: [TitleScene, WorldMapScene, BattleScene, PlayerHomeScene, PokemonCenterScene, RivalHomeScene, StarterSelectScene, RivalBattleScene, MenuScene, RouteScene, WildBattleScene, SeoulScene, TrainerBattleScene, CapitolCityScene, CapitolTowerScene, CapitolGymScene, GymLeaderBattleScene, CapitolPCScene, CapitolPalaceScene, CapitolMarketScene, EvolutionScene, Route2Scene, PineNeedleTownScene, PineNeedlePCScene, PineNeedleStudioScene, PokedexScene, ShopScene, BoxScene, BaekduPassScene, BaekduCityScene, BaekduPCScene, BaekduGymScene, Route3Scene, GeumgangCityScene, GeumgangPCScene, GeumgangGymScene, Route4Scene, HaeanCityScene, HaeanPCScene, HaeanGymScene, SudoLabScene, Route5Scene, ForestCityScene, ForestPCScene, ForestGymScene, ForestShrineScene, FerryScene, JejuPortScene, JejuCityScene, JejuVentsPortScene, JejuPCScene, JejuVentScene, Route6Scene, SunriseCityScene, SunrisePCScene, SunriseGymScene, SunriseCliff1Scene, SunriseCliff2Scene, SunriseCliff3Scene, BaekduCheckpointScene, BaekduSummitScene, ScholarsRoadScene, LeaguePlazaScene, PokemonLeagueScene, RegionMapScene, NorthernColiseumScene, NorthernPlazaScene, PyeongyangCityScene, NorthernReachesScene, SacredPeakScene, DolmoeCityScene, DolmoeGymScene, DolmoeRuinsScene, DolmoePCScene, DolmoeMineScene, SeoraePassScene, OceanScene, MartScene, DeptStoreScene, SeoraeTownScene, SeoraePCScene, SeoraeBuildingScene, SeoraeGymScene, GenderSelectScene, IntroScene, HaenyeoHotSpringScene, HallasanGardensScene, HarborTavernScene, JejuLibraryScene, JejuMarketScene, BeachPavilionScene, SanbangsanShrineScene, CheonjiyeonWaterfallScene, KaesongCityScene, HanRiverParkScene, BikeShopScene, ConvenienceStoreScene, NampoCityScene, WonsanCityScene, HamhungCityScene, ChongjinCityScene, SinuijuCityScene, SamjiyonCityScene, RyesongValleyScene, PokemonLabScene, NampoBeachScene, AhobiryongPassScene, WonsanBeachScene, SijungCoastScene, HamhungMineScene, ChilboHighlandsScene, KaemaPlateauScene, SamjiyonAjitRoadScene, NosdanHideoutScene, FogboundManorScene, HamhungNaengmyeonScene, NorthernBuildingScene],
   parent: document.body,
+  render: {
+    powerPreference: 'high-performance',   // prefer the discrete GPU on dual-GPU laptops
+    antialias: true,
+  },
+  fps: { target: 60, min: 30 },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 });
+
+// On phones/tablets, draw an on-screen D-pad + buttons that drive the same keyboard
+// input the game already reads. Add ?touch=1 to force it on for testing on desktop.
+initTouchControls(new URLSearchParams(location.search).has('touch'));
+(window as unknown as { __game: Phaser.Game }).__game = game;

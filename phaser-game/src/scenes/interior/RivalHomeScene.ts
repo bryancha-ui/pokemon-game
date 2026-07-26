@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
+import { rivalTrainerName } from '../../data/CharacterSprite';
 
 export class RivalHomeScene extends BaseInteriorScene {
   private minhyukTalked = false;
@@ -78,11 +79,12 @@ export class RivalHomeScene extends BaseInteriorScene {
   }
 
   protected setupNPCs() {
+    const rn = rivalTrainerName(this.registry);
     const minhyuk = this.createNPCGraphic(7, 6, 0x1133aa, 0x110033, false, 0);
     this.add.text(
       this.tile(7, 6).x + 16,
       this.tile(7, 6).y - 6,
-      'Minhyuk', { fontSize: '10px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }
+      rn, { fontSize: '10px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(minhyuk);
   }
@@ -92,18 +94,19 @@ export class RivalHomeScene extends BaseInteriorScene {
   }
 
   protected onInteract(_npc: NPC) {
+    const rn = rivalTrainerName(this.registry);
     if (!this.minhyukTalked) {
       this.minhyukTalked = true;
       this.dialog.show([
-        'Minhyuk: Oh, it\'s you. You finally got started?',
-        'Minhyuk: I\'ve been training every day.\nDon\'t expect it to be easy.',
-        'Minhyuk: My Pokémon will be the strongest.\nCount on it.',
+        `${rn}: Oh, it's you. You finally got started?`,
+        `${rn}: I've been training every day.\nDon't expect it to be easy.`,
+        `${rn}: My Pokémon will be the strongest.\nCount on it.`,
       ]);
     } else {
       const lines = [
-        ['Minhyuk: Still here? Go train.', 'Minhyuk: When we battle, I won\'t hold back.'],
-        ['Minhyuk: I heard you battled near the waterfall.', 'Minhyuk: Don\'t get overconfident.'],
-        ['Minhyuk: ...What? Stop staring at my trophies.', 'Minhyuk: Go get your own.'],
+        [`${rn}: Still here? Go train.`, `${rn}: When we battle, I won't hold back.`],
+        [`${rn}: I heard you battled near the waterfall.`, `${rn}: Don't get overconfident.`],
+        [`${rn}: ...What? Stop staring at my trophies.`, `${rn}: Go get your own.`],
       ];
       this.dialog.show(lines[Math.floor(Math.random() * lines.length)]);
     }

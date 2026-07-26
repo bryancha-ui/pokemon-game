@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
+import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 
 // ── Tile types ────────────────────────────────────────────────────────────────
 const T = {
@@ -200,7 +203,7 @@ const BUILDINGS: BuildingDef[] = [
   { id: 'rival',  label: "Minhyuk's House",  scene: 'RivalHomeScene',
     col: 16, row: 32, w: 4, h: 4, doorCol: 17, doorRow: 36,
     wallColor: 0xb0c4de, roofColor: 0x334466, accentColor: 0x8899bb },
-  { id: 'lab',    label: "Prof. Kim's Lab",  scene: 'StarterSelectScene',
+  { id: 'lab',    label: "Prof. Song's Lab",  scene: 'PokemonLabScene',
     col: 31, row: 10, w: 6, h: 7, doorCol: 33, doorRow: 17,
     wallColor: 0xeeeeff, roofColor: 0x2255aa, accentColor: 0xaaddff },
 ];
@@ -212,8 +215,6 @@ export class WorldMapScene extends Phaser.Scene {
   private interactKey!: Phaser.Input.Keyboard.Key;
   private map!: Tile[][];
   private mapGraphics!: Phaser.GameObjects.Graphics;
-  private locationText!: Phaser.GameObjects.Text;
-  private miniMapGraphics!: Phaser.GameObjects.Graphics;
   private enterPrompt!: Phaser.GameObjects.Text;
   private shoesText!: Phaser.GameObjects.Text;
   private cutsceneDialog!: DialogBox;
@@ -231,16 +232,24 @@ export class WorldMapScene extends Phaser.Scene {
   private walkTimer = 0;
   private isMoving = false;
   private cutsceneActive = false;
+  private spawnGuard = false;
   private saveToast!: Phaser.GameObjects.Text;
 
   constructor() { super('WorldMapScene'); }
 
   create() {
+
+    playBgm(this, 'waterfall');
     // Reset all per-session state
     this.cutsceneActive = false;
     this.isMoving       = false;
     this.walkFrame      = 0;
     this.walkTimer      = 0;
+
+    // Grace period: ignore exit triggers for a moment after spawning so we never
+    // bounce straight back through a doorway/route boundary we just entered from.
+    this.spawnGuard = true;
+    this.time.delayedCall(600, () => { this.spawnGuard = false; });
 
     // Clear any key states left over from previous scenes (e.g. StarterSelectScene)
     this.input.keyboard?.resetKeys();
@@ -265,11 +274,15 @@ export class WorldMapScene extends Phaser.Scene {
 
     this.drawMap();
     this.drawBuildings();
+    this.drawBus();
     this.createPlayer();
     this.setupCamera();
     this.setupInput();
     this.createUI();
     this.addLabels();
+
+    // Trigger any pending evolutions on return from battle
+    this.time.delayedCall(300, () => maybeLaunchEvolution(this));
   }
 
   // ── Map rendering ─────────────────────────────────────────────────────────
@@ -333,77 +346,8 @@ export class WorldMapScene extends Phaser.Scene {
   }
 
   private drawCharacter() {
-    const g = this.playerSprite;
-    g.clear();
-
-    const f = this.walkFrame;           // 0 or 1 — alternating step
-    const flip = this.facing === 2;     // mirror when facing left
-
-    // Shadow
-    g.fillStyle(0x000000, 0.25);
-    g.fillEllipse(0, 13, 18, 6);
-
-    // Shoes
-    g.fillStyle(0x222222, 1);
-    const lx = flip ? 3 : -8;
-    const rx = flip ? -8 : 3;
-    const ly = f === 0 ? 9 : 6;
-    const ry = f === 0 ? 6 : 9;
-    g.fillRect(lx, ly, 6, 5);
-    g.fillRect(rx, ry, 6, 5);
-
-    // Legs (dark blue trousers)
-    g.fillStyle(0x1a1a6e, 1);
-    g.fillRect(lx + 1, ly - 7, 4, 8);
-    g.fillRect(rx + 1, ry - 7, 4, 8);
-
-    // Body (red jacket — Korean school uniform style)
-    g.fillStyle(0xcc2222, 1);
-    g.fillRect(-8, -8, 16, 14);
-
-    // White shirt collar
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(-2, -8, 4, 5);
-
-    // Arms
-    g.fillStyle(0xcc2222, 1);
-    g.fillRect(-12, -7, 5, 9);
-    g.fillRect(7,   -7, 5, 9);
-
-    // Hands
-    g.fillStyle(0xffcc99, 1);
-    g.fillRect(-12, 2, 5, 4);
-    g.fillRect(7,   2, 5, 4);
-
-    // Neck
-    g.fillStyle(0xffcc99, 1);
-    g.fillRect(-3, -12, 6, 5);
-
-    // Head
-    g.fillStyle(0xffcc99, 1);
-    g.fillRect(-7, -24, 14, 13);
-
-    // Hair (dark)
-    g.fillStyle(0x1a1008, 1);
-    g.fillRect(-7, -24, 14, 5);
-    if (this.facing === 1) {  // back — full hair
-      g.fillRect(-7, -24, 14, 13);
-    }
-
-    // Eyes — only on front/side facing
-    if (this.facing !== 1) {
-      g.fillStyle(0x000000, 1);
-      if (this.facing === 0) {          // front
-        g.fillRect(-4, -17, 2, 2);
-        g.fillRect(2,  -17, 2, 2);
-      } else if (this.facing === 2) {   // left
-        g.fillRect(-5, -17, 2, 2);
-      } else {                          // right
-        g.fillRect(3,  -17, 2, 2);
-      }
-    }
-
-    g.setPosition(this.px, this.py);
+    drawTrainerBody(this.playerSprite, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerSprite.setPosition(this.px, this.py);
   }
 
   // ── Camera ────────────────────────────────────────────────────────────────
@@ -461,7 +405,7 @@ export class WorldMapScene extends Phaser.Scene {
       this.add.text(
         (b.col + b.w / 2) * TILE,
         (b.row - 2) * TILE,
-        b.label,
+        this.buildingLabel(b),
         { fontSize: '9px', color: '#ffffff', backgroundColor: '#00000099', padding: { x: 4, y: 2 } }
       ).setOrigin(0.5, 1).setDepth(4);
     }
@@ -484,10 +428,10 @@ export class WorldMapScene extends Phaser.Scene {
     };
     this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.shiftKey    = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
-    this.input.keyboard!.on('keydown-M', () => {
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => {
       if (!this.cutsceneActive) this.scene.launch('MenuScene');
     });
-    this.input.keyboard!.on('keydown-B', () => {
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => {
       if (!this.cutsceneActive) this.scene.launch('MenuScene');
     });
     this.input.keyboard!.on('keydown-F5', (e: KeyboardEvent) => {
@@ -498,12 +442,6 @@ export class WorldMapScene extends Phaser.Scene {
 
   // ── UI ────────────────────────────────────────────────────────────────────
   private createUI() {
-    // Location banner
-    const uiBg = this.add.rectangle(400, 24, 340, 36, 0x000000, 0.6).setScrollFactor(0).setDepth(100);
-    this.locationText = this.add.text(400, 24, '📍 Waterfall City', {
-      fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
-
     // Controls hint
     this.add.text(8, 480, 'WASD/Arrows  |  SPACE: enter  |  SHIFT: run  |  M: menu', {
       fontSize: '11px', color: '#cccccc', backgroundColor: '#00000099', padding: { x: 6, y: 3 },
@@ -513,9 +451,6 @@ export class WorldMapScene extends Phaser.Scene {
     this.shoesText = this.add.text(8, 456, '👟 RUNNING', {
       fontSize: '12px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 6, y: 3 },
     }).setScrollFactor(0).setDepth(100).setVisible(false);
-
-    // Mini-map
-    this.createMiniMap();
 
     // Cutscene dialog (same DialogBox, lives on overworld)
     this.cutsceneDialog = new DialogBox(this, 1280, 720);
@@ -532,34 +467,6 @@ export class WorldMapScene extends Phaser.Scene {
       loop: true,
       callback: () => this.saveGame(),
     });
-
-    void uiBg;
-  }
-
-  private createMiniMap() {
-    const MM = 3; // pixels per tile on mini-map
-    const mmW = COLS * MM;
-    const mmH = ROWS * MM;
-    const mmX = 800 - mmW - 10;
-    const mmY = 10;
-
-    this.add.rectangle(mmX + mmW / 2, mmY + mmH / 2, mmW + 4, mmH + 4, 0x000000, 0.8)
-      .setScrollFactor(0).setDepth(99);
-
-    this.miniMapGraphics = this.add.graphics().setScrollFactor(0).setDepth(100);
-
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const tile = this.map[r][c];
-        this.miniMapGraphics.fillStyle(TILE_COLOR[tile], 1);
-        this.miniMapGraphics.fillRect(mmX + c * MM, mmY + r * MM, MM, MM);
-      }
-    }
-
-    // Player dot drawn in update
-    this.add.text(mmX + mmW / 2, mmY - 8, 'MAP', {
-      fontSize: '9px', color: '#aaaaaa',
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
   }
 
   private addLabels() {
@@ -625,10 +532,89 @@ export class WorldMapScene extends Phaser.Scene {
     }
 
     this.drawCharacter();
-    this.updateMiniMapDot();
-    this.updateLocationText();
     this.checkBuildingDoors();
+    this.checkBus();
     this.checkTownExit();
+  }
+
+  // ── Northern express bus → Kaesong (개성) ──────────────────────────────────
+  // Once Phase 1 is done and the North has opened up (the envoy's invitation, or the
+  // Hanbando Champion beaten), an inter-regional coach runs from Waterfall City
+  // straight to Kaesong, the first of the eight 어사대 provinces — so the player can
+  // return to the northern circuit from the home hub without retracing the whole way.
+  private busUnlocked() {
+    return !!(this.registry.get('northInviteSeen') || this.registry.get('championDefeated') || this.registry.get('northLeagueDone'));
+  }
+  private readonly BUS_COL = 26;   // on the main east–west road
+  private readonly BUS_ROW = 24;
+
+  private drawBus() {
+    if (!this.busUnlocked()) return;
+    const x = this.BUS_COL * 32, y = this.BUS_ROW * 32;
+    const g = this.add.graphics().setDepth(6);
+    g.fillStyle(0x000000, 0.2); g.fillEllipse(x + 30, y + 26, 60, 12);
+    g.fillStyle(0xf2c14e); g.fillRoundedRect(x, y - 4, 60, 26, 5);
+    g.fillStyle(0xcc3322); g.fillRect(x, y - 4, 60, 5);
+    g.fillStyle(0x99e0ff); for (let i = 0; i < 4; i++) g.fillRect(x + 6 + i * 13, y + 3, 9, 8);
+    g.fillStyle(0x222222); g.fillCircle(x + 14, y + 24, 5); g.fillCircle(x + 46, y + 24, 5);
+    // Bus-stop sign
+    g.fillStyle(0x3a3f52); g.fillRect(x - 16, y - 2, 3, 26);
+    g.fillStyle(0x2a6ab0); g.fillRoundedRect(x - 26, y - 8, 22, 12, 2);
+    this.add.text(x - 15, y - 2, '🚏', { fontSize: '11px' }).setOrigin(0.5);
+    this.add.text(x + 30, y - 14, '🚌 Bus → Kaesong 개성', {
+      fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5).setDepth(7);
+  }
+
+  private checkBus() {
+    if (!this.busUnlocked()) return;
+    const bx = this.BUS_COL * 32 + 30, by = this.BUS_ROW * 32 + 12;
+    if (Math.hypot(this.px - bx, this.py - by) > 32 * 1.8) return;
+    this.enterPrompt.setText('SPACE — 🚌 Express Bus to Kaesong (개성)').setVisible(true);
+    if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+      this.enterPrompt.setVisible(false);
+      this.cutsceneActive = true;
+      this.cutsceneDialog.show([
+        '🚌 The northern express coach idles at the stop, engine rumbling.',
+        'Driver: Non-stop to Kaesong — first of the eight 어사대 provinces, up across the old border. Riding with me?',
+      ], () => {
+        this.cutsceneDialog.showChoice(
+          () => this.rideBusToKaesong(),
+          () => { this.cutsceneActive = false; },
+        );
+      });
+    }
+  }
+
+  private rideBusToKaesong() {
+    const W = this.scale.width, H = this.scale.height;
+    const g = this.add.graphics();
+    g.fillStyle(0x0b1020, 1); g.fillRect(0, 0, W, H);
+    g.fillStyle(0x141b30, 1); g.fillRect(0, H * 0.6, W, H * 0.4);
+    g.fillStyle(0x1c2036, 1);
+    g.fillTriangle(W * 0.10, H * 0.74, W * 0.30, H * 0.34, W * 0.52, H * 0.74);
+    g.fillTriangle(W * 0.45, H * 0.74, W * 0.70, H * 0.28, W * 0.94, H * 0.74);
+    g.fillStyle(0x3a3f52, 1); g.fillRect(0, H * 0.8, W, 6);   // highway
+    const bus = this.add.graphics();
+    bus.fillStyle(0xf2c14e); bus.fillRoundedRect(0, -20, 160, 38, 7);
+    bus.fillStyle(0xcc3322); bus.fillRect(0, -20, 160, 6);
+    bus.fillStyle(0x99e0ff); for (let i = 0; i < 6; i++) bus.fillRect(10 + i * 24, -10, 16, 13);
+    bus.fillStyle(0x222222); bus.fillCircle(34, 18, 8); bus.fillCircle(126, 18, 8);
+    bus.setPosition(-200, H * 0.8 - 6);
+    this.tweens.add({ targets: bus, x: W + 240, duration: 3000, ease: 'Sine.easeIn' });
+    const cap = this.add.text(W / 2, H * 0.14, '🚌  The express coach rolls north across the old border to Kaesong…', {
+      fontSize: '15px', color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5, align: 'center', wordWrap: { width: W * 0.8 },
+    }).setOrigin(0.5);
+    const root = this.add.container(0, 0, [g, bus, cap]).setScrollFactor(0).setDepth(200);
+    const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
+    root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
+    this.time.delayedCall(3200, () => {
+      this.cameras.main.fadeOut(700, 0, 0, 0, () => {
+        this.registry.set('kaesongReturnX', 17 * 32 + 16);
+        this.registry.set('kaesongReturnY', 21 * 32 + 16);
+        this.scene.start('KaesongCityScene');
+      });
+    });
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────
@@ -653,10 +639,11 @@ export class WorldMapScene extends Phaser.Scene {
     }
 
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+      this.enterPrompt.setText(`SPACE — Enter ${this.buildingLabel(near)}`).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         this.registry.set('returnX', near.doorCol * TILE + TILE / 2);
         this.registry.set('returnY', (near.doorRow + 1) * TILE + TILE / 2);
+        if (near.scene === 'PokemonCenterScene') this.registry.set('pcReturnScene', 'WorldMapScene');
         SaveManager.save(this.registry, this.px, this.py);
         this.cameras.main.fadeOut(400, 0, 0, 0, () => {
           this.scene.start(near!.scene);
@@ -681,36 +668,9 @@ export class WorldMapScene extends Phaser.Scene {
     });
   }
 
-  private updateMiniMapDot() {
-    const MM = 3;
-    const mmX = 800 - COLS * MM - 10;
-    const mmY = 10;
-    // Redraw just the dot (erase old, draw new)
-    this.miniMapGraphics.fillStyle(0xff0000, 1);
-    this.miniMapGraphics.fillRect(
-      mmX + (this.px / TILE) * MM - 2,
-      mmY + (this.py / TILE) * MM - 2,
-      4, 4
-    );
-  }
-
-  private updateLocationText() {
-    const col = Math.floor(this.px / TILE);
-    const row = Math.floor(this.py / TILE);
-    const tile = this.map[row]?.[col];
-    let zone = 'Waterfall City';
-    if (tile === T.MOUNTAIN) zone = 'Mt. Bukhan';
-    else if (tile === T.TREE && row < 10) zone = 'Waterfall Trail';
-    else if (tile === T.WATER) zone = 'Waterfall River';
-    else if (tile === T.PARK || tile === T.FLOWER) zone = 'Central Park';
-    else if (tile === T.ROAD_H || tile === T.ROAD_V || tile === T.ROAD_X) zone = 'Main Street';
-    else if (tile === T.BUILDING || tile === T.ROOF) zone = 'Residential Area';
-    else if (row > 46) zone = 'Route 1 → Capitol City';
-    this.locationText.setText(`📍 ${zone}`);
-  }
-
   // ── Town exit / rival cutscene ────────────────────────────────────────────
   private checkTownExit() {
+    if (this.spawnGuard) return;   // don't trigger on the spawn frame
     const row = Math.floor(this.py / TILE);
     const rivalDone     = !!this.registry.get('rivalBattleDone');
     const starterChosen = !!this.registry.get('starterChosen');
@@ -721,10 +681,13 @@ export class WorldMapScene extends Phaser.Scene {
       return;
     }
 
-    // After rival battle → enter Route 1 at the south wilderness
+    // After rival battle → enter Route 1 at its north end (clear of the north edge,
+    // so we don't immediately bounce back to Waterfall City).
     if (rivalDone && row >= 56 && !this.cutsceneActive) {
       this.cutsceneActive = true;  // prevent multi-frame retrigger
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.registry.set('routeReturnX', 13 * 32 + 16);
+        this.registry.set('routeReturnY', 4 * 32 + 16);
         this.scene.start('RouteScene');
       });
     }
@@ -755,26 +718,18 @@ export class WorldMapScene extends Phaser.Scene {
   }
 
   private drawMinhyukSprite(g: Phaser.GameObjects.Graphics) {
-    g.clear();
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 18, 6);
-    // Shoes
-    g.fillStyle(0xffffff, 1); g.fillRect(-8, 9, 6, 5); g.fillRect(3, 6, 6, 5);
-    // Legs
-    g.fillStyle(0x223366, 1); g.fillRect(-7, 2, 4, 8); g.fillRect(4, -1, 4, 8);
-    // Body (blue jacket)
-    g.fillStyle(0x1133aa, 1); g.fillRect(-8, -8, 16, 11);
-    g.fillStyle(0x1133aa, 1); g.fillRect(-12, -7, 5, 9); g.fillRect(7, -7, 5, 9);
-    g.fillStyle(0xffffff, 1); g.fillRect(-2, -8, 4, 5);
-    // Head
-    g.fillStyle(0xffcc99, 1); g.fillRect(-7, -22, 14, 13);
-    g.fillStyle(0x110022, 1); g.fillRect(-7, -22, 14, 5);
-    // Eyes
-    g.fillStyle(0x000000, 1); g.fillRect(-5, -16, 2, 2);
+    // The rival — opposite gender to the player — runs in facing left.
+    drawTrainerBody(g, 2, 0, rivalDesign(this.registry));
     // Name tag
     g.fillStyle(0x000000, 0.7); g.fillRoundedRect(-20, -36, 40, 12, 3);
     // (text rendered separately since Graphics can't draw text)
-    this.add.text(g.x, g.y - 30, 'Minhyuk', {
+    this.add.text(g.x, g.y - 30, rivalTrainerName(this.registry), {
       fontSize: '10px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(26);
+  }
+
+  /** A building's display label — the rival's house is named after the (gender-based) rival. */
+  private buildingLabel(b: BuildingDef): string {
+    return b.id === 'rival' ? `${rivalTrainerName(this.registry)}'s House` : b.label;
   }
 }

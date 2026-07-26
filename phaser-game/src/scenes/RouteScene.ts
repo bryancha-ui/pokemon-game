@@ -1,10 +1,16 @@
 import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { vanishesAfterDefeat } from '../data/Villains';
+import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
+import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
+import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import {
   OUTDOOR_ENCOUNTERS, CAVE_ENCOUNTERS,
   pickEncounter, randomLevel,
 } from '../data/CustomPokemon';
+import { prefetchPokemon } from '../data/PokeAPI';
 
 // ── Tile types ────────────────────────────────────────────────────────────────
 const RT = {
@@ -177,6 +183,9 @@ export class RouteScene extends Phaser.Scene {
   private nextEncounterAt = 12;
   private inCave = false;
   private cutsceneActive = false;
+  private cycling = false;
+  private spawnGuard = false;
+  private spawnPx = 0; private spawnPy = 0;   // edge exits fire once you've stepped away from spawn
 
   private dialog!: DialogBox;
   private locationText!: Phaser.GameObjects.Text;
@@ -187,16 +196,21 @@ export class RouteScene extends Phaser.Scene {
 
   preload() {
     if (!this.textures.exists('disguijar'))
-      this.load.image('disguijar', '/assets/disguijar.png');
+      this.load.image('disguijar', 'assets/disguijar.png');
   }
 
   create() {
+
+    playBgm(this, 'route1');
     // Reset per-session state
     this.cutsceneActive       = false;
     this.isMoving             = false;
     this.walkFrame            = 0;
     this.walkTimer            = 0;
     this.stepsSinceEncounter  = 0;
+    // Grace period so we never bounce straight back out the edge we entered from.
+    this.spawnGuard = true;
+    this.time.delayedCall(600, () => { this.spawnGuard = false; });
     this.input.keyboard?.resetKeys();
 
     const rx = this.registry.get('routeReturnX') as number | undefined;
@@ -204,6 +218,7 @@ export class RouteScene extends Phaser.Scene {
     if (rx !== undefined) { this.px = rx; this.py = ry as number; }
     this.registry.remove('routeReturnX');
     this.registry.remove('routeReturnY');
+    this.spawnPx = this.px; this.spawnPy = this.py;
 
     this.map = buildRouteMap();
     this.drawMap();
@@ -213,11 +228,15 @@ export class RouteScene extends Phaser.Scene {
     this.createUI();
     this.drawTrainers();
     this.cameras.main.fadeIn(400);
+    this.warmBattleData();   // background-fetch this route's dex Pokémon so the first battle is instant
 
     // Kisun cutscene on first visit
     const kisunDone = !!this.registry.get('kisunDone');
     if (!kisunDone) {
       this.time.delayedCall(600, () => this.triggerKisun());
+    } else {
+      // Otherwise, trigger any pending evolutions on return from battle
+      this.time.delayedCall(300, () => maybeLaunchEvolution(this));
     }
   }
 
@@ -341,20 +360,8 @@ export class RouteScene extends Phaser.Scene {
 
   private drawCharacter() {
     const g = this.playerG;
-    g.clear();
-    const f = this.walkFrame;
-    const flip = this.facing === 2;
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 18, 6);
-    const lx = flip ? 3 : -8, rx = flip ? -8 : 3;
-    const ly = f === 0 ? 9 : 6, ry = f === 0 ? 6 : 9;
-    g.fillStyle(0x222222); g.fillRect(lx, ly, 6, 5); g.fillRect(rx, ry, 6, 5);
-    g.fillStyle(0x1a1a6e); g.fillRect(lx + 1, ly - 7, 4, 8); g.fillRect(rx + 1, ry - 7, 4, 8);
-    g.fillStyle(0xcc2222); g.fillRect(-8, -8, 16, 11);
-    g.fillStyle(0xcc2222); g.fillRect(-12, -7, 5, 9); g.fillRect(7, -7, 5, 9);
-    g.fillStyle(0xffffff); g.fillRect(-2, -8, 4, 4);
-    g.fillStyle(0xffcc99); g.fillRect(-7, -22, 14, 12);
-    g.fillStyle(0x1a1008); g.fillRect(-7, -22, 14, 5);
-    g.fillStyle(0x000000); g.fillRect(-4, -16, 2, 2); g.fillRect(2, -16, 2, 2);
+    // Gender-aware body so the player isn't reset to the default red-shirt sprite.
+    (this.cycling ? drawRiderBody : drawTrainerBody)(g, this.facing, this.walkFrame, playerDesign(this.registry));
     g.setPosition(this.px, this.py);
   }
 
@@ -377,6 +384,7 @@ export class RouteScene extends Phaser.Scene {
       right: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
     };
     this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => { if (!this.cutsceneActive && hasBike(this.registry)) { this.cycling = !this.cycling; this.drawCharacter(); } });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => {
       if (!this.cutsceneActive) this.scene.launch('MenuScene');
     });
@@ -442,7 +450,7 @@ export class RouteScene extends Phaser.Scene {
       this.registry.set('pokeballs', 20);
       this.registry.set('kisunDone', true);
       this.cutsceneActive = false;
-      SaveManager.save(this.registry, this.px, this.py);
+      SaveManager.save(this.registry, this.px, this.py, 'RouteScene');
       this.showSaveToast();
       this.updateUI();
     });
@@ -494,10 +502,26 @@ export class RouteScene extends Phaser.Scene {
     },
   ] as const;
 
+  // Warm the PokeAPI cache for every standard-dex Pokémon on this route — the
+  // trainers' teams (e.g. Bug Catcher Billy's Weedle/Caterpie) and the wild
+  // tables — so the first battle doesn't stall on a cold network fetch.
+  private warmBattleData() {
+    const ids = new Set<number>();
+    for (const tr of this.TRAINERS) {
+      try {
+        for (const p of JSON.parse(tr.pokemon) as { id: number; custom?: string }[])
+          if (!p.custom && typeof p.id === 'number') ids.add(p.id);
+      } catch { /* ignore malformed team */ }
+    }
+    for (const e of [...OUTDOOR_ENCOUNTERS, ...CAVE_ENCOUNTERS])
+      if (!e.isCustom && typeof e.id === 'number') ids.add(e.id);
+    prefetchPokemon([...ids]);
+  }
+
   private drawTrainers() {
     for (const tr of this.TRAINERS) {
       const defeated = !!this.registry.get(`trainerDefeated_${tr.key}`);
-      if (defeated) continue;
+      if (defeated && vanishesAfterDefeat(tr.key)) continue;
 
       const wx = tr.col * TILE + 16;
       const wy = tr.row * TILE + 16;
@@ -576,7 +600,7 @@ export class RouteScene extends Phaser.Scene {
     this.isMoving = dx !== 0 || dy !== 0;
     const hasShoes = !!this.registry.get('hasRunningShoes');
     const running  = hasShoes && this.shiftKey.isDown && this.isMoving;
-    const speed    = running ? this.RUN_SPEED : this.SPEED;
+    const speed    = this.cycling ? BIKE_SPEED : (running ? this.RUN_SPEED : this.SPEED);
 
     if (this.isMoving) {
       const len = Math.sqrt(dx * dx + dy * dy);
@@ -643,6 +667,7 @@ export class RouteScene extends Phaser.Scene {
     this.registry.set('wildLevel',    level);
     this.registry.set('wildCustom',   entry.isCustom);
     this.registry.set('wildCatchRate', entry.catchRate);
+    this.registry.set('wildReturnScene', 'RouteScene');
     this.registry.set('routeReturnX', this.px);
     this.registry.set('routeReturnY', this.py);
 
@@ -654,21 +679,23 @@ export class RouteScene extends Phaser.Scene {
   // ── Exit detection ────────────────────────────────────────────────────────
 
   private checkExits() {
-    if (this.cutsceneActive) return;   // already transitioning
+    if (this.cutsceneActive || this.spawnGuard) return;   // already transitioning / just spawned
+    // Only exit once the player has stepped away from where they spawned, so arriving
+    // near an edge can't bounce you back — yet you can leave in one continuous walk.
+    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.5 * TILE) return;
     const row = Math.floor(this.py / TILE);
 
-    // North exit → back to Waterfall City
+    // North exit → back to Waterfall City.
     if (row < 1) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('returnX', 22 * 32 + 16);
-        this.registry.set('returnY', 56 * 32 + 16);
+        this.registry.set('returnY', 50 * 32 + 16);
         this.scene.start('WorldMapScene');
       });
     }
-
-    // South exit → Seoul
-    if (row >= RROWS - 1) {
+    // South exit → Seoul (Capitol).
+    else if (row >= RROWS - 1) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(500, 0, 0, 0, () => {
         this.scene.start('SeoulScene');

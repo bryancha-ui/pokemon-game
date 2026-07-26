@@ -102,11 +102,11 @@ export class PlayerHomeScene extends BaseInteriorScene {
     const starterChosen = this.registry.get('starterChosen') as boolean | undefined;
 
     if (!starterChosen && !this.momTalked) {
-      // First time — send player to Prof. Kim
+      // First time — send player to Prof. Song
       this.momTalked = true;
       this.dialog.show([
         'Mom: Oh, you\'re finally awake!',
-        'Mom: Professor Kim called earlier. She\'s at the lab on the north side of town.',
+        'Mom: Professor Song called earlier. She\'s at the lab on the north side of town.',
         'Mom: She said she has something special for new trainers.',
         'Mom: You should go see her! But first...\nWould you like to rest before heading out?',
       ], () => {
@@ -115,17 +115,17 @@ export class PlayerHomeScene extends BaseInteriorScene {
             this.registry.set('playerHealed', true);
             this.dialog.show([
               '...Your body feels refreshed!\nAll your Pokémon have been healed! ✨',
-              'Mom: Now go see Professor Kim. North part of town — you can\'t miss it! 💕',
+              'Mom: Now go see Professor Song. North part of town — you can\'t miss it! 💕',
             ]);
           },
           () => {
-            this.dialog.show(['Mom: Okay! Don\'t forget to visit Professor Kim. She\'s waiting! 💕']);
+            this.dialog.show(['Mom: Okay! Don\'t forget to visit Professor Song. She\'s waiting! 💕']);
           }
         );
       });
     } else if (!starterChosen) {
       this.dialog.show([
-        'Mom: Professor Kim is waiting at the lab, honey!',
+        'Mom: Professor Song is waiting at the lab, honey!',
         'Mom: North side of town — go choose your Pokémon! 💕',
       ]);
     } else {

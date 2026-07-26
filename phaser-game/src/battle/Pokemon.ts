@@ -87,10 +87,9 @@ export class Pokemon {
   }
 
   levelUp(): number {
-    const oldMaxHp = this.maxHp;
     this._level++;
     this.recalcStats();
-    this.hp = Math.min(this.maxHp, this.hp + (this.maxHp - oldMaxHp));
+    this.hp = this.maxHp;   // level-up fully restores HP
     return this._level;
   }
 

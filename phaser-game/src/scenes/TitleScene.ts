@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../utils/SaveManager';
 import { STARTERS } from '../data/StarterData';
+import { playBgm } from '../systems/Music';
 
 export class TitleScene extends Phaser.Scene {
   private selected = 0;
@@ -10,6 +11,10 @@ export class TitleScene extends Phaser.Scene {
   private hasSave = false;
   private stars: Phaser.GameObjects.Arc[] = [];
   private floatObjs: Phaser.GameObjects.GameObject[] = [];
+  private confirming = false;
+  private confirmChoice = 0;   // 0 = No (keep save), 1 = Yes (start over)
+  private confirmOverlay?: Phaser.GameObjects.Container;
+  private confirmBtns: Phaser.GameObjects.Text[] = [];
 
   // Use actual canvas dimensions so it adapts to any resolution
   private get W() { return this.scale.width; }
@@ -27,6 +32,7 @@ export class TitleScene extends Phaser.Scene {
   create() {
     this.hasSave = SaveManager.exists();
     this.cameras.main.fadeIn(900);
+    playBgm(this, 'title');   // starts once the browser unlocks audio on first input
 
     this.drawBackground();
     this.drawStars();
@@ -34,6 +40,7 @@ export class TitleScene extends Phaser.Scene {
     this.drawLogoArea();
     this.drawMenu();
     this.drawSaveInfo();
+    this.drawRestoreOption();
     this.setupInput();
     this.refreshSelection();
   }
@@ -229,13 +236,33 @@ export class TitleScene extends Phaser.Scene {
     const save = SaveManager.load();
     if (!save) return;
 
-    const info = save.starterName
-      ? `${save.starterName}  Lv.${save.starterLevel}  ·  ${SaveManager.formatDate(save.timestamp)}`
+    // Read the live party lead straight from the snapshot so the summary always matches
+    // the actual team — even for saves written before this was tracked correctly.
+    let name = save.starterName; let level = save.starterLevel;
+    try {
+      const party = JSON.parse((save.data?.party as string) ?? '[]') as { name?: string; level?: number }[];
+      if (party[0]?.name) name = party[0].name;
+      if (typeof party[0]?.level === 'number') level = party[0].level;
+    } catch { /* keep the stored values */ }
+
+    const info = name
+      ? `${name}  Lv.${level}  ·  ${SaveManager.formatDate(save.timestamp)}`
       : SaveManager.formatDate(save.timestamp);
 
     this.add.text(this.W / 2, this.H * 0.69, `Save data: ${info}`, {
       fontSize: '13px', color: '#9966cc',
     }).setOrigin(0.5).setDepth(6);
+  }
+
+  /** If a backup exists (from a previous delete / New Game), offer to restore it. */
+  private drawRestoreOption() {
+    if (!SaveManager.hasBackup()) return;
+    const t = this.add.text(this.W / 2, this.H * 0.75, '↩  Restore previous save', {
+      fontSize: '13px', color: '#88ccff', backgroundColor: '#00000055', padding: { x: 8, y: 4 },
+    }).setOrigin(0.5).setDepth(6).setInteractive({ useHandCursor: true });
+    t.on('pointerover', () => t.setColor('#ffffff'));
+    t.on('pointerout',  () => t.setColor('#88ccff'));
+    t.on('pointerdown', () => { if (SaveManager.restoreBackup()) this.scene.restart(); });
   }
 
   // ── Input ─────────────────────────────────────────────────────────────────
@@ -247,8 +274,11 @@ export class TitleScene extends Phaser.Scene {
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
       .on('down', () => this.confirm());
 
-    this.cursors.up.on('down',   () => { this.selected = Math.max(0, this.selected - 1); this.refreshSelection(); });
-    this.cursors.down.on('down', () => { this.selected = Math.min(1, this.selected + 1); this.refreshSelection(); });
+    this.cursors.up.on('down',    () => { if (this.confirming) { this.confirmChoice = 0; this.refreshConfirm(); return; } this.selected = Math.max(0, this.selected - 1); this.refreshSelection(); });
+    this.cursors.down.on('down',  () => { if (this.confirming) { this.confirmChoice = 1; this.refreshConfirm(); return; } this.selected = Math.min(1, this.selected + 1); this.refreshSelection(); });
+    this.cursors.left.on('down',  () => { if (this.confirming) { this.confirmChoice = 0; this.refreshConfirm(); } });
+    this.cursors.right.on('down', () => { if (this.confirming) { this.confirmChoice = 1; this.refreshConfirm(); } });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => { if (this.confirming) this.resolveConfirm(false); });
     this.confirmKey.on('down', () => this.confirm());
   }
 
@@ -266,18 +296,116 @@ export class TitleScene extends Phaser.Scene {
 
   // ── Confirm ───────────────────────────────────────────────────────────────
 
-  private confirm() {
-    if (this.selected === 1 && !this.hasSave) return;
+  /** Pick the furthest-progressed resumable city from save flags (recovery for old saves). */
+  private sceneFromProgress(d: Record<string, unknown>): string {
+    if (d['chapter11Done'] || d['championDefeated']) return 'CapitolCityScene';
+    if (d['sunriseGymDefeated'] || d['seventhTablet']) return 'SunriseCityScene';
+    if (d['forestGymDefeated'])   return 'ForestCityScene';
+    if (d['haeanGymDefeated'])    return 'HaeanCityScene';
+    if (d['geumgangGymDefeated']) return 'GeumgangCityScene';
+    if (d['baekduGymDefeated'])   return 'BaekduCityScene';
+    if (d['gymLeaderDefeated'])   return 'CapitolCityScene';
+    if (d['pineVisited'])         return 'PineNeedleTownScene';
+    if (d['capitolVisited'] || d['starterChosen']) return 'CapitolCityScene';
+    return 'WorldMapScene';
+  }
 
+  private confirm() {
+    // If the "start over?" prompt is open, this resolves it.
+    if (this.confirming) { this.resolveConfirm(this.confirmChoice === 1); return; }
+    if (this.selected === 1 && !this.hasSave) return;
+    // New Game with existing save → ask first, so a mis-click can't wipe progress.
+    if (this.selected === 0 && this.hasSave) { this.openNewGameConfirm(); return; }
+    this.doSelection();
+  }
+
+  private openNewGameConfirm() {
+    this.confirming = true;
+    this.confirmChoice = 0;   // default to the safe option
+    const cx = this.W / 2, cy = this.H / 2;
+    const c = this.add.container(0, 0).setDepth(60);
+    c.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.72));
+    c.add(this.add.rectangle(cx, cy, 580, 230, 0x1a0d2e, 0.99).setStrokeStyle(2, 0x8855bb));
+    c.add(this.add.text(cx, cy - 66, 'Start a new game?', { fontSize: '24px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    c.add(this.add.text(cx, cy - 18, 'Your current saved game will be erased.\nAre you sure you want to start over?', {
+      fontSize: '15px', color: '#ddd', align: 'center', lineSpacing: 5,
+    }).setOrigin(0.5));
+    const no = this.add.text(cx - 120, cy + 58, '  No, keep my save  ', { fontSize: '16px', color: '#fff', backgroundColor: '#33445a', padding: { x: 12, y: 8 } })
+      .setOrigin(0.5).setInteractive({ useHandCursor: true })
+      .on('pointerover', () => { this.confirmChoice = 0; this.refreshConfirm(); })
+      .on('pointerdown', () => this.resolveConfirm(false));
+    const yes = this.add.text(cx + 120, cy + 58, '  Yes, start over  ', { fontSize: '16px', color: '#fff', backgroundColor: '#7a2233', padding: { x: 12, y: 8 } })
+      .setOrigin(0.5).setInteractive({ useHandCursor: true })
+      .on('pointerover', () => { this.confirmChoice = 1; this.refreshConfirm(); })
+      .on('pointerdown', () => this.resolveConfirm(true));
+    c.add([no, yes]);
+    this.confirmBtns = [no, yes];
+    this.confirmOverlay = c;
+    this.refreshConfirm();
+  }
+
+  private refreshConfirm() {
+    this.confirmBtns.forEach((b, i) => {
+      const sel = i === this.confirmChoice;
+      b.setStyle({ backgroundColor: sel ? (i === 1 ? '#cc3355' : '#4a6a8a') : (i === 1 ? '#7a2233' : '#33445a') });
+      b.setColor(sel ? '#ffe44e' : '#ffffff');
+    });
+  }
+
+  private resolveConfirm(yes: boolean) {
+    this.confirming = false;
+    this.confirmOverlay?.destroy(true);
+    this.confirmOverlay = undefined;
+    this.confirmBtns = [];
+    if (yes) { this.selected = 0; this.doSelection(); }
+  }
+
+  private doSelection() {
     this.cameras.main.fadeOut(500, 0, 0, 0, () => {
       if (this.selected === 0) {
         SaveManager.delete();
         this.registry.reset();
-        this.scene.start('WorldMapScene');
+        this.scene.start('IntroScene');   // Prof. Song's welcome → boy/girl select → adventure
       } else {
         const save = SaveManager.load();
-        if (save) SaveManager.restore(this.registry, save);
-        this.scene.start('WorldMapScene');
+        let target = 'WorldMapScene';
+        if (save) {
+          SaveManager.restore(this.registry, save);
+          // Resume in a safe overworld scene matching where the player saved
+          const safe = ['WorldMapScene', 'RouteScene', 'Route2Scene',
+            'CapitolCityScene', 'PineNeedleTownScene', 'HanRiverParkScene',
+            'BaekduPassScene', 'BaekduCityScene',
+            'Route3Scene', 'GeumgangCityScene',
+            'Route4Scene', 'HaeanCityScene',
+            'Route5Scene', 'ForestCityScene',
+            'FerryScene', 'JejuPortScene', 'JejuVentScene', 'JejuCityScene',
+            'Route6Scene', 'SunriseCityScene',
+            'SunriseCliff1Scene', 'SunriseCliff2Scene', 'SunriseCliff3Scene',
+            'BaekduCheckpointScene', 'BaekduSummitScene',
+            'ScholarsRoadScene', 'LeaguePlazaScene', 'PokemonLeagueScene',
+            'NorthernColiseumScene', 'NorthernPlazaScene', 'PyeongyangCityScene',
+            'NorthernReachesScene', 'SacredPeakScene',
+            'DolmoeCityScene', 'DolmoeMineScene', 'SeoraeTownScene', 'SeoraePassScene',
+            // Northern 어사대 circuit — cities, routes, beaches & the mine
+            'KaesongCityScene', 'NampoCityScene', 'WonsanCityScene', 'HamhungCityScene',
+            'ChongjinCityScene', 'SinuijuCityScene', 'SamjiyonCityScene',
+            'RyesongValleyScene', 'AhobiryongPassScene', 'SijungCoastScene', 'ChilboHighlandsScene', 'KaemaPlateauScene',
+            'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene'];
+          const d = save.data ?? {};
+          const lastScene = d['lastScene'] as string | undefined;
+          // A WorldMap save is only trusted if the player has NO mid/late progress —
+          // otherwise it's a corrupted stamp, so recover from progress flags instead.
+          const lateProgress = !!(d['gymLeaderDefeated'] || d['baekduGymDefeated']
+            || d['geumgangGymDefeated'] || d['haeanGymDefeated'] || d['forestGymDefeated']);
+          const cand = (lastScene && safe.includes(lastScene)) ? lastScene
+            : (safe.includes(save.scene) ? save.scene : '');
+          if (cand && !(cand === 'WorldMapScene' && lateProgress)) {
+            target = cand;
+          } else {
+            target = this.sceneFromProgress(d);
+          }
+        }
+        this.scene.start(target);
       }
     });
   }

@@ -11,6 +11,11 @@ export function openSwitchPanel(
   activeSlot:   number,
   onCancel:     () => void,
   onSelect:     (slotIdx: number) => void,
+  allowCancel = true,    // false = forced switch (e.g. after a faint): no escape
+  // Which rows are selectable. Default = switch rules (a healthy, benched Pokémon).
+  // Item targeting passes its own (e.g. Revive → only fainted slots).
+  canSelectFn?: (entry: import('./PartySystem').PartyEntry, idx: number) => boolean,
+  title = 'Choose a Pokémon',
 ) {
   const W  = scene.scale.width;
   const H  = scene.scale.height;
@@ -32,20 +37,22 @@ export function openSwitchPanel(
 
   // Title
   overlay.add(
-    scene.add.text(cx, cy - 190, 'Choose a Pokémon', {
+    scene.add.text(cx, cy - 190, title, {
       fontSize: '18px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5),
   );
 
-  // Cancel button
-  const cancelBtn = scene.add.text(cx + panelW / 2 - 12, cy - 190, '✕  CANCEL', {
-    fontSize: '13px', color: '#aaaaaa',
-  }).setOrigin(1, 0.5)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerover',  () => cancelBtn.setColor('#ffffff'))
-    .on('pointerout',   () => cancelBtn.setColor('#aaaaaa'))
-    .on('pointerdown',  () => { overlay.destroy(true); onCancel(); });
-  overlay.add(cancelBtn);
+  // Cancel button (hidden on a forced switch — you must send something out)
+  if (allowCancel) {
+    const cancelBtn = scene.add.text(cx + panelW / 2 - 12, cy - 190, '✕  CANCEL', {
+      fontSize: '13px', color: '#aaaaaa',
+    }).setOrigin(1, 0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover',  () => cancelBtn.setColor('#ffffff'))
+      .on('pointerout',   () => cancelBtn.setColor('#aaaaaa'))
+      .on('pointerdown',  () => { overlay.destroy(true); onCancel(); });
+    overlay.add(cancelBtn);
+  }
 
   // Party rows
   for (let i = 0; i < 6; i++) {
@@ -67,7 +74,7 @@ export function openSwitchPanel(
 
     const isActive  = i === activeSlot;
     const isFainted = entry.hp <= 0;
-    const canSelect = !isActive && !isFainted;
+    const canSelect = canSelectFn ? canSelectFn(entry, i) : (!isActive && !isFainted);
 
     // Row bg
     const rowBg = scene.add.rectangle(cx, rowY, panelW - 40, rowH - 6,

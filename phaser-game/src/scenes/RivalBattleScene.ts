@@ -1,10 +1,18 @@
 import Phaser from 'phaser';
+import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
+import { playMoveFX } from '../systems/BattleFX';
+import { spriteScale } from '../data/SpriteScale';
 import { Pokemon, Move } from '../battle/Pokemon';
-import { STARTERS, TYPE_COLORS } from '../data/StarterData';
+import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
-import { buildFromEntry } from '../systems/PartyBattle';
+import { awardBenchExp } from '../systems/BattleExp';
+import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
+import { DexTracker } from '../systems/DexTracker';
+import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvatar';
+import { fitPortrait } from '../data/BattlePortraits';
+import { rivalTrainerName } from '../data/CharacterSprite';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
 
@@ -12,6 +20,8 @@ export class RivalBattleScene extends Phaser.Scene {
   private player!: Pokemon;
   private rival!: Pokemon;
   private state: BattleState = 'intro';
+  /** Gender-based rival trainer name: 'Minhyuk' (male) / 'Soohyun' (female). */
+  private get rivalTName() { return rivalTrainerName(this.registry); }
 
   // UI
   private dialogText!: Phaser.GameObjects.Text;
@@ -23,6 +33,8 @@ export class RivalBattleScene extends Phaser.Scene {
   private rivalLvText!: Phaser.GameObjects.Text;
   private playerSprite!: Phaser.GameObjects.Image;
   private rivalSprite!: Phaser.GameObjects.Image;
+  private playerTrainer?: Phaser.GameObjects.Image;
+  private rivalTrainer?: Phaser.GameObjects.Image;
   private actionPanel!: Phaser.GameObjects.Container;
   private movePanel!: Phaser.GameObjects.Container;
   private moveBtns: Phaser.GameObjects.Text[] = [];
@@ -34,6 +46,7 @@ export class RivalBattleScene extends Phaser.Scene {
   private H = 720;
   private readonly HP_BAR_W = 200;
   private activeSlot = 0;
+  private participants = new Set<number>([0]);
 
   constructor() { super('RivalBattleScene'); }
 
@@ -42,10 +55,19 @@ export class RivalBattleScene extends Phaser.Scene {
       if (!this.textures.exists(s.spriteKey))
         this.load.image(s.spriteKey, s.data.spriteUrl);
     });
+    PartySystem.get(this.registry).forEach(e => {
+      if (e.spriteKey && e.spriteUrl && !this.textures.exists(e.spriteKey))
+        this.load.image(e.spriteKey, e.spriteUrl);
+    });
+    for (const [key, url] of Object.entries(AVATAR_URL)) {
+      if (!this.textures.exists(key)) this.load.image(key, url);
+    }
   }
 
   create() {
     this.cameras.main.fadeIn(400);
+    pushBgm(this, 'rival');
+    this.events.once('shutdown', () => popBgm(this));
     this.buildPokemon();
     this.drawBackground();
     this.createHUDs();
@@ -54,6 +76,9 @@ export class RivalBattleScene extends Phaser.Scene {
     this.createActionPanel();
     this.createMovePanel();
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    // Open party/bag menu anytime
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => this.scene.launch('MenuScene'));
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => this.scene.launch('MenuScene'));
     this.hideAllPanels();
     this.startIntro();
   }
@@ -65,13 +90,24 @@ export class RivalBattleScene extends Phaser.Scene {
     const starterLevel = (this.registry.get('starterLevel') as number) ?? 5;
     const rivalKey     = (this.registry.get('rivalKey')     as string) ?? 'onnurian';
 
-    const playerDef = STARTERS.find(s => s.spriteKey === starterKey) ?? STARTERS[1];
-    const rivalDef  = STARTERS.find(s => s.spriteKey === rivalKey)   ?? STARTERS[2];
+    // Player from party slot 0
+    PartySystem.syncSlot0FromStarter(this.registry);
+    const party = PartySystem.get(this.registry);
+    // Lead with the first NON-fainted Pokémon so a fainted lead never enters battle.
+    this.activeSlot = Math.max(0, party.findIndex(e => e && e.hp > 0));
+    if (party.length > 0) {
+      this.player = buildFromEntry(party[this.activeSlot]);
+      this.participants = new Set<number>([this.activeSlot]);
+    } else {
+      const playerDef = findForm(starterKey) ?? STARTERS[1];
+      this.player = new Pokemon(playerDef.data, starterLevel, playerDef.startingMoves);
+      this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    }
 
-    this.player = new Pokemon(playerDef.data, starterLevel, playerDef.startingMoves);
-    this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
     // First rival encounter: rival only knows Tackle to keep it fair
-    this.rival  = new Pokemon(rivalDef.data, starterLevel, [rivalDef.startingMoves[0]]);
+    const rivalDef = findForm(rivalKey) ?? STARTERS[2];
+    this.rival = new Pokemon(rivalDef.data, starterLevel, [rivalDef.startingMoves[0]]);
+    DexTracker.markSeen(this.registry, rivalKey);
   }
 
   // ── Background ────────────────────────────────────────────────────────────
@@ -86,7 +122,7 @@ export class RivalBattleScene extends Phaser.Scene {
     g.fillTriangle(160, 210, 320, 80, 480, 210);
     g.fillTriangle(380, 205, 560, 70, 740, 205);
     // Ground
-    g.fillStyle(0x5a9a3a, 1); g.fillRect(0, 195, this.W, 110);
+    g.fillStyle(0x5a9a3a, 1); g.fillRect(0, 195, this.W, this.H - 315);   // green field down to the dialog box (no black gap)
     // Dirt patch (player side)
     g.fillStyle(0xc8a870, 1); g.fillEllipse(220, 280, 160, 30);
     // Dirt patch (rival side)
@@ -144,19 +180,31 @@ export class RivalBattleScene extends Phaser.Scene {
 
   private createSprites() {
     const rKey = (this.registry.get('rivalKey') as string) ?? 'onnurian';
-    const pKey = (this.registry.get('starterKey') as string) ?? 'vipour';
+    const pKey = PartySystem.get(this.registry)[this.activeSlot]?.spriteKey
+               ?? (this.registry.get('starterKey') as string) ?? 'vipour';
 
     // Start off-screen: rival enters from top-right, player from bottom-left
     this.rivalSprite  = this.add.image(960, 60,  rKey).setDepth(5).setAlpha(0);
     this.playerSprite = this.add.image(-80, 320,  pKey).setDepth(5).setFlipX(true).setAlpha(0);
-    this.fitSprite(this.rivalSprite, 130);
+    this.fitSprite(this.rivalSprite, 168);   // enlarge the rival's Pokémon so it reads as a real threat
     this.fitSprite(this.playerSprite, 150);
+
+    // Trainer portraits — each stands where its Pokémon will appear, shown during the intro only.
+    const pAvatar = playerAvatarKey(this.registry), rAvatar = rivalAvatarKey(this.registry);
+    if (this.textures.exists(pAvatar)) {
+      this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0);
+      fitPortrait(this.playerTrainer);
+    }
+    if (this.textures.exists(rAvatar)) {
+      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true);
+      fitPortrait(this.rivalTrainer);
+    }
   }
 
   private fitSprite(img: Phaser.GameObjects.Image, targetSize: number) {
     const tex = this.textures.get(img.texture.key).getSourceImage();
     const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
-    img.setScale(targetSize / dim);
+    img.setScale((targetSize * spriteScale(img.texture.key)) / dim);
   }
 
   // ── Dialog ────────────────────────────────────────────────────────────────
@@ -195,7 +243,7 @@ export class RivalBattleScene extends Phaser.Scene {
         this.typeDialog("You can't run from a trainer battle!", () => this.playerAction());
       }},
       { label: 'BAG', x: 20, y: 72, cb: () => {
-        this.typeDialog('Minhyuk: No items in a fair fight!', () => this.playerAction());
+        this.typeDialog(`${this.rivalTName}: No items in a fair fight!`, () => this.playerAction());
       }},
       { label: 'POKÉMON',    x: 155, y: 72, cb: () => this.onSwitchPokemon() },
     ];
@@ -255,11 +303,13 @@ export class RivalBattleScene extends Phaser.Scene {
   private startIntro() {
     const sName = this.player.name;
     const rName = this.rival.name;   // dynamic — matches actual rival Pokémon
+    // Trainer portraits step in for the pre-battle dialogue.
+    this.tweens.add({ targets: [this.playerTrainer, this.rivalTrainer].filter(Boolean), alpha: 1, duration: 350 });
     // Phase 1 — pre-battle dialogue, no Pokémon visible yet
-    this.typeDialog(`Minhyuk: Hey! Stop right there.`, () => {
-      this.typeDialog(`Minhyuk: You think you can just leave town with ${sName}?`, () => {
-        this.typeDialog(`Minhyuk: I chose ${rName}.\nWe have both been waiting for this.`, () => {
-          this.typeDialog(`Minhyuk: We battle. Right here, right now!`, () => {
+    this.typeDialog(`${this.rivalTName}: Hey! Stop right there.`, () => {
+      this.typeDialog(`${this.rivalTName}: You think you can just leave town with ${sName}?`, () => {
+        this.typeDialog(`${this.rivalTName}: I chose ${rName}.\nWe have both been waiting for this.`, () => {
+          this.typeDialog(`${this.rivalTName}: We battle. Right here, right now!`, () => {
             // Phase 2 — battle begins: reveal Pokémon and HUDs
             this.revealBattle();
           });
@@ -269,6 +319,9 @@ export class RivalBattleScene extends Phaser.Scene {
   }
 
   private revealBattle() {
+    // Portraits fade out; the Pokémon take their places.
+    if (this.playerTrainer) this.tweens.add({ targets: this.playerTrainer, alpha: 0, duration: 300 });
+    if (this.rivalTrainer)  this.tweens.add({ targets: this.rivalTrainer, alpha: 0, duration: 300 });
     // Rival Pokémon slides in from top-right
     this.rivalSprite.setAlpha(1);
     this.tweens.add({
@@ -276,7 +329,7 @@ export class RivalBattleScene extends Phaser.Scene {
       x: 580, y: 130,
       duration: 500, ease: 'Power2',
       onComplete: () => {
-        this.typeDialog(`Minhyuk sent out ${this.rival.name}!`, () => {
+        this.typeDialog(`${this.rivalTName} sent out ${this.rival.name}!`, () => {
           // Player Pokémon slides in from bottom-left
           this.playerSprite.setAlpha(1);
           this.tweens.add({
@@ -324,11 +377,13 @@ export class RivalBattleScene extends Phaser.Scene {
   private runTurn(playerMove: Move) {
     this.state = 'busy';
     this.player.useMove(playerMove);
+    persistMovePP(this.registry, this.activeSlot, this.player);   // PP persists across battles
 
     // Player attacks first (simplified — speed comparison could be added later)
     this.typeDialog(`${this.player.name} used ${playerMove.data.name}!`, () => {
       if (playerMove.data.power > 0) {
         const { dmg, critical, effectiveness } = this.rival.takeDamage(playerMove, this.player);
+        playMoveFX(this, this.playerSprite, this.rivalSprite, playerMove.data, effectiveness, () => {});
         let msg = '';
         if (critical)          msg += "A critical hit!  ";
         if (effectiveness > 1) msg += "It's super effective!";
@@ -361,9 +416,10 @@ export class RivalBattleScene extends Phaser.Scene {
       : this.rival.moves[0];
 
     this.rival.useMove(rivalMove);
-    this.typeDialog(`Minhyuk's ${this.rival.name} used ${rivalMove.data.name}!`, () => {
+    this.typeDialog(`${this.rivalTName}'s ${this.rival.name} used ${rivalMove.data.name}!`, () => {
       if (rivalMove.data.power > 0) {
-        this.player.takeDamage(rivalMove, this.rival);
+        const { effectiveness } = this.player.takeDamage(rivalMove, this.rival);
+        playMoveFX(this, this.rivalSprite, this.playerSprite, rivalMove.data, effectiveness, () => {});
         this.animateHpBar('player', () => {
           if (this.player.isKO) {
             this.typeDialog(`${this.player.name} fainted...`, () => this.rivalSendNextOrLose());
@@ -392,9 +448,11 @@ export class RivalBattleScene extends Phaser.Scene {
   private voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
     this.activeSlot = slotIdx;
+    this.participants.add(slotIdx);
     const party = PartySystem.get(this.registry);
     const entry = party[slotIdx];
     this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
 
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.animateHpBar('player', () => {});
@@ -421,8 +479,10 @@ export class RivalBattleScene extends Phaser.Scene {
     if (nextIdx === -1) { this.handleLoss(); return; }
 
     this.activeSlot = nextIdx;
+    this.participants.add(nextIdx);
     const entry = party[nextIdx];
     this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.animateHpBar('player', () => {});
 
@@ -444,19 +504,26 @@ export class RivalBattleScene extends Phaser.Scene {
 
   private handleWin() {
     this.state = 'over';
+    stopBgm(this);               // silence the rival theme so only the victory jingle plays
+    playJingle(this, 'victory');
     this.hideAllPanels();
     this.registry.set('rivalBattleDone', true);
 
     const expGained  = this.rival.level * 25;  // generous: ensures level-up at level 5
     const levelledUp = this.player.gainExp(expGained);
-    this.registry.set('starterLevel', this.player.level);
-    this.registry.set('starterExp',   this.player.exp);
-    PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+    PartySystem.updateSlotProgress(
+      this.registry, this.activeSlot,
+      this.player.level, this.player.exp, this.player.hp, this.player.maxHp,
+    );
 
-    let text = `Minhyuk: Tch. You got me this time.\n${this.player.name} gained ${expGained} EXP!`;
+    let text = `${this.rivalTName}: Tch. You got me this time.\n${this.player.name} gained ${expGained} EXP!`;
     if (levelledUp) {
       this.playerLvText.setText(`Lv.${this.player.level}`);
       text += `\n✨ ${this.player.name} grew to Lv. ${this.player.level}!`;
+    }
+    // Other participants share the EXP too.
+    for (const line of awardBenchExp(this.registry, this.participants, this.activeSlot, expGained)) {
+      text += `\n${line}`;
     }
     text += '\nReturning to Waterfall City...';
 
@@ -479,7 +546,7 @@ export class RivalBattleScene extends Phaser.Scene {
     this.hideAllPanels();
 
     this.dialogText.setText(
-      "You lost...\nMinhyuk: Don't give up. Come back stronger!\nMom healed your Pokémon at home.",
+      `You lost...\n${this.rivalTName}: Don't give up. Come back stronger!\nMom healed your Pokémon at home.`,
     );
 
     this.registry.set('playerHealed', true);
@@ -500,6 +567,7 @@ export class RivalBattleScene extends Phaser.Scene {
 
   // ── UI helpers ────────────────────────────────────────────────────────────
 
+  private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
   private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
   private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
   private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }

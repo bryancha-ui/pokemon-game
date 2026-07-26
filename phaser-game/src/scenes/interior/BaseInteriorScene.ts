@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { DialogBox } from '../../ui/DialogBox';
+import { drawTrainerBody, playerDesign } from '../../data/CharacterSprite';
+import { playBgm } from '../../systems/Music';
 
 const IT = 32; // interior tile size
 
@@ -35,10 +37,14 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+  /** Optional interior music key (e.g. 'center', 'mart'); subclasses set it. */
+  protected bgmKey?: string;
+
   create() {
     this.offsetX = (this.scale.width  - this.COLS * IT) / 2;
     this.offsetY = (this.scale.height - this.ROWS * IT) / 2;
 
+    if (this.bgmKey) playBgm(this, this.bgmKey);
     this.drawRoom();
     this.setupNPCs();
     this.placePlayer();
@@ -218,14 +224,8 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   protected redrawPlayer() {
     const g = this.playerG;
     g.clear();
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 12, 16, 5);
-    g.fillStyle(0x1a1a6e, 1);   g.fillRect(-6, 2, 5, 8); g.fillRect(1, 2, 5, 8);
-    g.fillStyle(0xcc2222, 1);   g.fillRect(-7, -8, 14, 11);
-    g.fillStyle(0xcc2222, 1);   g.fillRect(-11, -7, 4, 8); g.fillRect(7, -7, 4, 8);
-    g.fillStyle(0xffffff, 1);   g.fillRect(-2, -8, 4, 4);
-    g.fillStyle(0xffcc99, 1);   g.fillRect(-7, -22, 14, 12);
-    g.fillStyle(0x1a1008, 1);   g.fillRect(-7, -22, 14, 5);
-    g.fillStyle(0x000000, 1);   g.fillRect(-4, -16, 2, 2); g.fillRect(2, -16, 2, 2);
+    // Gender-aware body so a girl doesn't turn into the default red-shirt sprite indoors.
+    drawTrainerBody(g, 0, 0, playerDesign(this.registry));
     g.setPosition(this.px, this.py);
   }
 

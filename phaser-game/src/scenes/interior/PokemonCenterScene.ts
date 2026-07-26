@@ -1,7 +1,18 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
+import { PartySystem } from '../../systems/PartySystem';
+import { playJingle } from '../../systems/Music';
 
 export class PokemonCenterScene extends BaseInteriorScene {
+  protected bgmKey = 'center';
   constructor() { super({ key: 'PokemonCenterScene' }); }
+
+  create() {
+    // This Pokémon Center is shared by several overworld scenes (Waterfall, Kaesong…);
+    // honour whoever sent us here so the south exit returns to the right city.
+    const ret = this.registry.get('pcReturnScene');
+    this.returnSceneKey = (typeof ret === 'string' && ret) ? ret : 'WorldMapScene';
+    super.create();
+  }
 
   protected drawRoom() {
     const g = this.add.graphics().setDepth(0);
@@ -69,27 +80,64 @@ export class PokemonCenterScene extends BaseInteriorScene {
   }
 
   protected setupNPCs() {
+    // Nurse Joy (heals)
     const nurse = this.createNPCGraphic(7, 2, 0xffffff, 0xff88aa, true, 0);
-    this.add.text(
-      this.tile(7, 2).x + 16,
-      this.tile(7, 2).y - 6,
-      'Nurse Joy', { fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
+    (nurse as NPC & { role?: string }).role = 'nurse';
+    this.add.text(this.tile(7, 2).x + 16, this.tile(7, 2).y - 6, 'Nurse Joy',
+      { fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(nurse);
+
+    // Mart Clerk (shop)
+    const clerk = this.createNPCGraphic(3, 6, 0x33aa66, 0x223322, false, 0);
+    (clerk as NPC & { role?: string }).role = 'clerk';
+    this.add.text(this.tile(3, 6).x + 16, this.tile(3, 6).y - 6, 'Mart Clerk',
+      { fontSize: '10px', color: '#aaffcc', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
+    ).setOrigin(0.5, 1).setDepth(16);
+    this.npcs.push(clerk);
+
+    // PC (storage box)
+    const pc = this.createNPCGraphic(13, 6, 0x4466cc, 0x112244, false, 0);
+    (pc as NPC & { role?: string }).role = 'pc';
+    this.add.text(this.tile(13, 6).x + 16, this.tile(13, 6).y - 6, '💻 PC',
+      { fontSize: '10px', color: '#aaccff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
+    ).setOrigin(0.5, 1).setDepth(16);
+    this.npcs.push(pc);
   }
 
   protected placePlayer() {
     this.createPlayerGraphic(7, 11);
   }
 
-  protected onInteract(_npc: NPC) {
+  protected onInteract(npc: NPC) {
+    const role = (npc as NPC & { role?: string }).role ?? 'nurse';
+
+    if (role === 'clerk') {
+      this.dialog.show(['Mart Clerk: Welcome! Take a look at our wares.'], () => {
+        this.scene.launch('ShopScene', { parentKey: this.scene.key });
+        this.scene.pause();
+      });
+      return;
+    }
+
+    if (role === 'pc') {
+      this.dialog.show(["Trainer's PC: Accessing Pokémon storage system..."], () => {
+        this.scene.launch('BoxScene', { parentKey: this.scene.key });
+        this.scene.pause();
+      });
+      return;
+    }
+
+    // Nurse — heal the party
     this.dialog.show(
       ['Nurse Joy: Welcome to the Pokémon Center! 🌸',
        'Nurse Joy: We restore your tired Pokémon.\nShall I heal your Pokémon?'],
       () => {
         this.dialog.showChoice(
           () => {
+            PartySystem.healAll(this.registry);
             this.registry.set('playerHealed', true);
+            playJingle(this, 'heal');   // healing chime
             this.dialog.show([
               'Nurse Joy: We\'ll take your Pokémon for just a moment!',
               '...  ✨  ...  ✨  ...  ✨',

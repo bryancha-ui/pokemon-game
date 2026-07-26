@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
+import { playBgm } from '../systems/Music';
+import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
+import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
+import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
+import { PartySystem } from '../systems/PartySystem';
+import { Inventory } from '../systems/Items';
 
 // ── City tile types ────────────────────────────────────────────────────────────
 const C = {
@@ -111,8 +117,10 @@ function buildCityMap(): CTile[][] {
 
   // ── South residential (rows 58-68) ───────────────────────────────────────
   fill(58, 2, 68, CCOLS - 2, SW);
-  // Apartment blocks
-  [[59,3,67,8],[59,10,67,15],[59,28,67,34],[59,36,67,42]].forEach(
+  // Apartment blocks. The two EASTERN blocks sit south of the river boulevard
+  // (rows 63-66) so the avenue runs cleanly between buildings instead of slicing
+  // through them; the western blocks keep their full height.
+  [[59,3,67,8],[59,10,67,15],[63,28,67,34],[63,36,67,42]].forEach(
     ([r1,c1,r2,c2]) => fill(r1,c1,r2,c2,B)
   );
   // Parks
@@ -136,6 +144,13 @@ function buildCityMap(): CTile[][] {
   fill(34, 2, 36, CCOLS - 2, R);
   fill(51, 2, 53, CCOLS - 2, R);
   fill(68, 2, 70, CCOLS - 2, R);
+
+  // ── East avenue out to the Han River Park (rows 60-62) ──────────────────────
+  // A grand tree-lined boulevard running from the central road east, opening a gate
+  // to the riverside district. It runs BETWEEN the residential blocks (which sit to
+  // its south), never through them.
+  fill(60, 26, 63, CCOLS, R);
+  for (const c of [27, 31, 35, 39, 43]) map[59][c] = TR;   // tree-lined north kerb
 
   void G; void T;
   return map;
@@ -163,6 +178,9 @@ const LOCATIONS: CityLocation[] = [
   { label: "Central Market",   scene: 'CapitolMarketScene',
     doorRow: 51, doorCol: 17,
     x: 15, y: 44, w: 6, h: 8, roofColor: 0xee8833, wallColor: 0xffcc88 },
+  { label: "Dept. Store (6F)", scene: 'DeptStoreScene',
+    doorRow: 51, doorCol: 35,
+    x: 27, y: 44, w: 17, h: 8, roofColor: 0x2a6a9a, wallColor: 0xcfd8e0 },
   { label: "Capitol GYM",      scene: 'CapitolGymScene',
     doorRow: 14, doorCol: 23,
     x: 14, y: 3, w: 20, h: 12, roofColor: 0x222266, wallColor: 0x334477 },
@@ -181,9 +199,14 @@ export class CapitolCityScene extends Phaser.Scene {
   private locationText!: Phaser.GameObjects.Text;
 
   private px = 24 * TILE + 16;
-  private py = 69 * TILE + 16;   // start near south entrance
+  private py = 67 * TILE + 16;   // start near south entrance (kept clear of the south-exit row)
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
+  private cycling = false;
+  private spawnGuard = false;
+  private spawnPx = 0; private spawnPy = 0;   // exits arm once the player has stepped away from here
+  private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
+  private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;
   private readonly RUN_SPEED = 260;
 
@@ -191,12 +214,21 @@ export class CapitolCityScene extends Phaser.Scene {
 
   preload() {
     if (!this.textures.exists('corrpanda'))
-      this.load.image('corrpanda', '/assets/corrpanda.png');
+      this.load.image('corrpanda', 'assets/corrpanda.png');
   }
 
   create() {
+
+    playBgm(this, 'sudo');
     this.cutsceneActive = false;
     this.walkFrame = 0; this.walkTimer = 0;
+    // Grace period: ignore edge exits briefly after spawning so we never bounce
+    // straight back out through the boundary we just entered from.
+    this.spawnGuard = true;
+    this.northArmed = false;
+    this.eastArmed = false;
+    this.cycling = false;
+    this.time.delayedCall(600, () => { this.spawnGuard = false; });
     this.input.keyboard?.resetKeys();
 
     // Restore position
@@ -204,6 +236,7 @@ export class CapitolCityScene extends Phaser.Scene {
     const ry = this.registry.get('capitalReturnY') as number | undefined;
     if (rx !== undefined) { this.px = rx; this.py = ry as number; }
     this.registry.remove('capitalReturnX'); this.registry.remove('capitalReturnY');
+    this.spawnPx = this.px; this.spawnPy = this.py;
 
     this.map = buildCityMap();
     this.drawCity();
@@ -228,7 +261,336 @@ export class CapitolCityScene extends Phaser.Scene {
           'The Gym Leader Jin awaits at the northern gym.\nPrepare well — her shadow Pokémon are powerful.',
         ], () => { this.cutsceneActive = false; });
       });
+    } else if (this.registry.get('gymLeaderDefeated') && !this.registry.get('newsShown')) {
+      // News broadcast cutscene — plays once after beating the gym
+      this.registry.set('newsShown', true);
+      this.time.delayedCall(700, () => this.playNewsBroadcast());
+    } else if (this.registry.get('chapter11Done') && !this.registry.get('ch12IntroShown')) {
+      // Epilogue / Chapter 12 hook — plays once on returning after Baekdu Peak
+      this.registry.set('ch12IntroShown', true);
+      this.time.delayedCall(700, () => this.playEpilogue());
+    } else if (this.registry.get('championDefeated') && !this.registry.get('flyHmGiven')) {
+      // Champion returns home — Professor Song awards HM Fly. Plays once.
+      this.time.delayedCall(700, () => this.playChampionReturn());
+    } else if (this.registry.get('northLeagueDone') && !this.registry.get('northReunionSeen')) {
+      // POST-GAME I aftermath — Hwangeum meets you at the station. Plays once.
+      this.time.delayedCall(700, () => this.playNorthernReunion());
+    } else if (this.registry.get('partyDayDone') && !this.registry.get('partIIDone') && !this.registry.get('partIIStarted')) {
+      // POST-GAME II hook — Professor Song's briefing + the road to the northern reaches.
+      this.time.delayedCall(700, () => this.playPartIIBriefing());
+    } else {
+      // Trigger any pending evolutions on return from battle
+      this.time.delayedCall(300, () => maybeLaunchEvolution(this));
     }
+
+    if (this.registry.get('sunriseGymDefeated')) this.drawScholarsGate();
+  }
+
+  // ── Scholars' Road trailhead (post-Baekdu) ─────────────────────────────────
+  private readonly SCHOLARS_GATE = { col: 6, row: 31 };
+  private drawScholarsGate() {
+    const x = this.SCHOLARS_GATE.col * TILE + 16, y = this.SCHOLARS_GATE.row * TILE + 16;
+    const g = this.add.graphics().setDepth(6);
+    g.fillStyle(0x000000, 0.2); g.fillEllipse(x, y + 14, 40, 8);
+    g.fillStyle(0x6a5a3a); g.fillRect(x - 22, y - 26, 6, 40); g.fillRect(x + 16, y - 26, 6, 40);
+    g.fillStyle(0x8a6a3a); g.fillRect(x - 28, y - 30, 56, 8);
+    g.fillStyle(0x4a3a20); g.fillRect(x - 26, y - 22, 52, 4);
+    this.add.text(x, y - 38, '⛩ Scholars\' Road', {
+      fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5).setDepth(7);
+  }
+
+  private playEpilogue() {
+    this.cutsceneActive = true;
+    this.dialog.show([
+      'In the weeks after Baekdu Peak, the region steadies. Director Suri turns herself in with full documentation; her late repentance is noted in her case.',
+      'Chaeyeon leads the regional restoration — real, patient work. Commander Ryeo and Executive Mubaek are taken into custody. Ryeo says only: "The cause was just. The method was wrong. I know the difference now."',
+      'Freed from the matrix, 풍백, 우사, and 운사 return to roaming the wild peaks — Wind on the high ridges, Rain in the storm valleys, Clouds at the cloud-wreathed summits.',
+      'Professor Song: The Spirit\'s return stabilized the region. The three old spirits are free. And 나비할망 found her guardian. Remarkable. Both of you.',
+      'Professor Song: There\'s one road left to walk. The Hanbando Pokémon League sits beyond the mountains — and Scholars\' Road begins right here, behind the palace where your journey started.',
+      'A grand stone gate has opened behind the palace. ⛩ Scholars\' Road is now open.',
+    ], () => { this.cutsceneActive = false; });
+  }
+
+  /** Champion homecoming — Professor Song walks up to you and hands over HM Fly (one-time). */
+  private playChampionReturn() {
+    this.cutsceneActive = true;
+    this.registry.set('flyHmGiven', true);
+    this.facing = 1;                        // face up, toward the approaching Professor
+    this.drawChar();
+
+    const startY = this.py - TILE * 5.5;    // enters from the plaza to the north
+    const stopY  = this.py - TILE * 1.6;    // halts just in front of the champion
+
+    const prof = this.add.graphics().setDepth(21);
+    const tag  = this.add.text(this.px, startY - 30, 'Professor Song', {
+      fontSize: '10px', color: '#bfe4ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(22);
+    this.drawProfessor(prof, this.px, startY, 0);
+
+    // Walk in → award + dialog → walk back out.
+    this.walkProfessor(prof, tag, startY, stopY, () => {
+      this.registry.set('hasFlyHM', true);
+      Inventory.add(this.registry, 'hm_fly', 1);                  // HM goes in the Bag (reusable)
+
+      // Auto-teach Fly to a Flying-type on the team, if any, so you can Fly right away.
+      const party = PartySystem.get(this.registry);
+      // Only auto-teach when there's a free move slot — never silently overwrite a
+      // 4th move here. A full-moveset flyer is taught from the Bag, where the player
+      // gets to choose which move to forget.
+      const flyerIdx = party.findIndex(p =>
+        [p.type1, p.type2].some(t => (t ?? '').toLowerCase() === 'flying') &&
+        !p.moves.some(m => m.toLowerCase() === 'fly') &&
+        p.moves.length < 4);
+      let learnLine: string;
+      if (flyerIdx >= 0) {
+        PartySystem.teachMove(this.registry, flyerIdx, 'Fly');
+        learnLine = `✈ You received HM01 FLY!  ${party[flyerIdx].name} learned Fly!`;
+      } else {
+        learnLine = '✈ You received HM01 FLY!  Use it from your Bag to teach Fly to a Flying-type — if its moves are full, you choose which to forget.';
+      }
+
+      SaveManager.save(this.registry, this.px, this.py, 'CapitolCityScene');   // persist the award
+      this.dialog.show([
+        'Professor Song hurries across the plaza to meet you as you return home, Champion.',
+        'Professor Song: The whole region saw it. You did what no one else could — and you never once stopped putting your Pokémon first.',
+        'Professor Song: Here — I had this prepared the moment I heard the news. Champions shouldn\'t have to walk everywhere.',
+        learnLine,
+        'Professor Song: The HM stays in your Bag — teach Fly to any Flying-type. Then open the Town Map, pick a city you\'ve visited, and Fly straight there.',
+        'Professor Song: And there\'s something else. Word from beyond the northern border — the Northern League, and the eight 어사대 provinces that guard the road to it. They\'ve heard of you.',
+        'Professor Song: They say a coach runs from Waterfall City now, all the way up to Kaesong — first of the eight. If you mean to go north, that bus is how you\'ll get there. Go — see the region you saved, and the one beyond it.',
+      ], () => {
+        this.walkProfessor(prof, tag, stopY, startY, () => {
+          prof.destroy(); tag.destroy();
+          this.cutsceneActive = false;
+        });
+      });
+    });
+  }
+
+  /** Tween the Professor sprite along the player's column with animated steps. */
+  private walkProfessor(
+    prof: Phaser.GameObjects.Graphics, tag: Phaser.GameObjects.Text,
+    fromY: number, toY: number, onDone: () => void,
+  ) {
+    const proxy = { y: fromY };
+    let frame = 0;
+    const step = this.time.addEvent({ delay: 140, loop: true, callback: () => { frame ^= 1; } });
+    this.tweens.add({
+      targets: proxy, y: toY,
+      duration: Math.max(500, (Math.abs(toY - fromY) / TILE) * 260),
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        this.drawProfessor(prof, this.px, proxy.y, frame);
+        tag.setPosition(this.px, proxy.y - 30);
+      },
+      onComplete: () => {
+        step.remove();
+        this.drawProfessor(prof, this.px, toY, 0);   // settle to idle pose
+        onDone();
+      },
+    });
+  }
+
+  /** A grey-haired professor in a lab coat, drawn to match the town character style. */
+  private drawProfessor(g: Phaser.GameObjects.Graphics, x: number, y: number, frame: number) {
+    g.clear();
+    const lx = -8, rx = 3;
+    const ly = frame === 0 ? 9 : 6, ry = frame === 0 ? 6 : 9;
+    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 20, 6);
+    g.fillStyle(0x3a2a18); g.fillRect(lx, ly, 6, 5); g.fillRect(rx, ry, 6, 5);      // shoes
+    g.fillStyle(0x555560); g.fillRect(lx + 1, ly - 7, 4, 8); g.fillRect(rx + 1, ry - 7, 4, 8); // trousers
+    g.fillStyle(0xffffff); g.fillRect(-9, -8, 18, 14);                              // lab coat
+    g.fillStyle(0xdfe4ea); g.fillRect(-1, -8, 2, 14);                               // coat seam
+    g.fillStyle(0xffffff); g.fillRect(-13, -7, 5, 11); g.fillRect(8, -7, 5, 11);    // sleeves
+    g.fillStyle(0xffcc99); g.fillRect(-13, 4, 5, 4); g.fillRect(8, 4, 5, 4);        // hands
+    g.fillStyle(0xffcc99); g.fillRect(-7, -22, 14, 13);                             // face/neck
+    g.fillStyle(0x9a9a9a); g.fillRect(-7, -22, 14, 5); g.fillRect(-7, -22, 3, 10); g.fillRect(4, -22, 3, 10); // grey hair
+    g.fillStyle(0x222222); g.fillRect(-5, -16, 4, 3); g.fillRect(1, -16, 4, 3); g.fillRect(-1, -15, 2, 1);    // glasses
+    g.fillStyle(0x000000); g.fillRect(-4, -15, 1, 1); g.fillRect(2, -15, 1, 1);     // eyes
+    g.setPosition(x, y);
+  }
+
+  /** Hwangeum meets the returning northern victor at the Capitol station (one-time). */
+  /** Homecoming after the Northern League: the whole cast gathers at Capitol, a
+   *  party runs into the night, and the next morning teases the road ahead. */
+  private playNorthernReunion() {
+    this.cutsceneActive = true;
+    this.registry.set('northReunionSeen', true);
+    this.registry.remove('northReunionPending');
+    this.facing = 1; this.drawChar();   // face the crowd
+
+    const guests = this.drawPartyGuests();
+    this.dialog.show([
+      'The Capitol station is packed — the whole region has come to meet the trainer who conquered the Northern League.',
+      'Champion Hwangeum: ...You actually did it. You beat Taewang. Three years I carried that loss — you lifted it clean off me. Thank you.',
+      'Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Hanbando\'s history.',
+      'Rival: I always said I\'d catch up to you someday. ...Yeah, I\'m nowhere close. And honestly? I have never been prouder to lose.',
+      'Admin Chaeyeon: Even the people you once fought stood in this crowd tonight. The region you healed came out for you.',
+      'Leader Byeoksan: Every Gym in Hanbando shut its doors today. Tonight — we drink to the Champion of Champions!',
+      'The plaza erupts. Lanterns go up over the Han River, the markets roll out food, and music starts.',
+    ], () => this.startParty(guests));
+  }
+
+  /** Draw the party guests in an arc around the champion. Returns them for cleanup. */
+  private drawPartyGuests(): Phaser.GameObjects.GameObject[] {
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const guest = (dx: number, dy: number, name: string, color: number, special?: 'prof' | 'rival') => {
+      const g = this.add.graphics().setDepth(22);
+      const x = this.px + dx, y = this.py + dy;
+      if (special === 'prof')       this.drawProfessor(g, x, y, 0);
+      else if (special === 'rival') { drawTrainerBody(g, 0, 0, rivalDesign(this.registry)); g.setPosition(x, y); }
+      else                          { drawNpcBody(g, color); g.setPosition(x, y); }
+      const t = this.add.text(x, y - 26, name, {
+        fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
+      }).setOrigin(0.5).setDepth(23);
+      objs.push(g, t);
+    };
+    guest(0,   -76, 'Champion Hwangeum', 0xffd54a);
+    guest(-92, -46, 'Prof. Song', 0, 'prof');
+    guest(92,  -46, 'Rival', 0, 'rival');
+    guest(-64, -96, 'Leader Namsun', 0xe28aa0);
+    guest(64,  -96, 'Leader Harang', 0x3a7ad9);
+    guest(-136, 4, 'Admin Chaeyeon', 0x3aa88a);
+    guest(136,  4, 'Leader Byeoksan', 0xd98a3a);
+    return objs;
+  }
+
+  private startParty(guests: Phaser.GameObjects.GameObject[]) {
+    const W = this.scale.width, H = this.scale.height;
+    // Evening glow + floating lanterns / confetti (camera-fixed overlay).
+    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a1030, 0.42).setScrollFactor(0).setDepth(150);
+    const festive: Phaser.GameObjects.GameObject[] = [dim];
+    const icons = ['🏮', '🎉', '✨', '🎊', '🏮'];
+    for (let i = 0; i < 12; i++) {
+      const l = this.add.text(Math.random() * W, H + 20, icons[i % icons.length], { fontSize: '22px' })
+        .setScrollFactor(0).setDepth(151);
+      festive.push(l);
+      this.tweens.add({ targets: l, y: 40 + Math.random() * H * 0.6, duration: 2200 + Math.random() * 2200, yoyo: true, repeat: -1, delay: Math.random() * 1500 });
+    }
+    const banner = this.add.text(W / 2, 74, '🎉  The Capitol throws a party in your honour!', {
+      fontSize: '18px', color: '#ffe44e', fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(152);
+    festive.push(banner);
+
+    this.dialog.show([
+      'Lanterns drift over the Han River and the whole city stays out until dawn.',
+      'Hwangeum: For one night — no titles, no battles. Just us and the region we love. Eat. Dance. You earned this.',
+      'Rival: Come on, Champion — one last race. First to the fountain! ...For old times\' sake.',
+      'The night blurs into music and light. For the first time since your journey began, there is nothing left to fight for. Only this.',
+    ], () => {
+      // The next morning.
+      this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
+        festive.forEach(k => k.destroy());
+        guests.forEach(k => k.destroy());
+        this.registry.set('partyDayDone', true);
+        this.cameras.main.fadeIn(800);
+        this.dialog.show([
+          '— The next morning —',
+          '📟 Your Pokédex buzzes before you\'re even fully awake — an incoming call from Professor Song.',
+          'Prof. Song (over the Pokédex, quietly): Champion. I let you have your night — you deserved a hundred of them. But those reports I mentioned...',
+          'Prof. Song: Something is stirring in the sealed northern reaches. 노스단 is moving again — and this time they reach for something far older than the Spirit of Cheonji.',
+          'Prof. Song: Rest today. Tomorrow, the last road begins. I\'ll call again when it\'s time.  (To be continued…)',
+        ], () => { this.cutsceneActive = false; });
+      });
+    });
+  }
+
+  // ── POST-GAME II — The Descent of Hwanung ──────────────────────────────────
+  /** Professor Song's briefing on 노스단's return + the road to the northern reaches. */
+  private playPartIIBriefing() {
+    this.cutsceneActive = true;
+    const full = !this.registry.get('partIIBriefed');
+    this.registry.set('partIIBriefed', true);
+    const intro = full ? [
+      '📟 Your Pokédex buzzes — an incoming call from Professor Song, back at the lab in Sudo City.',
+      'Prof. Song (over the Pokédex, grim): 노스단. Again — but bigger. With Commander Ryeo imprisoned, someone new has taken the banner, and they\'ve abandoned the old plan entirely.',
+      'Prof. Song: I\'m sending an image to your Pokédex now — an old scroll. A radiant figure descending, three spirits at its side. They reach for the one power above all others. 환웅 — Hwanung, the Sovereign Who Descended.',
+      'Prof. Song: If 노스단 captures Hwanung, they command the very force that shaped the region — north and south, in a single stroke.',
+      'Prof. Song: But the Sovereign only descends for one who has gathered his three attendants — 풍백 the Wind, 우사 the Rain, 운사 the Clouds. Find and catch them before 노스단 does.',
+      'Prof. Song: One more thing. The northern reaches are guarded by the 어사대 — the Royal Inspectorate. They trust outsiders even less than 노스단 does. You\'ll have to earn them, city by city.',
+      'Prof. Song: Ready the strongest team you have ever fielded, then take the road north. I\'ll stay on the Pokédex the whole way. Shall we go?',
+    ] : [
+      '📟 Your Pokédex buzzes — Professor Song.',
+      'Prof. Song (over the Pokédex): The northern reaches are waiting, Champion — and 노스단 is already climbing toward the shrines. Ready to head north?',
+    ];
+    this.dialog.show(intro, () => {
+      this.dialog.showChoice(() => this.travelToReaches(), () => { this.cutsceneActive = false; });
+    });
+  }
+
+  private travelToReaches() {
+    this.cutsceneActive = true;
+    this.registry.set('partIIStarted', true);
+    const W = this.scale.width, H = this.scale.height;
+    const g = this.add.graphics();
+    g.fillStyle(0x0c1424, 1); g.fillRect(0, 0, W, H);
+    g.fillStyle(0x1a2740, 1); g.fillTriangle(W * 0.1, H, W * 0.34, H * 0.28, W * 0.56, H);
+    g.fillStyle(0x22314e, 1); g.fillTriangle(W * 0.44, H, W * 0.7, H * 0.2, W * 0.98, H);
+    g.fillStyle(0xffffff, 0.85); g.fillTriangle(W * 0.7, H * 0.2, W * 0.66, H * 0.3, W * 0.74, H * 0.3);
+    for (let i = 0; i < 60; i++) g.fillStyle(0xffffff, Math.random()), g.fillCircle(Math.random() * W, Math.random() * H * 0.7, Math.random() < 0.5 ? 1 : 2);
+    const cap = this.add.text(W / 2, H * 0.12, '❄  Beyond the border tunnels — into the Northern Reaches…', {
+      fontSize: '17px', color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5, align: 'center',
+    }).setOrigin(0.5);
+    const root = this.add.container(0, 0, [g, cap]).setScrollFactor(0).setDepth(200);
+    const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
+    root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
+    this.time.delayedCall(2600, () => {
+      this.cameras.main.fadeOut(700, 0, 0, 0, () => this.scene.start('NorthernReachesScene'));
+    });
+  }
+
+  private checkScholarsGate() {
+    if (!this.registry.get('sunriseGymDefeated')) return;   // 8th badge opens the road to the Hanbando League
+    const wx = this.SCHOLARS_GATE.col * TILE + 16, wy = this.SCHOLARS_GATE.row * TILE + 16;
+    if (Math.hypot(this.px - wx, this.py - wy) > TILE * 1.4) return;
+    this.enterPrompt.setText('SPACE — Scholars\' Road → Pokémon League').setVisible(true);
+    if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
+    this.cutsceneActive = true;
+    this.registry.set('scholarsRoadReturnX', 12 * 32 + 16);
+    this.registry.set('scholarsRoadReturnY', 56 * 32 + 16);
+    this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('ScholarsRoadScene'));
+  }
+
+  // ── News broadcast (post-gym) ─────────────────────────────────────────────
+  private playNewsBroadcast() {
+    this.cutsceneActive = true;
+
+    // Big screen overlay in the plaza
+    const sw = 520, sh = 300;
+    const cx = this.scale.width / 2, cy = this.scale.height / 2 - 40;
+    const screen = this.add.container(0, 0).setScrollFactor(0).setDepth(150);
+    screen.add(this.add.rectangle(cx, cy, sw + 20, sh + 20, 0x111111).setStrokeStyle(4, 0x444444));
+    screen.add(this.add.rectangle(cx, cy, sw, sh, 0x0a1a2a));
+    // "LIVE" badge
+    screen.add(this.add.rectangle(cx - sw / 2 + 44, cy - sh / 2 + 24, 60, 24, 0xcc2222));
+    screen.add(this.add.text(cx - sw / 2 + 44, cy - sh / 2 + 24, '● LIVE', { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+    // News graphic — mountains + lake
+    const g = this.add.graphics().setScrollFactor(0).setDepth(151);
+    g.fillStyle(0x223344); g.fillTriangle(cx - 180, cy + 60, cx - 90, cy - 60, cx, cy + 60);
+    g.fillStyle(0x2a4055); g.fillTriangle(cx - 40, cy + 60, cx + 80, cy - 80, cx + 190, cy + 60);
+    g.fillStyle(0xffffff, 0.8); g.fillTriangle(cx + 80, cy - 80, cx + 64, cy - 50, cx + 96, cy - 50);
+    g.fillStyle(0x4488cc); g.fillEllipse(cx + 30, cy + 80, 220, 40);
+    screen.add(g);
+    screen.add(this.add.text(cx, cy + sh / 2 - 26, 'HANBANDO NEWS — Baekdu Highland', {
+      fontSize: '13px', color: '#ffe44e', backgroundColor: '#000000aa', padding: { x: 6, y: 3 },
+    }).setOrigin(0.5));
+
+    this.dialog.show([
+      'NEWS: Unusual seismic activity reported near the Baekdu Highland area...',
+      'NEWS: Researchers from the Hanbando Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...',
+    ], () => {
+      // Rival appears
+      this.dialog.show([
+        "Rival: That's the direction of Route 2. Baekdu Highland — that's where Professor Song said the trail leads.",
+        "Rival: Let's see who gets there first. Again.",
+        'Route 2 is now open to the NORTH of the city.',
+      ], () => {
+        screen.destroy(true);
+        this.registry.set('route2Unlocked', true);
+        this.cutsceneActive = false;
+      });
+    });
   }
 
   // ── Map drawing ───────────────────────────────────────────────────────────
@@ -334,20 +696,8 @@ export class CapitolCityScene extends Phaser.Scene {
     this.drawChar();
   }
   private drawChar() {
-    const g = this.playerG; g.clear();
-    const f = this.walkFrame, flip = this.facing === 2;
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 18, 6);
-    const lx = flip ? 3 : -8, rx = flip ? -8 : 3;
-    const ly = f === 0 ? 9 : 6, ry = f === 0 ? 6 : 9;
-    g.fillStyle(0x222222); g.fillRect(lx, ly, 6, 5); g.fillRect(rx, ry, 6, 5);
-    g.fillStyle(0x1a1a6e); g.fillRect(lx + 1, ly - 7, 4, 8); g.fillRect(rx + 1, ry - 7, 4, 8);
-    g.fillStyle(0xcc2222); g.fillRect(-8, -8, 16, 11);
-    g.fillStyle(0xcc2222); g.fillRect(-12, -7, 5, 9); g.fillRect(7, -7, 5, 9);
-    g.fillStyle(0xffffff); g.fillRect(-2, -8, 4, 4);
-    g.fillStyle(0xffcc99); g.fillRect(-7, -22, 14, 12);
-    g.fillStyle(0x1a1008); g.fillRect(-7, -22, 14, 5);
-    g.fillStyle(0x000000); g.fillRect(-4, -16, 2, 2); g.fillRect(2, -16, 2, 2);
-    g.setPosition(this.px, this.py);
+    (this.cycling ? drawRiderBody : drawTrainerBody)(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerG.setPosition(this.px, this.py);
   }
 
   private setupCamera() {
@@ -366,8 +716,13 @@ export class CapitolCityScene extends Phaser.Scene {
     };
     this.shiftKey    = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    this.input.keyboard!.on('keydown-M', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
-    this.input.keyboard!.on('keydown-B', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    // C — hop on / off the Bicycle (once obtained from the Han River Bike Shop).
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
+      if (this.cutsceneActive || !hasBike(this.registry)) return;
+      this.cycling = !this.cycling; this.drawChar();
+    });
   }
 
   private createUI() {
@@ -406,7 +761,7 @@ export class CapitolCityScene extends Phaser.Scene {
 
     const moving = dx !== 0 || dy !== 0;
     const running = moving && !!this.registry.get('hasRunningShoes') && this.shiftKey.isDown;
-    const speed   = running ? this.RUN_SPEED : this.SPEED;
+    const speed   = this.cycling ? BIKE_SPEED : (running ? this.RUN_SPEED : this.SPEED);
 
     if (moving) {
       const len = Math.sqrt(dx * dx + dy * dy);
@@ -420,8 +775,27 @@ export class CapitolCityScene extends Phaser.Scene {
 
     this.drawChar();
     this.checkBuildings();
+    this.checkScholarsGate();
     this.checkSouthExit();
+    this.checkNorthExit();
+    this.checkEastExit();
     this.locationText.setText(`🏙 Capitol City${this.py < 20 * TILE ? ' — Gym District' : this.py < 40 * TILE ? ' — Tower Quarter' : this.py < 55 * TILE ? ' — Commercial' : ''}`);
+  }
+
+  private checkNorthExit() {
+    if (this.spawnGuard) return;
+    // North gate opens after the gym is defeated → Route 2 (Scholar's Road)
+    if (!this.registry.get('route2Unlocked')) return;
+    // Arm only once the player has stepped down into the city, so arriving from
+    // Route 2 (which spawns near this gate) can't immediately bounce them back.
+    if (this.py > 4 * TILE) this.northArmed = true;
+    if (!this.northArmed) return;
+    if (this.py < 1.2 * TILE && !this.cutsceneActive) {
+      this.cutsceneActive = true;
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.scene.start('Route2Scene');
+      });
+    }
   }
 
   private collides(x: number, y: number): boolean {
@@ -457,7 +831,29 @@ export class CapitolCityScene extends Phaser.Scene {
     }
   }
 
+  private checkEastExit() {
+    if (this.spawnGuard) return;
+    // Arm only once the player has stepped west into the city, so returning from the
+    // park (which spawns near this gate) doesn't immediately bounce them back.
+    if (this.px < (CCOLS - 6) * TILE) this.eastArmed = true;
+    if (!this.eastArmed) return;
+    const row = Math.floor(this.py / TILE);
+    if (this.px > (CCOLS - 1.2) * TILE && row >= 60 && row <= 62 && !this.cutsceneActive) {
+      this.cutsceneActive = true;
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.registry.set('hanRiverReturnX', 23 * 32 + 16);
+        this.registry.set('hanRiverReturnY', 24 * 32 + 16);
+        this.scene.start('HanRiverParkScene');
+      });
+    }
+  }
+
   private checkSouthExit() {
+    if (this.spawnGuard) return;
+    // Only fire once the player has stepped away from where they spawned, so arriving
+    // from Route 1 (which spawns you near this exit) can't bounce you back — but you can
+    // still leave in one continuous walk toward the gate.
+    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.5 * TILE) return;
     if (this.py > (CROWS - 2) * TILE && !this.cutsceneActive) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

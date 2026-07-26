@@ -1,0 +1,638 @@
+import Phaser from 'phaser';
+import { vanishesAfterDefeat } from '../data/Villains';
+import { drawTrainerBody, drawNpcBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { DialogBox } from '../ui/DialogBox';
+import { SaveManager } from '../utils/SaveManager';
+import { playBgm } from '../systems/Music';
+import { DexTracker } from '../systems/DexTracker';
+import { PartySystem } from '../systems/PartySystem';
+import { Inventory } from '../systems/Items';
+import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
+import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
+import { customForm } from '../data/CustomBattle';
+
+// ── Tiles ───────────────────────────────────────────────────────────────────
+const T = { ROCK: 0, ASH: 1, TALLGRASS: 2, LAVA: 3, VENT: 4, SUMMIT: 5 } as const;
+type Tile = typeof T[keyof typeof T];
+const TILE = 32, COLS = 24, ROWS = 70;
+const COLORS: Record<Tile, number> = {
+  [T.ROCK]: 0x2a2228, [T.ASH]: 0x6a5a52, [T.TALLGRASS]: 0x5a6a3a, [T.LAVA]: 0xd84a1a,
+  [T.VENT]: 0x9a4a2a, [T.SUMMIT]: 0x7a6a60,
+};
+const SOLID = new Set<Tile>([T.ROCK, T.LAVA]);
+const ENCOUNTER = new Set<Tile>([T.TALLGRASS]);
+
+// Volcanic wild Pokémon (fire / rock / poison / ghost), mostly new customs
+const VENT_ENCOUNTERS: EncounterEntry[] = [
+  { id: 'blazekunk',     weight: 14, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 150 }, // Fire/Poison
+  { id: 'mushvenom',     weight: 14, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 150 }, // Rock/Poison
+  { id: 'liondance',     weight: 12, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 160 }, // Fire/Normal
+  { id: 'crystbeetle',   weight: 12, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 160 }, // Bug/Rock
+  { id: 'foxgeist',      weight: 10, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 150 }, // Poison/Ghost
+  { id: 'redheadagama',  weight: 10, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 150 }, // Fire/Dragon
+  { id: 'dynabeetle',    weight: 12, minLevel: 44, maxLevel: 48, isCustom: true,  catchRate: 150 }, // Bug/Fire (volcanic)
+  { id: 126, weight: 8, minLevel: 44, maxLevel: 48, isCustom: false, catchRate: 120 }, // Magmar
+  { id: 74,  weight: 10, minLevel: 44, maxLevel: 48, isCustom: false, catchRate: 200 }, // Geodude
+  { id: 218, weight: 8, minLevel: 44, maxLevel: 48, isCustom: false, catchRate: 190 }, // Slugma
+];
+
+function buildMap(): Tile[][] {
+  const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.ROCK) as Tile[]);
+  const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
+    for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
+  };
+  // ── Switchback climb (carved as walkable ASH through the rock) ──────────────
+  fill(60, ROWS, 10, 14, T.ASH);   // entry, bottom
+  fill(58, 62, 3, 14, T.ASH);      // ledge 1 → left
+  fill(48, 62, 3, 7, T.ASH);       // climb left
+  fill(46, 50, 3, 21, T.ASH);      // ledge 2 → right
+  fill(36, 50, 17, 21, T.ASH);     // climb right
+  fill(34, 38, 3, 21, T.ASH);      // ledge 3 → left
+  fill(24, 38, 3, 7, T.ASH);       // climb left
+  fill(22, 26, 3, 21, T.ASH);      // ledge 4 → right
+  fill(12, 26, 17, 21, T.ASH);     // climb right
+  fill(10, 14, 3, 21, T.ASH);      // ledge 5 → center
+  fill(2, 14, 9, 15, T.ASH);       // final climb to summit
+  // Summit plateau
+  fill(1, 9, 4, 20, T.SUMMIT);
+  fill(2, 9, 9, 15, T.ASH);        // keep approach onto the plateau
+
+  // Tall-grass patches along the ledges
+  fill(58, 61, 6, 10, T.TALLGRASS);
+  fill(46, 49, 9, 14, T.TALLGRASS);
+  fill(34, 37, 8, 13, T.TALLGRASS);
+  fill(22, 25, 9, 14, T.TALLGRASS);
+  fill(48, 61, 4, 6, T.TALLGRASS);
+  fill(24, 37, 4, 6, T.TALLGRASS);
+
+  // Lava pools + vents (hazards / decoration set into the rock walls)
+  for (const [r, c] of [[55,16],[44,8],[40,14],[30,16],[20,8],[16,14],[52,2],[28,21]] as [number,number][]) m[r][c] = T.LAVA;
+  for (const [r, c] of [[57,12],[45,18],[35,5],[23,18],[12,5],[6,7],[6,16]] as [number,number][]) {
+    if (m[r]?.[c] === T.ROCK || m[r]?.[c] === T.SUMMIT) m[r][c] = T.VENT;
+  }
+  return m;
+}
+
+export class JejuVentScene extends Phaser.Scene {
+  private map!: Tile[][];
+  private playerG!: Phaser.GameObjects.Graphics;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
+  private shiftKey!: Phaser.Input.Keyboard.Key;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private dialog!: DialogBox;
+  private px = 12 * TILE + 16;
+  private py = 66 * TILE + 16;   // enter at the bottom (ferry landing)
+  private facing = 1; private walkFrame = 0; private walkTimer = 0;
+  private cutsceneActive = false;
+  private steps = 0; private nextEnc = 10;
+  private readonly SPEED = 120; private readonly RUN = 250;
+  private nabiSceneShown = false;
+
+  private readonly TRAINERS = [
+    {
+      key: 'jeju-suri-1', name: 'Team Suri Grunt', col: 18, row: 42, color: 0x161616, label: 'Team\nSuri',
+      line: "Grunt: Turn back! The Director's orders — no one reaches the summit before our transport secures the moth!",
+      pokemon: JSON.stringify([{ id: 229, level: 46 }, { id: 319, level: 47 }]),  // Houndoom, Sharpedo
+      expPool: 1100,
+    },
+    {
+      key: 'jeju-suri-2', name: 'Team Suri Grunt', col: 5, row: 28, color: 0x161616, label: 'Team\nSuri',
+      line: "Grunt: You climb fast for a tourist. It ends here!",
+      pokemon: JSON.stringify([{ id: 461, level: 47 }, { id: 0, level: 48, custom: 'martbadger' }]),  // Weavile, Martbadger
+      expPool: 1200,
+    },
+  ] as const;
+
+  constructor() { super('JejuVentScene'); }
+
+  preload() {
+    if (this.textures.exists('nabihalmang')) return;
+    const url = customForm('nabihalmang')?.data.spriteUrl ?? 'assets/dex/nabihalmang.png';
+    this.load.image('nabihalmang', url);
+  }
+
+  private get caught() {
+    return DexTracker.isCaught(this.registry, 'nabihalmang')
+      || PartySystem.get(this.registry).some(e => e.spriteKey === 'nabihalmang')
+      || (this.registry.get('box') as string ?? '').includes('nabihalmang');
+  }
+
+  create() {
+    this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.steps = 0;
+    this.input.keyboard?.resetKeys();
+    const rx = this.registry.get('jejuVentReturnX') as number | undefined;
+    const ry = this.registry.get('jejuVentReturnY') as number | undefined;
+    if (rx !== undefined) { this.px = rx; this.py = ry as number; }
+    this.registry.remove('jejuVentReturnX'); this.registry.remove('jejuVentReturnY');
+
+    this.map = buildMap();
+    this.drawMap();
+    this.drawTrainers();
+    this.createPlayer();
+    this.setupCamera();
+    this.setupInput();
+    this.createUI();
+    this.cameras.main.fadeIn(400);
+    SaveManager.save(this.registry, this.px, this.py, 'JejuVentScene');
+
+    // Eerie volcanic ambience for the vent climb — except during the capture finale,
+    // which swaps to 나비할망's dancheong theme just below.
+    if (!(this.caught && !this.registry.get('nabiCaughtBeat'))) playBgm(this, 'vents');
+
+    // Returned from the legendary battle having CAUGHT 나비할망 → Commander Ryeo confrontation.
+    if (this.caught && !this.registry.get('nabiCaughtBeat')) {
+      this.registry.set('nabiCaughtBeat', true);
+      this.registry.set('chapter9Done', true);   // Phase 1 legendary acquired
+      this.registry.set('phase1Legendary', 'nabihalmang');
+      SaveManager.save(this.registry, this.px, this.py, 'JejuVentScene');   // persist NOW so it can't be lost on quit
+      playBgm(this, 'dancheong');   // The Dancheong Shield — 나비할망's theme for this closing beat
+      this.time.delayedCall(300, () => {
+        this.cutsceneActive = true;
+        const visual = this.buildRyeoConfrontation();
+        this.dialog.show([
+          "나비할망 folds her glowing, dancheong-patterned wings and settles beside you at last.",
+          "Prof. Song: She's chosen you as her guardian — and the south's. You truly earned her.",
+          "A sound like metal grinding. Commander Ryeo emerges from the shadows of the rig — bloodied, furious, movements sharp with desperation.",
+          "Commander Ryeo: That moth was supposed to be OUR key to reshaping this peninsula! And you—",
+          `${rivalTrainerName(this.registry)}: You lose. We took it. 나비할망 chose our friend. Maybe she knows something about what you'd actually do with her.`,
+          "Commander Ryeo: ...Then I'll take it from your corpse. One final test. You and me. No team. Just will.",
+        ], () => {
+          // Battle with Commander Ryeo
+          visual.destroy();
+          PartySystem.healAll(this.registry);
+          this.registry.set('trainerName', 'Commander Ryeo');
+          this.registry.set('trainerKey', 'jeju-ryeo-final');
+          this.registry.set('trainerPokemon', JSON.stringify([
+            { id: 248, level: 51 },                      // Tyranitar (Rock/Dark) — lead, Sand Stream
+            { id: 0, level: 51, custom: 'corrpanda' },   // Dark — swift striker
+            { id: 0, level: 52, custom: 'martbadger' },  // Steel/Dark — bulky support
+            { id: 462, level: 52 },                      // Magnezone (Electric/Steel) — coverage
+            { id: 373, level: 53 },                      // Salamence (Dragon/Flying) — sweeper
+            { id: 381, level: 54 },                      // Kyogre (Water) — ace
+          ]));
+          this.registry.set('trainerExpPool', 3600);
+          this.registry.set('trainerReturnScene', 'JejuVentScene');
+          this.registry.set('jejuVentReturnX', 12 * TILE + 16);
+          this.registry.set('jejuVentReturnY', 8 * TILE + 16);
+          this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
+        });
+      });
+    } else if (this.caught && this.registry.get('nabiCaughtBeat') && !this.registry.get('commanderRyeoDefeated')) {
+      // After Ryeo is defeated, show the final scene
+      if (this.registry.get('trainerDefeated_jeju-ryeo-final') && !this.registry.get('ryeoDefeatScene')) {
+        this.registry.set('ryeoDefeatScene', true);
+        this.time.delayedCall(300, () => {
+          this.cutsceneActive = true;
+          this.dialog.show([
+            "Commander Ryeo staggers backward, her Pokémon recalled. She looks at the towering moth beside you — at the glow of her wings — and something breaks in her expression.",
+            "Commander Ryeo: ...She looks at you like you're not a tool to be used. Like you matter. That's what I never understood about this region. That's what we tried to control.",
+            `${rivalTrainerName(this.registry)}: The 노스단 southern operations are done. Your rig is scrap. Your orders don't reach here anymore.`,
+            "Commander Ryeo: No. They don't. (She turns and walks down the mountain, alone.)",
+            "Prof. Song: She's leaving. Let her. 노스단's reach here is broken.",
+            "나비할망's wings catch the dawn light. You've earned something rare — the choice of a legendary.",
+            "Prof. Song: Reach the Hanbando League, prove yourself champion. Then the world opens up. The north has lessons too.",
+            `${rivalTrainerName(this.registry)}: To the League, then. 나비할망 will make sure we get there in one piece.`,
+          ], () => { this.cutsceneActive = false; });
+        });
+      }
+    } else if (!this.registry.get('jejuClimbStarted')) {
+      this.registry.set('jejuClimbStarted', true);
+      this.time.delayedCall(500, () => {
+        this.cutsceneActive = true;
+        this.dialog.show([
+          'The vent trail rises sharply from the port — a long, switchbacked climb through lava and ash.',
+          `${rivalTrainerName(this.registry)}: Eerie up here. Watch the lava and keep your footing — no telling what roosts at the top.`,
+        ], () => { this.cutsceneActive = false; });
+      });
+    } else {
+      this.time.delayedCall(300, () => maybeLaunchEvolution(this));
+    }
+  }
+
+  // ── Map ─────────────────────────────────────────────────────────────────
+  private drawMap() {
+    const g = this.make.graphics({ x: 0, y: 0 });
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const t = this.map[r][c];
+      g.fillStyle(COLORS[t], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
+      if (t === T.ROCK) { g.fillStyle(0x3a3038); g.fillRect(c*TILE+4, r*TILE+5, 8, 7); g.fillRect(c*TILE+18, r*TILE+18, 9, 8); }
+      if (t === T.TALLGRASS) { g.fillStyle(0x3f5a22, 0.8); for (let i=0;i<3;i++){ g.fillRect(c*TILE+5+i*8, r*TILE+16, 2, 12); g.fillRect(c*TILE+7+i*8, r*TILE+12, 2, 16);} }
+      if (t === T.LAVA) { g.fillStyle(0xff8a3a, 0.8); g.fillRect(c*TILE+4, r*TILE+6, TILE-8, 5); g.fillStyle(0xffd060, 0.7); g.fillRect(c*TILE+10, r*TILE+16, TILE-20, 4); }
+      if (t === T.VENT) { g.fillStyle(0xff6a2a, 0.5); g.fillCircle(c*TILE+16, r*TILE+18, 8); g.fillStyle(0x553028, 0.6); g.fillCircle(c*TILE+16, r*TILE+18, 4); }
+      if (t === T.SUMMIT) { g.fillStyle(0x8a7a70, 0.5); g.fillRect(c*TILE+6, r*TILE+8, 6, 6); }
+    }
+    const key = '__jejuVentMap__';
+    if (this.textures.exists(key)) this.textures.remove(key);
+    g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
+    this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
+
+    this.add.text(12 * TILE, 67.5 * TILE, '↓ Jeju Port', {
+      fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
+    }).setOrigin(0.5).setDepth(5);
+    this.add.text(12 * TILE, 0.6 * TILE, '⛰ Summit — the Vents', {
+      fontSize: '10px', color: '#ffd0a0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
+    }).setOrigin(0.5).setDepth(5);
+  }
+
+  private drawTrainers() {
+    for (const tr of this.TRAINERS) {
+      if (this.registry.get(`trainerDefeated_${tr.key}`) && vanishesAfterDefeat(tr.key)) continue;
+      const g = this.add.graphics().setDepth(8);
+      g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
+      g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 16, 5);
+      g.fillStyle(tr.color); g.fillRect(-7, -8, 14, 12);
+      g.fillStyle(0xcc2233); g.fillRect(-7, -8, 14, 2);
+      g.fillStyle(0x222222); g.fillRect(-6, 4, 5, 8); g.fillRect(1, 4, 5, 8);
+      g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
+      g.fillStyle(0x101010); g.fillRect(-6, -21, 12, 5);
+      g.fillStyle(0xcc2233); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, {
+        fontSize: '8px', color: '#ff8899', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
+      }).setOrigin(0.5).setDepth(9);
+    }
+  }
+
+  // ── Player / camera / input ──────────────────────────────────────────────
+  private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
+  private drawChar() {
+    drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerG.setPosition(this.px, this.py);
+  }
+  private setupCamera() {
+    this.cameras.main.setBounds(0, 0, COLS * TILE, ROWS * TILE);
+    this.cameras.main.setZoom(1.6);
+    this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);
+  }
+  private setupInput() {
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.wasd = { up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'), left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D') };
+    this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    // DEBUG: press 0 to (re)stage the Commander Ryeo confrontation as if 나비할망 was just caught.
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO).on('down', () => this.debugStageRyeoBattle());
+  }
+
+  /** Test hook — jump straight to the post-capture Commander Ryeo battle.
+   *  Marks 나비할망 as caught and clears the "beat" flags so create() re-runs the
+   *  confrontation cutscene → TrainerBattleScene against Commander Ryeo. */
+  private debugStageRyeoBattle() {
+    if (this.cutsceneActive) return;
+    DexTracker.markCaught(this.registry, 'nabihalmang');   // makes `this.caught` true
+    this.registry.set('nabiCaughtBeat', false);            // re-arm the confrontation
+    this.registry.set('ryeoDefeatScene', false);
+    this.registry.set('commanderRyeoDefeated', false);
+    this.registry.set('trainerDefeated_jeju-ryeo-final', false);
+    this.registry.set('jejuVentReturnX', 12 * TILE + 16);
+    this.registry.set('jejuVentReturnY', 8 * TILE + 16);   // on the summit plateau
+    this.scene.restart();
+  }
+  private createUI() {
+    this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
+    this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
+    this.add.text(this.scale.width / 2, 22, '🌋 Jeju Vents — The Ascent (제주 분화구)', {
+      fontSize: '13px', color: '#fff', fontStyle: 'bold',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+      fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
+    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+  }
+
+  // ── Update ───────────────────────────────────────────────────────────────
+  update(_: number, delta: number) {
+    if (this.cutsceneActive) {
+      if (this.dialog.isInChoice()) {
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this.dialog.navigateChoice(-1);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) this.dialog.navigateChoice(1);
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.confirmChoice();
+      } else if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
+      return;
+    }
+    const dt = delta / 1000; let dx = 0, dy = 0;
+    if (this.cursors.left.isDown  || this.wasd.left.isDown)  { dx = -1; this.facing = 2; }
+    if (this.cursors.right.isDown || this.wasd.right.isDown) { dx =  1; this.facing = 3; }
+    if (this.cursors.up.isDown    || this.wasd.up.isDown)    { dy = -1; this.facing = 1; }
+    if (this.cursors.down.isDown  || this.wasd.down.isDown)  { dy =  1; this.facing = 0; }
+    const moving = dx !== 0 || dy !== 0;
+    const running = moving && !!this.registry.get('hasRunningShoes') && this.shiftKey.isDown;
+    const speed = running ? this.RUN : this.SPEED;
+    if (moving) {
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = this.px + (dx / len) * speed * dt, ny = this.py + (dy / len) * speed * dt;
+      if (!this.collides(nx, this.py)) this.px = nx;
+      if (!this.collides(this.px, ny)) this.py = ny;
+      this.walkTimer += delta;
+      if (this.walkTimer > (running ? 100 : 180)) { this.walkFrame ^= 1; this.walkTimer = 0; this.steps++; this.checkEncounter(); }
+    } else this.walkFrame = 0;
+    this.drawChar();
+    this.checkTrainers();
+    this.checkSummit();
+    this.checkExits();
+  }
+  private collides(x: number, y: number): boolean {
+    const hw = 6;
+    return [[x-hw,y-4],[x+hw,y-4],[x-hw,y+8],[x+hw,y+8]].some(([cx, cy]) => {
+      const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return true;
+      return SOLID.has(this.map[row][col]);
+    });
+  }
+
+  private checkEncounter() {
+    const col = Math.floor(this.px / TILE), row = Math.floor(this.py / TILE);
+    const t = this.map[row]?.[col];
+    if (!t || !ENCOUNTER.has(t)) { this.steps = 0; return; }
+    if (this.steps < this.nextEnc) return;
+    if (Math.random() > 0.22) return;
+    this.steps = 0; this.nextEnc = 8 + Math.floor(Math.random() * 8);
+    const e = pickEncounter(VENT_ENCOUNTERS);
+    this.registry.set('wildId', e.id);
+    this.registry.set('wildLevel', randomLevel(e));
+    this.registry.set('wildCustom', e.isCustom);
+    this.registry.set('wildCatchRate', e.catchRate);
+    this.registry.set('wildReturnScene', 'JejuVentScene');
+    this.registry.set('jejuVentReturnX', this.px); this.registry.set('jejuVentReturnY', this.py);
+    this.cameras.main.fadeOut(400, 255, 255, 255, () => this.scene.start('WildBattleScene'));
+  }
+
+  private checkTrainers() {
+    for (const tr of this.TRAINERS) {
+      if (this.registry.get(`trainerDefeated_${tr.key}`)) continue;
+      const wx = tr.col * TILE + 16, wy = tr.row * TILE + 16;
+      if (Math.hypot(this.px - wx, this.py - wy) < TILE * 1.5) {
+        this.cutsceneActive = true;
+        this.registry.set('trainerName', tr.name);
+        this.registry.set('trainerKey', tr.key);
+        this.registry.set('trainerPokemon', tr.pokemon);
+        this.registry.set('trainerExpPool', tr.expPool);
+        this.registry.set('trainerReturnScene', 'JejuVentScene');
+        this.registry.set('jejuVentReturnX', this.px); this.registry.set('jejuVentReturnY', this.py);
+        this.dialog.show([tr.line, "Team Suri Grunt: For the Director!"], () => {
+          this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
+        });
+        return;
+      }
+    }
+  }
+
+  /** The summit. The whole 노스단 vs. 나비할망 event is gated behind the 7th badge
+   *  (Frostbell) — before that the vents are quiet and you simply cross Jeju to reach
+   *  Dolmoe/Seorae. Prof. Song calls you back here once you hold the Frostbell Badge. */
+  private checkSummit() {
+    if (this.caught) return;
+    if (this.py > 9 * TILE) return;   // only on the summit plateau
+    this.cutsceneActive = true;
+
+    // ── Before the 7th badge: nothing is here yet. ─────────────────────────
+    if (!this.registry.get('seoraeGymDefeated')) {
+      this.dialog.show([
+        'The vent summit is quiet — only wind, steam and black rock. Nothing stirs here yet.',
+        "Prof. Song (comms): 노스단 hasn't moved on this place. Keep earning badges — I'll call you the moment it matters.",
+      ], () => { this.cutsceneActive = false; });
+      return;
+    }
+
+    // ── After the 7th badge: the 노스단 confrontation + the capture. ─────────
+    const launch = () => {
+      PartySystem.healAll(this.registry);
+      if (Inventory.count(this.registry, 'masterball') <= 0) Inventory.add(this.registry, 'masterball', 1);
+      this.playNabihalmangScene(() => {
+        this.registry.set('wildId', 'nabihalmang');
+        this.registry.set('wildLevel', 52);
+        this.registry.set('wildCustom', true);
+        this.registry.set('wildCatchRate', 3);
+        this.registry.set('wildReturnScene', 'JejuVentScene');
+        this.registry.set('jejuVentReturnX', 12 * TILE + 16);
+        this.registry.set('jejuVentReturnY', 10 * TILE + 16);
+        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('WildBattleScene'));
+      });
+    };
+    if (!this.registry.get('jejuSummitSeen')) {
+      this.registry.set('jejuSummitSeen', true);
+      DexTracker.markSeen(this.registry, 'nabihalmang');
+      this.dialog.show([
+        'You crest the black-rock summit. 나비할망 — wings of hammered, dancheong-patterned metal, dusted in luminous fairy scales — thrashes inside a straining 노스단 rig.',
+        "Commander Ryeo: Tighten the restraint field! Her wings can neutralize the Cheonji energy — secure her and the weapon completes itself even without the lake!",
+        "노스단 Operative: Commander, her output is climbing—",
+        "Commander Ryeo: Hold it. HOLD IT.",
+        "나비할망's metallic wings flare — and the restraint field SHATTERS. The 노스단 equipment overloads in a cascade of sparks; operatives are thrown back.",
+        "Commander Ryeo: ...Impossible. She was never going to be a battery. She's not a tool. We were wrong about what she was. (She orders a retreat.)",
+        "Prof. Song (comms): She's frightened, and testing you. The old texts say she binds only to a guardian she deems worthy of protecting the south.",
+        "Prof. Song: Your Master Ball — this is the moment Dosik meant. Weaken her first, then throw it.",
+        `${rivalTrainerName(this.registry)}: Go on. She's been waiting longer than either of us has been alive.`,
+      ], launch);
+    } else {
+      this.dialog.show(["나비할망 still thrashes at the summit, testing you. Steady your team and try again."], launch);
+    }
+  }
+
+  private checkExits() {
+    if (this.cutsceneActive) return;
+    // South → back down to Jeju Vents Portal
+    if (this.py > (ROWS - 1) * TILE) {
+      this.cutsceneActive = true;
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.registry.set('jejuVentsPortReturnX', 10 * TILE + 16); this.registry.set('jejuVentsPortReturnY', 3 * TILE + 16);
+        this.scene.start('JejuVentsPortScene');
+      });
+    }
+  }
+
+  // ── Cinematic helpers ─────────────────────────────────────────────────────
+  /** Wrap a set of game objects into a screen-space container that ignores the
+   *  camera zoom, so cutscene art always fills the viewport cleanly. */
+  private cutsceneRoot(kids: Phaser.GameObjects.GameObject[], depth = 117): Phaser.GameObjects.Container {
+    const W = this.scale.width, H = this.scale.height;
+    const root = this.add.container(0, 0, kids).setScrollFactor(0).setDepth(depth);
+    const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
+    root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
+    return root;
+  }
+
+  /** A drifting field of volcanic embers, returned so it can be faded/destroyed. */
+  private buildEmbers(): Phaser.GameObjects.Graphics {
+    const W = this.scale.width, H = this.scale.height;
+    const g = this.add.graphics();
+    const seeds = Array.from({ length: 26 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: 1 + Math.random() * 2, p: Math.random() * Math.PI * 2 }));
+    const ev = this.time.addEvent({ delay: 50, loop: true, callback: () => {
+      if (!g.active) { ev.remove(false); return; }   // stop once the graphics is destroyed
+      g.clear();
+      for (const s of seeds) {
+        s.y -= 0.6 + s.r * 0.3; s.p += 0.08; s.x += Math.sin(s.p) * 0.5;
+        if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; }
+        g.fillStyle(0xff7a2a, 0.5); g.fillCircle(s.x, s.y, s.r);
+        g.fillStyle(0xffd060, 0.6); g.fillCircle(s.x, s.y, s.r * 0.5);
+      }
+    }});
+    g.once('destroy', () => ev.remove(false));
+    return g;
+  }
+
+  /** Hand-drawn 나비할망 — a guardian moth with metallic, dancheong-patterned wings.
+   *  Returns a container (wings animate via a flap tween). */
+  private buildNabihalmang(): Phaser.GameObjects.Container {
+    const glow = this.add.graphics();
+    glow.fillStyle(0xaee9ff, 0.12); glow.fillCircle(0, 0, 150);
+    glow.fillStyle(0x8fd0ff, 0.10); glow.fillCircle(0, 0, 105);
+    glow.fillStyle(0xffffff, 0.06); glow.fillCircle(0, 0, 60);
+
+    const wings = this.add.graphics();
+    const drawWing = (d: number) => {
+      // metallic wing plates (upper + lower)
+      wings.fillStyle(0x3b414c, 1);
+      wings.beginPath(); wings.moveTo(0, -8); wings.lineTo(d*100, -78); wings.lineTo(d*132, -14); wings.lineTo(d*74, 22); wings.closePath(); wings.fillPath();
+      wings.fillStyle(0x2f333d, 1);
+      wings.beginPath(); wings.moveTo(0, 8); wings.lineTo(d*76, 34); wings.lineTo(d*102, 86); wings.lineTo(d*36, 60); wings.closePath(); wings.fillPath();
+      // dancheong roundels on the upper wing
+      wings.fillStyle(0xd6392a, 0.95); wings.fillEllipse(d*74, -34, 48, 30);
+      wings.fillStyle(0xf5c542, 0.95); wings.fillEllipse(d*74, -34, 30, 18);
+      wings.fillStyle(0x2a8a4a, 0.9);  wings.fillEllipse(d*74, -34, 16, 10);
+      wings.fillStyle(0x2a5aba, 1);    wings.fillCircle(d*74, -34, 4);
+      wings.fillStyle(0x2a8a4a, 0.85); wings.fillEllipse(d*104, -16, 20, 13);
+      // eyespot on the lower wing
+      wings.fillStyle(0x14141c, 1);    wings.fillCircle(d*70, 56, 12);
+      wings.fillStyle(0xaee9ff, 0.95); wings.fillCircle(d*70, 56, 6);
+      wings.fillStyle(0xffffff, 0.9);  wings.fillCircle(d*68, 54, 2);
+      // hammered-metal edge highlight
+      wings.lineStyle(2, 0xcfd6dd, 0.7);
+      wings.beginPath(); wings.moveTo(d*100, -78); wings.lineTo(d*132, -14); wings.strokePath();
+      wings.beginPath(); wings.moveTo(d*36, 60); wings.lineTo(d*102, 86); wings.strokePath();
+      // luminous fairy scales
+      wings.fillStyle(0xaee9ff, 0.7);
+      for (const [sx, sy] of [[44,-46],[86,-22],[58,22],[80,50],[112,-18]] as [number,number][]) wings.fillCircle(d*sx, sy, 2.2);
+    };
+    drawWing(1); drawWing(-1);
+
+    const body = this.add.graphics();
+    body.fillStyle(0x4a4038, 1); body.fillEllipse(0, -8, 22, 30);         // fuzzy thorax
+    body.fillStyle(0x5a4e44, 0.6); body.fillEllipse(-3, -10, 12, 20);     // fur sheen
+    body.fillStyle(0x2a2420, 1);
+    for (let i = 0; i < 4; i++) body.fillEllipse(0, 8 + i * 10, 15 - i * 2, 9);  // segmented abdomen
+    body.fillStyle(0x3a322c, 1); body.fillCircle(0, -28, 11);             // head
+    body.fillStyle(0xaee9ff, 1); body.fillCircle(-4, -29, 3.4); body.fillCircle(4, -29, 3.4);  // glowing eyes
+    body.fillStyle(0xffffff, 0.9); body.fillCircle(-5, -30, 1.3); body.fillCircle(3, -30, 1.3);
+    body.lineStyle(2, 0x2a2420, 1);                                       // feathery antennae
+    body.beginPath(); body.moveTo(-3, -37); body.lineTo(-18, -58); body.strokePath();
+    body.beginPath(); body.moveTo(3, -37); body.lineTo(18, -58); body.strokePath();
+    body.fillStyle(0x2a2420, 1);
+    for (let i = 0; i < 6; i++) { body.fillCircle(-6 - i * 2.4, -40 - i * 3.4, 1.7); body.fillCircle(6 + i * 2.4, -40 - i * 3.4, 1.7); }
+
+    const c = this.add.container(0, 0, [glow, wings, body]);
+    this.tweens.add({ targets: wings, scaleX: 0.72, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.tweens.add({ targets: glow, alpha: 0.55, scale: 1.12, duration: 950, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return c;
+  }
+
+  /** Commander Ryeo — drawn in the player's own clean pixel style (drawNpcBody),
+   *  in her plum 노스단 coat with magenta trim, a hair streak and a blood mark. */
+  private buildCommanderRyeo(bloodied = true): Phaser.GameObjects.Container {
+    const g = this.add.graphics();
+    drawNpcBody(g, 0x2a1a2c, { hair: 0x141018, skin: 0xf0c8a0 });   // base body, player style
+    // Commander accents layered on top
+    g.fillStyle(0xaa3366, 1); g.fillRect(-8, -9, 16, 1);            // magenta shoulder trim
+    g.fillStyle(0xaa3366, 1); g.fillRect(-1, -7, 2, 8);            // coat placket
+    g.fillStyle(0xaa3366, 1); g.fillCircle(-4, -3, 1.4);          // 노스단 emblem
+    g.fillStyle(0xaa3366, 1); g.fillRect(3, -23, 3, 6);           // magenta hair streak
+    if (bloodied) { g.fillStyle(0x9a1a1a, 0.9); g.fillRect(-5, -15, 1.5, 5); }  // blood streak on cheek
+    return this.add.container(0, 0, [g]);
+  }
+
+  /** Director Suri — the same player-style body, olive coat with gold trim. */
+  private buildDirectorSuri(): Phaser.GameObjects.Container {
+    const g = this.add.graphics();
+    drawNpcBody(g, 0x33341f, { hair: 0x4a3a1a, skin: 0xf0c8a0 });
+    g.fillStyle(0xccaa44, 1); g.fillRect(-8, -9, 16, 1);           // gold shoulder trim
+    g.fillStyle(0xccaa44, 1); g.fillRect(-1, -7, 2, 8);           // coat placket
+    return this.add.container(0, 0, [g]);
+  }
+
+  /** Commander Ryeo stands next to the player on the map as an ordinary,
+   *  player-sized 2D overworld sprite for the confrontation dialogue — no
+   *  enlargement, no floating. Returns the objects so they can be destroyed. */
+  private buildRyeoConfrontation(): Phaser.GameObjects.Container {
+    // Turn the player to face Ryeo (she stands just above, to the north).
+    this.facing = 1; this.drawChar();
+
+    const rx = this.px, ry = this.py - 2 * TILE;            // Ryeo stands a couple tiles north
+    const ryeo = this.buildCommanderRyeo(true).setPosition(rx, ry);   // normal scale (1) = player size
+
+    const rLabel = this.add.text(rx, ry - 24, 'Commander Ryeo', {
+      fontSize: '8px', color: '#ff99bb', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5);
+
+    // The rival stands beside you (to the west), also facing Ryeo — a normal 2D sprite.
+    const rivalG = this.add.graphics().setPosition(this.px - TILE, this.py);
+    drawTrainerBody(rivalG, 1, 0, rivalDesign(this.registry));   // facing up (back), like the player
+    // The rival's name is gender-based: 'Minhyuk' (male) / 'Soohyun' (female).
+    const rivalName = rivalTrainerName(this.registry);
+    const vLabel = this.add.text(this.px - TILE, this.py - 24, rivalName, {
+      fontSize: '8px', color: '#9ad0ff', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5);
+
+    // Prof. Song stands to your east — a 2D overworld sprite in his lab coat.
+    const songG = this.add.graphics().setPosition(this.px + TILE, this.py);
+    drawNpcBody(songG, 0xe6e6ea, { hair: 0x4a4038 });                // white lab coat, greying hair
+    songG.fillStyle(0x222222, 1); songG.fillRect(-6, -16, 12, 1);    // glasses bar
+    songG.fillStyle(0x8a1a1a, 1); songG.fillRect(-1, -7, 2, 4);      // tie
+    const gLabel = this.add.text(this.px + TILE, this.py - 24, 'Prof. Song', {
+      fontSize: '8px', color: '#aef0c0', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5);
+
+    // 나비할망 settles beside the player — a small guardian moth, tucked up by your side.
+    const nabi = this.buildNabihalmang().setPosition(this.px + TILE * 0.45, this.py - TILE * 0.75).setScale(0.28);
+
+    return this.add.container(0, 0, [ryeo, rLabel, rivalG, vLabel, songG, gLabel, nabi]).setDepth(19);
+  }
+
+  /** The capture intro — 나비할망 breaks the restraint field as 노스단 recoils. */
+  private playNabihalmangScene(onComplete: () => void) {
+    if (this.nabiSceneShown) return onComplete();
+    this.nabiSceneShown = true;
+    const W = this.scale.width, H = this.scale.height;
+
+    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0014, 0).setOrigin(0.5);
+    const embers = this.buildEmbers().setAlpha(0);
+    const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0).setOrigin(0.5);
+
+    const nabi = this.buildNabihalmang();
+    nabi.setPosition(W / 2, H * 0.78).setScale(0.5).setAlpha(0);
+
+    const ryeo = this.buildCommanderRyeo(false);
+    ryeo.setPosition(W * 0.13, H * 0.68).setScale(3.6).setAlpha(0);
+    const suri = this.buildDirectorSuri();
+    suri.setPosition(W * 0.87, H * 0.68).setScale(3.6).setAlpha(0);
+
+    const label = this.add.text(W / 2, H * 0.30, '🦋 나비할망', {
+      fontSize: '18px', color: '#aee9ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
+    }).setOrigin(0.5).setAlpha(0);
+    const rLabel = this.add.text(W * 0.13, H * 0.46, 'Cmdr Ryeo', {
+      fontSize: '9px', color: '#ff99bb', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5).setAlpha(0);
+    const sLabel = this.add.text(W * 0.87, H * 0.46, 'Dir. Suri', {
+      fontSize: '9px', color: '#ffdd88', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5).setAlpha(0);
+
+    const root = this.cutsceneRoot([dim, embers, ryeo, suri, nabi, label, rLabel, sLabel, flash], 117);
+
+    // Entrance: gloom gathers, the villains appear, then the moth rises free
+    this.tweens.add({ targets: dim, alpha: 0.6, duration: 800 });
+    this.tweens.add({ targets: embers, alpha: 1, duration: 800, delay: 200 });
+    this.tweens.add({ targets: [ryeo, suri, rLabel, sLabel], alpha: 1, duration: 700, delay: 200 });
+    this.tweens.add({ targets: nabi, alpha: 1, scale: 1.8, y: H * 0.42, duration: 1500, delay: 500, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: label, alpha: 1, duration: 900, delay: 900 });
+
+    // The restraint field SHATTERS — a bright flash + shockwave
+    this.time.delayedCall(1900, () => {
+      this.cameras.main.shake(320, 0.006);
+      this.tweens.add({ targets: flash, alpha: 0.85, duration: 90, yoyo: true });
+    });
+
+    this.time.delayedCall(3000, () => {
+      this.tweens.add({ targets: root, alpha: 0, duration: 600 });
+      this.time.delayedCall(700, () => { root.destroy(); onComplete(); });
+    });
+  }
+}

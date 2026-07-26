@@ -1,13 +1,109 @@
 import Phaser from 'phaser';
-import { Pokemon, Move } from '../battle/Pokemon';
-import { STARTERS, TYPE_COLORS } from '../data/StarterData';
-import { fetchPokemon, fetchMove } from '../data/PokeAPI';
+import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
+import { expMultiplierFor } from '../data/NorthernRegion';
+import { playMoveFX } from '../systems/BattleFX';
+import { spriteScale } from '../data/SpriteScale';
+import { runLevelUpLearning } from '../systems/MoveLearning';
+import { Pokemon, Move, MoveData } from '../battle/Pokemon';
+import { getEffectiveness } from '../battle/TypeChart';
+import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
+import { fetchPokemon } from '../data/PokeAPI';
+import { customForm } from '../data/CustomBattle';
 import { PartySystem } from '../systems/PartySystem';
-import { buildFromEntry } from '../systems/PartyBattle';
+import { awardBenchExp } from '../systems/BattleExp';
+import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
+import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
+import { portraitFor, fitPortrait } from '../data/BattlePortraits';
+import { AVATAR_URL, rivalAvatarKey } from '../data/PlayerAvatar';
+import { DexTracker } from '../systems/DexTracker';
+import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
+import { tmForMove } from '../data/TMs';
 import { SaveManager } from '../utils/SaveManager';
 
-type State = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
+// ── Enemy movesets ──────────────────────────────────────────────────────────
+// PokéAPI enemies previously fought with only Tackle + Growl. Give every enemy a
+// strong, type-appropriate kit (two moves per type) so trainers — especially the
+// Elite Four and Champion, whose teams are mostly PokéAPI species — actually hit hard.
+const mv = (name: string, type: string, category: 'physical' | 'special', power: number, accuracy = 100, pp = 10): MoveData =>
+  ({ name, type: type as MoveData['type'], category, power, accuracy, pp });
+
+const TYPE_MOVES: Record<string, MoveData[]> = {
+  normal:   [mv('Body Slam', 'normal', 'physical', 85, 100, 15), mv('Hyper Beam', 'normal', 'special', 95, 90, 5)],
+  fire:     [mv('Flamethrower', 'fire', 'special', 90, 100, 15), mv('Fire Blast', 'fire', 'special', 95, 85, 5)],
+  water:    [mv('Surf', 'water', 'special', 90, 100, 15), mv('Hydro Pump', 'water', 'special', 95, 80, 5)],
+  grass:    [mv('Energy Ball', 'grass', 'special', 90, 100, 10), mv('Leaf Blade', 'grass', 'physical', 90, 100, 15)],
+  electric: [mv('Thunderbolt', 'electric', 'special', 90, 100, 15), mv('Thunder', 'electric', 'special', 95, 70, 10)],
+  ice:      [mv('Ice Beam', 'ice', 'special', 90, 100, 10), mv('Blizzard', 'ice', 'special', 95, 70, 5)],
+  fighting: [mv('Close Combat', 'fighting', 'physical', 95, 100, 5), mv('Brick Break', 'fighting', 'physical', 75, 100, 15)],
+  poison:   [mv('Sludge Bomb', 'poison', 'special', 90, 100, 10), mv('Poison Jab', 'poison', 'physical', 80, 100, 20)],
+  ground:   [mv('Earthquake', 'ground', 'physical', 95, 100, 10), mv('Earth Power', 'ground', 'special', 90, 100, 10)],
+  flying:   [mv('Brave Bird', 'flying', 'physical', 95, 100, 15), mv('Air Slash', 'flying', 'special', 85, 95, 15)],
+  psychic:  [mv('Psychic', 'psychic', 'special', 90, 100, 10), mv('Psyshock', 'psychic', 'special', 80, 100, 10)],
+  bug:      [mv('Bug Buzz', 'bug', 'special', 90, 100, 10), mv('X-Scissor', 'bug', 'physical', 80, 100, 15)],
+  rock:     [mv('Stone Edge', 'rock', 'physical', 95, 80, 5), mv('Rock Slide', 'rock', 'physical', 85, 90, 10)],
+  ghost:    [mv('Shadow Ball', 'ghost', 'special', 90, 100, 15), mv('Shadow Claw', 'ghost', 'physical', 80, 100, 15)],
+  dragon:   [mv('Draco Meteor', 'dragon', 'special', 95, 90, 5), mv('Dragon Pulse', 'dragon', 'special', 85, 100, 10)],
+  dark:     [mv('Dark Pulse', 'dark', 'special', 85, 100, 15), mv('Crunch', 'dark', 'physical', 80, 100, 15)],
+  steel:    [mv('Flash Cannon', 'steel', 'special', 85, 100, 10), mv('Iron Head', 'steel', 'physical', 80, 100, 15)],
+  fairy:    [mv('Moonblast', 'fairy', 'special', 95, 100, 10), mv('Dazzling Gleam', 'fairy', 'special', 80, 100, 10)],
+};
+const FALLBACK_MOVE: MoveData = mv('Tackle', 'normal', 'physical', 50, 100, 35);
+
+/** A strong, type-appropriate kit (up to 4 moves) for a PokéAPI enemy. */
+function enemyMovesForTypes(t1?: string, t2?: string): MoveData[] {
+  const moves: MoveData[] = [];
+  const add = (m?: MoveData) => { if (m && !moves.some(x => x.name === m.name)) moves.push(m); };
+  const a = (t1 && TYPE_MOVES[t1]) || [FALLBACK_MOVE];
+  const b = t2 ? TYPE_MOVES[t2] : undefined;
+  if (b) { add(a[0]); add(b[0]); add(a[1]); add(b[1]); }
+  else { add(a[0]); add(a[1]); add(TYPE_MOVES.normal[0]); }
+  return moves.length ? moves.slice(0, 4) : [FALLBACK_MOVE];
+}
+
+// Off-type "coverage" move for each type — chosen to threaten the things that
+// usually counter that type (e.g. Steel → Earthquake to punish Fire/Electric/Steel
+// switch-ins). Used to make the Elite Four + Champion hard to exploit one weakness.
+// Earthquake is deliberately limited to ~half the types (the natural EdgeQuake /
+// anti-Steel users: steel, poison, rock) so the Elite Four / Champion aren't all
+// carrying the same ground move; the rest get distinct, type-appropriate coverage.
+const COVERAGE_BY_TYPE: Record<string, MoveData> = {
+  steel:    mv('Earthquake', 'ground', 'physical', 95, 100, 10),
+  ice:      mv('Focus Blast', 'fighting', 'special', 95, 70, 5),
+  flying:   mv('Ice Beam', 'ice', 'special', 90, 100, 10),
+  psychic:  mv('Focus Blast', 'fighting', 'special', 95, 70, 5),
+  dragon:   mv('Fire Blast', 'fire', 'special', 95, 85, 5),
+  electric: mv('Ice Beam', 'ice', 'special', 90, 100, 10),
+  ghost:    mv('Focus Blast', 'fighting', 'special', 95, 70, 5),
+  fire:     mv('Energy Ball', 'grass', 'special', 90, 100, 10),
+  water:    mv('Ice Beam', 'ice', 'special', 90, 100, 10),
+  grass:    mv('Ice Beam', 'ice', 'special', 90, 100, 10),
+  fighting: mv('Stone Edge', 'rock', 'physical', 95, 80, 5),
+  poison:   mv('Earthquake', 'ground', 'physical', 95, 100, 10),
+  ground:   mv('Stone Edge', 'rock', 'physical', 95, 80, 5),
+  rock:     mv('Earthquake', 'ground', 'physical', 95, 100, 10),
+  bug:      mv('Rock Slide', 'rock', 'physical', 85, 90, 10),
+  dark:     mv('Sludge Bomb', 'poison', 'special', 90, 100, 10),
+  fairy:    mv('Flamethrower', 'fire', 'special', 90, 100, 10),
+  normal:   mv('Brick Break', 'fighting', 'physical', 75, 100, 15),
+};
+
+/** Elite Four / Champion kit: STAB + off-type coverage so a single super-effective
+ *  matchup can't sweep them (dual-types get 2 STAB + 2 coverage). */
+function eliteMovesForTypes(t1?: string, t2?: string): MoveData[] {
+  const moves: MoveData[] = [];
+  const add = (m?: MoveData) => { if (m && !moves.some(x => x.name === m.name)) moves.push(m); };
+  if (t1) add(TYPE_MOVES[t1]?.[0]);
+  if (t2) add(TYPE_MOVES[t2]?.[0]);
+  if (t1) add(COVERAGE_BY_TYPE[t1]);
+  if (t2) add(COVERAGE_BY_TYPE[t2]); else if (t1) add(TYPE_MOVES[t1]?.[1]);
+  if (!moves.length) add(FALLBACK_MOVE);
+  // Top up to 4 with strong neutral coverage if anything was a duplicate.
+  add(TYPE_MOVES.normal[0]);
+  return moves.slice(0, 4);
+}
+
+type State = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'over';
 const HP_W = 180;
 
 export class TrainerBattleScene extends Phaser.Scene {
@@ -16,11 +112,17 @@ export class TrainerBattleScene extends Phaser.Scene {
   private trainerName   = 'Trainer';
   private trainerKey    = '';
   private activeSlot    = 0;
+  private participants  = new Set<number>([0]);   // slots that battled → all gain EXP
   private _returnScene  = 'RouteScene';  // filled from registry in create()
-  private enemyQueue: { id: number; level: number }[] = [];
+  private enemyQueue: { id: number; level: number; custom?: string }[] = [];
   private enemyIdx = 0;
   private totalExp = 0;
   private state: State = 'loading';
+  // Gym-leader reward (snapshotted at create so it can't leak to later battles)
+  private badgeFlag = '';
+  private badgeName = '';
+  private badgeTM   = '';
+  private winLine   = '';
 
   private dialogText!: Phaser.GameObjects.Text;
   private playerHpBar!: Phaser.GameObjects.Rectangle;
@@ -28,11 +130,15 @@ export class TrainerBattleScene extends Phaser.Scene {
   private playerHpText!: Phaser.GameObjects.Text;
   private enemyHpText!: Phaser.GameObjects.Text;
   private playerLvText!: Phaser.GameObjects.Text;
+  private playerNameText!: Phaser.GameObjects.Text;
   private enemyLvText!: Phaser.GameObjects.Text;
+  private enemyNameText!: Phaser.GameObjects.Text;
   private enemySprite!: Phaser.GameObjects.Image;
   private playerSprite!: Phaser.GameObjects.Image;
+  private trainerPortrait?: Phaser.GameObjects.Image;
   private actionPanel!: Phaser.GameObjects.Container;
   private movePanel!: Phaser.GameObjects.Container;
+  private bagPanel!: Phaser.GameObjects.Container;
   private spaceKey!: Phaser.Input.Keyboard.Key;
 
   private W = 1280;
@@ -45,6 +151,11 @@ export class TrainerBattleScene extends Phaser.Scene {
       if (!this.textures.exists(s.spriteKey))
         this.load.image(s.spriteKey, s.data.spriteUrl);
     });
+    // Load sprites for the whole party so any lead Pokémon renders correctly.
+    PartySystem.get(this.registry).forEach(e => {
+      if (e.spriteKey && e.spriteUrl && !this.textures.exists(e.spriteKey))
+        this.load.image(e.spriteKey, e.spriteUrl);
+    });
   }
 
   async create() {
@@ -55,28 +166,81 @@ export class TrainerBattleScene extends Phaser.Scene {
     // Which scene to return to after the battle (route or gym)
     this._returnScene = (this.registry.get('trainerReturnScene') as string) ?? 'RouteScene';
     const raw = (this.registry.get('trainerPokemon') as string) ?? '[]';
-    this.enemyQueue  = JSON.parse(raw) as { id: number; level: number }[];
+    this.enemyQueue  = (JSON.parse(raw) as { id: number; level: number; custom?: string }[])
+      // Guard: ordinary trainers never field a box-legendary — swap any for a strong
+      // non-legendary. (Custom species are untouched.)
+      .map(e => e.custom ? e : { ...e, id: deLegendify(e.id) });
+    // Reset per-battle state: Phaser reuses the scene instance across scene.start(),
+    // so these instance fields persist from the previous battle. Without this, a
+    // trainer fought after another multi-Pokémon trainer loses Pokémon equal to the
+    // previous team's size (e.g. Director Suri only sending out 1 after Commander Ryeo).
+    this.enemyIdx = 0;
+    this.activeSlot = 0;
+    this.participants = new Set<number>([0]);
+
+    // Snapshot any gym-leader reward, then clear the keys so a later plain
+    // trainer battle never inherits a stale badge.
+    this.badgeFlag = (this.registry.get('trainerBadgeFlag') as string) ?? '';
+    this.badgeName = (this.registry.get('trainerBadgeName') as string) ?? '';
+    this.badgeTM   = (this.registry.get('trainerBadgeTM')   as string) ?? '';
+    this.winLine   = (this.registry.get('trainerWinLine')   as string) ?? '';
+    this.registry.set('trainerBadgeFlag', '');
+    this.registry.set('trainerBadgeName', '');
+    this.registry.set('trainerBadgeTM', '');
+    this.registry.set('trainerWinLine', '');
+
+    // Pick the battle theme by opponent, then restore the ambient track on exit.
+    const k = this.trainerKey;
+    let track = 'trainer';
+    if (this.badgeName)                 track = 'gymleader';   // any of the 8 gym leaders
+    else if (k.startsWith('rival'))     track = 'rival';       // rival showdowns (Geumgang etc.)
+    else if (k.includes('sovereign'))   track = 'sovereign';  // 노스단 Sovereign-Claimant (post-game final)
+    else if (k.startsWith('eosa-'))     track = 'eosa';        // 어사대장 exams (northern 마패 circuit)
+    else if (k.includes('ryeo'))        track = 'suri';       // Commander Ryeo (Team Suri / Jeju finale)
+    else if (k.includes('nosdan'))      track = 'groupnorth'; // 노스단 (Group North)
+    else if (k.includes('suri'))        track = 'suri';       // Team Suri
+    else if (k.startsWith('north-taewang')) track = 'taewang';   // Northern Champion
+    else if (k.startsWith('north-'))    track = 'northelite';  // Northern League Elite Four
+    else if (k.startsWith('champion'))  track = 'champion';    // Champion Hwangeum
+    else if (k.startsWith('e4-'))       track = 'elitefour';   // Hanbando League Elite Four
+    pushBgm(this, track);
+    this.events.once('shutdown', () => popBgm(this));
 
     this.drawBackground();
     this.createDialogBox();
     this.typeDialog('Loading…');
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    // Open party/bag menu anytime
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => this.scene.launch('MenuScene'));
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => this.scene.launch('MenuScene'));
 
     await this.loadPlayerPokemon();
     await this.loadEnemyPokemon(0);
+    this.buffBoss();   // 우두머리 bosses get extra HP
+
+    // Load this trainer's battle portrait (shown only during the intro).
+    const portrait = this.resolvePortrait();
+    if (portrait && !this.textures.exists(portrait.key)) {
+      this.load.image(portrait.key, portrait.url);
+      await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
+    }
 
     this.createSprites();
     this.createHUDs();
     this.createActionPanel();
     this.createMovePanel();
+    this.createBagPanel();
     this.hideAllPanels();
 
-    // Intro
+    // Intro — the trainer's portrait appears first, then steps aside for the battle.
     this.enemySprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.enemySprite, x: 560, y: 130, alpha: 1, duration: 400,
-      onComplete: () => {
-        this.typeDialog(`${this.trainerName} wants to battle!`, () => {
+    if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 1, duration: 300 });
+    this.typeDialog(`${this.trainerName} wants to battle!`, () => {
+      // Portrait fades out; the enemy Pokémon takes its place.
+      if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 0, duration: 300 });
+      this.tweens.add({
+        targets: this.enemySprite, x: 560, y: 130, alpha: 1, duration: 400,
+        onComplete: () => {
           this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}!`, () => {
             this.playerSprite.setAlpha(1);
             this.tweens.add({
@@ -87,38 +251,74 @@ export class TrainerBattleScene extends Phaser.Scene {
               },
             });
           });
-        });
-      },
+        },
+      });
     });
   }
 
   // ── Pokémon loading ───────────────────────────────────────────────────────
 
   private async loadPlayerPokemon() {
-    const key   = (this.registry.get('starterKey')   as string) ?? 'vipour';
-    const level = (this.registry.get('starterLevel') as number) ?? 5;
-    const def   = STARTERS.find(s => s.spriteKey === key) ?? STARTERS[1];
-    this.player = new Pokemon(def.data, level, def.startingMoves);
-    this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    PartySystem.syncSlot0FromStarter(this.registry);
     const party = PartySystem.get(this.registry);
-    if (party.length > 0) this.player['hp'] = Math.min(party[0].hp, this.player.maxHp);
+    // Lead with the first NON-fainted Pokémon so a fainted lead never enters battle.
+    this.activeSlot = Math.max(0, party.findIndex(e => e && e.hp > 0));
+    if (party.length > 0) {
+      this.player = buildFromEntry(party[this.activeSlot]);
+      this.participants = new Set<number>([this.activeSlot]);
+    } else {
+      const key   = (this.registry.get('starterKey')   as string) ?? 'vipour';
+      const level = (this.registry.get('starterLevel') as number) ?? 5;
+      const def   = findForm(key) ?? STARTERS[1];
+      this.player = new Pokemon(def.data, level, def.startingMoves);
+      this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
+    }
   }
 
   private async loadEnemyPokemon(idx: number) {
     const entry = this.enemyQueue[idx];
     if (!entry) return;
-    const [data, tackle, growl] = await Promise.all([
-      fetchPokemon(entry.id),
-      fetchMove('tackle'),
-      fetchMove('growl'),
-    ]);
+
+    // Custom-species enemy (e.g. a gym leader's signature or a rival's starter).
+    if (entry.custom) {
+      const form = customForm(entry.custom);
+      if (form) {
+        DexTracker.markSeen(this.registry, form.data.id);
+        const texKey = entry.custom;  // custom sprite keys double as texture keys
+        if (!this.textures.exists(texKey)) {
+          this.load.image(texKey, form.data.spriteUrl);
+          await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
+        }
+        // Enemy custom mons use a strong type kit (E4/Champion also get coverage).
+        this.enemy = new Pokemon(form.data, entry.level,
+          this.isElite ? eliteMovesForTypes(form.data.type1, form.data.type2) : enemyMovesForTypes(form.data.type1, form.data.type2));
+        this.registry.set('_teKey', texKey);
+        return;
+      }
+      // Starter / evolved-starter forms (munklift, scorpent, banderado…) live in StarterData.
+      const sf = findForm(entry.custom);
+      if (sf) {
+        DexTracker.markSeen(this.registry, entry.custom);
+        const texKey = entry.custom;
+        if (!this.textures.exists(texKey)) {
+          this.load.image(texKey, sf.data.spriteUrl);
+          await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
+        }
+        this.enemy = new Pokemon(sf.data, entry.level, sf.startingMoves);
+        this.registry.set('_teKey', texKey);
+        return;
+      }
+    }
+
+    DexTracker.markSeen(this.registry, entry.id);
+    const data = await fetchPokemon(entry.id);
     const texKey = `te-${entry.id}`;
     if (!this.textures.exists(texKey)) {
       this.load.image(texKey, data.spriteUrl);
       await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
     }
-    data.spriteUrl = data.spriteUrl; // already set
-    this.enemy = new Pokemon(data, entry.level, [tackle, growl]);
+    this.enemy = new Pokemon(data, entry.level,
+      this.isElite ? eliteMovesForTypes(data.type1, data.type2) : enemyMovesForTypes(data.type1, data.type2));
     this.enemy.data.spriteUrl = data.spriteUrl;
     // Store tex key for sprite creation
     this.registry.set('_teKey', texKey);
@@ -129,7 +329,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   private drawBackground() {
     const g = this.add.graphics();
     g.fillStyle(0x6688bb); g.fillRect(0, 0, this.W, 300);
-    g.fillStyle(0x4a7a3a); g.fillRect(0, 200, this.W, 110);
+    g.fillStyle(0x4a7a3a); g.fillRect(0, 200, this.W, this.H - 320);   // green field down to the dialog box (no black gap)
     g.fillStyle(0x8a9a6a);
     g.fillTriangle(0, 200, 150, 80, 300, 200);
     g.fillTriangle(200, 200, 400, 60, 600, 200);
@@ -145,14 +345,14 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private createHUDs() {
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.add.text(12, 24, this.enemy.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.enemyNameText = this.add.text(12, 24, this.enemy.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.enemyLvText  = this.add.text(180, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' });
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
     this.add.rectangle(660, 318, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(730, 292, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(660, 320, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(570, 320, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -160,18 +360,65 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private createSprites() {
-    const pKey  = (this.registry.get('starterKey') as string) ?? 'vipour';
+    // Use the actual lead's sprite (it may not be slot 0 if slot 0 was fainted).
+    const pKey  = PartySystem.get(this.registry)[this.activeSlot]?.spriteKey
+                ?? (this.registry.get('starterKey') as string) ?? 'vipour';
     const teKey = (this.registry.get('_teKey') as string) ?? 'vipour';
 
     this.enemySprite  = this.add.image(900, 60, this.textures.exists(teKey) ? teKey : pKey).setDepth(5).setAlpha(0);
     this.playerSprite = this.add.image(-80, 320, pKey).setDepth(5).setFlipX(true).setAlpha(0);
 
-    const fit = (img: Phaser.GameObjects.Image, size: number) => {
-      const t = this.textures.get(img.texture.key).getSourceImage();
-      img.setScale(size / Math.max((t.width as number) || size, (t.height as number) || size));
-    };
-    fit(this.enemySprite, 130);
-    fit(this.playerSprite, 140);
+    this.fitSprite(this.enemySprite, this.enemySpriteSize());
+    this.fitSprite(this.playerSprite, 140);
+    if (this.isBossThreat) this.addBossAura();
+
+    // Trainer portrait — stands where the enemy Pokémon appears, shown during the intro only.
+    const portrait = this.resolvePortrait();
+    if (portrait && this.textures.exists(portrait.key)) {
+      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0);
+      fitPortrait(this.trainerPortrait);
+    }
+  }
+
+  /** The portrait for this battle: the gender-based rival avatar for any rival fight,
+   *  otherwise the NPC portrait mapped to the trainer key. */
+  private resolvePortrait(): { key: string; url: string } | undefined {
+    if (this.trainerKey.startsWith('rival')) {
+      const key = rivalAvatarKey(this.registry);
+      return { key, url: AVATAR_URL[key] };
+    }
+    return portraitFor(this.trainerKey);
+  }
+
+  /** A 우두머리 (boss) — the 어사대 mission threats (Rampaging Gyarados, Fog-Wraith
+   *  Gengar, Berserk Steelix…). They loom larger in battle than ordinary Pokémon. */
+  private get isBossThreat() { return this.trainerKey.endsWith('-threat'); }
+  private enemySpriteSize() { return this.isBossThreat ? 200 : 130; }
+
+  /** A 우두머리 boss is far hardier than a normal Pokémon — double its HP. */
+  private buffBoss() {
+    if (!this.isBossThreat || !this.enemy) return;
+    this.enemy.maxHp = Math.round(this.enemy.maxHp * 2);
+    this.enemy.hp = this.enemy.maxHp;
+  }
+
+  /** A menacing aura behind a boss Pokémon so its extra size reads as "우두머리". */
+  private addBossAura() {
+    const aura = this.add.graphics().setDepth(4);
+    aura.fillStyle(0x8a1a3a, 0.32); aura.fillCircle(0, 0, 118);
+    aura.fillStyle(0xd8324a, 0.22); aura.fillCircle(0, 0, 86);
+    aura.setPosition(this.enemySprite.x, this.enemySprite.y);
+    // follow the enemy sprite as it slides in, and pulse ominously
+    this.enemySprite.on('destroy', () => aura.destroy());
+    this.tweens.add({ targets: aura, scale: { from: 0.9, to: 1.08 }, alpha: { from: 0.9, to: 0.55 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    this.time.addEvent({ delay: 16, loop: true, callback: () => { if (aura.active && this.enemySprite.active) aura.setPosition(this.enemySprite.x, this.enemySprite.y); } });
+  }
+
+  /** Scale an image so its largest dimension fits `size` px (works for any sprite). */
+  private fitSprite(img: Phaser.GameObjects.Image, size: number) {
+    const t = this.textures.get(img.texture.key).getSourceImage();
+    const s = size * spriteScale(img.texture.key);
+    img.setScale(s / Math.max((t.width as number) || size, (t.height as number) || size));
   }
 
   // ── Dialog ────────────────────────────────────────────────────────────────
@@ -186,10 +433,10 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
-      delay: 26, repeat: text.length - 1,
+      delay: 12, repeat: text.length - 1,   // faster typewriter for snappier battles
       callback: () => {
         this.dialogText.setText(text.slice(0, ++i));
-        if (i >= text.length) { ev.destroy(); if (onDone) this.time.delayedCall(600, onDone); }
+        if (i >= text.length) { ev.destroy(); if (onDone) this.time.delayedCall(280, onDone); }
       },
     });
   }
@@ -202,16 +449,16 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.actionPanel.add(bg);
 
     const actions = [
-      { label: 'FIGHT',       x: 16,  y: 16, cb: () => this.onFight() },
-      { label: 'BAG',         x: 170, y: 16, cb: () => this.typeDialog("Can't use items here!", () => this.playerAction()) },
-      { label: "CAN'T\nRUN",  x: 16,  y: 68, cb: () => this.typeDialog("Can't run from a trainer!", () => this.playerAction()) },
-      { label: 'POKÉMON',     x: 170, y: 68, cb: () => this.onSwitchPokemon() },
+      { label: 'FIGHT',       x: 16,  y: 16, cb: () => this.onFight(),         enabled: true },
+      { label: 'BAG',         x: 170, y: 16, cb: () => this.onBag(),           enabled: true },
+      { label: "CAN'T\nRUN",  x: 16,  y: 68, cb: () => this.typeDialog("Can't run from a trainer!", () => this.playerAction()), enabled: false },
+      { label: 'POKÉMON',     x: 170, y: 68, cb: () => this.onSwitchPokemon(), enabled: true },
     ];
     actions.forEach(a => {
-      const t = this.add.text(a.x, a.y, a.label, { fontSize: '18px', color: '#fff' })
-        .setInteractive({ useHandCursor: a.label === 'FIGHT' })
-        .on('pointerover',  () => { if (a.label === 'FIGHT') t.setColor('#ffe44e'); })
-        .on('pointerout',   () => t.setColor('#ffffff'))
+      const t = this.add.text(a.x, a.y, a.label, { fontSize: '18px', color: a.enabled ? '#fff' : '#888' })
+        .setInteractive({ useHandCursor: a.enabled })
+        .on('pointerover',  () => { if (a.enabled) t.setColor('#ffe44e'); })
+        .on('pointerout',   () => t.setColor(a.enabled ? '#ffffff' : '#888888'))
         .on('pointerdown',  a.cb);
       this.actionPanel.add(t);
     });
@@ -244,9 +491,82 @@ export class TrainerBattleScene extends Phaser.Scene {
     });
   }
 
-  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
+  private showActionPanel() { this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
   private showMovePanel()   { this.movePanel.setVisible(true);   this.actionPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
+  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+
+  // ── Bag panel (heal / status / revive items — no balls in trainer battles) ──
+  private createBagPanel() {
+    this.bagPanel = this.add.container(0, this.H - 120).setDepth(10).setVisible(false);
+    this.rebuildBagPanel();
+  }
+
+  private rebuildBagPanel() {
+    this.bagPanel.removeAll(true);
+    const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x111133).setStrokeStyle(1, 0x5577aa);
+    this.bagPanel.add(bg);
+    this.bagPanel.add(this.add.text(this.W - 30, 10, '← BACK', { fontSize: '12px', color: '#aaa' })
+      .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()));
+
+    const inv = Inventory.all(this.registry);
+    const usable = ITEMS.filter(it => (inv[it.key] ?? 0) > 0 &&
+      (it.category === 'heal' || it.category === 'status' || it.category === 'revive'));
+    if (usable.length === 0) {
+      this.bagPanel.add(this.add.text(30, 40, 'No usable items in the bag.', { fontSize: '15px', color: '#ccc' }));
+      return;
+    }
+    const cols = [20, 250, 480, 710];
+    usable.slice(0, 8).forEach((def, i) => {
+      const x = cols[i % 4], y = 18 + Math.floor(i / 4) * 50;
+      const r = this.add.rectangle(x + 100, y + 14, 210, 40, 0x1a3a2a)
+        .setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
+      this.bagPanel.add(r);
+      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${def.name}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      this.bagPanel.add(this.add.text(x + 8, y + 20, `×${inv[def.key]}`, { fontSize: '11px', color: '#ffe44e' }));
+      r.on('pointerover', () => r.setFillStyle(0x2a5a3a));
+      r.on('pointerout',  () => r.setFillStyle(0x1a3a2a));
+      r.on('pointerdown', () => this.useHealItem(def.key));
+    });
+  }
+
+  private onBag() {
+    if (this.state !== 'playerAction' && this.state !== 'bag') return;
+    this.state = 'bag';
+    this.rebuildBagPanel();
+    this.actionPanel.setVisible(false); this.movePanel.setVisible(false);
+    this.bagPanel.setVisible(true);
+    this.typeDialog('Choose an item!');
+  }
+
+  private useHealItem(itemKey: string) {
+    if (this.state !== 'bag') return;
+    // Choose which Pokémon to use it on (Revive targets a fainted one; heals/cures a healthy one).
+    const wantFainted = itemDef(itemKey)?.category === 'revive';
+    this.hideAllPanels();
+    openSwitchPanel(
+      this, this.activeSlot,
+      () => this.onBag(),                                   // cancel → back to the bag
+      (slot) => this.useItemOnTarget(itemKey, slot),
+      true,
+      (entry) => wantFainted ? entry.hp <= 0 : entry.hp > 0,
+      wantFainted ? 'Revive which Pokémon?' : 'Use on which Pokémon?',
+    );
+  }
+
+  private useItemOnTarget(itemKey: string, slot: number) {
+    const r = useItemOnSlot(this.registry, itemKey, slot);
+    if (!r.ok) { this.typeDialog(r.message, () => this.onBag()); return; }
+    // If the ACTIVE Pokémon was affected, sync its battle HP + bar.
+    if (slot === this.activeSlot) {
+      const e = PartySystem.get(this.registry)[this.activeSlot];
+      if (e) this.player.hp = e.hp;
+    }
+    this.hideAllPanels();
+    this.state = 'busy';
+    const finish = () => this.typeDialog(r.message, () => this.enemyTurn());   // using an item costs your turn
+    if (slot === this.activeSlot) this.animateHpBar('player', finish); else finish();
+  }
 
   // ── Battle flow ───────────────────────────────────────────────────────────
 
@@ -259,6 +579,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   private onFight() {
     if (this.state !== 'playerAction') return;
     this.state = 'playerMove';
+    this.refreshMovePanel();   // rebuild so PP counts reflect moves used this battle
     this.showMovePanel();
     this.typeDialog('Choose a move!');
   }
@@ -272,36 +593,71 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    this.player.useMove(playerMove);
+    // Turn order is decided by Speed (ties broken randomly).
+    const playerFirst = this.player.spd > this.enemy.spd
+      || (this.player.spd === this.enemy.spd && Math.random() < 0.5);
+    if (playerFirst) {
+      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction()));
+    } else {
+      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+    }
+  }
 
+  /** Resolve the player's move; on a KO, hand off to afterEnemyKO instead of continuing. */
+  private doPlayerMove(playerMove: Move, onDone: () => void) {
+    this.player.useMove(playerMove);
+    persistMovePP(this.registry, this.activeSlot, this.player);   // PP persists across battles
     this.typeDialog(`${this.player.name.toUpperCase()} used ${playerMove.data.name}!`, () => {
-      if (playerMove.data.power > 0) {
-        const { dmg, critical, effectiveness } = this.enemy.takeDamage(playerMove, this.player);
-        void dmg;
-        this.animateHpBar('enemy', () => {
-          const msg = critical ? 'A critical hit! ' :
-            effectiveness > 1 ? 'Super effective!' :
-            effectiveness < 1 && effectiveness > 0 ? 'Not very effective...' : '';
-          const next = () => {
-            if (this.enemy.isKO) { this.typeDialog(`${this.enemy.name.toUpperCase()} fainted!`, () => this.afterEnemyKO()); return; }
-            this.enemyTurn();
-          };
-          if (msg) this.typeDialog(msg, next); else next();
-        });
-      } else {
-        this.enemyTurn();
-      }
+      if (playerMove.data.power <= 0) { onDone(); return; }
+      const { critical, effectiveness } = this.enemy.takeDamage(playerMove, this.player);
+      playMoveFX(this, this.playerSprite, this.enemySprite, playerMove.data, effectiveness, () => {});
+      this.animateHpBar('enemy', () => {
+        const msg = critical ? 'A critical hit!' :
+          effectiveness > 1 ? 'Super effective!' :
+          effectiveness < 1 && effectiveness > 0 ? 'Not very effective...' : '';
+        const after = () => {
+          if (this.enemy.isKO) { this.typeDialog(`${this.enemy.name.toUpperCase()} fainted!`, () => this.afterEnemyKO()); return; }
+          onDone();
+        };
+        if (msg) this.typeDialog(msg, after); else after();
+      });
     });
   }
 
-  private enemyTurn() {
+  private get isElite() {
+    return this.trainerKey.startsWith('e4-') || this.trainerKey.startsWith('champion-');
+  }
+
+  /** Enemy move choice. E4/Champion pick a WEIGHTED-random move (weight = power ×
+   *  type effectiveness vs the player), so they mix their own STAB with super-effective
+   *  coverage — leaning toward damage without spamming a single best move. Others random. */
+  private pickEnemyMove(pool: Move[]): Move {
+    const rand = (arr: Move[]) => arr[Math.floor(Math.random() * arr.length)];
+    if (!this.isElite) return rand(pool);
+    const damaging = pool.filter(m => m.data.power > 0);
+    if (!damaging.length) return rand(pool);
+    const weights = damaging.map(m =>
+      Math.max(0, m.data.power * getEffectiveness(m.data.type, this.player.data.type1, this.player.data.type2)));
+    const total = weights.reduce((a, b) => a + b, 0);
+    if (total <= 0) return rand(damaging);
+    let r = Math.random() * total;
+    for (let i = 0; i < damaging.length; i++) { r -= weights[i]; if (r <= 0) return damaging[i]; }
+    return damaging[damaging.length - 1];
+  }
+
+  /** The enemy attacks (after a switch or item use, this is its single turn). */
+  private enemyTurn() { this.doEnemyMove(() => this.playerAction()); }
+
+  /** Resolve the enemy's move; on a KO, hand off to sendNextOrLose instead of continuing. */
+  private doEnemyMove(onDone: () => void) {
     const moves = this.enemy.moves.filter(m => m.pp > 0);
-    const move  = moves.length ? moves[Math.floor(Math.random() * moves.length)] : this.enemy.moves[0];
+    const move  = this.pickEnemyMove(moves.length ? moves : this.enemy.moves);
     this.enemy.useMove(move);
 
     this.typeDialog(`${this.enemy.name.toUpperCase()} used ${move.data.name}!`, () => {
       if (move.data.power > 0) {
-        this.player.takeDamage(move, this.enemy);
+        const { effectiveness } = this.player.takeDamage(move, this.enemy);
+        playMoveFX(this, this.enemySprite, this.playerSprite, move.data, effectiveness, () => {});
         this.animateHpBar('player', () => {
           PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
           if (this.player.isKO) {
@@ -309,73 +665,176 @@ export class TrainerBattleScene extends Phaser.Scene {
               this.sendNextOrLose();
             });
           } else {
-            this.playerAction();
+            onDone();
           }
         });
       } else {
-        this.playerAction();
+        onDone();
       }
     });
   }
 
   private afterEnemyKO() {
-    this.enemyIdx++;
-    if (this.enemyIdx < this.enemyQueue.length) {
-      // Send out next Pokémon
-      this.loadEnemyPokemon(this.enemyIdx).then(() => {
-        const teKey = (this.registry.get('_teKey') as string);
-        this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
-        this.animateHpBar('enemy', () => {});
-        this.enemyLvText.setText(`Lv.${this.enemy.level}`);
-        this.enemyHpBar.width  = HP_W;
-        this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
-        this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}!`,
-          () => this.playerAction());
+    // Award EXP to the active Pokémon for this defeated enemy, mid-battle.
+    // Northern (Phase 2) battles award extra EXP to keep up with the steep level curve.
+    this.awardExp(Math.round(this.enemy.level * 24 * expMultiplierFor(this.registry)), () => {
+      this.enemyIdx++;
+      if (this.enemyIdx < this.enemyQueue.length) {
+        // Send out next Pokémon
+        this.loadEnemyPokemon(this.enemyIdx).then(() => {
+          this.buffBoss();   // extra HP for a 우두머리 boss
+          const teKey = (this.registry.get('_teKey') as string);
+          this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
+          this.fitSprite(this.enemySprite, this.enemySpriteSize());   // re-scale: custom sprites differ in size (bosses loom larger)
+          this.animateHpBar('enemy', () => {});
+          this.enemyNameText?.setText(this.enemy.name.toUpperCase());
+          this.enemyLvText.setText(`Lv.${this.enemy.level}`);
+          this.enemyHpBar.width  = HP_W;
+          this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
+          this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}!`,
+            () => this.offerSwitchAfterKO());
+        });
+      } else {
+        this.handleWin();
+      }
+    });
+  }
+
+  /** Grant EXP to the active Pokémon, persist it, and show the message + level-up. */
+  private awardExp(amount: number, onDone: () => void) {
+    const oldLevel = this.player.level;
+    const levelled = this.player.gainExp(amount);
+    PartySystem.updateSlotProgress(
+      this.registry, this.activeSlot,
+      this.player.level, this.player.exp, this.player.hp, this.player.maxHp,
+    );
+    // Every other Pokémon that participated also gains EXP.
+    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount);
+    const after = () => this.playBenchLines(benchLines, onDone);
+    const msg = `${this.player.name.toUpperCase()} gained ${amount} EXP!`;
+    if (levelled) {
+      this.playerLvText.setText(`Lv.${this.player.level}`);
+      this.typeDialog(msg, () => {
+        this.animateHpBar('player', () => {
+          this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${this.player.level}!`, () => {
+            runLevelUpLearning(this, this.activeSlot, this.player, oldLevel, this.player.level,
+              (t, cb) => this.typeDialog(t, cb), after);
+          });
+        });
       });
     } else {
-      this.handleWin();
+      this.typeDialog(msg, after);
     }
+  }
+
+  /** Show queued benched-participant level-up notices, then continue. */
+  private playBenchLines(lines: string[], onDone: () => void) {
+    if (lines.length === 0) { onDone(); return; }
+    this.typeDialog(lines[0], () => this.playBenchLines(lines.slice(1), onDone));
   }
 
   private handleWin() {
     this.state = 'over';
+    // Silence the battle theme so only the win jingle plays (not both at once).
+    stopBgm(this);
+    // Milestone jingle: badge get for gym leaders, victory fanfare otherwise.
+    playJingle(this, this.badgeFlag ? 'badge' : 'victory');
+
+    // ── Gym-leader victory (badge + TM reward) ────────────────────────────
+    if (this.badgeFlag) {
+      const badgeName = this.badgeName || 'Badge';
+      const tmName    = this.badgeTM;
+      const winLine   = this.winLine || `${this.trainerName}: A worthy challenger.`;
+      const prize = Math.round(this.totalExp * 6);
+      Inventory.addMoney(this.registry, prize);
+      this.registry.set(this.badgeFlag, true);
+
+      const lines = [winLine, `You got ${formatMoney(prize)} for winning!`];
+      lines.push(`Congratulations! ${badgeName} obtained! 🏅`);
+      if (tmName) {
+        const tm = tmForMove(tmName);
+        if (tm) Inventory.add(this.registry, tm.key, 1);   // add the TM to the bag
+        lines.push(`Received: TM — ${tmName}!  (Check your Bag to teach it.)`);
+      }
+
+      const playSeq = (i: number) => {
+        if (i >= lines.length) {
+          this.saveProgress();
+          this.returnToRoute();
+          return;
+        }
+        this.typeDialog(lines[i], () => playSeq(i + 1));
+      };
+      playSeq(0);
+      return;
+    }
+
     const trainerLines: Record<string, string> = {
       'bug-catcher': "Bug Catcher: Whoa! Your Pokémon is so strong!",
       'hiker':       "Hiker: You've got real mountain spirit, kid.",
       'youngster':   "Youngster: No way! I just polished my sneakers…",
+      'suri-grunts': "Team Suri: ...You're stronger than the locals. The Director will hear of this.",
+      'nosdan-ryeo-1': "Commander Ryeo: ...The Spirit of Cheonji will be awakened. The only question is who controls what happens next — and it will NOT be Team Suri.",
+      'nosdan-ryeo-2': "Commander Ryeo: ...This changes nothing. The array will be ready when the Spirit wakes. (She withdraws south.)",
+      'rival-2': "Rival: ...Okay. Not luck. You're the real thing. My starter's almost ready for its final form. Next time, you won't recognize it.",
+      'rival-3': "Rival: Final form and all — and you STILL beat me. You're the real deal. Let's go save that moth grandmother.",
+      'suri-chaeyeon-1': "Admin Chaeyeon: Team Suri isn't the only organization moving through this region anymore. And the other one — they're not here for research.",
+      'suri-chaeyeon-2': "Admin Chaeyeon: 노스단 isn't here for healing. They've followed our digs for months, waiting. I've filed reports — the Director calls them a myth. She's wrong. And I don't know what to do with that.",
+      'nosdan-ryeo-cliff': "Commander Ryeo: ...You've beaten me on the cliff. But the array is the real threat — and it is not yet finished.",
+      'suri-director': "Director Suri: ...Enough. You and your friend fight like the region itself is at your back. Perhaps it is.",
+      'baekdu-soldier-1': "노스단 Soldier: The perimeter's yours. It won't matter — the towers will hold.",
+      'baekdu-soldier-2': "노스단 Soldier: Fall back! Fall back to the courtyard!",
+      'baekdu-sentry-w': "Watchtower Sentry: The west light's dead... the courtyard's exposed!",
+      'baekdu-sentry-e': "Watchtower Sentry: Searchlight down! The captain's on her own now.",
+      'baekdu-seollan': "Seollan: ...The Commander said you might reach this far. I didn't believe her. The gate is yours — but the mountain will not forgive you the way I have.",
+      'baekdu-grunt-1': "노스단 Grunt: You don't understand — the machine doesn't care who wins down here!",
+      'baekdu-admin-1': "노스단 Admin: Climb all you like. The matrix completes with or without us.",
+      'nosdan-mubaek': "Executive Mubaek: ...Six partners, and still you broke through. Go, then. The Spirit will not be so easily reasoned with.",
+      'road-hyeonu': "Hyeonu: A clean answer. The road has measured you well.",
+      'road-dawon': "Dawon: My dragons bow to yours. Go — the gate's just above.",
+      'road-munseok': "Munseok: Forty years, and you've still got something to teach me. Hah! Go on up.",
+      'rival-4': "Rival: ...Yeah. Yeah, that's the trainer I've been chasing this whole time. Go on — the Four are waiting, and so is HE.",
+      'e4-gyeoul': "Gyeoul: The thaw comes for us all. You've earned the next hall.",
+      'e4-hwageum': "Hwageum: My steel held nothing back, and you broke through it. Impressive.",
+      'e4-baram': "Baram: Like the wind itself — I couldn't pin you down. Go higher.",
+      'e4-saleum': "Saleum: The vision held after all. The throne is yours to challenge.",
+      'champion-hwangeum': "Hwangeum: ...Good. Three years I've wondered when someone would come who could do this.",
+      // ── POST-GAME I — The Northern League ──
+      'rival-5': "Rival: Yeah. YEAH. Go show these northerners what a Hanbando trainer looks like. I'll be in the stands, losing my voice for you.",
+      'north-seorak': "Seorak: ...You moved the stone. The next hall is yours to enter, southerner.",
+      'north-hanseol': "Hanseol: The cold couldn't hold you. Go on — climb higher.",
+      'north-cheolgang': "Cheolgang: My steel broke before you did. That has not happened in years. Pass.",
+      'north-baekho': "Baekho: The white tiger yields. Only the Great King remains above you now.",
+      'north-taewang': "Taewang: ...Thirty years, and the first to take my throne is a southerner. The north acknowledges Hanbando.",
+      // ── POST-GAME II — The Descent of Hwanung ──
+      'inspector-jito': "어사대장 Jito: ...Strong, and you fight clean — no tricks, no cruelty. That tells me more than words. Travel our cities. Show me WHY you're here.",
+      'nosdan-admin': "노스단 Admin: ...The stars already gave us the shrines. Beating me changes nothing — the Sovereign will descend for US.",
+      'inspector-salmu': "어사대장 Salmu: The trainer beneath the legend is real after all. The order takes note.",
+      'inspector-gapcheol': "어사대장 Gapcheol: Iron tested, iron held. You have the 어사대's respect — and mine.",
+      'inspector-jinnok': "어사대장 Jinnok: The head of the order is satisfied. The wards will open. We climb together, Champion.",
+      'nosdan-sovereign': "노스단 Sovereign-Claimant: ...Impossible. The throne was ours to take — the pantheon, the peninsula, all of it... (The 어사대 close in around the fallen claimant.)",
     };
     const defeatLine = trainerLines[this.trainerKey] ??
       `${this.trainerName}: You battled well…`;
 
-    this.typeDialog(defeatLine, () => {
-      // Grant EXP
-      this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
-      const levelled  = this.player.gainExp(this.totalExp);
-      this.registry.set('starterLevel', this.player.level);
-      this.registry.set('starterExp',   this.player.exp);
-      PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+    // Prize money for winning (EXP was already awarded per defeated Pokémon).
+    const prize = Math.round(this.totalExp * 4);
+    Inventory.addMoney(this.registry, prize);
 
-      const expMsg = `${this.player.name.toUpperCase()} gained ${this.totalExp} EXP!\n(Total: ${this.player.exp}/${this.player.expToNextLevel()} to next level)`;
-      if (levelled) {
-        this.playerLvText.setText(`Lv.${this.player.level}`);
-        this.typeDialog(expMsg, () => {
-          this.animateHpBar('player', () => {
-            this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${this.player.level}!`, () => {
-              this.registry.set('trainerDefeated_' + this.trainerKey, true);
-              SaveManager.save(this.registry, this.returnPx, this.returnPy);
-              this.returnToRoute();
-            });
-          });
-        });
-      } else {
-        const needed = this.player.expToNextLevel() - this.player.exp;
-        this.typeDialog(`${expMsg}  (${needed} to next level)`, () => {
-          this.registry.set('trainerDefeated_' + this.trainerKey, true);
-          SaveManager.save(this.registry, this.returnPx, this.returnPy);
-          this.returnToRoute();
-        });
-      }
+    this.typeDialog(`${defeatLine}\nYou got ${formatMoney(prize)} for winning!`, () => {
+      this.registry.set('trainerDefeated_' + this.trainerKey, true);
+      this.saveProgress();
+      this.returnToRoute();
     });
+  }
+
+  /** Save badge/progress against the last RESUMABLE overworld scene (the city/route
+   *  the player came from) — never the WorldMap default, which strands the player. */
+  private saveProgress() {
+    const scene = (this.registry.get('lastScene') as string) ?? this._returnScene;
+    const px = (this.registry.get('lastX') as number) ?? this.returnPx;
+    const py = (this.registry.get('lastY') as number) ?? this.returnPy;
+    SaveManager.save(this.registry, px, py, scene);
   }
 
   private get returnPx() { return (this.registry.get('routeReturnX') as number) ?? 0; }
@@ -393,21 +852,87 @@ export class TrainerBattleScene extends Phaser.Scene {
     );
   }
 
-  private voluntarySwitch(slotIdx: number) {
+  /** After the opponent sends out a fresh Pokémon, offer the player a FREE switch
+   *  (does not cost the turn) — the classic "Will you switch?" prompt. */
+  private offerSwitchAfterKO() {
+    const party = PartySystem.get(this.registry);
+    const hasBench = party.some((e, i) => i !== this.activeSlot && e.hp > 0);
+    if (!hasBench) { this.playerAction(); return; }   // nothing to switch to
+
+    this.state = 'busy';
+    this.hideAllPanels();
+    this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}.\nWill you switch your Pokémon?`);
+
+    const panel = this.add.container(this.W * 0.60, this.H - 120).setDepth(12);
+    panel.add(this.add.rectangle(80, 60, 316, 120, 0x111133).setStrokeStyle(1, 0x5577aa));
+    const mk = (label: string, x: number, cb: () => void) => {
+      const t = this.add.text(x, 44, label, { fontSize: '20px', color: '#ffffff' })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => t.setColor('#ffe44e'))
+        .on('pointerout',  () => t.setColor('#ffffff'))
+        .on('pointerdown', () => { panel.destroy(true); cb(); });
+      panel.add(t);
+    };
+    mk('▶ SWITCH', 28, () => this.openKOSwitch());
+    mk('  STAY IN', 178, () => this.playerAction());
+  }
+
+  private openKOSwitch() {
+    this.hideAllPanels();
+    openSwitchPanel(
+      this, this.activeSlot,
+      () => this.offerSwitchAfterKO(),     // BACK → re-show the switch/stay prompt
+      (idx) => this.freeSwitch(idx),
+    );
+  }
+
+  /** Swap in a chosen party member WITHOUT spending the turn (the enemy already
+   *  used its turn fainting). Mirrors voluntarySwitch but ends at playerAction(). */
+  private freeSwitch(slotIdx: number) {
     this.state = 'busy';
     this.activeSlot = slotIdx;
-    const party = PartySystem.get(this.registry);
-    const entry = party[slotIdx];
+    this.participants.add(slotIdx);
+    const entry = PartySystem.get(this.registry)[slotIdx];
     this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
 
+    this.playerNameText.setText(this.player.name.toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
+    this.playerHpBar.width = HP_W;
     this.animateHpBar('player', () => {});
 
     if (this.textures.exists(entry.spriteKey)) {
       this.playerSprite.setTexture(entry.spriteKey);
       const tex = this.textures.get(entry.spriteKey).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
-      this.playerSprite.setScale(140 / dim);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
+    }
+    this.playerSprite.setAlpha(0);
+    this.tweens.add({
+      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
+      onComplete: () => this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => this.playerAction()),
+    });
+  }
+
+  private voluntarySwitch(slotIdx: number) {
+    this.state = 'busy';
+    this.activeSlot = slotIdx;
+    this.participants.add(slotIdx);
+    const party = PartySystem.get(this.registry);
+    const entry = party[slotIdx];
+    this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
+
+    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerLvText.setText(`Lv.${this.player.level}`);
+    this.playerHpBar.width = HP_W;
+    this.animateHpBar('player', () => {});
+
+    if (this.textures.exists(entry.spriteKey)) {
+      this.playerSprite.setTexture(entry.spriteKey);
+      const tex = this.textures.get(entry.spriteKey).getSourceImage();
+      const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
     this.playerSprite.setAlpha(0);
     this.tweens.add({
@@ -427,24 +952,41 @@ export class TrainerBattleScene extends Phaser.Scene {
       PartySystem.set(this.registry, party);
     }
 
-    // Find next healthy Pokémon
-    const nextIdx = party.findIndex((e, i) => i !== this.activeSlot && e.hp > 0);
-
-    if (nextIdx === -1) {
-      // All fainted → trainer wins — return to wherever the battle was triggered from
+    // No healthy Pokémon left → trainer wins.
+    const anyHealthy = party.some((e, i) => i !== this.activeSlot && e.hp > 0);
+    if (!anyHealthy) {
       this.typeDialog(`${this.trainerName}: You're out of Pokémon! Better luck next time.`, () => {
         PartySystem.healAll(this.registry);
+        // Losing anywhere in a League gauntlet fails the whole run — the four masters
+        // must be beaten again from the first, in one attempt.
+        if (this.trainerKey.startsWith('e4-') || this.trainerKey.startsWith('champion-')) {
+          this.registry.set('leagueRunFailed', true);
+        } else if (this.trainerKey.startsWith('north-')) {
+          this.registry.set('northLeagueRunFailed', true);
+        }
         this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start(this._returnScene));
       });
       return;
     }
 
-    // Send in next Pokémon
-    this.activeSlot  = nextIdx;
-    const entry      = party[nextIdx];
-    this.player      = buildFromEntry(entry);
+    // Let the player CHOOSE which Pokémon to send next (forced switch — no cancel).
+    this.state = 'busy';
+    this.hideAllPanels();
+    this.typeDialog('Choose your next Pokémon!');
+    openSwitchPanel(this, this.activeSlot, () => {}, (idx) => this.sendInChosen(idx), false);
+  }
+
+  /** Bring in the player-chosen Pokémon after a faint, then resume the player's turn. */
+  private sendInChosen(nextIdx: number) {
+    this.state = 'busy';
+    this.activeSlot = nextIdx;
+    this.participants.add(nextIdx);
+    const entry = PartySystem.get(this.registry)[nextIdx];
+    this.player = buildFromEntry(entry);
+    this.refreshMovePanel();
 
     // Update HUD
+    this.playerNameText.setText(this.player.name.toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -456,7 +998,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       this.playerSprite.setTexture(key);
       const tex = this.textures.get(key).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
-      this.playerSprite.setScale(140 / dim);
+      this.playerSprite.setScale((140 * spriteScale(key)) / dim);
     }
     this.playerSprite.setAlpha(0);
     this.tweens.add({
@@ -480,7 +1022,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const ratio = mon.hp / mon.maxHp;
     bar.fillColor = ratio > 0.5 ? 0x44cc44 : ratio > 0.25 ? 0xddcc00 : 0xcc4444;
     this.tweens.add({
-      targets: bar, width: Math.max(0, ratio * HP_W), duration: 450, ease: 'Linear',
+      targets: bar, width: Math.max(0, ratio * HP_W), duration: 260, ease: 'Linear',
       onComplete: () => { label.setText(`${mon.hp}/${mon.maxHp}`); onDone(); },
     });
   }
