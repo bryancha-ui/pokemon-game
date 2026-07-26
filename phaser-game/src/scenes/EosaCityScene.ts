@@ -67,7 +67,7 @@ const SOLID = new Set<Tile>([T.BUILDING, T.TREE]);   // WATER handled separately
  *  map; a `solid` one also blocks its footprint. */
 export interface EosaLandmark {
   col: number; row: number; w: number; h: number;
-  color: number; label: string; kind?: 'building' | 'lighthouse' | 'monument' | 'pavilion'; solid?: boolean;
+  color: number; label: string; kind?: 'building' | 'lighthouse' | 'monument' | 'pavilion' | 'station' | 'rail'; solid?: boolean;
   enter?: string;    // a scene to enter via a door at the landmark's foot (e.g. a restaurant interior)
   enterId?: string;  // if `enter` is the generic NorthernBuildingScene, which building config to show
 }
@@ -515,6 +515,23 @@ export abstract class EosaCityScene extends Phaser.Scene {
         g.fillStyle(0x6a4a2a); g.fillRect(x + 4, y + h * 0.4, 5, h * 0.6); g.fillRect(x + w - 9, y + h * 0.4, 5, h * 0.6);
         g.fillStyle(lm.color); g.fillTriangle(x - 4, y + h * 0.45, x + w / 2, y, x + w + 4, y + h * 0.45);
         g.fillStyle(0x8a6a3a); g.fillRect(x + 4, y + h * 0.42, w - 8, 4);
+      } else if (lm.kind === 'station') {
+        // Grand frontier railway terminal — stone hall, arched entrance, clock, green roof.
+        g.fillStyle(0xd8cdb8); g.fillRect(x, y + h * 0.28, w, h * 0.72);
+        g.lineStyle(2, 0x3a2f22); g.strokeRect(x, y + h * 0.28, w, h * 0.72);
+        g.fillStyle(lm.color); g.fillRect(x - 3, y + h * 0.2, w + 6, h * 0.12);           // eaves
+        g.fillStyle(0x2f5a3a); g.fillTriangle(x + w / 2, y - 4, x + w * 0.34, y + h * 0.2, x + w * 0.66, y + h * 0.2); // central gable
+        g.fillStyle(0xf4e9c8); g.fillCircle(x + w / 2, y + h * 0.08, Math.min(w, h) * 0.06); // clock face
+        g.lineStyle(1, 0x000000); g.beginPath(); g.moveTo(x + w / 2, y + h * 0.08); g.lineTo(x + w / 2, y + h * 0.05); g.strokePath();
+        g.fillStyle(0x2a1c10); g.fillRect(x + w / 2 - 9, y + h - 22, 18, 22);              // arched doorway
+        g.fillStyle(0xffcf6a); g.fillRect(x + w / 2 - 6, y + h - 19, 12, 17);
+        g.fillStyle(0x88ccff, 0.75); for (let wx = 6; wx < w - 14; wx += 22) g.fillRect(x + wx, y + h * 0.42, 12, 14); // windows
+      } else if (lm.kind === 'rail') {
+        // Railway heading off toward the horizon — ballast bed, sleepers, twin steel rails.
+        g.fillStyle(0x6a6156); g.fillRect(x, y, w, h);                                     // gravel ballast bed
+        g.fillStyle(0x4a3826); for (let sy = y + 3; sy < y + h - 2; sy += 10) g.fillRect(x + 2, sy, w - 4, 5);  // sleepers
+        g.fillStyle(0xcfd6dd); g.fillRect(x + w * 0.34, y, 3, h); g.fillRect(x + w * 0.62, y, 3, h);            // twin rails
+        g.fillStyle(0xffffff, 0.35); g.fillRect(x + w * 0.34, y, 1, h); g.fillRect(x + w * 0.62, y, 1, h);      // rail shine
       } else {
         g.fillStyle(0xe8dcc6); g.fillRect(x, y + h * 0.25, w, h * 0.75); g.lineStyle(2, 0x3a2a1a); g.strokeRect(x, y + h * 0.25, w, h * 0.75);
         g.fillStyle(lm.color); g.fillTriangle(x - 4, y + h * 0.28, x + w / 2, y, x + w + 4, y + h * 0.28);

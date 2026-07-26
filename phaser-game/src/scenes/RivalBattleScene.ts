@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
+import { pushBgm, popBgm, stopBgm, playJingle, TRACKS } from '../systems/Music';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { playMoveFX } from '../systems/BattleFX';
 import { spriteScale } from '../data/SpriteScale';
@@ -67,7 +67,9 @@ export class RivalBattleScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.fadeIn(400);
-    pushBgm(this, 'rival');
+    // Keep the ambient track playing through the rival's run-in + dialogue, and preload
+    // the rival battle theme now so it can start the INSTANT the battle begins (revealBattle).
+    if (!this.cache.audio.exists('rival') && TRACKS.rival) { this.load.audio('rival', TRACKS.rival); this.load.start(); }
     this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
     this.buildPokemon();
     this.drawBackground();
@@ -302,16 +304,25 @@ export class RivalBattleScene extends Phaser.Scene {
   // ── Battle flow ───────────────────────────────────────────────────────────
 
   private startIntro() {
+    // Phase 1 — the rival RUNS in from the right; only then does the dialogue start.
+    if (this.playerTrainer) this.tweens.add({ targets: this.playerTrainer, alpha: 1, duration: 300 });
+    if (this.rivalTrainer) {
+      this.rivalTrainer.setAlpha(1);
+      this.rivalTrainer.x = this.W + 100;
+      this.tweens.add({ targets: this.rivalTrainer, x: 580, duration: 620, ease: 'Cubic.out', onComplete: () => this.introDialogue() });
+    } else {
+      this.introDialogue();
+    }
+  }
+
+  private introDialogue() {
     const sName = this.player.name;
     const rName = this.rival.name;   // dynamic — matches actual rival Pokémon
-    // Trainer portraits step in for the pre-battle dialogue.
-    this.tweens.add({ targets: [this.playerTrainer, this.rivalTrainer].filter(Boolean), alpha: 1, duration: 350 });
-    // Phase 1 — pre-battle dialogue, no Pokémon visible yet
     this.typeDialog(`${this.rivalTName}: Hey! Stop right there.`, () => {
       this.typeDialog(`${this.rivalTName}: You think you can just leave town with ${sName}?`, () => {
         this.typeDialog(`${this.rivalTName}: I chose ${rName}.\nWe have both been waiting for this.`, () => {
           this.typeDialog(`${this.rivalTName}: We battle. Right here, right now!`, () => {
-            // Phase 2 — battle begins: reveal Pokémon and HUDs
+            // Phase 2 — dialogue over: the battle begins and the rival theme kicks in.
             this.revealBattle();
           });
         });
@@ -320,6 +331,7 @@ export class RivalBattleScene extends Phaser.Scene {
   }
 
   private revealBattle() {
+    pushBgm(this, 'rival');   // rival battle music starts exactly as the battle begins
     // Portraits fade out; the Pokémon take their places.
     if (this.playerTrainer) this.tweens.add({ targets: this.playerTrainer, alpha: 0, duration: 300 });
     if (this.rivalTrainer)  this.tweens.add({ targets: this.rivalTrainer, alpha: 0, duration: 300 });

@@ -4,7 +4,11 @@
 // buttons never sit on top of the game. The deck holds a D-pad + A/B + utility
 // pills, and — during battle — a move-select bar (see deckShowMoves/deckHideMoves).
 //
-// The whole game reads the keyboard (arrows/SPACE/SHIFT/M/C/ESC); the D-pad/buttons
+// Everything on the deck is sized in a single unit `--u` derived from the deck's
+// ACTUAL box (a ResizeObserver recomputes it on rotate / fold / resize), so the
+// controls always scale to fit and never overflow when the screen changes shape.
+//
+// The game reads the keyboard (arrows/SPACE/SHIFT/M/C/ESC); the D-pad/buttons
 // synthesise those key events on `window` (the target Phaser listens on), so no
 // per-scene wiring is needed. Battle move buttons instead call a JS callback the
 // battle scene supplies, since the on-canvas move buttons are already tap-driven.
@@ -40,7 +44,7 @@ const btnBase =
   'display:flex;align-items:center;justify-content:center;pointer-events:auto;' +
   'touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font-weight:700;' +
   'border:2px solid rgba(255,255,255,0.5);background:rgba(30,38,66,0.9);' +
-  'box-shadow:0 2px 6px rgba(0,0,0,0.45);-webkit-tap-highlight-color:transparent;';
+  'box-shadow:0 2px 6px rgba(0,0,0,0.45);-webkit-tap-highlight-color:transparent;box-sizing:border-box;';
 
 /** Button that holds a key down while pressed (D-pad, run). */
 function holdButton(label: string, css: string, code: number): HTMLElement {
@@ -76,6 +80,16 @@ let controlLayer: HTMLElement | null = null;
 let moveLayer: HTMLElement | null = null;
 let mobile = false;
 
+/** Recompute the `--u` sizing unit from the deck's real box so nothing overflows. */
+function updateUnit(): void {
+  if (!deckEl) return;
+  const r = deckEl.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return;
+  // Fit the D-pad (~9u wide incl. the A/B cluster; ~11u tall incl. pills) into the deck.
+  const u = Math.max(6, Math.min(72, Math.min(r.width / 16, r.height / 12)));
+  deckEl.style.setProperty('--u', u.toFixed(2) + 'px');
+}
+
 /**
  * Build the DS-style split shell. Must run BEFORE the Phaser game is created so the
  * game can mount into the top `#game` pane. Returns the parent the game should use.
@@ -88,29 +102,35 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
   // Body becomes a vertical split: game pane on top, control deck below.
   document.body.style.cssText =
     'margin:0;padding:0;background:#000;display:flex;flex-direction:column;' +
-    'height:100vh;width:100vw;overflow:hidden;' +
+    'height:100vh;height:100dvh;width:100vw;overflow:hidden;' +
     'font-family:system-ui,-apple-system,sans-serif;touch-action:none;overscroll-behavior:none;';
 
   const gamePane = document.createElement('div');
   gamePane.id = 'game';
   // 16:9 game sits at full width; its height follows that aspect (capped) so the
-  // canvas fills the top pane snugly and the rest of the screen is the deck.
+  // canvas fills the top pane snugly and the rest of the screen is the deck. The
+  // cap keeps the deck a usable size in landscape too.
   gamePane.style.cssText =
-    'position:relative;width:100vw;height:min(60vh,calc(100vw*0.5625));' +
+    'position:relative;width:100vw;height:min(56vh,calc(100vw*0.5625));' +
     'flex:0 0 auto;background:#000;overflow:hidden;';
 
   deckEl = document.createElement('div');
   deckEl.id = 'deck';
   deckEl.style.cssText =
-    'position:relative;flex:1 1 auto;width:100vw;min-height:0;' +
+    'position:relative;flex:1 1 auto;width:100vw;min-height:0;--u:24px;' +
     'background:linear-gradient(#141a2e,#0b0f1e);border-top:3px solid #33406a;' +
     'box-shadow:inset 0 3px 8px rgba(0,0,0,0.5);touch-action:none;';
 
   buildControlLayer();
   buildMoveLayer();
   deckEl.append(controlLayer!, moveLayer!);
-
   document.body.append(gamePane, deckEl);
+
+  // Keep the sizing unit in step with the deck's real size across rotate / fold / resize.
+  updateUnit();
+  if ('ResizeObserver' in window) new ResizeObserver(updateUnit).observe(deckEl);
+  window.addEventListener('resize', updateUnit);
+  window.addEventListener('orientationchange', () => setTimeout(updateUnit, 150));
   return { parent: gamePane, mobile: true };
 }
 
@@ -119,25 +139,29 @@ function buildControlLayer(): void {
   const layer = document.createElement('div');
   layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
 
-  // D-pad — bottom-left plus of four pads.
-  const D = 'width:19vw;height:19vw;max-width:78px;max-height:78px;border-radius:12px;font-size:7vw;';
+  // D-pad — a 3×3 grid in the bottom-left; the four arrows sit in the plus cells so
+  // the cluster scales as one block and can never spill outside the deck.
   const pad = document.createElement('div');
-  pad.style.cssText = 'position:absolute;left:4vw;bottom:5vw;width:57vw;max-width:234px;height:57vw;max-height:234px;';
-  const up    = holdButton('▲', `position:absolute;left:19vw;top:0;${D}`,    KEY.up);
-  const down  = holdButton('▼', `position:absolute;left:19vw;bottom:0;${D}`, KEY.down);
-  const left  = holdButton('◀', `position:absolute;left:0;top:19vw;${D}`,    KEY.left);
-  const right = holdButton('▶', `position:absolute;right:0;top:19vw;${D}`,   KEY.right);
-  pad.append(up, down, left, right);
+  pad.style.cssText =
+    'position:absolute;left:var(--u);bottom:var(--u);' +
+    'width:calc(var(--u)*7.6);height:calc(var(--u)*7.6);display:grid;' +
+    'grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(var(--u)*0.28);';
+  const cell = 'border-radius:calc(var(--u)*0.55);font-size:calc(var(--u)*1.7);';
+  const up    = holdButton('▲', cell + 'grid-column:2;grid-row:1;', KEY.up);
+  const left  = holdButton('◀', cell + 'grid-column:1;grid-row:2;', KEY.left);
+  const right = holdButton('▶', cell + 'grid-column:3;grid-row:2;', KEY.right);
+  const down  = holdButton('▼', cell + 'grid-column:2;grid-row:3;', KEY.down);
+  pad.append(up, left, right, down);
 
-  // A / B — bottom-right.
-  const a = tapButton('A',  'position:absolute;right:4vw;bottom:9vw;width:22vw;height:22vw;max-width:92px;max-height:92px;border-radius:50%;font-size:8vw;background:rgba(46,120,74,0.92);', KEY.space);
-  const b = holdButton('B', 'position:absolute;right:26vw;bottom:16vw;width:17vw;height:17vw;max-width:70px;max-height:70px;border-radius:50%;font-size:6.5vw;background:rgba(150,64,64,0.92);', KEY.shift);
+  // A / B — bottom-right cluster.
+  const a = tapButton('A',  'position:absolute;right:var(--u);bottom:calc(var(--u)*1.6);width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);border-radius:50%;font-size:calc(var(--u)*1.6);background:rgba(46,120,74,0.92);', KEY.space);
+  const b = holdButton('B', 'position:absolute;right:calc(var(--u)*3.9);bottom:calc(var(--u)*3.1);width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;font-size:calc(var(--u)*1.25);background:rgba(150,64,64,0.92);', KEY.shift);
 
   // Utility pills — top-right of the deck.
-  const pill = 'top:2.5vw;width:12vw;height:12vw;max-width:50px;max-height:50px;border-radius:12px;font-size:5.5vw;';
-  const menu = tapButton('☰',  `position:absolute;right:4vw;${pill}`,  KEY.m);
-  const back = tapButton('✕',  `position:absolute;right:18vw;${pill}`, KEY.esc);
-  const bike = tapButton('🚲', `position:absolute;right:32vw;${pill}`, KEY.c);
+  const pill = 'top:calc(var(--u)*0.6);width:calc(var(--u)*1.95);height:calc(var(--u)*1.95);border-radius:calc(var(--u)*0.45);font-size:calc(var(--u)*1);';
+  const menu = tapButton('☰',  `position:absolute;right:var(--u);${pill}`,              KEY.m);
+  const back = tapButton('✕',  `position:absolute;right:calc(var(--u)*3.25);${pill}`,   KEY.esc);
+  const bike = tapButton('🚲', `position:absolute;right:calc(var(--u)*5.5);${pill}`,    KEY.c);
 
   layer.append(pad, a, b, menu, back, bike);
   controlLayer = layer;
@@ -146,16 +170,16 @@ function buildControlLayer(): void {
 /** The battle move-select bar (2×2), shown only while a move choice is offered. */
 function buildMoveLayer(): void {
   const layer = document.createElement('div');
-  layer.style.cssText = 'position:absolute;inset:0;display:none;flex-direction:column;padding:2.5vw;box-sizing:border-box;pointer-events:none;';
+  layer.style.cssText = 'position:absolute;inset:0;display:none;flex-direction:column;padding:calc(var(--u)*0.5);box-sizing:border-box;pointer-events:none;';
   const title = document.createElement('div');
   title.textContent = 'CHOOSE A MOVE';
-  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:4vw;text-align:center;letter-spacing:2px;margin:1vw 0 2vw;';
+  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:calc(var(--u)*1.15);text-align:center;letter-spacing:2px;margin:calc(var(--u)*0.3) 0 calc(var(--u)*0.5);';
   const grid = document.createElement('div');
   grid.className = '__movegrid';
-  grid.style.cssText = 'flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2.5vw;pointer-events:auto;';
+  grid.style.cssText = 'flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:calc(var(--u)*0.5);pointer-events:auto;';
   const back = document.createElement('div');
   back.textContent = '← BACK';
-  back.style.cssText = btnBase + 'margin-top:2.5vw;height:11vw;max-height:46px;border-radius:10px;font-size:4vw;pointer-events:auto;background:rgba(60,70,100,0.9);';
+  back.style.cssText = btnBase + 'margin-top:calc(var(--u)*0.5);height:calc(var(--u)*2.4);border-radius:calc(var(--u)*0.4);font-size:calc(var(--u)*1.1);pointer-events:auto;background:rgba(60,70,100,0.9);';
   back.dataset.role = 'back';
   layer.append(title, grid, back);
   moveLayer = layer;
@@ -175,13 +199,13 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
     const cell = document.createElement('div');
     const dim = m.pp <= 0;
     cell.style.cssText = btnBase +
-      `flex-direction:column;border-radius:12px;border-color:${col};` +
+      `flex-direction:column;border-radius:calc(var(--u)*0.5);border-color:${col};min-width:0;` +
       `background:${dim ? 'rgba(40,40,50,0.85)' : 'rgba(24,30,54,0.95)'};opacity:${dim ? 0.5 : 1};` +
-      'font-size:4.4vw;line-height:1.15;padding:2vw;text-align:center;';
+      'line-height:1.15;padding:calc(var(--u)*0.4);text-align:center;overflow:hidden;';
     cell.innerHTML =
-      `<div style="font-weight:800">${m.data.name.toUpperCase()}</div>` +
-      `<div style="font-size:3vw;color:${col};margin-top:1vw">${m.data.type.toUpperCase()}</div>` +
-      `<div style="font-size:3vw;color:#cbd3e6;margin-top:0.5vw">PP ${m.pp}/${m.data.pp}</div>`;
+      `<div style="font-weight:800;font-size:calc(var(--u)*1.15)">${m.data.name.toUpperCase()}</div>` +
+      `<div style="font-size:calc(var(--u)*0.8);color:${col};margin-top:calc(var(--u)*0.25)">${m.data.type.toUpperCase()}</div>` +
+      `<div style="font-size:calc(var(--u)*0.8);color:#cbd3e6;margin-top:calc(var(--u)*0.15)">PP ${m.pp}/${m.data.pp}</div>`;
     cell.addEventListener('pointerdown', (e) => { e.preventDefault(); onPick(i); });
     grid.append(cell);
   });

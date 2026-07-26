@@ -6,19 +6,20 @@ import { SaveManager } from '../utils/SaveManager';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
 // ── Sinuiju Ice Cave (신의주 얼음 동굴) ────────────────────────────────────────────
-// The 어사대장 Amrok's exam trial: an ice cavern under the frozen Amrok. The floor is
-// sheer ice — step onto it and you SLIDE until a boulder or wall stops you (the classic
-// ice-puzzle). Slide your way up through the frozen maze to the heart of the cave,
-// where the Ice-Bound Beartic (얼음 툰베어) sleeps frozen into the wall — until you get
-// close, and it shatters free as a 우두머리 boss.
+// 어사대장 Amrok's exam trial: a four-stage ice cavern under the frozen Amrok. Every
+// chamber floor is sheer ice — step on it and you SLIDE until a boulder or wall stops
+// you. Each stage is a slide puzzle (UP, then a turn, then UP into the next chamber),
+// the turns alternating left/right as you descend deeper, until you reach the heart
+// where the Ice-Bound Beartic (얼음 툰베어) shatters free of the wall as a 우두머리 boss.
 
-const T = { WALL: 0, SNOW: 1, ICE: 2, ROCK: 3 } as const;
+const T = { WALL: 0, SNOW: 1, ICE: 2, ROCK: 3, EXIT: 4 } as const;
 type Tile = typeof T[keyof typeof T];
-const TILE = 32, COLS = 15, ROWS = 27;
+const TILE = 32, COLS = 15, ROWS = 46;
 const SOLID = new Set<Tile>([T.WALL, T.ROCK]);
 
 const THREAT_KEY = 'eosa-sinuiju-threat';   // '-threat' → TrainerBattleScene 우두머리 (aura + 2× HP)
-const BEAR_COL = 7, BEAR_ROW = 4;           // the Beartic, frozen into the heart chamber
+const BEAR_COL = 7, BEAR_ROW = 2;           // the Beartic, frozen into the heart chamber
+const SPAWN_COL = 7, SPAWN_ROW = 43;        // the entrance snowdrift
 
 // Wild ice-dwellers, only in the entrance snowdrift.
 const IC_ENCOUNTERS: EncounterEntry[] = [
@@ -35,22 +36,34 @@ function buildMap(): Tile[][] {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
   };
-  // Heart chamber (top) — walkable frozen ground where the Beartic waits.
-  fill(1, 9, 1, 14, T.SNOW);
-  // Wall between heart and the slide puzzle, with a single passage at col 2.
-  fill(9, 10, 1, 14, T.WALL); m[9][2] = T.SNOW;
-  // The slide puzzle — one big ice field.
-  fill(10, 20, 1, 14, T.ICE);
-  // Wall between puzzle and entrance, passage at col 7.
-  fill(20, 21, 1, 14, T.WALL); m[20][7] = T.SNOW;
-  // Entrance snowdrift (bottom) — safe footing; wild ice Pokémon lurk here.
-  fill(21, 26, 1, 14, T.SNOW);
+  fill(1, 5, 1, 14, T.SNOW);        // heart chamber (rows 1-4), Beartic frozen in the wall
+  fill(6, 14, 1, 14, T.ICE);        // STAGE 4 (rows 6-13)
+  fill(15, 23, 1, 14, T.ICE);       // STAGE 3 (rows 15-22)
+  fill(24, 32, 1, 14, T.ICE);       // STAGE 2 (rows 24-31)
+  fill(33, 41, 1, 14, T.ICE);       // STAGE 1 (rows 33-40)
+  fill(42, 45, 1, 14, T.SNOW);      // entrance snowdrift (rows 42-44)
 
-  // Boulders that stop your slides — the solution is: UP, LEFT, UP.
-  m[10][7] = T.ROCK;   // sliding up from the entrance stops you at row 11
-  m[11][1] = T.ROCK;   // sliding left along row 11 stops you at col 2, right under the heart passage
-  // A few decoy boulders to make the cavern feel real (off the solution path).
-  m[13][11] = T.ROCK; m[16][4] = T.ROCK; m[18][10] = T.ROCK; m[15][12] = T.ROCK;
+  // Passages (snow "landings") through each divider wall — the exit of one stage is
+  // the entrance of the next, so the route weaves: enter col7 → col2 → col11 → col4 → col7.
+  m[41][7] = T.SNOW;   // entrance → stage 1
+  m[32][2] = T.SNOW;   // stage 1 → stage 2
+  m[23][11] = T.SNOW;  // stage 2 → stage 3
+  m[14][4] = T.SNOW;   // stage 3 → stage 4
+  m[5][7] = T.SNOW;    // stage 4 → heart
+  m[45][7] = T.EXIT;   // entrance floor → back out to Sinuiju
+
+  // Boulders that stop your slides — each stage solves as UP, (turn), UP.
+  // Stage 1 (enter col7, turn LEFT to col2):
+  m[33][7] = T.ROCK; m[34][1] = T.ROCK;
+  // Stage 2 (enter col2, turn RIGHT to col11):
+  m[24][2] = T.ROCK; m[25][12] = T.ROCK;
+  // Stage 3 (enter col11, turn LEFT to col4):
+  m[15][11] = T.ROCK; m[16][3] = T.ROCK;
+  // Stage 4 (enter col4, turn RIGHT to col7 → heart):
+  m[6][4] = T.ROCK; m[7][8] = T.ROCK;
+
+  // Decoy boulders off the solution path — make each cavern feel real (and misleading).
+  for (const [r, c] of [[37, 10], [39, 4], [28, 6], [30, 9], [19, 7], [21, 2], [10, 11], [12, 6]] as [number, number][]) m[r][c] = T.ROCK;
   return m;
 }
 
@@ -61,7 +74,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private tc = 7; private tr = 24;    // tile coords; spawn in the entrance
+  private tc = SPAWN_COL; private tr = SPAWN_ROW;
   private facing = 1;
   private stepping = false;
   private dir = { dx: 0, dy: 0 };
@@ -78,7 +91,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
 
     const rc = this.registry.get('iceCaveReturnCol') as number | undefined;
     const rr = this.registry.get('iceCaveReturnRow') as number | undefined;
-    if (rc !== undefined) { this.tc = rc; this.tr = rr as number; }
+    if (rc !== undefined) { this.tc = rc; this.tr = rr as number; } else { this.tc = SPAWN_COL; this.tr = SPAWN_ROW; }
     this.registry.remove('iceCaveReturnCol'); this.registry.remove('iceCaveReturnRow');
 
     this.map = buildMap();
@@ -115,28 +128,29 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
       else if (t === T.ICE) { g.fillStyle(0x9fd6ee, 1); g.fillRect(x, y, TILE, TILE); g.fillStyle(0xc7ecf9, 0.9); g.fillRect(x + 1, y + 1, TILE - 2, TILE - 2); g.lineStyle(1, 0x7fbfe0, 0.7); g.strokeRect(x + 3, y + 3, TILE - 6, TILE - 6); g.fillStyle(0xffffff, 0.7); g.fillRect(x + 6, y + 6, 8, 2); g.fillRect(x + 18, y + 20, 6, 2); }
       else if (t === T.SNOW) { g.fillStyle(0xe9f1f7, 1); g.fillRect(x, y, TILE, TILE); g.fillStyle(0xffffff, 0.7); g.fillCircle(x + 10, y + 12, 3); g.fillCircle(x + 22, y + 22, 2); }
       else if (t === T.ROCK) { g.fillStyle(0x9fd6ee, 1); g.fillRect(x, y, TILE, TILE); g.fillStyle(0x5c6b7a, 1); g.fillTriangle(x + 16, y + 4, x + 3, y + 28, x + 29, y + 28); g.fillStyle(0x7f8f9e, 0.8); g.fillRect(x + 12, y + 12, 6, 5); g.fillStyle(0xdff0fb, 0.6); g.fillRect(x + 8, y + 24, TILE - 16, 4); }
+      else if (t === T.EXIT) { g.fillStyle(0x1a2330, 1); g.fillRect(x, y, TILE, TILE); g.fillStyle(0x2a3a4a, 1); g.fillRect(x + 4, y + 2, TILE - 8, TILE - 4); g.fillStyle(0xffe44e, 1); g.fillRect(x + 14, y + 8, 4, 16); g.fillTriangle(x + 8, y + 20, x + 24, y + 20, x + 16, y + 28); }
     }
     const key = '__iceCaveMap__';
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(7 * TILE + 16, 25.4 * TILE, '↓ Sinuiju', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(7.5 * TILE, 15 * TILE, '얼음길 — 미끄러진다!\n(the ice slides you)', { fontSize: '8px', color: '#0a3a4a', align: 'center', backgroundColor: '#cdeafaee', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    if (!this.beaten) this.add.text(BEAR_COL * TILE + 16, 1.4 * TILE, '❄ 얼음 동굴의 심장부 ❄', { fontSize: '9px', color: '#bfe8ff', fontStyle: 'bold', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(7 * TILE + 16, 45 * TILE + 4, '↓ Sinuiju', { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    const stageY: [string, number][] = [['STAGE 1', 37], ['STAGE 2', 28], ['STAGE 3', 19], ['STAGE 4', 10]];
+    for (const [lab, row] of stageY) this.add.text(1.6 * TILE, row * TILE, lab, { fontSize: '8px', color: '#0a3a4a', fontStyle: 'bold', backgroundColor: '#cdeafacc', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(7.5 * TILE, 43 * TILE, '얼음길 — 미끄러진다!\n(ice slides you until a rock stops you)', { fontSize: '8px', color: '#0a3a4a', align: 'center', backgroundColor: '#cdeafaee', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    if (!this.beaten) this.add.text(BEAR_COL * TILE + 16, 0.5 * TILE, '❄ 얼음 동굴의 심장부 ❄', { fontSize: '9px', color: '#bfe8ff', fontStyle: 'bold', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 
   private drawBeartic() {
     const g = this.add.graphics().setDepth(7);
-    const cx = BEAR_COL * TILE + 16, cy = BEAR_ROW * TILE + 20;
-    // a hulking frozen bear encased in a block of ice
+    const cx = BEAR_COL * TILE + 16, cy = BEAR_ROW * TILE + 18;
     g.fillStyle(0x000000, 0.2); g.fillEllipse(cx, cy + 20, 46, 12);
-    g.fillStyle(0xeaf6ff, 1); g.fillEllipse(cx, cy, 34, 40);                 // body
-    g.fillStyle(0xf6fcff, 1); g.fillCircle(cx, cy - 20, 16);                 // head
-    g.fillStyle(0x2a3550, 1); g.fillCircle(cx - 6, cy - 22, 2.5); g.fillCircle(cx + 6, cy - 22, 2.5); // eyes
-    g.fillStyle(0xbfe0f0, 1); g.fillTriangle(cx - 4, cy - 8, cx + 4, cy - 8, cx, cy + 6); // ice beard
-    g.fillStyle(0xffffff, 1); g.fillTriangle(cx - 14, cy - 30, cx - 10, cy - 30, cx - 12, cy - 40); g.fillTriangle(cx + 10, cy - 30, cx + 14, cy - 30, cx + 12, cy - 40); // ears
-    // encasing ice sheen
+    g.fillStyle(0xeaf6ff, 1); g.fillEllipse(cx, cy, 34, 40);
+    g.fillStyle(0xf6fcff, 1); g.fillCircle(cx, cy - 20, 16);
+    g.fillStyle(0x2a3550, 1); g.fillCircle(cx - 6, cy - 22, 2.5); g.fillCircle(cx + 6, cy - 22, 2.5);
+    g.fillStyle(0xbfe0f0, 1); g.fillTriangle(cx - 4, cy - 8, cx + 4, cy - 8, cx, cy + 6);
+    g.fillStyle(0xffffff, 1); g.fillTriangle(cx - 14, cy - 30, cx - 10, cy - 30, cx - 12, cy - 40); g.fillTriangle(cx + 10, cy - 30, cx + 14, cy - 30, cx + 12, cy - 40);
     g.fillStyle(0xaad8f0, 0.28); g.fillRoundedRect(cx - 26, cy - 44, 52, 78, 8);
     this.tweens.add({ targets: g, alpha: { from: 1, to: 0.82 }, duration: 900, yoyo: true, repeat: -1 });
   }
@@ -160,9 +174,9 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
   }
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
-    this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '❄ 신의주 얼음 동굴 (Ice Cave)', {
-      fontSize: '14px', color: '#eaf6ff', fontStyle: 'bold',
+    this.add.rectangle(this.scale.width / 2, 22, 430, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
+    this.add.text(this.scale.width / 2, 22, '❄ 신의주 얼음 동굴 — 4 stages to the heart', {
+      fontSize: '13px', color: '#eaf6ff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD/Arrows: move  (ice slides you until a rock stops you)  M: menu', {
       fontSize: '10px', color: '#cbe6f5', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
@@ -193,7 +207,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
   private tryStep(dx: number, dy: number) {
     this.dir = { dx, dy };
     const nc = this.tc + dx, nr = this.tr + dy;
-    if (this.solid(nc, nr)) { return; }   // blocked — a boulder/wall halts the slide
+    if (this.solid(nc, nr)) { return; }   // a boulder/wall halts the slide
     const onIce = this.tileAt(this.tc, this.tr) === T.ICE || this.tileAt(nc, nr) === T.ICE;
     this.stepping = true;
     this.tweens.add({
@@ -205,9 +219,17 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
 
   private onArrive() {
     if (this.tileAt(this.tc, this.tr) === T.ICE) { this.tryStep(this.dir.dx, this.dir.dy); return; }  // keep sliding
+    if (this.tileAt(this.tc, this.tr) === T.EXIT) { this.exitToSinuiju(); return; }
     this.checkBeartic();
     this.maybeEncounter();
-    this.checkExit();
+  }
+
+  private exitToSinuiju() {
+    this.cutscene = true;
+    this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+      this.registry.set('SinuijuCitySceneReturnX', 18 * 32 + 16); this.registry.set('SinuijuCitySceneReturnY', 21 * 32 + 16);
+      this.scene.start('SinuijuCityScene');
+    });
   }
 
   private checkBeartic() {
@@ -230,7 +252,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
   }
 
   private maybeEncounter() {
-    if (this.tileAt(this.tc, this.tr) !== T.SNOW || this.tr < 21) return;   // only the entrance snowdrift
+    if (this.tileAt(this.tc, this.tr) !== T.SNOW || this.tr < 42) return;   // only the entrance snowdrift
     if (Math.random() > 0.12) return;
     const e = pickEncounter(IC_ENCOUNTERS);
     this.registry.set('wildId', e.id);
@@ -240,14 +262,5 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
     this.registry.set('wildReturnScene', 'SinuijuIceCaveScene');
     this.registry.set('iceCaveReturnCol', this.tc); this.registry.set('iceCaveReturnRow', this.tr);
     this.cameras.main.fadeOut(400, 255, 255, 255, () => this.scene.start('WildBattleScene'));
-  }
-
-  private checkExit() {
-    if (this.tr < ROWS - 1) return;   // walked off the bottom → back out to Sinuiju
-    this.cutscene = true;
-    this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-      this.registry.set('SinuijuCitySceneReturnX', 16 * 32); this.registry.set('SinuijuCitySceneReturnY', 21 * 32 + 16);
-      this.scene.start('SinuijuCityScene');
-    });
   }
 }
