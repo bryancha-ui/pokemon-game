@@ -85,7 +85,7 @@ export class RivalBattleScene extends Phaser.Scene {
     this.hideAllPanels();
     // The first rival battle plays its challenge dialogue in the OVERWORLD; if that already
     // happened, skip straight to the fight. Otherwise fall back to the in-battle intro.
-    if (this.registry.get('rivalIntroSeen')) { this.registry.remove('rivalIntroSeen'); this.revealBattle(); }
+    if (this.registry.get('rivalIntroSeen')) { this.registry.remove('rivalIntroSeen'); this.enterRivalBattle(); }
     else this.startIntro();
   }
 
@@ -331,6 +331,20 @@ export class RivalBattleScene extends Phaser.Scene {
         });
       });
     });
+  }
+
+  /** After the overworld challenge, the battle window still opens on the rival trainer
+   *  (gender-based, opposite the player) standing there for a beat before sending out. */
+  private enterRivalBattle() {
+    pushBgm(this, 'rival');
+    const portraits = [this.playerTrainer, this.rivalTrainer].filter(Boolean) as Phaser.GameObjects.Image[];
+    if (portraits.length) {
+      portraits.forEach((p) => p.setAlpha(0));
+      this.tweens.add({ targets: portraits, alpha: 1, duration: 300 });
+      this.time.delayedCall(1000, () => this.revealBattle());
+    } else {
+      this.revealBattle();
+    }
   }
 
   private revealBattle() {
