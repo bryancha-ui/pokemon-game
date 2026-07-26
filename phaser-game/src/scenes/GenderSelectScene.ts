@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { AVATAR_URL } from '../data/PlayerAvatar';
+import { rivalTrainerName } from '../data/CharacterSprite';
+import { promptName, showMessage } from '../systems/NameEntry';
 
 // ── New-game character select ───────────────────────────────────────────────────
 // The very first step of a new game: pick boy or girl. The rival is always the
@@ -69,8 +71,31 @@ export class GenderSelectScene extends Phaser.Scene {
     this.panels.girl.setStrokeStyle(this.choice === 'girl' ? 4 : 3, this.choice === 'girl' ? 0xffe44e : 0x33507e);
   }
 
+  private confirmed = false;
   private confirm() {
+    if (this.confirmed) return;   // guard against double-confirm opening two name prompts
+    this.confirmed = true;
     this.registry.set('playerGender', this.choice);
-    this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('WorldMapScene'));
+
+    // Prof. Song names the player, then the rival, before the adventure begins.
+    const playerDefault = this.choice === 'girl' ? 'Hana' : 'Jun';
+    promptName(
+      { title: 'What is your name?', subtitle: 'Prof. Song: And what shall I call you, new trainer?', placeholder: 'Your name', defaultValue: playerDefault, maxLength: 10 },
+      (playerName) => {
+        this.registry.set('playerName', playerName);
+        // 'rivalName' is still unset here, so this returns the gender-based default.
+        const rivalDefault = rivalTrainerName(this.registry);
+        promptName(
+          { title: "Your rival's name?", subtitle: `Prof. Song: This spirited young trainer will be your rival, ${playerName}. What is their name?`, placeholder: "Rival's name", defaultValue: rivalDefault, maxLength: 10 },
+          (rivalName) => {
+            this.registry.set('rivalName', rivalName);
+            showMessage(
+              `Prof. Song: Now you're all set, ${playerName}! ${rivalName} is waiting to see how far you'll go. I hope you enjoy your adventure!`,
+              () => this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('WorldMapScene')),
+            );
+          },
+        );
+      },
+    );
   }
 }

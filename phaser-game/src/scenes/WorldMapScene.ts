@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
@@ -130,6 +130,8 @@ function buildMap(): Tile[][] {
       }
     }
   }
+  // Keep a clear yard in front of the player's home (door at 11,36) — no trees blocking it.
+  for (let r = 36; r <= 40; r++) for (let c = 9; c <= 14; c++) { if (map[r][c] === TR || map[r][c] === FL) map[r][c] = PK; }
 
   // ── Town square / plaza: rows 31-37, cols 23-29 ────────────────────────────
   for (let r = 31; r < 38; r++) {
@@ -715,12 +717,13 @@ export class WorldMapScene extends Phaser.Scene {
       ease: 'Power2',
       onComplete: () => {
         const rivalName  = rivalTrainerName(this.registry);
+        const pName      = playerTrainerName(this.registry);
         const starterKey = (this.registry.get('starterKey') as string) ?? 'vipour';
         const rivalKey   = (this.registry.get('rivalKey')   as string) ?? 'onnurian';
         const sName = findForm(starterKey)?.data.name ?? 'that Pokémon';
         const rName = findForm(rivalKey)?.data.name ?? 'my partner';
         this.cutsceneDialog.show([
-          `${rivalName}: Hey! Stop right there.`,
+          `${rivalName}: Hey, ${pName}! Stop right there.`,
           `${rivalName}: You think you can just leave town with ${sName}?`,
           `${rivalName}: I chose ${rName}.\nWe have both been waiting for this.`,
           `${rivalName}: We battle. Right here, right now!`,

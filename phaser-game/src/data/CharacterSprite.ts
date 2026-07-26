@@ -17,11 +17,20 @@ export function playerDesign(reg: Reg): 'boy' | 'girl' {
 export function rivalDesign(reg: Reg): 'boy' | 'girl' {
   return reg.get('playerGender') === 'girl' ? 'boy' : 'girl';
 }
-/** The rival's trainer name, matched to the rival's gender (the opposite of the
- *  player's): a male player faces female 'Soohyun'; a female player faces male
- *  'Minhyuk'. */
+/** The rival's trainer name. Uses the name the player chose at the intro if set,
+ *  otherwise a gender-based default (a male player faces female 'Soohyun'; a female
+ *  player faces male 'Minhyuk'). */
 export function rivalTrainerName(reg: Reg): string {
+  const custom = reg.get('rivalName');
+  if (typeof custom === 'string' && custom.trim()) return custom.trim();
   return rivalDesign(reg) === 'girl' ? 'Soohyun' : 'Minhyuk';
+}
+
+/** The player's trainer name — chosen at the intro, or a gender-based default. */
+export function playerTrainerName(reg: Reg): string {
+  const name = reg.get('playerName');
+  if (typeof name === 'string' && name.trim()) return name.trim();
+  return playerDesign(reg) === 'girl' ? 'Hana' : 'Jun';
 }
 
 const SKIN = 0xf0c8a0, HAIR = 0x1a1410, BLAZER = 0x33363e, COLLAR = 0xffffff;
