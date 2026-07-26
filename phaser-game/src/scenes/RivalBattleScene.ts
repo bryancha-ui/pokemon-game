@@ -83,7 +83,10 @@ export class RivalBattleScene extends Phaser.Scene {
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => this.scene.launch('MenuScene'));
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => this.scene.launch('MenuScene'));
     this.hideAllPanels();
-    this.startIntro();
+    // The first rival battle plays its challenge dialogue in the OVERWORLD; if that already
+    // happened, skip straight to the fight. Otherwise fall back to the in-battle intro.
+    if (this.registry.get('rivalIntroSeen')) { this.registry.remove('rivalIntroSeen'); this.revealBattle(); }
+    else this.startIntro();
   }
 
   // ── Pokémon construction ──────────────────────────────────────────────────

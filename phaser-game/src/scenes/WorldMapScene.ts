@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
+import { findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 
@@ -696,22 +697,35 @@ export class WorldMapScene extends Phaser.Scene {
   private triggerRivalCutscene() {
     this.cutsceneActive = true;
 
-    // Minhyuk runs in from the right — animation only, dialog happens inside RivalBattleScene
-    const minhyuk = this.add.graphics().setDepth(25);
-    minhyuk.setPosition(this.px + 320, this.py);
-    this.drawMinhyukSprite(minhyuk);
+    // The rival runs in from the right. The whole challenge — dialogue and all — now plays
+    // out HERE in the overworld; only when it ends do we cut to the battle window.
+    const rival = this.add.graphics().setDepth(25);
+    rival.setPosition(this.px + 320, this.py);
+    this.drawMinhyukSprite(rival);
+    const nameTag = this.add.text(this.px + 320, this.py - 30, rivalTrainerName(this.registry), {
+      fontSize: '10px', color: '#ffe44e', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(26);
 
     this.tweens.add({
-      targets: minhyuk,
+      targets: [rival, nameTag],
       x: this.px + 64,
       duration: 600,
       ease: 'Power2',
       onComplete: () => {
-        // Brief pause so the player sees Minhyuk arrive, then cut to battle
-        this.time.delayedCall(500, () => {
-          this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-            this.scene.start('RivalBattleScene');
-          });
+        const rivalName  = rivalTrainerName(this.registry);
+        const starterKey = (this.registry.get('starterKey') as string) ?? 'vipour';
+        const rivalKey   = (this.registry.get('rivalKey')   as string) ?? 'onnurian';
+        const sName = findForm(starterKey)?.data.name ?? 'that Pokémon';
+        const rName = findForm(rivalKey)?.data.name ?? 'my partner';
+        this.cutsceneDialog.show([
+          `${rivalName}: Hey! Stop right there.`,
+          `${rivalName}: You think you can just leave town with ${sName}?`,
+          `${rivalName}: I chose ${rName}.\nWe have both been waiting for this.`,
+          `${rivalName}: We battle. Right here, right now!`,
+        ], () => {
+          // Dialogue over → switch to the battle window (RivalBattleScene skips its own intro).
+          this.registry.set('rivalIntroSeen', true);
+          this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('RivalBattleScene'));
         });
       },
     });
@@ -720,12 +734,8 @@ export class WorldMapScene extends Phaser.Scene {
   private drawMinhyukSprite(g: Phaser.GameObjects.Graphics) {
     // The rival — opposite gender to the player — runs in facing left.
     drawTrainerBody(g, 2, 0, rivalDesign(this.registry));
-    // Name tag
+    // Name-tag backdrop (the label text is added + tweened by the caller so it follows).
     g.fillStyle(0x000000, 0.7); g.fillRoundedRect(-20, -36, 40, 12, 3);
-    // (text rendered separately since Graphics can't draw text)
-    this.add.text(g.x, g.y - 30, rivalTrainerName(this.registry), {
-      fontSize: '10px', color: '#ffe44e', fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(26);
   }
 
   /** A building's display label — the rival's house is named after the (gender-based) rival. */
