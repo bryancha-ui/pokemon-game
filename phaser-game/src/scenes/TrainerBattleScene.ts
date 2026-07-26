@@ -233,11 +233,9 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.createBagPanel();
     this.hideAllPanels();
 
-    // Intro — the trainer's portrait appears first, then steps aside for the battle.
+    // Intro. Send the enemy out, then lead with the player.
     this.enemySprite.setAlpha(0);
-    if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 1, duration: 300 });
-    this.typeDialog(`${this.trainerName} wants to battle!`, () => {
-      // Portrait fades out; the enemy Pokémon takes its place.
+    const sendOut = () => {
       if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 0, duration: 300 });
       this.tweens.add({
         targets: this.enemySprite, x: 560, y: 130, alpha: 1, duration: 400,
@@ -247,14 +245,21 @@ export class TrainerBattleScene extends Phaser.Scene {
             this.tweens.add({
               targets: this.playerSprite, x: 180, y: 260, duration: 350,
               onComplete: () => {
-                this.typeDialog(`Go! ${this.player.name.toUpperCase()}!`,
-                  () => this.playerAction());
+                this.typeDialog(`Go! ${this.player.name.toUpperCase()}!`, () => this.playerAction());
               },
             });
           });
         },
       });
-    });
+    };
+    // Rival showdowns play their challenge dialogue in the OVERWORLD, so the battle window
+    // opens straight on the fight. Everyone else gets the usual "wants to battle!" card.
+    if (this.trainerKey.startsWith('rival')) {
+      sendOut();
+    } else {
+      if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 1, duration: 300 });
+      this.typeDialog(`${this.trainerName} wants to battle!`, sendOut);
+    }
   }
 
   // ── Pokémon loading ───────────────────────────────────────────────────────
