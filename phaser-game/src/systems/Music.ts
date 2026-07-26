@@ -115,7 +115,15 @@ export function playBgm(scene: Phaser.Scene, key: string): void {
   const url = TRACKS[key];
   if (!url) return;
 
+  // Record the track we WANT synchronously. A track can be lazy-loaded (its `begin`
+  // fires later, once the file downloads AND the browser unlocks audio on first
+  // input). If, in the meantime, another scene requested a different track, this
+  // deferred `begin` must NOT resurrect the stale one — otherwise two tracks play at
+  // once (e.g. the Title theme leaking over Professor Song's intro).
+  reg.set('bgmWanted', key);
+
   const begin = () => {
+    if (reg.get('bgmWanted') !== key) return;   // superseded by a later playBgm/stopBgm — abort
     stopJingle(scene);   // a new track supersedes any lingering victory/badge fanfare
     const prev = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
     if (prev) { prev.stop(); prev.destroy(); }
@@ -156,6 +164,7 @@ export function stopBgm(scene: Phaser.Scene): void {
   if (cur) { cur.stop(); cur.destroy(); }
   reg.remove('bgmSound');
   reg.remove('bgmKey');
+  reg.remove('bgmWanted');   // cancel any deferred track load so it can't start after a stop
 }
 
 /** Stop a currently-playing one-shot jingle (if any). */
