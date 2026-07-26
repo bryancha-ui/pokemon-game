@@ -390,7 +390,7 @@ export class TitleScene extends Phaser.Scene {
             'KaesongCityScene', 'NampoCityScene', 'WonsanCityScene', 'HamhungCityScene',
             'ChongjinCityScene', 'SinuijuCityScene', 'SamjiyonCityScene',
             'RyesongValleyScene', 'AhobiryongPassScene', 'SijungCoastScene', 'ChilboHighlandsScene', 'KaemaPlateauScene',
-            'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene'];
+            'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene', 'SinuijuIceCaveScene'];
           const d = save.data ?? {};
           const lastScene = d['lastScene'] as string | undefined;
           // A WorldMap save is only trusted if the player has NO mid/late progress —

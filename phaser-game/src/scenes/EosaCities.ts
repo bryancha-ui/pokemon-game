@@ -222,15 +222,16 @@ const SINUIJU: EosaCity = {
   award: ['어사대장 Amrok: ...You crossed. Few do.', '🐎 You received the Sinuiju 마패!'],
   mission: {
     threatKey: 'eosa-sinuiju-threat', threatName: 'Ice-Bound Beartic (얼음 툰베어)',
-    threatMon: { id: 614, level: 73 }, col: 5, row: 15, color: 0x8ab0d0,
+    threatMon: { id: 614, level: 74 }, col: 0, row: 0, remote: true,   // confronted deep in the ice cave
     blurb: ['어사대장 Amrok: You wish to cross. But no one crosses while the ice is unsafe.',
-            'A Beartic has taken the frozen Amrok, smashing the ice near the old bridge-span. Every blow spiders a crack toward the town side. If it breaks the sheet, the crossing is gone until spring.',
-            'Go out onto the river and drive it back to the far bank. Then, and only then, do we speak of your exam.'],
-    reminder: '어사대장 Amrok: The ice still cracks under that beast. Drive the Beartic from the river, then return to me.',
-    approach: ['You step onto the groaning ice. The Beartic rises on its hind legs, ice-beard bristling, and roars.', 'It brings both paws down — the sheet lurches beneath you. Fight!'],
-    cleared: ['어사대장 Amrok: ...The ice holds. The crossing is safe. You walked out onto breaking ice for people you have never met.',
+            'Below the frozen Amrok lies an ice cave, and in its heart a Beartic has woken. Its roars crack the whole sheet — every hour the split creeps closer to the town side. If it reaches us, the crossing is gone until spring.',
+            'Take the frozen path to the cave mouth and go DEEP. But mind your footing — the cavern floor is sheer ice; step onto it and you will slide until a boulder stops you. Reach the heart, drive the beast out, then we speak of your exam.'],
+    reminder: '어사대장 Amrok: The ice still splinters from below. Slide your way to the heart of the ice cave, drive the Beartic out, then return to me.',
+    approach: ['(unused — the Beartic is confronted in the heart of the ice cave.)'],
+    cleared: ['어사대장 Amrok: ...The cracking has stopped. The crossing holds. You slid blind through that frozen maze and faced the beast in its own lair.',
               'That is the coldest kind of courage. The gate is yours to earn. Begin.'],
   },
+  sideExit: { col: 16, scene: 'SinuijuIceCaveScene', label: '얼음 동굴 (Ice Cave)', icon: '❄', road: true },
   // A wide frozen-border city on the Amrok river.
   size: { cols: 36, rows: 24 },
   landmarks: [

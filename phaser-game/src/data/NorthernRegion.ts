@@ -13,7 +13,7 @@ const NORTHERN_SCENES = new Set<string>([
   // northern routes & beaches
   'RyesongValleyScene', 'AhobiryongPassScene', 'NampoBeachScene', 'WonsanBeachScene',
   'SijungCoastScene', 'HamhungMineScene', 'ChilboHighlandsScene', 'KaemaPlateauScene', 'FogboundManorScene',
-  'SamjiyonAjitRoadScene', 'NosdanHideoutScene',
+  'SamjiyonAjitRoadScene', 'NosdanHideoutScene', 'SinuijuIceCaveScene',
   // Northern League + post-game II
   'NorthernPlazaScene', 'NorthernColiseumScene', 'NorthernReachesScene',
   'SacredPeakScene', 'BaekduSummitScene',
