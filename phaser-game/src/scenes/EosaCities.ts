@@ -232,13 +232,14 @@ const SINUIJU: EosaCity = {
               'That is the coldest kind of courage. The gate is yours to earn. Begin.'],
   },
   sideExit: { col: 18, scene: 'SinuijuIceCaveScene', label: '얼음 동굴 (Ice Cave)', icon: '❄', road: true },   // right of the circuit road so it never collides with the Kaema route
-  // A wide frozen-border city on the Amrok river.
-  size: { cols: 36, rows: 24 },
+  // A wide frozen-border city on the Amrok river — expanded east into an open railway plaza.
+  size: { cols: 48, rows: 24 },
   landmarks: [
-    // ── The frontier railway — Sinuiju is where the rails leave the known world ──
-    { col: 2,  row: 11, w: 6, h: 4, color: 0x3a5a7a, label: '🚉 압록강 국제철도역 (Intl. Rail Station)',      kind: 'station', solid: true },
-    { col: 1,  row: 15, w: 9, h: 1, color: 0x6a6156, label: '🛤 미지의 대륙행 철길 (Line to the 미지의 대륙)',  kind: 'rail' },
-    { col: 1,  row: 17, w: 3, h: 2, color: 0x8aa0c0, label: '🧭 미지의 대륙 전망대 (Unknown-Continent Overlook)', kind: 'pavilion' },
+    // ── The frontier railway plaza — a wide-open square on the east edge of town, where
+    //    the rails leave the known world for the 미지의 대륙 ──
+    { col: 40, row: 6,  w: 6, h: 4, color: 0x3a5a7a, label: '🚉 압록강 국제철도역 (Intl. Rail Station)',      kind: 'station', solid: true },
+    { col: 38, row: 11, w: 9, h: 1, color: 0x6a6156, label: '🛤 미지의 대륙행 철길 (Line to the 미지의 대륙)',  kind: 'rail' },
+    { col: 44, row: 14, w: 3, h: 2, color: 0x8aa0c0, label: '🧭 미지의 대륙 전망대 (Unknown-Continent Overlook)', kind: 'pavilion' },
     { col: 29, row: 2,  w: 6, h: 3, color: 0x6a7a9a, label: '🌉 압록강 대교 (Amrok Bridge — broken)', kind: 'monument' },
     { col: 26, row: 5,  w: 4, h: 4, color: 0x4a6a8a, label: '🏛 Customs House (세관)',        kind: 'building', solid: true },
     { col: 27, row: 14, w: 4, h: 4, color: 0x5a7a9a, label: '❄ Ice Harbour (얼음 항)',        kind: 'building', solid: true },
@@ -246,12 +247,14 @@ const SINUIJU: EosaCity = {
     { col: 26, row: 18, w: 4, h: 3, color: 0x6a4a2a, label: '🏪 교역소 (Trading Post)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'sinuiju-post' },
   ],
   npcs: [
-    { col: 4,  row: 15, color: 0x2a4a6a, label: 'Stationmaster',
-      lines: ['Stationmaster: All aboard? Ha — not yet. This is the end of the line... for now.',
-              'The 압록강 국제철도 was built to run clear across the 미지의 대륙 — the Unknown Continent, west of the river. Iron rails to the very edge of the map, and beyond.',
+    { col: 41, row: 12, color: 0x2a4a6a, label: 'Stationmaster',
+      lines: ['Stationmaster: Welcome to the 압록강 국제철도역! Grandest terminal in the north — and the emptiest.',
+              'The line was built to run clear across the 미지의 대륙 — the Unknown Continent, off past the frozen river. Iron rails to the very edge of the map, and beyond.',
               'But the far span stands unfinished, and no soul has charted what waits out there. One day the trains will run again. Perhaps you will ride the first, Champion.'] },
-    { col: 10, row: 16, color: 0x7a6a9a, label: 'Continental Traveler',
-      lines: ['Traveler: I came all this way to catch the train to the 미지의 대륙. They tell me the line has been shut for years.', 'Still... I can feel it out there, past the frozen Amrok. A whole continent, waiting to be walked.'] },
+    { col: 45, row: 13, color: 0x7a6a9a, label: 'Continental Traveler',
+      lines: ['Traveler: I came all this way to catch the train to the 미지의 대륙. They tell me the line has been shut for years.', 'Still... from this overlook I can feel it out there, past the frozen Amrok. A whole continent, waiting to be walked.'] },
+    { col: 38, row: 9,  color: 0x5a6a7a, label: 'Rail Porter',
+      lines: ['Rail Porter: Mind the platform, Champion. These rails haven\'t felt a train in years, but we sweep them every morning all the same.', 'Old-timers say when the line to the 미지의 대륙 reopens, the whole plaza will fill with travellers again.'] },
     { col: 12, row: 13, color: 0x3a5a8a, label: 'Border Guard', lines: ['Border Guard: The far bank is another country. The bridge broke years ago — now only the ice connects us, and only in winter.'] },
     { col: 20, row: 14, color: 0x6a4a2a, label: 'Fur Trader', lines: ['Fur Trader: Sable, ermine, jade from across the river — the Trading Post has it all. If you can pay.'] },
     { col: 24, row: 20, color: 0x5a7a9a, label: 'Ice Fisher', lines: ['Ice Fisher: Since you drove that Beartic off, the ice holds firm again. My whole village fishes it once more.'] },
