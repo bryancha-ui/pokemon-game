@@ -389,7 +389,7 @@ export class TitleScene extends Phaser.Scene {
             // Northern 어사대 circuit — cities, routes, beaches & the mine
             'KaesongCityScene', 'NampoCityScene', 'WonsanCityScene', 'HamhungCityScene',
             'ChongjinCityScene', 'SinuijuCityScene', 'SamjiyonCityScene',
-            'RyesongValleyScene', 'AhobiryongPassScene', 'SijungCoastScene', 'ChilboHighlandsScene', 'KaemaPlateauScene',
+            'RyesongValleyScene', 'AhobiryongPassScene', 'SijungCoastScene', 'ChilboHighlandsScene', 'KaemaPlateauScene', 'RangrimMountainScene',
             'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene', 'SinuijuIceCaveScene'];
           const d = save.data ?? {};
           const lastScene = d['lastScene'] as string | undefined;

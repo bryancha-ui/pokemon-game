@@ -261,7 +261,8 @@ const SINUIJU: EosaCity = {
     { col: 9,  row: 12, color: 0x8ab0d0, label: 'Skater', lines: ['Skater: When the Amrok freezes solid, we skate clear across it! ...Mind the cracks by the old bridge, though.'] },
     { col: 8,  row: 21, color: 0x4a6a8a, label: 'Bundled Elder', lines: ['Bundled Elder: Coldest gate in the north, they call Sinuiju. Amrok guards it well. You did him proud out on that ice.'] },
   ],
-  prev: { scene: 'KaemaPlateauScene', returnKey: 'kaema', x: 11 * 32 + 16, y: 4 * 32 + 16 }, next: { scene: 'SamjiyonCityScene', ...SOUTH },   // south over the plateau → Chongjin
+  prev: { scene: 'KaemaPlateauScene', returnKey: 'kaema', x: 11 * 32 + 16, y: 4 * 32 + 16 },   // south over the plateau → Chongjin
+  next: { scene: 'RangrimMountainScene', returnKey: 'rangrim', x: 11 * 32 + 16, y: 47 * 32 + 16 },   // north over the Rangrim Range → Samjiyon
 };
 
 const SAMJIYON: EosaCity = {
@@ -305,7 +306,8 @@ const SAMJIYON: EosaCity = {
     { col: 9,  row: 12, color: 0x6a7590, label: 'Lodge Guest', lines: ['Lodge Guest: Warm up at the Highland Lodge before you climb. It\'s a long, cold road to the peak.'] },
     { col: 8,  row: 18, color: 0xaef0ff, label: 'Aurora Watcher', lines: ['Aurora Watcher: On clear nights the sky burns green and violet over the three lakes. There\'s no sight like it in all Hanbando.'] },
   ],
-  prev: { scene: 'SinuijuCityScene', ...NORTH }, next: { scene: 'NorthernPlazaScene', returnKey: 'northPlaza', x: 11.5 * 32, y: 27 * 32 },
+  prev: { scene: 'RangrimMountainScene', returnKey: 'rangrim', x: 11 * 32 + 16, y: 4 * 32 + 16 },   // south over the Rangrim Range → Sinuiju
+  next: { scene: 'NorthernPlazaScene', returnKey: 'northPlaza', x: 11.5 * 32, y: 27 * 32 },
 };
 
 export class NampoCityScene    extends EosaCityScene { constructor() { super(NAMPO); } }
