@@ -32,6 +32,12 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Grunt': '조무래기', 'Nurse': '간호사',
   // Northern League Elite Four + champion
   'Seorak': '서락', 'Hanseol': '한설', 'Cheolgang': '철강', 'Baekho': '백호',
+  'Driver': '기사',
+  // 어사대 chiefs (마패 circuit)
+  '어사대장 Haemin': '어사대장 해민', '어사대장 Haegang': '어사대장 해강',
+  '어사대장 Cheolju': '어사대장 철주', '어사대장 Mukyeong': '어사대장 무경',
+  '어사대장 Amrok': '어사대장 압록', '어사대장 Seolwon': '어사대장 설원',
+  '어사대장 Jeongan': '어사대장 정안', '어사대장 Hyeon': '어사대장 현',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -263,6 +269,63 @@ export const KO_STRINGS: Record<string, string> = {
   'WASD move  SPACE enter/exam  C bike  M menu': 'WASD 이동  SPACE 입장/시험  C 자전거  M 메뉴',
   "Churned up out of the depths, one of Gyarados's brood lunges at you!":
     '심연에서 솟구쳐, 갸라도스의 무리 하나가 네게 달려든다!',
+
+  // ── Jeju / Ferry ──
+  '🏝️ Jeju City — Island Heart': '🏝️ 제주 시티 — 섬의 심장',
+  'The volcanic coast of Jeju rises ahead — and far above, the vents glow at the summit.':
+    '제주의 화산 해안이 앞에 솟아 있다 — 그리고 저 높이, 정상의 분화구가 빛난다.',
+  'The ferry idles at the pier. Sail back to Haean City on the mainland?':
+    '연락선이 부두에 정박해 있다. 본토의 해안 시티로 돌아갈까?',
+  '↑ Disembark — Jeju City': '↑ 하선 — 제주 시티',
+  '⛴️ The Overnight Ferry (남해 연락선)': '⛴️ 밤배 (남해 연락선)',
+
+  // ── Sudo finale party (cont.) ──
+  'Rival: Two leagues, a whole villain syndicate, and now an actual GOD. ...I stopped trying to catch up a long time ago. I just get to say I knew you.':
+    '라이벌: 리그 두 개, 악당 조직 하나, 그리고 이제 진짜 신까지. ...난 오래전에 널 따라잡길 포기했어. 그냥 널 알았다고 말할 수 있는 걸로 만족해.',
+  'Prof. Song: 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care. Hanbando has never been safer, or more whole.':
+    '송 박사: 환웅, 풍백, 우사, 운사, 나비할망 — 모든 신들이 평화롭게 너의 보살핌 아래에 있어. 한반도는 이보다 더 안전하거나 온전한 적이 없었어.',
+  'Prof. Song: Whatever legend they tell about this region a thousand years from now, it starts with you. Thank you, Champion.':
+    '송 박사: 천 년 뒤 이 지방에 대해 어떤 전설을 이야기하든, 그건 너로부터 시작될 거야. 고맙다, 챔피언.',
+
+  // ── World map / express bus ──
+  'SPACE — 🚌 Express Bus to Kaesong (개성)': 'SPACE — 🚌 개성행 급행 버스',
+  '🚌 The northern express coach idles at the stop, engine rumbling.':
+    '🚌 북부행 급행 버스가 엔진을 울리며 정류장에 서 있다.',
+  'Driver: Non-stop to Kaesong — first of the eight 어사대 provinces, up across the old border. Riding with me?':
+    '기사: 개성까지 논스톱 — 옛 국경 너머, 여덟 어사대 지방의 첫 번째지. 같이 갈래?',
+
+  // ── Pine Needle Town ──
+  '🏡 Pine Needle Town (솔잎 마을)': '🏡 솔잎 마을',
+  'A quiet artisan village famous for ink painting and hanji paper-making.':
+    '수묵화와 한지 제작으로 유명한 조용한 장인 마을.',
+  'Paper lanterns sway between the houses. The air smells of pine and ink.':
+    '집들 사이로 종이 등불이 흔들린다. 공기에서 소나무와 먹 냄새가 난다.',
+  'The path north climbs steeply into snow and cloud.': '북쪽 길은 눈과 구름 속으로 가파르게 오른다.',
+
+  // ── 어사대 circuit — Nampo (representative; chief lines reused across cities) ──
+  'Nampo (남포) — the great West-Sea barrage holds back the tide beyond the quay, its sluice-gates gleaming with salt.':
+    '남포 — 거대한 서해 방조제가 부두 너머의 조수를 막아서고, 수문이 소금으로 반짝인다.',
+  '어사대장 Haemin waits by the water, patient as the turning tide.':
+    '어사대장 해민이 물가에서, 밀물처럼 인내심 있게 기다린다.',
+  'Power without patience drowns itself. Read the tide, and read me. Begin.':
+    '인내 없는 힘은 스스로를 익사시킨다. 조수를 읽고, 나를 읽어라. 시작.',
+  'You waited for the right wave. Good.': '알맞은 파도를 기다렸구나. 좋다.',
+  'Before any exam — the province needs you.': '시험에 앞서 — 이 지방이 널 필요로 한다.',
+  'The barrage still groans under that beast. Head to Nampo Beach, surf out past the whirlpools and quell the Gyarados, then return.':
+    '방조제가 아직도 그 괴수 아래서 신음한다. 남포 해변으로 가 소용돌이 너머로 파도타기해 갸라도스를 잠재우고 돌아오라.',
+  'The Gyarados rears from the swell, sluice-water sheeting off its coils, and fixes its glare on you.':
+    '갸라도스가 물결에서 몸을 일으키고, 똬리에서 수문물이 쏟아지며, 네게 시선을 고정한다.',
+  '🐎 You received the Nampo 마패!': '🐎 남포 마패를 받았다!',
+
+  // ── Capitol post-game (epilogue) ──
+  'In the weeks after Baekdu Peak, the region steadies. Director Suri turns herself in with full documentation; her late repentance is noted in her case.':
+    '백두봉 이후 몇 주 동안 지방이 안정된다. 수리 국장은 모든 자료와 함께 자수하고, 뒤늦은 뉘우침이 사건 기록에 남는다.',
+  "Professor Song: The Spirit's return stabilized the region. The three old spirits are free. And 나비할망 found her guardian. Remarkable. Both of you.":
+    '송 박사: 정령의 귀환이 지방을 안정시켰어. 세 옛 정령은 자유로워졌고. 그리고 나비할망은 자신의 수호자를 찾았지. 놀라워. 너희 둘 다.',
+  "A grand stone gate has opened behind the palace. ⛩ Scholars' Road is now open.":
+    '궁궐 뒤로 웅장한 돌문이 열렸다. ⛩ 선비의 길이 이제 열렸다.',
+  "Here — I had this prepared the moment I heard the news. Champions shouldn't have to walk everywhere.":
+    '자 — 소식을 듣자마자 준비해 뒀단다. 챔피언이 어디든 걸어다닐 순 없지.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
