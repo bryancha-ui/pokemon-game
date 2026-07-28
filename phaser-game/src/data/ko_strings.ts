@@ -589,6 +589,24 @@ export const KO_STRINGS: Record<string, string> = {
   'Keeper Noksaek guards the Living Temple. Earn his seal, and he may share what the roots remember.':
     '수호자 녹색이 생명 신전을 지키지. 그의 인장을 얻으면, 뿌리가 기억하는 것을 나눠줄지도 몰라.',
 
+  // ── Route trainers (pre-battle taunts) ──
+  'Strong, for someone fresh from the capital!': '수도에서 갓 온 사람치곤 강하군!',
+  'Fascinating data! Thank you for the sample.': '흥미로운 데이터야! 표본 고마워.',
+  'Hold still! ...Actually, my Pokémon are better subjects. And better fighters. Smile!':
+    '가만있어! ...아니, 내 포켓몬이 더 나은 피사체지. 그리고 더 잘 싸우고. 웃어!',
+  'Ahoy! Salt in my beard, salt in my blood. My sea-Pokémon will wash you right off this cliff!':
+    '어이! 수염에도 소금, 피에도 소금. 내 바다 포켓몬이 널 이 절벽에서 씻어내 버릴 거다!',
+  'These old trees are crawling with my favourites! Wanna see my best ones? They bite!':
+    '이 고목들엔 내가 제일 좋아하는 녀석들이 우글거려! 최고의 녀석들 볼래? 물어!',
+  'My birds ride the sea wind off these cliffs. Catch them if you can!':
+    '내 새들은 이 절벽의 바닷바람을 타지. 잡을 수 있으면 잡아봐!',
+  'The old 용 dragons sleep beneath this coast. My partners carry their blood. Face them!':
+    '오래된 용들이 이 해안 아래 잠들어 있어. 내 파트너들은 그 피를 이어받았지. 맞서봐!',
+  // Route trainer names
+  'Photographer Seulgi': '사진사 슬기',
+  'Bug Catcher Beomseok': '벌레잡이 소년 범석',
+  'Dragon Tamer Yunho': '드래곤 조련사 윤호',
+
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
   'SPACE to advance': 'SPACE: 넘기기',
