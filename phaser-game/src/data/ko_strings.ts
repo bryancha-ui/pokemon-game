@@ -47,6 +47,9 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Larch Cutter': '낙엽송 벌목꾼', 'Aurora Watcher': '오로라 관측자', '노스단 Lookout': '노스단 감시병',
   // Scholars' Road (victory road)
   'Hyeonu': '현우', 'Dawon': '다원', 'Munseok': '문석', 'Badge Scanner': '배지 스캐너',
+  // 어사대 inspectors (Northern Reaches) + 노스단 ranks
+  '어사대장 Jito': '어사대장 지토', '어사대장 Salmu': '어사대장 살무', '어사대장 Gapcheol': '어사대장 갑철',
+  '노스단 Grunt': '노스단 조무래기', '노스단 Admin': '노스단 간부',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -505,6 +508,24 @@ export const KO_STRINGS: Record<string, string> = {
     '라이벌: 그래서 — 이제 어쩔 거야? 앞으로도 모험을 계속할 거야?',
   "(You look out over the sleeping region — north and south, whole at last. Wherever the road goes next... it's yours to walk.)":
     '(잠든 지방을 내려다본다 — 남과 북이 마침내 하나가 되었다. 다음 길이 어디로 향하든... 그건 네가 걸어갈 길이다.)',
+
+  // ── Sacred Peak (climb) ──
+  "The Ancient Altar's hidden stair delivers you to a realm above the clouds. Three sealed shrines rise along the ridge to the Sacred Peak, where the oldest myth says the heavens once touched the earth.":
+    '고대 제단의 숨겨진 계단이 너를 구름 위의 세계로 데려간다. 능선을 따라 봉인된 세 사당이 성스러운 봉우리로 솟아 있고, 가장 오래된 신화는 이곳에서 하늘이 땅에 닿았다고 전한다.',
+  "어사대장 Jinnok: 노스단 is already climbing. Reach the Wind, the Rain and the Clouds before they do. I'll hold the lower wards and heal you as you pass. Go, Champion.":
+    '어사대장 진옥: 노스단이 이미 오르고 있어. 놈들보다 먼저 바람, 비, 구름에 다다르라. 아래쪽 결계는 내가 지키고, 지나갈 때 회복시켜 주마. 가라, 챔피언.',
+  '🌋 Cheonji — the summit lake': '🌋 천지 — 정상의 호수',
+
+  // ── Northern Reaches (어사대 gauntlet) ──
+  'Far enough, southerner. You crossed our woods without a guide — few outsiders manage even that.':
+    '거기까지다, 남부인. 안내인도 없이 우리 숲을 건넜군 — 외지인 중 그마저 해내는 자는 드물지.',
+  'But the shrines lie beyond me, and I do not move for reputation. Prove your intent — or turn back the way you came.':
+    '하지만 사당은 나를 지나야 있고, 나는 명성 따위로 비켜서지 않아. 네 뜻을 증명하라 — 아니면 왔던 길로 돌아가라.',
+  "We charted the shrines from the stars already. You're too late — but I'll enjoy slowing you down among the trees.":
+    '우린 이미 별자리로 사당의 위치를 파악했어. 넌 너무 늦었지 — 그래도 이 숲에서 널 붙잡아 두는 건 즐겁겠군.',
+  'Charming. But the 어사대 do not run on rumor. Show me the trainer beneath the legend.':
+    '귀엽군. 하지만 어사대는 소문으로 움직이지 않아. 그 전설 아래의 트레이너를 보여봐.',
+  'Iron does not bend for sentiment. Come.': '강철은 감정으로 휘지 않는다. 와라.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
