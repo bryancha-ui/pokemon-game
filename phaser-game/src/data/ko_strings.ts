@@ -466,6 +466,46 @@ export const KO_STRINGS: Record<string, string> = {
   'Forty years a trainer. The League gate is just over my shoulder — earn your way past me.':
     '트레이너 생활 사십 년. 리그 관문이 바로 내 어깨 너머에 있다 — 날 지나갈 자격을 얻어라.',
 
+  // ══ ENDING — Northern League party → 노스단 alarm → Rangrim shortcut → finale ══
+  'The Northern League throws a party in your honour — the whole city out in the streets, cheering the Champion who united north and south.':
+    '북방 리그가 너를 기리는 파티를 연다 — 온 도시가 거리로 나와, 남과 북을 하나로 만든 챔피언을 환호한다.',
+  "Rival: I never thought anyone would beat Taewang. But it's you — so of course you did.":
+    '라이벌: 누가 태왕을 이길 줄은 몰랐어. 근데 너잖아 — 그러니 당연한 거지.',
+  "📟 Then, mid-celebration, your Pokédex screams an alarm. Prof. Song's face drains of colour.":
+    '📟 그때, 축제 한가운데서 도감이 경보를 울린다. 송 박사의 얼굴이 새하얗게 질린다.',
+  "Prof. Song: It's 노스단. They're moving on the Rangrim Mountains — RIGHT NOW — racing to reach 환웅 (Hwanwoong), the Sovereign Who Descended, before anyone can stop them.":
+    '송 박사: 노스단이야. 놈들이 지금 — 바로 지금 — 낭림 산맥으로 움직이고 있어. 아무도 막기 전에 강림한 군주 환웅에게 닿으려 하고 있어.',
+  "Prof. Song: They've sealed the whole range behind their lines. But there is another way in — the 고대 제단 (Ancient Altar) opens a hidden stair straight to the Sacred Peak.":
+    '송 박사: 놈들이 산맥 전체를 봉쇄했어. 하지만 다른 길이 있지 — 고대 제단이 성스러운 봉우리로 곧장 이어지는 숨겨진 계단을 연단다.',
+  "Rival: The party can wait. Go — we'll hold things here. Beat them to the top, Champion!":
+    '라이벌: 파티는 나중에 해도 돼. 가 — 여긴 우리가 맡을게. 정상까지 놈들보다 먼저 도착해, 챔피언!',
+  '🎉 The music fades behind you as you race for the Rangrim Mountains...':
+    '🎉 음악이 등 뒤로 멀어지고, 너는 낭림 산맥으로 달려간다...',
+  // Altar (shortcut past the blockade)
+  '노스단 has sealed every pass up the Rangrim Mountains — but they never knew about this.':
+    '노스단이 낭림 산맥의 모든 길목을 봉쇄했다 — 하지만 이곳만은 몰랐다.',
+  'You lay your hand on the 고대 제단 (Ancient Altar). The stone hums with divine energy, and it responds to your presence.':
+    '고대 제단에 손을 얹는다. 돌이 신성한 기운으로 진동하며, 너의 존재에 응답한다.',
+  'The hidden stair opens — a shortcut straight past the blockade to the Sacred Peak, where 환웅 (Hwanwoong) awaits...':
+    '숨겨진 계단이 열린다 — 봉쇄를 곧장 지나 성스러운 봉우리로 이어지는 지름길, 그곳엔 환웅이 기다린다...',
+  // Finale party + rival one-on-one
+  'You beat 노스단 to the summit, defeated Sovereign Clemont, and 환웅 itself descended to your side. The threat is over.':
+    '너는 노스단보다 먼저 정상에 올라 군주 클레몽을 물리쳤고, 환웅이 몸소 네 곁으로 강림했다. 위협은 끝났다.',
+  "You come home to a hero's welcome — and the party the alarm cut short picks up right where it left off, louder than ever.":
+    '영웅의 환대 속에 돌아온다 — 경보로 중단됐던 파티가 그 어느 때보다 뜨겁게 다시 이어진다.',
+  'Prof. Song: 노스단 is finished. 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care.':
+    '송 박사: 노스단은 끝났어. 환웅, 풍백, 우사, 운사, 나비할망 — 모든 신들이 평화롭게 너의 보살핌 아래 있어.',
+  'Prof. Song: Whatever legend they tell of this region a thousand years from now, it starts with you. Thank you, Champion.':
+    '송 박사: 천 년 뒤 이 지방에 대해 어떤 전설을 이야기하든, 그건 너로부터 시작될 거야. 고맙다, 챔피언.',
+  '— Later, when the lanterns have burned low, the Rival finds you alone. —':
+    '— 이윽고, 등불이 사그라들 무렵, 라이벌이 홀로 있는 너를 찾아온다. —',
+  'Rival: ...We really did it. Every gym, both leagues, a whole syndicate, and a god at the end of it.':
+    '라이벌: ...우리 정말 해냈어. 모든 체육관, 두 리그, 조직 하나, 그리고 마지막엔 신까지.',
+  'Rival: So — what now? Are you going to keep adventuring from here?':
+    '라이벌: 그래서 — 이제 어쩔 거야? 앞으로도 모험을 계속할 거야?',
+  "(You look out over the sleeping region — north and south, whole at last. Wherever the road goes next... it's yours to walk.)":
+    '(잠든 지방을 내려다본다 — 남과 북이 마침내 하나가 되었다. 다음 길이 어디로 향하든... 그건 네가 걸어갈 길이다.)',
+
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
   'SPACE to advance': 'SPACE: 넘기기',

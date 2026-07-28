@@ -51,12 +51,16 @@ export class SudoLabScene extends Phaser.Scene {
       this.registry.remove('finalePartyPending');
       SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
       this.dialog.show([
-        'You come home to Sudo City one final time — this time carrying a god.',
+        'You beat 노스단 to the summit, defeated Sovereign Clemont, and 환웅 itself descended to your side. The threat is over.',
+        'You come home to a hero\'s welcome — and the party the alarm cut short picks up right where it left off, louder than ever.',
         'The whole region floods the streets. Lanterns, music, confetti; north and south celebrating as one people for the first time in living memory.',
-        'Rival: Two leagues, a whole villain syndicate, and now an actual GOD. ...I stopped trying to catch up a long time ago. I just get to say I knew you.',
-        'Prof. Song: 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care. Hanbando has never been safer, or more whole.',
-        'Prof. Song: Whatever legend they tell about this region a thousand years from now, it starts with you. Thank you, Champion.',
+        'Prof. Song: 노스단 is finished. 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care.',
+        'Prof. Song: Whatever legend they tell of this region a thousand years from now, it starts with you. Thank you, Champion.',
         '🎉 The city celebrates deep into the night in your honour.',
+        '— Later, when the lanterns have burned low, the Rival finds you alone. —',
+        'Rival: ...We really did it. Every gym, both leagues, a whole syndicate, and a god at the end of it.',
+        'Rival: So — what now? Are you going to keep adventuring from here?',
+        '(You look out over the sleeping region — north and south, whole at last. Wherever the road goes next... it\'s yours to walk.)',
       ], () => { this.busy = false; this.rollCredits(); });
       return;
     }
@@ -71,13 +75,13 @@ export class SudoLabScene extends Phaser.Scene {
       this.registry.set('northReunionSeen', true);
       SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
       this.dialog.show([
-        'You return to Sudo City as a hero. The entire city has gathered to celebrate your Northern League victory!',
-        'Confetti fills the air as Prof. Song, the Rival, and citizens cheer for the new Champion who united north and south.',
-        'Prof. Song: Today, Hanbando stands whole. You did what no one thought possible — you conquered the Northern League!',
-        'Rival: I never thought I\'d see the day someone actually beat Taewang. But I guess I shouldn\'t be surprised — it\'s you.',
-        'Prof. Song: The time has come. 환웅 (Hwanwoong), the Sovereign Who Descended, awaits at the Sacred Peak. Go to the Ancient Altar and begin the final ascent.',
-        'Prof. Song: This is the ultimate test, Champion. Prove yourself worthy of the Sovereign\'s presence.',
-        '🎉 The celebration fades as you prepare for the final chapter...',
+        'The Northern League throws a party in your honour — the whole city out in the streets, cheering the Champion who united north and south.',
+        'Rival: I never thought anyone would beat Taewang. But it\'s you — so of course you did.',
+        '📟 Then, mid-celebration, your Pokédex screams an alarm. Prof. Song\'s face drains of colour.',
+        'Prof. Song: It\'s 노스단. They\'re moving on the Rangrim Mountains — RIGHT NOW — racing to reach 환웅 (Hwanwoong), the Sovereign Who Descended, before anyone can stop them.',
+        'Prof. Song: They\'ve sealed the whole range behind their lines. But there is another way in — the 고대 제단 (Ancient Altar) opens a hidden stair straight to the Sacred Peak.',
+        'Rival: The party can wait. Go — we\'ll hold things here. Beat them to the top, Champion!',
+        '🎉 The music fades behind you as you race for the Rangrim Mountains...',
       ], () => {
         this.busy = false;
         this.cameras.main.fadeOut(500, 0, 0, 0, () => {
