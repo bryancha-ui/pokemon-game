@@ -38,6 +38,13 @@ export const KO_SPEAKERS: Record<string, string> = {
   '어사대장 Cheolju': '어사대장 철주', '어사대장 Mukyeong': '어사대장 무경',
   '어사대장 Amrok': '어사대장 압록', '어사대장 Seolwon': '어사대장 설원',
   '어사대장 Jeongan': '어사대장 정안', '어사대장 Hyeon': '어사대장 현',
+  // 어사대 city NPC roles
+  'Salt Farmer': '소금 농부', 'Old Woodsman': '늙은 나무꾼', 'Gate Guard': '관문 경비병',
+  'Disciple Baekho': '제자 백호', 'Disciple Miru': '제자 미루', 'Noodle Lover': '국수 애호가',
+  'Bridge Elder': '다리 어르신', 'Bathhouse Regular': '목욕탕 단골', 'Old Sailor': '늙은 뱃사람',
+  'Night-crew Worker': '야간 작업자', 'Foghorn Keeper': '무적 지기', 'Rail Porter': '철도 짐꾼',
+  'Border Guard': '국경 경비병', 'Fur Trader': '모피 상인', 'Ice Fisher': '얼음 낚시꾼',
+  'Larch Cutter': '낙엽송 벌목꾼', 'Aurora Watcher': '오로라 관측자', '노스단 Lookout': '노스단 감시병',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -326,6 +333,69 @@ export const KO_STRINGS: Record<string, string> = {
     '궁궐 뒤로 웅장한 돌문이 열렸다. ⛩ 선비의 길이 이제 열렸다.',
   "Here — I had this prepared the moment I heard the news. Champions shouldn't have to walk everywhere.":
     '자 — 소식을 듣자마자 준비해 뒀단다. 챔피언이 어디든 걸어다닐 순 없지.',
+
+  // ══ 어사대 circuit — full city scripts ══
+  // Nampo
+  'Rampaging Gyarados (난동 갸라도스)': '난동 갸라도스',
+  'A great Gyarados has been battering the West-Sea barrage from out on the open water. One more night and the sluice-gates give way, and the tide takes the lower town.':
+    '거대한 갸라도스가 먼바다에서 서해 방조제를 들이받고 있어. 하룻밤만 더 지나면 수문이 무너지고, 조수가 아랫마을을 삼킬 거야.',
+  'Take the shore path west out to Nampo Beach, then Surf out to it. But mind the water — its 부하 (underlings) stir up whirlpools that wander the whole bay. Weave between them, or be dragged under.':
+    '서쪽 해안길을 따라 남포 해변으로 가서 파도타기로 다가가라. 하지만 물을 조심해 — 그 부하들이 만 전체를 떠도는 소용돌이를 일으키니까. 그 사이를 헤쳐 나가지 않으면 끌려 들어갈 거야.',
+  'It lunges, jaws wide. No turning back now!': '녀석이 아가리를 벌리고 달려든다. 이제 물러설 수 없다!',
+  '어사대장 Haemin: The gates hold, and the town sleeps easy. Word travels fast on the water — they already speak your name.':
+    '어사대장 해민: 수문은 버티고, 마을은 편히 잠든다. 물길엔 소문이 빠르지 — 벌써 네 이름을 입에 올리더군.',
+  'Now I will see it for myself.': '이제 내가 직접 확인하겠다.',
+  'Since you dealt with that Gyarados, the gates run smooth. The whole town owes you a bowl.':
+    '네가 그 갸라도스를 처리해 준 뒤로 수문이 매끄럽게 돌아가. 온 마을이 네게 한 그릇 빚졌지.',
+  'We rake the flats at low tide. Nampo salt seasons half the northern coast!':
+    '썰물 때 갯벌을 긁는단다. 남포 소금이 북부 해안 절반을 간 맞추지!',
+  // Wonsan
+  '🐎 You received the Wonsan 마패!': '🐎 원산 마패를 받았다!',
+  'Hah — eager for a bout? Not yet. Anyone can win one fight. A fighter is forged by fighting through exhaustion.':
+    '하 — 한판 붙고 싶은가? 아직이야. 한 번 이기는 건 누구나 해. 투사는 지쳐 쓰러질 때까지 싸우며 단련되는 법.',
+  'Best all three, back to back, then come to me. Show me you can keep your feet when your legs are burning!':
+    '셋을 연달아 꺾은 뒤 내게 오라. 다리가 타들어가도 버티고 서 있음을 보여라!',
+  "You didn't just win — you outlasted. Now let's see if you've anything left for ME. Begin!":
+    '넌 그저 이긴 게 아니라 — 끝까지 버텼다. 이제 나를 상대할 힘이 남았는지 보자. 시작!',
+  "Best his three disciples and he'll respect you. He respects nothing else.":
+    '그의 제자 셋을 꺾으면 널 인정할 거야. 그것 말곤 아무것도 인정하지 않지.',
+  'The Songdowon pines have shaded this shore for a thousand years. Sit awhile.':
+    '송도원 소나무들이 천 년 동안 이 해안에 그늘을 드리웠지. 잠시 앉았다 가게.',
+  'The Pyeongseong checkpoint is just ahead. Have your 마패 ready.': '평성 검문소가 바로 앞이야. 마패를 준비해 두게.',
+  "Master Haegang sent you? Then you'll start with me — down here by the pier. Come on!":
+    '해강 사부가 보냈다고? 그럼 나부터 시작이다 — 여기 부두에서. 덤벼!',
+  'Still on your feet after Baekho? Good. The training ground is MY dojo. Show me your stance!':
+    '백호를 이기고도 서 있군? 좋아. 이 훈련장은 내 도장이다. 네 자세를 보여라!',
+  // Hamhung
+  'Berserk Steelix (폭주 강철톤)': '폭주 강철톤',
+  'A Steelix has burrowed up from the ore mine that feeds our furnaces and gone berserk in the tunnels. It thrashes when the miners come near — and if it collapses the main gallery, the whole steelworks goes cold.':
+    '용광로에 광석을 대는 광산에서 강철톤이 파고 올라와 갱도에서 폭주하고 있어. 광부가 다가가면 날뛰지 — 주 갱도가 무너지면 제철소 전체가 식어버려.',
+  'Take the pit road at the south edge of town down to the mine, and subdue it. No forge runs while it rages. See to it.':
+    '마을 남쪽 끝의 갱도길을 따라 광산으로 내려가 제압하라. 녀석이 날뛰는 한 용광로는 돌지 않는다. 처리해라.',
+  'Heat and ore-dust roll through the gallery. The Steelix rears from the rock, plates glowing dull red.':
+    '열기와 광석 먼지가 갱도를 휘감는다. 강철톤이 바위에서 몸을 일으키고, 비늘이 붉게 달아오른다.',
+  'It lunges, shaking the whole tunnel. Hold your ground!': '녀석이 갱도 전체를 뒤흔들며 달려든다. 자리를 지켜라!',
+  'You did not flinch from the heat. Good. Neither will I. Begin.': '넌 열기 앞에서 움츠리지 않았다. 좋아. 나도 그럴 것이다. 시작.',
+  'The Songchon river has fed this plain for centuries. The steel came later — the water was always here.':
+    '성천강이 수백 년 동안 이 평야를 먹여 살렸지. 강철은 나중이야 — 물은 늘 여기 있었어.',
+  // Chongjin
+  "s edge stands the old Fogbound Manor — abandoned for years. Lately a Gengar has nested inside, and from its windows the fog spills out to lead our night crews off the pier. Two boats are lost.":
+    '가장자리엔 오래된 안개저택이 서 있어 — 수년째 버려진 채로. 근래 팬텀 하나가 안에 둥지를 틀고, 그 창문에서 안개가 새어 나와 야간 인부들을 부두 밖으로 홀려내지. 배 두 척을 잃었어.',
+  'Take the fog road and go into the manor. End its game. What you cannot see can still be faced... if you keep your nerve. Go.':
+    '안개길을 따라 저택으로 들어가라. 그 장난을 끝내라. 보이지 않는 것도 맞설 수 있다... 담대함을 잃지 않는다면. 가라.',
+  'The Fog-Wraith Gengar\'s laugh echoes from everywhere at once. Steady yourself!':
+    '안개망령 팬텀의 웃음이 사방에서 한꺼번에 울린다. 마음을 다잡아라!',
+  'You cleared my harbor of what I could not see. Now show me your steel directly, Champion. Face me — pass my exam, and the 마패 is yours by right.':
+    '내가 보지 못한 것을 항구에서 몰아냈군. 이제 네 강함을 직접 보여라, 챔피언. 나와 맞서 — 시험을 통과하면 마패는 정당히 네 것이다.',
+  // Sinuiju
+  'Ice-Bound Beartic (얼음 툰베어)': '얼음 툰베어',
+  'You wish to cross. But no one crosses while the ice is unsafe.': '건너고 싶겠지. 하지만 얼음이 위험한 동안엔 누구도 건너지 못한다.',
+  'Below the frozen Amrok lies an ice cave, and in its heart a Beartic has woken. Its roars crack the whole sheet — every hour the split creeps closer to the town side. If it reaches us, the crossing is gone until spring.':
+    '얼어붙은 압록강 아래 얼음 동굴이 있고, 그 중심에서 툰베어가 깨어났다. 그 포효가 얼음판 전체를 갈라놓지 — 매시간 균열이 마을 쪽으로 다가온다. 우리에게 닿으면 봄까지 강을 건널 수 없어.',
+  '어사대장 Amrok: The ice still splinters from below. Slide your way to the heart of the ice cave, drive the Beartic out, then return to me.':
+    '어사대장 압록: 아직도 얼음이 아래에서 쪼개지고 있다. 얼음 동굴 중심까지 미끄러져 나아가 툰베어를 몰아낸 뒤, 내게 돌아오라.',
+  'That is the coldest kind of courage. The gate is yours to earn. Begin.':
+    '그것이야말로 가장 차가운 용기다. 관문을 얻을 자격이 있다. 시작.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
