@@ -138,6 +138,7 @@ import { HamhungNaengmyeonScene } from './scenes/interior/HamhungNaengmyeonScene
 import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
 import { setupMobileShell } from './systems/TouchControls';
 import { initI18n } from './systems/i18n';
+import { PokemonFxPlugin } from './systems/PokemonFx';
 
 // On touch devices, split the page DS-style (game on top, control deck below) and
 // mount the game into the top pane so the controls never cover it. ?touch=1 forces it.
@@ -153,6 +154,10 @@ const game = new Phaser.Game({
   render: {
     powerPreference: 'high-performance',   // prefer the discrete GPU on dual-GPU laptops
     antialias: true,
+  },
+  // Global "Pokémon-like" post-FX (colour grade + bloom + vignette) on every scene.
+  plugins: {
+    scene: [{ key: 'PokemonFx', plugin: PokemonFxPlugin, mapping: 'pokemonFx', start: true }],
   },
   fps: { target: 60, min: 30 },
   scale: {

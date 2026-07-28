@@ -5,6 +5,7 @@ import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { displayMoves, buildFromEntry } from '../systems/PartyBattle';
 import { TM_MOVE_DATA } from '../data/TMs';
 import type { MoveData } from '../battle/Pokemon';
+import { t } from '../systems/i18n';
 
 // Battle data for HM field moves, so teaching one on a full moveset can offer the
 // same "which move to forget?" picker that TMs use.
@@ -75,25 +76,25 @@ export class MenuScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x5577aa);
 
     // ── Header ──────────────────────────────────────────────────────────────
-    this.add.text(this.W / 2, this.H / 2 - 248, '— MENU —', {
+    this.add.text(this.W / 2, this.H / 2 - 248, t('— MENU —', '— 메뉴 —'), {
       fontSize: '18px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5);
 
     // ── Tab buttons ──────────────────────────────────────────────────────────
-    this.tabPokemon = this.add.text(this.W / 2 - 80, this.H / 2 - 218, 'POKÉMON', {
+    this.tabPokemon = this.add.text(this.W / 2 - 80, this.H / 2 - 218, t('POKÉMON', '포켓몬'), {
       fontSize: '14px', color: '#ffffff', backgroundColor: '#1a3a6a',
       padding: { x: 12, y: 6 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.switchTab('pokemon'));
 
-    this.tabBag = this.add.text(this.W / 2 + 60, this.H / 2 - 218, 'BAG', {
+    this.tabBag = this.add.text(this.W / 2 + 60, this.H / 2 - 218, t('BAG', '가방'), {
       fontSize: '14px', color: '#aaaaaa', backgroundColor: '#111133',
       padding: { x: 12, y: 6 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.switchTab('bag'));
 
     // ── Save button ──────────────────────────────────────────────────────────
-    const saveBtn = this.add.text(this.W / 2 - 340, this.H / 2 - 248, '💾 SAVE', {
+    const saveBtn = this.add.text(this.W / 2 - 340, this.H / 2 - 248, t('💾 SAVE', '💾 저장'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#1a3a1a',
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -110,7 +111,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // ── Close button ─────────────────────────────────────────────────────────
-    this.add.text(this.W / 2 + 370, this.H / 2 - 248, '✕ CLOSE', {
+    this.add.text(this.W / 2 + 370, this.H / 2 - 248, t('✕ CLOSE', '✕ 닫기'), {
       fontSize: '13px', color: '#aaaaaa',
     }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.closeMenu())
@@ -403,7 +404,7 @@ export class MenuScene extends Phaser.Scene {
     const overlay = this.add.container(0, 0).setDepth(60);
     overlay.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.7));
     overlay.add(this.add.rectangle(cx, cy, 620, 470, 0x10142a, 0.99).setStrokeStyle(2, 0xffe44e));
-    overlay.add(this.add.text(cx, cy - 205, '— GYM BADGES —', { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    overlay.add(this.add.text(cx, cy - 205, t('— GYM BADGES —', '— 체육관 배지 —'), { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
     overlay.add(this.add.text(cx, cy - 180, `${earned} / ${BADGES.length} collected`, { fontSize: '13px', color: '#9ab' }).setOrigin(0.5));
 
     // 4 columns × 2 rows

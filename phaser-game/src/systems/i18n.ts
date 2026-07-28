@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { dexEntry } from '../data/Pokedex';
-import { KO_STRINGS, KO_TYPES } from '../data/ko_strings';
+import { KO_STRINGS, KO_TYPES, KO_SPEAKERS } from '../data/ko_strings';
 
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
 export const POKE_KR: Record<string, string> = {
@@ -53,10 +53,36 @@ export function t(en: string, ko?: string): string {
 
 /** Look up an English string in the Korean dictionary. Unmapped strings (and English
  *  mode) return the original unchanged, so callers can wrap freely without risk. */
+// Dynamic battle lines embed a Pokémon's (English) name; translate the template and
+// keep the name in place so every battle reads in Korean.
+const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+  [/^What will (.+) do\?$/, m => `${m[1]}는 무엇을 할까?`],
+  [/^(.+) fainted!$/,       m => `${m[1]}은 쓰러졌다!`],
+  [/^Go, (.+)!$/,           m => `가랏, ${m[1]}!`],
+  [/^Go (.+)!$/,            m => `가랏, ${m[1]}!`],
+  [/^A wild (.+) appeared!$/, m => `앗! 야생 ${m[1]}이 나타났다!`],
+  [/^You caught (.+)!$/,    m => `${m[1]}을 잡았다!`],
+];
+
 export function tr(en: string): string {
   if (currentLang !== 'ko' || typeof en !== 'string') return en;
-  const hit = KO_STRINGS[en] ?? KO_STRINGS[en.trim()];
-  return hit ?? en;
+  const exact = KO_STRINGS[en] ?? KO_STRINGS[en.trim()];
+  if (exact) return exact;
+  for (const [re, fn] of BATTLE_PATTERNS) {
+    const m = en.match(re);
+    if (m) return fn(m);
+  }
+  // "Speaker: spoken line" — translate the speaker and the line independently, so a
+  // line only needs its spoken text in the dictionary to localize (and vice-versa).
+  const idx = en.indexOf(': ');
+  if (idx > 0 && idx <= 24) {
+    const speaker = en.slice(0, idx);
+    const rest = en.slice(idx + 2);
+    const koRest = KO_STRINGS[rest] ?? KO_STRINGS[rest.trim()];
+    const koSpeaker = KO_SPEAKERS[speaker];
+    if (koRest || koSpeaker) return `${koSpeaker ?? speaker}: ${koRest ?? rest}`;
+  }
+  return en;
 }
 
 /** A type's display name in the current language. */
