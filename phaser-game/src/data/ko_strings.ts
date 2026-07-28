@@ -93,6 +93,12 @@ export const KO_STRINGS: Record<string, string> = {
   'Choose your next Pokémon!': '다음 포켓몬을 선택하세요!',
   '▶ SPACE to advance  |  A to throw Pokéball': '▶ SPACE 넘기기  |  A 몬스터볼 던지기',
   'Switch to which Pokémon?': '어느 포켓몬으로 교체할까요?',
+  "CAN'T RUN": '도망 불가',
+  "You can't run from a trainer battle!": '트레이너 배틀에서는 도망칠 수 없어!',
+  "You can't flee a Gym Battle!": '체육관 배틀에서는 도망칠 수 없어!',
+  'What will you do?': '무엇을 할까?',
+  'Choose a move!': '기술을 선택해!',
+  'No PP left!': 'PP가 없어!',
 
   // ── Battle: outcome / status lines (static) ──
   'A critical hit!': '급소에 맞았다!',

@@ -14,6 +14,7 @@ import { DexTracker } from '../systems/DexTracker';
 import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvatar';
 import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
+import { tr } from '../systems/i18n';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
 
@@ -222,6 +223,7 @@ export class RivalBattleScene extends Phaser.Scene {
   }
 
   private typeDialog(text: string, onDone?: () => void) {
+    text = tr(text);
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
@@ -255,7 +257,7 @@ export class RivalBattleScene extends Phaser.Scene {
     ];
 
     for (const a of actions) {
-      const t = this.add.text(a.x, a.y, a.label, {
+      const t = this.add.text(a.x, a.y, tr(a.label), {
         fontSize: '20px',
         color: a.label === "CAN'T RUN" ? '#666688' : '#ffffff',
       }).setInteractive({ useHandCursor: a.label !== "CAN'T RUN" })

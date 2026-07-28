@@ -16,6 +16,7 @@ import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { playMoveFX } from '../systems/BattleFX';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
+import { tr } from '../systems/i18n';
 
 type State = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 const HP_W = 200;
@@ -251,6 +252,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   }
 
   private typeDialog(text: string, onDone?: () => void) {
+    text = tr(text);
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
@@ -275,7 +277,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       { label: 'POKÉMON',  x: 155, y: 70, cb: () => this.onSwitchPokemon() },
     ];
     actions.forEach(a => {
-      const t = this.add.text(a.x, a.y, a.label, {
+      const t = this.add.text(a.x, a.y, tr(a.label), {
         fontSize: '18px', color: a.label === "CAN'T RUN" ? '#556677' : '#ffffff',
       }).setInteractive({ useHandCursor: !a.label.includes("RUN") })
         .on('pointerover', () => { if (!a.label.includes("RUN")) t.setColor('#cc88ff'); })
