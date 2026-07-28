@@ -272,6 +272,12 @@ export class CapitolCityScene extends Phaser.Scene {
     } else if (this.registry.get('championDefeated') && !this.registry.get('flyHmGiven')) {
       // Champion returns home — Professor Song awards HM Fly. Plays once.
       this.time.delayedCall(700, () => this.playChampionReturn());
+    } else if (this.registry.get('sudoPartyPending')) {
+      // POST-GAME finale — the Northern League victory is celebrated back in Sudo City,
+      // which then unlocks the Ancient Altar shortcut to the Sacred Peak (환웅). Plays once.
+      this.time.delayedCall(700, () => {
+        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('SudoLabScene'));
+      });
     } else if (this.registry.get('northLeagueDone') && !this.registry.get('northReunionSeen')) {
       // POST-GAME I aftermath — Hwangeum meets you at the station. Plays once.
       this.time.delayedCall(700, () => this.playNorthernReunion());

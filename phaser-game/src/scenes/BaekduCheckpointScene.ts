@@ -350,10 +350,10 @@ export class BaekduCheckpointScene extends Phaser.Scene {
       this.registry.set('trainerName', 'Gate Captain Seollan');
       this.registry.set('trainerKey', 'baekdu-seollan');
       this.registry.set('trainerPokemon', JSON.stringify([
-        { id: 0,   level: 55, custom: 'snoqueen' },     // Ice — Aurora Veil
-        { id: 0,   level: 56, custom: 'martbadger' },    // Steel/Dark — wall
-        { id: 0,   level: 56, custom: 'corrpanda' },     // Dark — Sucker Punch
-        { id: 699, level: 58 },                           // Aurorus (Rock/Ice ace) — Avalanche + Stealth Rock
+        { id: 0,   level: 75, custom: 'snoqueen' },     // Ice — Aurora Veil
+        { id: 0,   level: 76, custom: 'martbadger' },    // Steel/Dark — wall
+        { id: 0,   level: 76, custom: 'corrpanda' },     // Dark — Sucker Punch
+        { id: 699, level: 78 },                           // Aurorus (Rock/Ice ace) — Avalanche + Stealth Rock
       ]));
       this.registry.set('trainerExpPool', 3000);
       this.registry.set('trainerReturnScene', 'BaekduCheckpointScene');

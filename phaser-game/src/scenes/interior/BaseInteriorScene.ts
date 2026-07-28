@@ -25,6 +25,7 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   protected downKey!: Phaser.Input.Keyboard.Key;
   protected interactPrompt!: Phaser.GameObjects.Text;
   protected returnSceneKey = 'WorldMapScene';
+  protected exiting = false;
 
   // Room grid: 16 cols × 13 rows drawn at origin (offsetX, offsetY)
   protected COLS = 16;
@@ -41,6 +42,7 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   protected bgmKey?: string;
 
   create() {
+    this.exiting = false;
     this.offsetX = (this.scale.width  - this.COLS * IT) / 2;
     this.offsetY = (this.scale.height - this.ROWS * IT) / 2;
 
@@ -55,6 +57,7 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.exiting) return;
     if (this.dialog.isOpen()) {
       this.handleDialogInput();
       return;
@@ -243,6 +246,8 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   // ── Scene exit ────────────────────────────────────────────────────────────
 
   protected exitToWorld() {
+    if (this.exiting) return;
+    this.exiting = true;
     this.cameras.main.fadeOut(400, 0, 0, 0, () => {
       this.scene.start(this.returnSceneKey);
     });

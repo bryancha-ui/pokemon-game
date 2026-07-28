@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SaveManager } from '../utils/SaveManager';
 import { STARTERS } from '../data/StarterData';
 import { playBgm, stopBgm } from '../systems/Music';
+import { t, getLang, setLang } from '../systems/i18n';
 
 export class TitleScene extends Phaser.Scene {
   private selected = 0;
@@ -42,8 +43,30 @@ export class TitleScene extends Phaser.Scene {
     this.drawMenu();
     this.drawSaveInfo();
     this.drawRestoreOption();
+    this.drawLangToggle();
     this.setupInput();
     this.refreshSelection();
+  }
+
+  /** Language selector at game start — flip between English and Korean. */
+  private drawLangToggle() {
+    const lang = getLang();
+    this.add.text(this.W - 210, 26, t('Language', '언어'), {
+      fontSize: '14px', color: '#9aa8cc',
+    }).setOrigin(0, 0.5).setDepth(20);
+    const mk = (label: string, l: 'en' | 'ko', x: number) => {
+      const on = lang === l;
+      const b = this.add.text(x, 26, label, {
+        fontSize: '15px', fontStyle: on ? 'bold' : 'normal',
+        color: on ? '#ffe44e' : '#8a8ab0',
+        backgroundColor: on ? '#3a2a5a' : '#181828',
+        padding: { x: 10, y: 5 },
+      }).setOrigin(0, 0.5).setDepth(20).setInteractive({ useHandCursor: true });
+      b.on('pointerdown', () => { if (getLang() !== l) { setLang(l); this.scene.restart(); } });
+      return b;
+    };
+    mk('EN', 'en', this.W - 130);
+    mk('한국어', 'ko', this.W - 78);
   }
 
   update() {
@@ -208,7 +231,7 @@ export class TitleScene extends Phaser.Scene {
 
   private drawMenu() {
     const cx = this.W / 2;
-    const options = ['▶  NEW GAME', '▶  CONTINUE'];
+    const options = [t('▶  NEW GAME', '▶  새 게임'), t('▶  CONTINUE', '▶  이어하기')];
 
     this.menuItems = options.map((label, i) => {
       const disabled = i === 1 && !this.hasSave;
@@ -392,7 +415,8 @@ export class TitleScene extends Phaser.Scene {
             'ChongjinCityScene', 'SinuijuCityScene', 'SamjiyonCityScene',
             'RyesongValleyScene', 'AhobiryongPassScene', 'SijungCoastScene', 'ChilboHighlandsScene', 'KaemaPlateauScene',
             'RangrimFoothillsScene', 'RangrimCavernScene', 'RangrimAltarScene', 'RangrimSnowfieldScene', 'RangrimSummitScene',
-            'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene', 'SinuijuIceCaveScene'];
+            'NampoBeachScene', 'WonsanBeachScene', 'HamhungMineScene', 'FogboundManorScene', 'SamjiyonAjitRoadScene', 'SinuijuIceCaveScene',
+            'NorthernBuildingScene', 'HamhungNaengmyeonScene'];
           const d = save.data ?? {};
           const lastScene = d['lastScene'] as string | undefined;
           // A WorldMap save is only trusted if the player has NO mid/late progress —

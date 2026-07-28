@@ -108,6 +108,6 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
   protected checkExit(): void {
     const doorY = this.tile(0, this.ROWS - 1).y;
     const nearDoor = this.px > this.tile(6, 0).x && this.px < this.tile(10, 0).x;
-    if (nearDoor && this.py > doorY + 16) this.exitToWorld();
+    if (nearDoor && this.py >= doorY + 8) this.exitToWorld();
   }
 }

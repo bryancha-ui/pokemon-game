@@ -25,11 +25,13 @@ const SOLID = new Set<Tile>([T.ROCK, T.BOULDER, T.STREAM, T.LEDGE]);
 
 interface Trainer { key: string; name: string; col: number; row: number; color: number; label: string; line: string; pokemon: string; expPool: number; }
 interface RgExit { scene: string; returnKey: string; x: number; y: number }
+/** A hidden passage revealed by interacting (SPACE) with a fixed tile, e.g. the Ancient Altar. */
+interface RgSecret extends RgExit { col: number; row: number; prompt: string; lines: string[] }
 interface RgConfig {
   key: string; returnKey: string; title: string; bgm: string;
-  southLabel: string; northLabel: string;
+  southLabel: string; northLabel: string; westLabel?: string;
   enc: EncounterEntry[]; encTiles: Tile[]; trainers: Trainer[];
-  prev: RgExit; next: RgExit;
+  prev: RgExit; next: RgExit; west?: RgExit; secret?: RgSecret; statue?: RgSecret;
   build: () => Tile[][]; darkCave?: boolean; decorate?: (s: RangrimBaseScene) => void;
 }
 
@@ -59,6 +61,8 @@ export class RangrimBaseScene extends Phaser.Scene {
   private spawnGuard = false; private spawnPx = 0; private spawnPy = 0;
   private steps = 0; private nextEnc = 10;
   private encTiles!: Set<Tile>;
+  private secretPrompt?: Phaser.GameObjects.Text;
+  private statuePrompt?: Phaser.GameObjects.Text;
   private readonly SPEED = 120; private readonly RUN = 250;
 
   constructor(cfg: RgConfig) { super(cfg.key); this.cfg = cfg; }
@@ -133,6 +137,9 @@ export class RangrimBaseScene extends Phaser.Scene {
 
     this.add.text(MIDCOL * TILE + 16, (ROWS - 0.6) * TILE, this.cfg.southLabel, { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(MIDCOL * TILE + 16, 0.6 * TILE, this.cfg.northLabel, { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    if (this.cfg.westLabel) {
+      this.add.text(0.6 * TILE, MIDCOL * TILE + 16, this.cfg.westLabel, { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0, 0.5).setDepth(5);
+    }
   }
 
   private drawTrainers() {
@@ -173,6 +180,16 @@ export class RangrimBaseScene extends Phaser.Scene {
     this.add.rectangle(this.scale.width / 2, 22, 460, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
     this.add.text(this.scale.width / 2, 22, this.cfg.title, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu', { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+    if (this.cfg.secret) {
+      this.secretPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
+        fontSize: '13px', color: '#cabaff', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
+    }
+    if (this.cfg.statue) {
+      this.statuePrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
+        fontSize: '13px', color: '#cabaff', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
+    }
   }
 
   update(_: number, delta: number) {
@@ -202,7 +219,76 @@ export class RangrimBaseScene extends Phaser.Scene {
     } else this.walkFrame = 0;
     this.drawChar();
     this.checkTrainers();
+    this.checkAltar();
+    this.checkStatue();
     this.checkExits();
+  }
+
+  /** Interact with the Ancient Altar (SPACE) to open the hidden stair to Sacred Peak (Hwanwoong). */
+  private checkAltar() {
+    const s = this.cfg.secret;
+    if (!s || !this.secretPrompt) return;
+    const wx = s.col * TILE + 16, wy = s.row * TILE + 16;
+    if (Math.hypot(this.px - wx, this.py - wy) > TILE * 1.6) { this.secretPrompt.setVisible(false); return; }
+    this.secretPrompt.setText(s.prompt).setVisible(true);
+    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    this.secretPrompt.setVisible(false);
+    
+    // Check if northern league is completed before allowing access
+    if (!this.registry.get('northLeagueDone')) {
+      this.cutsceneActive = true;
+      this.dialog.show([
+        'You lay your hand on the 고대 제단 (Ancient Altar). The stone is ice-cold, but it does not respond.',
+        'A voice echoes from the stone: "Only those who have proven themselves in the Northern League may ascend. Return after you have conquered the north."',
+      ], () => { this.cutsceneActive = false; });
+      return;
+    }
+    
+    // The Sudo City victory celebration plays automatically on returning to the Capitol
+    // after the Northern League, so the altar no longer hard-gates on it — clearing the
+    // Northern League is enough to ascend to the Sacred Peak.
+    // After the league, the altar leads to Sacred Peak (Hwanwoong)
+    this.cutsceneActive = true;
+    this.dialog.show([
+      'You lay your hand on the 고대 제단 (Ancient Altar). The stone hums with divine energy, and it responds to your presence.',
+      'The path to the Sacred Peak opens before you, where 환웅 (Hwanwoong) awaits...',
+    ], () => {
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => {
+        this.registry.set('sacredPeakReturnX', 9 * 32 + 16);
+        this.registry.set('sacredPeakReturnY', 37 * 32 + 16);
+        this.scene.start('SacredPeakScene');
+      });
+    });
+  }
+
+  /** Interact with the Statue (SPACE) to open the hidden stair to Cheonji (crater lake). */
+  private checkStatue() {
+    const s = this.cfg.statue;
+    if (!s || !this.statuePrompt) return;
+    const wx = s.col * TILE + 16, wy = s.row * TILE + 16;
+    if (Math.hypot(this.px - wx, this.py - wy) > TILE * 1.6) { this.statuePrompt.setVisible(false); return; }
+    this.statuePrompt.setText(s.prompt).setVisible(true);
+    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    this.statuePrompt.setVisible(false);
+    
+    // Check if northern league is completed before allowing access
+    if (!this.registry.get('northLeagueDone')) {
+      this.cutsceneActive = true;
+      this.dialog.show([
+        'You lay your hand on the ancient statue. The stone is ice-cold, but it does not respond.',
+        'A voice echoes from the stone: "Only those who have proven themselves in the Northern League may descend. Return after you have conquered the north."',
+      ], () => { this.cutsceneActive = false; });
+      return;
+    }
+    
+    // After northern league completion, statue leads to Cheonji
+    this.cutsceneActive = true;
+    this.dialog.show(s.lines, () => {
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => {
+        this.registry.set(s.returnKey + 'ReturnX', s.x); this.registry.set(s.returnKey + 'ReturnY', s.y);
+        this.scene.start(s.scene);
+      });
+    });
   }
   private collides(x: number, y: number): boolean {
     const hw = 6;
@@ -264,6 +350,7 @@ export class RangrimBaseScene extends Phaser.Scene {
     const nc = this.px > (MIDCOL - 4) * TILE && this.px < (MIDCOL + 4) * TILE;
     if (this.py > (ROWS - 1) * TILE && nc) this.go(this.cfg.prev);
     else if (this.py < 1 * TILE && nc) this.go(this.cfg.next);
+    else if (this.cfg.west && this.px < 1 * TILE && this.py > 8 * TILE && this.py < 20 * TILE) this.go(this.cfg.west);
   }
 }
 
@@ -298,8 +385,11 @@ function altar(): Tile[][] {
   fill(0, ROWS, 3, 21, T.CAVE);
   fill(0, ROWS, 0, 3, T.ROCK); fill(0, ROWS, 21, COLS, T.ROCK);
   fill(11, 16, 8, 16, T.ROCK); fill(12, 15, 9, 15, T.CAVE);   // the raised altar dais (rock rim, hollow centre)
-  fill(13, 14, 10, 14, T.PATH);                              // the aisle onto the dais
+  fill(13, 18, 11, 13, T.PATH);                              // aisle south from the hall, opening the rim onto the altar
   for (const [r, c] of [[6, 7], [7, 16], [20, 7], [21, 16], [9, 5], [22, 18]] as [number, number][]) m[r][c] = T.BOULDER;
+  // Add statue platform at row 9
+  fill(8, 10, 10, 14, T.ROCK);
+  fill(9, 10, 11, 13, T.CAVE); // statue location
   return m;
 }
 function snowfield(): Tile[][] {
@@ -364,7 +454,7 @@ const CAVERN: RgConfig = {
 };
 const ALTAR: RgConfig = {
   key: 'RangrimAltarScene', returnKey: 'rgAltar', title: '⛰ 낭림 제단의 방 (Altar Hall)', bgm: 'sacredpeak', darkCave: true,
-  southLabel: '↓ 하부 동굴 (Cavern)', northLabel: '↑ 설원 능선 (Snow Ridge)',
+  southLabel: '↓ 하부 동굴 (Cavern)', northLabel: '↑ 설원 능선 (Snow Ridge)', westLabel: '← 백두봉 (Baekdu Peak)',
   encTiles: [T.CAVE], enc: [
     { id: 35, weight: 14, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 120 },
     { id: 437, weight: 10, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 90 },
@@ -379,8 +469,32 @@ const ALTAR: RgConfig = {
   ],
   prev: rgExit('RangrimCavernScene', 'rgCave', NORTH_END),
   next: rgExit('RangrimSnowfieldScene', 'rgSnow', SOUTH_END),
+  west: rgExit('BaekduSummitScene', 'baekduSummit', { x: 18 * 32 + 16, y: 30 * 32 + 16 }),
+  // Interacting with the Ancient Altar (aisle at row 13) opens a hidden stair to Sacred Peak (Hwanwoong).
+  secret: {
+    scene: 'SacredPeakScene', returnKey: 'sacredPeak', x: 9 * 32 + 16, y: 37 * 32 + 16,
+    col: 11, row: 13, prompt: 'SPACE — Touch the Ancient Altar',
+    lines: [
+      'You lay your hand on the 고대 제단 (Ancient Altar). The stone hums with divine energy, and it responds to your presence.',
+      'The path to the Sacred Peak opens before you, where 환웅 (Hwanwoong) awaits...',
+    ],
+  },
+  // Interacting with the statue (aisle at row 9) opens a hidden stair to Cheonji (crater lake).
+  statue: {
+    scene: 'CheonjiScene', returnKey: 'cheonji', x: 10 * 32 + 16, y: 19 * 32 + 16,
+    col: 11, row: 9, prompt: 'SPACE — Touch the Statue',
+    lines: [
+      'You lay your hand on the ancient statue. The stone is ice-cold, and it hums — a deep, charged note that answers from somewhere far below.',
+      'With a grinding of rock, the base splits, revealing a hidden stair winding down toward 천지 (Cheonji), the sacred crater lake...',
+    ],
+  },
   build: altar,
-  decorate: (s) => { s.glow(11, 13, 0x9a8ce0); s.label('고대 제단 (Ancient Altar)', 11, 11, '#cabaff'); },
+  decorate: (s) => { 
+    s.glow(11, 13, 0x9a8ce0); 
+    s.label('고대 제단 (Ancient Altar)', 11, 11, '#cabaff');
+    s.glow(11, 9, 0x8ac8e0); 
+    s.label('고대 조각상 (Ancient Statue)', 11, 7, '#a8d0f0');
+  },
 };
 const SNOWFIELD: RgConfig = {
   key: 'RangrimSnowfieldScene', returnKey: 'rgSnow', title: '⛰ 낭림 설원 능선 (Snow Ridge)', bgm: 'baekdupass',

@@ -22,7 +22,12 @@ export function rivalDesign(reg: Reg): 'boy' | 'girl' {
  *  player faces male 'Minhyuk'). */
 export function rivalTrainerName(reg: Reg): string {
   const custom = reg.get('rivalName');
-  if (typeof custom === 'string' && custom.trim()) return custom.trim();
+  const rivalKey = String(reg.get('rivalKey') ?? '').toLowerCase();
+  // Self-heal old saves where 'rivalName' was accidentally set to the rival's starter
+  // Pokémon (e.g. "Munkain") — reject a name that matches the rival's species key.
+  if (typeof custom === 'string' && custom.trim() && custom.trim().toLowerCase() !== rivalKey) {
+    return custom.trim();
+  }
   return rivalDesign(reg) === 'girl' ? 'Soohyun' : 'Minhyuk';
 }
 

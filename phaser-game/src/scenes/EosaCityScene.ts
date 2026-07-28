@@ -67,7 +67,7 @@ const SOLID = new Set<Tile>([T.BUILDING, T.TREE]);   // WATER handled separately
  *  map; a `solid` one also blocks its footprint. */
 export interface EosaLandmark {
   col: number; row: number; w: number; h: number;
-  color: number; label: string; kind?: 'building' | 'lighthouse' | 'monument' | 'pavilion' | 'station' | 'rail'; solid?: boolean;
+  color: number; label: string; kind?: 'building' | 'lighthouse' | 'monument' | 'pavilion' | 'station' | 'rail' | 'hideout'; solid?: boolean;
   enter?: string;    // a scene to enter via a door at the landmark's foot (e.g. a restaurant interior)
   enterId?: string;  // if `enter` is the generic NorthernBuildingScene, which building config to show
 }
@@ -532,6 +532,42 @@ export abstract class EosaCityScene extends Phaser.Scene {
         g.fillStyle(0x4a3826); for (let sy = y + 3; sy < y + h - 2; sy += 10) g.fillRect(x + 2, sy, w - 4, 5);  // sleepers
         g.fillStyle(0xcfd6dd); g.fillRect(x + w * 0.34, y, 3, h); g.fillRect(x + w * 0.62, y, 3, h);            // twin rails
         g.fillStyle(0xffffff, 0.35); g.fillRect(x + w * 0.34, y, 1, h); g.fillRect(x + w * 0.62, y, 1, h);      // rail shine
+      } else if (lm.kind === 'hideout') {
+        // ── Imposing 4-storey 노스단 fortress ──
+        const FLOORS = 4;
+        const floorH = h / FLOORS;
+        // Main tower body — dark gunmetal steel
+        g.fillStyle(0x000000, 0.35); g.fillEllipse(x + w / 2, y + h + 2, w * 0.85, 14);   // ground shadow
+        g.fillStyle(0x1a1a26, 1); g.fillRect(x, y, w, h);
+        g.fillStyle(0x22222e, 1); g.fillRect(x + 4, y + 4, w - 8, h - 6);
+        // Crimson storey dividers + lit windows per floor
+        for (let f = 0; f < FLOORS; f++) {
+          const fy = y + f * floorH;
+          g.fillStyle(0x8a1020, 1); g.fillRect(x + 4, fy + floorH - 4, w - 8, 4);           // crimson band
+          g.fillStyle(0xff5a6a, 0.85);                                                      // red-lit windows
+          const winCount = Math.max(2, Math.floor((w - 24) / 24));
+          const winGap = (w - 24) / winCount;
+          for (let wn = 0; wn < winCount; wn++) g.fillRect(x + 12 + wn * winGap, fy + 10, 14, Math.max(8, floorH - 22));
+        }
+        // Crimson banners flanking the tower
+        for (const bx of [x + 6, x + w - 16]) {
+          g.fillStyle(0x8a1020, 1); g.fillRect(bx, y + 6, 10, h - 20);
+          g.fillStyle(0xffd24a, 1); g.fillCircle(bx + 5, y + h / 2, 4);                    // gold emblem on each banner
+        }
+        // Roof parapet with crimson trim
+        g.fillStyle(0x0e0e16, 1); g.fillRect(x - 3, y - 6, w + 6, 8);
+        g.fillStyle(0x8a1020, 1); g.fillRect(x - 3, y - 6, w + 6, 3);
+        // Crenellations
+        for (let cx = x - 2; cx < x + w; cx += 12) {
+          g.fillStyle(0x0e0e16, 1); g.fillRect(cx, y - 14, 8, 10);
+        }
+        // Gate at the bottom centre
+        const gateW = Math.min(32, w * 0.35), gateH = Math.min(28, floorH * 0.7);
+        g.fillStyle(0x5a1024, 1); g.fillRect(x + w / 2 - gateW / 2 - 2, y + h - gateH - 2, gateW + 4, gateH + 2);
+        g.fillStyle(0x8a1a34, 1); g.fillRect(x + w / 2 - gateW / 2, y + h - gateH, gateW, gateH);
+        // 노스단 emblem above gate
+        g.fillStyle(0xffd24a, 1); g.fillCircle(x + w / 2, y + h - gateH - 10, 6);
+        g.fillStyle(0x8a1020, 1); g.fillCircle(x + w / 2, y + h - gateH - 10, 3);
       } else {
         g.fillStyle(0xe8dcc6); g.fillRect(x, y + h * 0.25, w, h * 0.75); g.lineStyle(2, 0x3a2a1a); g.strokeRect(x, y + h * 0.25, w, h * 0.75);
         g.fillStyle(lm.color); g.fillTriangle(x - 4, y + h * 0.28, x + w / 2, y, x + w + 4, y + h * 0.28);
@@ -637,15 +673,15 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const cfg = this.cfg;
     const nearCentre = this.px > 12 * TILE && this.px < 16 * TILE;
     const be = cfg.sideExit;
-    if (cfg.next && this.py < 1.2 * TILE && nearCentre) { this.go(cfg.next); }
-    else if (cfg.prev && this.py > (this.rows - 1) * TILE && nearCentre) { this.go(cfg.prev); }
-    else if (be && this.py > (this.rows - 1) * TILE && this.px > (be.col - 1.5) * TILE && this.px < (be.col + 1.5) * TILE) {
-      // walk off the south edge along the side path → the beach / mine
+    if (be && this.py > (this.rows - 1) * TILE && this.px > (be.col - 1.5) * TILE && this.px < (be.col + 1.5) * TILE) {
+      // walk off the south edge along the side path → the beach / mine / ajit road
       this.cutsceneActive = true;
       this.registry.set(cfg.key + 'ReturnX', be.col * TILE + 16);
       this.registry.set(cfg.key + 'ReturnY', (this.rows - 3) * TILE + 16);   // return inland on the path
       this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start(be.scene));
     }
+    else if (cfg.next && this.py < 1.2 * TILE && nearCentre) { this.go(cfg.next); }
+    else if (cfg.prev && this.py > (this.rows - 1) * TILE && nearCentre) { this.go(cfg.prev); }
   }
   private go(e: Exit) {
     this.cutsceneActive = true;

@@ -16,7 +16,7 @@ export const MAPAE: MapaeDef[] = [
   { key: 'chongjin',  city: 'Chongjin',  chief: '어사대장 Mukyeong' }, // far-NE fog port / Dark
   { key: 'sinuiju',   city: 'Sinuiju',   chief: '어사대장 Amrok' },    // Yalu border ice / Ice·Dragon
   { key: 'samjiyon',  city: 'Samjiyon',  chief: '어사대장 Seolwon' },  // Baekdu highland / Ice
-  { key: 'pyeongyang',city: 'Pyeongyang',chief: '어사대장 Jeongan' },  // capital, final certification / Normal
+  { key: 'pyeongseong',city: 'Pyeongseong',chief: '어사대장 Supreme Gwang' },  // capital, final certification / Supreme Commander
 ];
 
 const flag = (key: string) => `mapae_${key}`;
@@ -26,10 +26,18 @@ export function hasMapae(reg: Phaser.Data.DataManager, key: string): boolean {
 }
 export function awardMapae(reg: Phaser.Data.DataManager, key: string): void {
   reg.set(flag(key), true);
+  // Update the count in registry
+  const currentCount = MAPAE.reduce((n, m) => n + (reg.get(flag(m.key)) ? 1 : 0), 0);
+  reg.set('mapaeCount', currentCount);
 }
 /** How many of the eight 마패 the player currently holds. */
 export function mapaeCount(reg: Phaser.Data.DataManager): number {
-  return MAPAE.reduce((n, m) => n + (reg.get(flag(m.key)) ? 1 : 0), 0);
+  // Use cached count from registry if available, otherwise calculate
+  const cached = reg.get('mapaeCount') as number;
+  if (cached !== undefined) return cached;
+  const calculated = MAPAE.reduce((n, m) => n + (reg.get(flag(m.key)) ? 1 : 0), 0);
+  reg.set('mapaeCount', calculated);
+  return calculated;
 }
 /** Eligible for the Northern League: all 8 마패 AND all 8 southern badges. */
 export function northernLeagueEligible(reg: Phaser.Data.DataManager): boolean {

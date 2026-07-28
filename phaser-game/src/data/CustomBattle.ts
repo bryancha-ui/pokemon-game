@@ -49,6 +49,7 @@ const CUSTOM: CB[] = [
   { key: 'corrpanda',     name: 'Corrpanda',     t1: 'dark',                    stage: 2 },
   { key: 'gawlhawk',      name: 'Gawlhawk',      t1: 'rock',     t2: 'flying',  stage: 1 },
   { key: 'prowlrock',     name: 'Prowlrock',     t1: 'rock',     t2: 'flying',  stage: 2 },
+  { key: 'prowlnox',      name: 'Prowlnox',      t1: 'rock',     t2: 'flying',  stage: 3 },
   { key: 'nosepassx',     name: 'Nosepass',      t1: 'rock',     t2: 'psychic', stage: 1 },
   { key: 'oribioass',     name: 'Oribioass',     t1: 'rock',     t2: 'psychic', stage: 2 },
   { key: 'sandygastx',    name: 'Sandygast',     t1: 'ground',   t2: 'fairy',   stage: 1 },

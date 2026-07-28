@@ -61,6 +61,7 @@ export const PORTRAITS: Record<string, Portrait> = {
   'inspector-jinnok':  P('npc_jinnok.png'),
   'dosadae':           P('npc_dosadae.png'),
   'nosdan-sovereign':  P('npc_sovereign.png'),
+  'nosdan-samjiyon-boss': P('npc_sovereign.png'),   // Sovereign Clemont — atop the Samjiyon 아지트
   'prof-song':         P('npc_song.webp'),
 };
 

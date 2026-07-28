@@ -89,6 +89,8 @@ export class SunriseCityScene extends Phaser.Scene {
   private readonly SPEED = 120; private readonly RUN = 250;
 
   private rivalCol = 26; private rivalRow = 14;
+  /** The rival waits at Sunrise only until the last gym is cleared, then heads off. */
+  private get rivalHere(): boolean { return !this.registry.get('sunriseGymDefeated'); }
 
   constructor() { super('SunriseCityScene'); }
 
@@ -108,7 +110,7 @@ export class SunriseCityScene extends Phaser.Scene {
 
     this.map = buildMap();
     this.drawMap();
-    this.drawRival();
+    if (this.rivalHere) this.drawRival();
     this.createPlayer();
     this.setupCamera();
     this.setupInput();
@@ -305,6 +307,7 @@ export class SunriseCityScene extends Phaser.Scene {
   /** Talk to the Rival: once the last badge + seventh tablet are in hand, set out for
    *  Baekdu Peak (Chapter 11). Otherwise, a simple nudge toward the Gym. */
   private checkRival() {
+    if (!this.rivalHere) return;   // rival has left after the final badge
     const dx = this.px - (this.rivalCol * TILE + 16), dy = this.py - (this.rivalRow * TILE + 16);
     if (Math.hypot(dx, dy) > TILE * 1.5) { if (!this.nearBuilding()) this.enterPrompt.setVisible(false); return; }
     this.enterPrompt.setText('SPACE: talk to ' + rivalTrainerName(this.registry)).setVisible(true);
@@ -368,7 +371,7 @@ export class SunriseCityScene extends Phaser.Scene {
   }
 
   private nearRival(): boolean {
-    return Math.hypot(this.px - (this.rivalCol * TILE + 16), this.py - (this.rivalRow * TILE + 16)) <= TILE * 1.5;
+    return this.rivalHere && Math.hypot(this.px - (this.rivalCol * TILE + 16), this.py - (this.rivalRow * TILE + 16)) <= TILE * 1.5;
   }
 
   private checkExit() {

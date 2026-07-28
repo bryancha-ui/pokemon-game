@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
+import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -356,6 +356,13 @@ export class BaekduPassScene extends Phaser.Scene {
     this.cutsceneActive = true;
     if (!this.registry.get('suriEventSeen')) {
       this.registry.set('suriEventSeen', true);
+      // The rival runs in at your side — draw their 2D sprite next to you for the standoff.
+      const rival = this.add.graphics().setDepth(20);
+      drawTrainerBody(rival, 1, 0, rivalDesign(this.registry));
+      rival.setPosition(this.px + 30, this.py);
+      this.add.text(this.px + 30, this.py - 22, rivalTrainerName(this.registry), {
+        fontSize: '9px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+      }).setOrigin(0.5).setDepth(21);
       this.dialog.show([
         "Ranger Sooyeon: You can't restrict this area — it's public land! The wild Pokémon habitat here is protected!",
         "Team Suri Grunt A: Team Suri operates under provisional research authority. Stand aside.",

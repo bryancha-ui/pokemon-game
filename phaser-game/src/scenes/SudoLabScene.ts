@@ -2,6 +2,11 @@ import Phaser from 'phaser';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
+import { PartySystem } from '../systems/PartySystem';
+import { dexEntry } from '../data/Pokedex';
+
+// The mythological pantheon shown drifting through the ending credits.
+const PANTHEON = ['hwanwoong', 'nabihalmang', 'poongbaek', 'woosa', 'woonsa'];
 
 /**
  * CHAPTER 7 — Return to Sudo City: Professor Song's Revelation + Rival Battle #3.
@@ -12,8 +17,20 @@ export class SudoLabScene extends Phaser.Scene {
   private dialog!: DialogBox;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private busy = false;
+  private ending = false;
 
   constructor() { super('SudoLabScene'); }
+
+  preload() {
+    // Load the pantheon + the player's own party so the credits can parade them.
+    const keys = new Set<string>(PANTHEON);
+    for (const e of PartySystem.get(this.registry)) if (e.spriteKey) keys.add(e.spriteKey);
+    for (const k of keys) {
+      if (this.textures.exists(k)) continue;
+      const url = dexEntry(k)?.spriteUrl;
+      if (url) this.load.image(k, url);
+    }
+  }
 
   create() {
 
@@ -25,6 +42,52 @@ export class SudoLabScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     const rivalDone = !!this.registry.get('trainerDefeated_rival-3');
+    const partyPending = !!this.registry.get('sudoPartyPending');
+    const finalePending = !!this.registry.get('finalePartyPending');
+
+    if (finalePending) {
+      // THE ENDING — one last celebration in Sudo City after catching 환웅, then credits.
+      this.busy = true;
+      this.registry.remove('finalePartyPending');
+      SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
+      this.dialog.show([
+        'You come home to Sudo City one final time — this time carrying a god.',
+        'The whole region floods the streets. Lanterns, music, confetti; north and south celebrating as one people for the first time in living memory.',
+        'Rival: Two leagues, a whole villain syndicate, and now an actual GOD. ...I stopped trying to catch up a long time ago. I just get to say I knew you.',
+        'Prof. Song: 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care. Hanbando has never been safer, or more whole.',
+        'Prof. Song: Whatever legend they tell about this region a thousand years from now, it starts with you. Thank you, Champion.',
+        '🎉 The city celebrates deep into the night in your honour.',
+      ], () => { this.busy = false; this.rollCredits(); });
+      return;
+    }
+
+    if (partyPending) {
+      // Northern League victory celebration party
+      this.busy = true;
+      this.registry.remove('sudoPartyPending');
+      this.registry.set('sudoPartyDone', true);
+      // This IS the post-league celebration — skip the alternate Capitol reunion party
+      // so the player heads straight for the Ancient Altar shortcut to the Sacred Peak.
+      this.registry.set('northReunionSeen', true);
+      SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
+      this.dialog.show([
+        'You return to Sudo City as a hero. The entire city has gathered to celebrate your Northern League victory!',
+        'Confetti fills the air as Prof. Song, the Rival, and citizens cheer for the new Champion who united north and south.',
+        'Prof. Song: Today, Hanbando stands whole. You did what no one thought possible — you conquered the Northern League!',
+        'Rival: I never thought I\'d see the day someone actually beat Taewang. But I guess I shouldn\'t be surprised — it\'s you.',
+        'Prof. Song: The time has come. 환웅 (Hwanwoong), the Sovereign Who Descended, awaits at the Sacred Peak. Go to the Ancient Altar and begin the final ascent.',
+        'Prof. Song: This is the ultimate test, Champion. Prove yourself worthy of the Sovereign\'s presence.',
+        '🎉 The celebration fades as you prepare for the final chapter...',
+      ], () => {
+        this.busy = false;
+        this.cameras.main.fadeOut(500, 0, 0, 0, () => {
+          this.registry.set('capitalReturnX', 24 * 32 + 16);
+          this.registry.set('capitalReturnY', 31 * 32 + 16);
+          this.scene.start('CapitolCityScene');
+        });
+      });
+      return;
+    }
 
     if (rivalDone) {
       // Returned from Rival Battle #3 → closing beat, then head onward.
@@ -131,6 +194,10 @@ export class SudoLabScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.ending) {
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.endGame();
+      return;
+    }
     if (this.busy) {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
       return;
@@ -143,5 +210,51 @@ export class SudoLabScene extends Phaser.Scene {
         this.scene.start('HaeanCityScene');
       });
     }
+  }
+
+  /** Scroll the ending credits over a starfield, then return to the title. */
+  private rollCredits() {
+    const W = this.scale.width, H = this.scale.height;
+    this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
+      this.children.removeAll();
+      this.ending = true;
+      playBgm(this, 'endingcredits');   // dedicated credits theme
+      this.cameras.main.fadeIn(1000);
+      this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 1).setDepth(200);
+      const stars = this.add.graphics().setDepth(201);
+      for (let i = 0; i < 130; i++) { stars.fillStyle(0xffffff, Math.random() * 0.7 + 0.2); stars.fillCircle(Math.random() * W, Math.random() * H, Math.random() < 0.15 ? 2 : 1); }
+
+      // Parade the pantheon + the player's party drifting up through the starfield.
+      const showcase = [...PANTHEON, ...PartySystem.get(this.registry).map(e => e.spriteKey)]
+        .filter((k, i, a) => k && this.textures.exists(k) && a.indexOf(k) === i);
+      showcase.forEach((k, i) => {
+        const x = (W / (showcase.length + 1)) * (i + 1);
+        const img = this.add.image(x, H + 100 + Math.random() * H, k).setDepth(202).setAlpha(0.9);
+        const src = this.textures.get(k).getSourceImage();
+        img.setScale(120 / Math.max((src.width as number) || 1, (src.height as number) || 1));
+        this.tweens.add({ targets: img, y: -140, duration: 13000 + Math.random() * 9000, delay: i * 500, repeat: -1, ease: 'Linear' });
+        this.tweens.add({ targets: img, x: x + (Math.random() * 50 - 25), duration: 2600 + Math.random() * 1400, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+        this.tweens.add({ targets: img, angle: Math.random() * 8 - 4, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      });
+
+      const credits = [
+        '🌟  POKÉMON  KOREA  🌟', '', '', 'THE COMPLETE PANTHEON', '환웅 · 풍백 · 우사 · 운사 · 나비할망', '', '— TRUE END —', '', '',
+        'You crossed all of Hanbando —', 'south and north, sea and summit —', 'and united a broken peninsula', 'under a single Champion.', '', '',
+        'Thank you for playing.', '', '', 'Press SPACE to return to the title.',
+      ].join('\n');
+      const text = this.add.text(W / 2, H + 40, credits, {
+        fontSize: '20px', color: '#ffe88a', align: 'center', fontStyle: 'bold', stroke: '#000', strokeThickness: 4, lineSpacing: 12,
+      }).setOrigin(0.5, 0).setDepth(204);
+      this.tweens.add({
+        targets: text, y: -text.height - 40, duration: 20000, ease: 'Linear',
+        onComplete: () => this.time.delayedCall(800, () => this.endGame()),
+      });
+    });
+  }
+
+  private endGame() {
+    if (!this.ending) return;
+    this.ending = false;
+    this.cameras.main.fadeOut(1000, 0, 0, 0, () => this.scene.start('TitleScene'));
   }
 }

@@ -92,6 +92,7 @@ export const TRACKS: Record<string, string> = {
   leagueinterior: BASE + 'bgm_leagueinterior.mp3', // League interior
   halloffame: BASE + 'bgm_halloffame.mp3',  // Hall of Fame
   evolution:  BASE + 'bgm_evolution.mp3',   // Evolution sequence
+  endingcredits: BASE + 'bgm_endingcredits.mp3',  // Ending credits roll
 };
 
 // Short, one-shot jingles that play OVER the current music (non-looping).
@@ -129,7 +130,7 @@ export function playBgm(scene: Phaser.Scene, key: string): void {
   const outgoing = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
   if (outgoing) { outgoing.stop(); outgoing.destroy(); reg.remove('bgmSound'); reg.remove('bgmKey'); }
 
-  const begin = () => {
+  const play = () => {
     if (reg.get('bgmWanted') !== key) return;   // superseded by a later playBgm/stopBgm — abort
     stopJingle(scene);   // a new track supersedes any lingering victory/badge fanfare
     const prev = reg.get('bgmSound') as Phaser.Sound.BaseSound | undefined;
@@ -138,6 +139,24 @@ export function playBgm(scene: Phaser.Scene, key: string): void {
     snd.play();
     reg.set('bgmSound', snd);
     reg.set('bgmKey', key);
+  };
+
+  // Add/play as soon as the track is DECODED into the cache. If the audio context is
+  // still locked (Safari / iOS before the first tap) that's fine — Phaser queues the
+  // `play()` internally and auto-starts it on the first user gesture. The only thing we
+  // must NOT do is call `sound.add` before the buffer is decoded, because that fails
+  // with 'Audio key "<key>" missing from cache' (sometimes as an uncaught error the
+  // global overlay surfaces). So if the buffer isn't ready we (re)load, then play once
+  // it lands — and if a suspended-context decode was dropped, retry after the unlock.
+  const begin = () => {
+    if (reg.get('bgmWanted') !== key) return;
+    if (scene.cache.audio.exists(key)) { play(); return; }
+    scene.load.audio(key, url);
+    scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      if (scene.cache.audio.exists(key)) play();
+      else scene.sound.once(Phaser.Sound.Events.UNLOCKED, begin);
+    });
+    scene.load.start();
   };
 
   if (scene.cache.audio.exists(key)) { begin(); return; }
@@ -189,6 +208,10 @@ export function playJingle(scene: Phaser.Scene, key: string): void {
   const url = JINGLES[key];
   if (!url) return;
   const fire = () => {
+    // Only add once the buffer is decoded (see playBgm) so a one-shot jingle can never
+    // throw 'Audio key "<key>" missing from cache'. A locked context is fine — Phaser
+    // queues the play until the first user gesture.
+    if (!scene.cache.audio.exists(key)) return;
     stopJingle(scene);   // never stack jingles
     const snd = scene.sound.add(key, { volume: JINGLE_VOLUME });
     snd.play();

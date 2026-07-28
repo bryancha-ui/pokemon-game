@@ -11,6 +11,7 @@ import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
 import { customForm } from '../data/CustomBattle';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
+import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
@@ -824,13 +825,10 @@ export class WildBattleScene extends Phaser.Scene {
       PartySystem.set(this.registry, party);
     }
 
-    // All Pokémon fainted → loss
+    // All Pokémon fainted → whiteout to the nearest Pokémon Center.
     if (!party.some((e, i) => i !== this.activeSlot && e.hp > 0)) {
       this.typeDialog('You have no more Pokémon!', () => {
-        PartySystem.healAll(this.registry);
-        this.registry.set('returnX', 10 * 32 + 16);
-        this.registry.set('returnY', 35 * 32 + 16);
-        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('WorldMapScene'));
+        this.typeDialog(blackoutMessage(this.registry), () => blackoutToCenter(this));
       });
       return;
     }

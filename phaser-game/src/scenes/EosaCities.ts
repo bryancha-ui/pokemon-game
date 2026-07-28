@@ -76,29 +76,31 @@ const WONSAN: EosaCity = {
               'You didn\'t just win — you outlasted. Now let\'s see if you\'ve anything left for ME. Begin!'],
   },
   // A wide East-Sea resort town, with a paved route down to Kalma Beach.
-  size: { cols: 36, rows: 24 },
+  size: { cols: 40, rows: 28 },
   landmarks: [
-    { col: 33, row: 2,  w: 2, h: 5, color: 0xd63b3b, label: '🗼 Kalma Lighthouse (등대)',       kind: 'lighthouse', solid: true },
-    { col: 26, row: 4,  w: 3, h: 4, color: 0x2a7a6a, label: '🐟 Wonsan Seafood Market (수산시장)', kind: 'building',   solid: true },
-    { col: 32, row: 12, w: 3, h: 4, color: 0x3a6a9a, label: '🏨 Beach Resort (해수욕장 호텔)',      kind: 'building',   solid: true },
-    { col: 33, row: 19, w: 2, h: 3, color: 0xb8a24a, label: '🏔 Mt. Kumgang Viewpoint (금강산 전망)', kind: 'monument' },
+    { col: 37, row: 2,  w: 2, h: 5, color: 0xd63b3b, label: '🗼 Kalma Lighthouse (등대)',       kind: 'lighthouse', solid: true },
+    { col: 30, row: 4,  w: 3, h: 4, color: 0x2a7a6a, label: '🐟 Wonsan Seafood Market (수산시장)', kind: 'building',   solid: true },
+    { col: 36, row: 12, w: 3, h: 4, color: 0x3a6a9a, label: '🏨 Beach Resort (해수욕장 호텔)',      kind: 'building',   solid: true },
+    { col: 37, row: 19, w: 2, h: 3, color: 0xb8a24a, label: '🏔 Mt. Kumgang Viewpoint (금강산 전망)', kind: 'monument' },
     { col: 6,  row: 20, w: 3, h: 3, color: 0x2f6a3a, label: '🌲 Songdowon Pine Grove (송도원)',    kind: 'pavilion' },
     { col: 20, row: 21, w: 3, h: 2, color: 0x6a8ab0, label: '⛱ Beach Promenade (해안 산책로)',     kind: 'pavilion' },
-    { col: 26, row: 17, w: 4, h: 3, color: 0x3a6a8a, label: '☕ 갈마 해변 카페 (Beach Café)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'wonsan-cafe' },
+    { col: 30, row: 17, w: 4, h: 3, color: 0x3a6a8a, label: '☕ 갈마 해변 카페 (Beach Café)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'wonsan-cafe' },
+    { col: 36, row: 2,  w: 4, h: 4, color: 0x2a2440, label: '🛡 평성 관문 (to Pyeongseong)', kind: 'building', solid: true, enter: 'PyeongseongCheckpointScene' },
   ],
   npcs: [
     { col: 9,  row: 13, color: 0xcc6a4a, label: 'Sunbather', lines: ['Sunbather: Kalma Beach in summer — nothing beats it! Well... maybe a cold drink at the café.'] },
-    { col: 20, row: 14, color: 0xaa5533, label: 'Retired Boxer', lines: ['Retired Boxer: Chief Haegang trained me, back in the day.', 'Best his three disciples and he\'ll respect you. He respects nothing else.'] },
-    { col: 24, row: 20, color: 0x3a8a6a, label: 'Hiker', lines: ['Hiker: On a clear day you can see the blue shoulder of Mt. Kumgang from the viewpoint. Breathtaking.'] },
-    { col: 11, row: 18, color: 0xcc8aaa, label: 'Beach Vendor', lines: ['Beach Vendor: Ice cream! Cold drinks! Get \'em before the tide comes in!'] },
+    { col: 25, row: 14, color: 0xaa5533, label: 'Retired Boxer', lines: ['Retired Boxer: Chief Haegang trained me, back in the day.', 'Best his three disciples and he\'ll respect you. He respects nothing else.'] },
+    { col: 28, row: 20, color: 0x3a8a6a, label: 'Hiker', lines: ['Hiker: On a clear day you can see the blue shoulder of Mt. Kumgang from the viewpoint. Breathtaking.'] },
+    { col: 15, row: 18, color: 0xcc8aaa, label: 'Beach Vendor', lines: ['Beach Vendor: Ice cream! Cold drinks! Get \'em before the tide comes in!'] },
     { col: 7,  row: 21, color: 0x2f6a3a, label: 'Old Woodsman', lines: ['Old Woodsman: The Songdowon pines have shaded this shore for a thousand years. Sit awhile.'] },
+    { col: 35, row: 8, color: 0x5a4a3a, label: 'Gate Guard', lines: ['Gate Guard: The Pyeongseong checkpoint is just ahead. Have your 마패 ready.'] },
   ],
-  sideExit: { col: 30, scene: 'WonsanBeachScene', label: 'Kalma Beach', icon: '🏖' },
+  sideExit: { col: 34, scene: 'WonsanBeachScene', label: 'Kalma Beach', icon: '🏖' },
   trainers: [
     { key: 'wonsan-disciple-1', name: 'Disciple Baekho', col: 5, row: 13, color: 0xcc7a3a, label: 'Disciple\n① Pier',
       line: 'Master Haegang sent you? Then you\'ll start with me — down here by the pier. Come on!',
       pokemon: JSON.stringify([{ id: 62, level: 67 }, { id: 297, level: 68 }]), expPool: 2000 },
-    { key: 'wonsan-disciple-2', name: 'Disciple Miru', col: 18, row: 6, color: 0xba5a3a, label: 'Disciple\n② Ground',
+    { key: 'wonsan-disciple-2', name: 'Disciple Miru', col: 22, row: 6, color: 0xba5a3a, label: 'Disciple\n② Ground',
       line: 'Still on your feet after Baekho? Good. The training ground is MY dojo. Show me your stance!',
       pokemon: JSON.stringify([{ id: 68, level: 68 }, { id: 447, level: 68 }]), expPool: 2100 },
     // Disciple ③ waits at the far end of the gauntlet — down at Kalma Beach (WonsanBeachScene).
@@ -277,11 +279,11 @@ const SAMJIYON: EosaCity = {
   award: ['어사대장 Seolwon: Eight 마패. You are worthy to climb. The Northern League will know you now.',
           '🐎 You received the Samjiyon 마패!  (Present all eight at the Northern League.)'],
   mission: {
-    threatKey: 'nosdan-samjiyon-boss-threat', threatName: '노스단 간부 Seorak',
+    threatKey: 'nosdan-samjiyon-boss', threatName: 'Sovereign Clemont',
     threatMon: { id: 461, level: 77 }, col: 0, row: 0, remote: true,   // confronted atop the 노스단 아지트
     blurb: ['어사대장 Seolwon: The last of the eight. Steady your breath, Champion — begin—',
-            '💥 The Hall doors burst open in a gust of snow! A 노스단 간부 strides in, grunts fanning out behind him.',
-            '노스단 간부 Seorak: The exam is cancelled, Inspector. 노스단 has raised its 아지트 at the head of your mountain road — Samjiyon is OURS now, the gateway to the sacred peak.',
+            '💥 The Hall doors burst open in a gust of snow! The 노스단 Sovereign strides in, grunts fanning out behind him.',
+            'Sovereign Clemont: The exam is cancelled, Inspector. 노스단 has raised its 아지트 at the head of your mountain road — Samjiyon is OURS now, the gateway to the sacred peak.',
             '어사대장 Seolwon: ...So they come at last, into the open. Champion — I cannot grant the exam while that tower stands over my people.',
             'Seolwon: Take the mountain road to their 아지트. Climb it, floor by floor, and cast down the 간부 at its top. Break their hold on Samjiyon — then, and only then, face me.'],
     reminder: '어사대장 Seolwon: The 노스단 아지트 still looms at the head of the mountain road. Climb it, throw down their 간부, and return — then the last exam is yours.',
@@ -289,25 +291,28 @@ const SAMJIYON: EosaCity = {
     cleared: ['어사대장 Seolwon: ...The tower has fallen. Word came down the mountain — the 노스단 flag is torn down and their grunts scatter into the snow.',
               'You stormed their whole 아지트 alone, on the eve of your own trial. That is the spirit the peak asks for. Now — face me. Begin.'],
   },
-  sideExit: { col: 16, scene: 'SamjiyonAjitRoadScene', label: '노스단 아지트 진입로', icon: '🏢', road: true },
-  // A wide highland-plateau town beneath Baekdu.
-  size: { cols: 36, rows: 24 },
+  sideExit: { col: 38, scene: 'SamjiyonAjitRoadScene', label: '노스단 산책로 (Nosdan Path)', icon: '🥾', road: true },
+  // A wide highland-plateau town beneath Baekdu. The 노스단 아지트 is reached only up the
+  // mountain road (노스단 산책로) off the eastern flank — no building sits in the town itself.
+  size: { cols: 48, rows: 28 },
   landmarks: [
-    { col: 28, row: 2,  w: 6, h: 3, color: 0xaef0ff, label: '🏔 Baekdu Trailhead (백두산 등산로)', kind: 'monument' },
-    { col: 26, row: 5,  w: 4, h: 4, color: 0x8a9aca, label: '🪵 Larch Sawmill (제재소)',          kind: 'building', solid: true },
-    { col: 31, row: 13, w: 3, h: 4, color: 0xaab0d0, label: '🌌 Aurora Viewpoint (오로라 전망대)', kind: 'monument' },
-    { col: 6,  row: 21, w: 4, h: 2, color: 0xaef0ff, label: '💧 Three Lakes (삼지연)',            kind: 'pavilion' },
-    { col: 26, row: 18, w: 4, h: 3, color: 0x6a7590, label: '🏡 고원 산장 (Highland Lodge)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'samjiyon-lodge' },
+    { col: 28, row: 2,  w: 6, h: 3,  color: 0xaef0ff, label: '🏔 Baekdu Trailhead (백두산 등산로)', kind: 'monument' },
+    { col: 26, row: 5,  w: 4, h: 4,  color: 0x8a9aca, label: '🪵 Larch Sawmill (제재소)',          kind: 'building', solid: true },
+    { col: 40, row: 18, w: 3, h: 4,  color: 0xaab0d0, label: '🌌 Aurora Viewpoint (오로라 전망대)', kind: 'monument' },
+    { col: 6,  row: 24, w: 4, h: 2,  color: 0xaef0ff, label: '💧 Three Lakes (삼지연)',            kind: 'pavilion' },
+    { col: 26, row: 22, w: 4, h: 3,  color: 0x6a7590, label: '🏡 고원 산장 (Highland Lodge)', kind: 'building', enter: 'NorthernBuildingScene', enterId: 'samjiyon-lodge' },
   ],
   npcs: [
     { col: 12, row: 13, color: 0x8a9aca, label: 'Larch Cutter', lines: ['Larch Cutter: The larch forests run right up to Baekdu\'s foot. Good timber — if the blizzards let you fell it.'] },
-    { col: 20, row: 20, color: 0xaab0d0, label: 'Pilgrim', lines: ['Pilgrim: Beyond the plateau lies the sacred peak itself. Only those worthy of all eight 마패 may climb. ...Is that you?'] },
-    { col: 24, row: 13, color: 0xcfe0e8, label: 'Snow Child', lines: ['Snow Child: The snow stopped falling! The Abomasnow used to make it blizzard FOREVER. Thank you, mister!'] },
+    { col: 20, row: 23, color: 0xaab0d0, label: 'Pilgrim', lines: ['Pilgrim: Beyond the plateau lies the sacred peak itself. Only those worthy of all eight 마패 may climb. ...Is that you?'] },
+    { col: 32, row: 15, color: 0xcfe0e8, label: 'Snow Child', lines: ['Snow Child: The snow stopped falling! The Abomasnow used to make it blizzard FOREVER. Thank you, mister!'] },
     { col: 9,  row: 12, color: 0x6a7590, label: 'Lodge Guest', lines: ['Lodge Guest: Warm up at the Highland Lodge before you climb. It\'s a long, cold road to the peak.'] },
-    { col: 8,  row: 18, color: 0xaef0ff, label: 'Aurora Watcher', lines: ['Aurora Watcher: On clear nights the sky burns green and violet over the three lakes. There\'s no sight like it in all Hanbando.'] },
+    { col: 8,  row: 21, color: 0xaef0ff, label: 'Aurora Watcher', lines: ['Aurora Watcher: On clear nights the sky burns green and violet over the three lakes. There\'s no sight like it in all Hanbando.'] },
+    { col: 34, row: 14, color: 0x5a1024, label: '노스단 Lookout', lines: ['노스단 Lookout: The 노스단 산책로 runs east off the plateau, up to our 아지트. Don\'t take that path unless you mean to climb.'] },
   ],
   prev: { scene: 'RangrimSummitScene', returnKey: 'rgPeak', x: 11 * 32 + 16, y: 3 * 32 + 16 },   // south down the Rangrim mountain (5 maps) → Sinuiju
-  next: { scene: 'NorthernPlazaScene', returnKey: 'northPlaza', x: 11.5 * 32, y: 27 * 32 },
+  // Samjiyon is the highland terminus of the Rangrim branch — it no longer leads to the
+  // Northern League. The League (NorthernPlaza) is reached only through Pyeongseong.
 };
 
 export class NampoCityScene    extends EosaCityScene { constructor() { super(NAMPO); } }

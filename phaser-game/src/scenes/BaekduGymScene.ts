@@ -234,8 +234,9 @@ export class BaekduGymScene extends Phaser.Scene {
           this.registry.set('trainerExpPool',     tr.expPool);
           this.registry.set('trainerReturnScene', 'BaekduGymScene');
           this.registry.set('gymPosX', this.px); this.registry.set('gymPosY', this.py);
-          this.registry.set('baekduCityReturnX',  this.px);
-          this.registry.set('baekduCityReturnY',  this.py);
+          // NB: don't touch baekduCityReturnX/Y here — those are the city door position
+          // set on entry. Overwriting them with gym coords warps the player into the
+          // Cheonji lake (a solid tile) on exit, trapping them.
           this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
         });
         return;
@@ -271,8 +272,7 @@ export class BaekduGymScene extends Phaser.Scene {
         this.registry.set('trainerBadgeName',   'Summit Seal Badge');
         this.registry.set('trainerBadgeTM',     'Close Combat');
         this.registry.set('trainerWinLine',     'Byeoksan: The mountain tested you and you stood.');
-        this.registry.set('baekduCityReturnX',  this.px);
-        this.registry.set('baekduCityReturnY',  this.py);
+        // (see checkTrainers) leave baekduCityReturnX/Y as the city door, not gym coords.
         this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
       });
     }

@@ -398,8 +398,8 @@ export class NorthernReachesScene extends Phaser.Scene {
     this.dialog.show([
       '어사대장 Jinnok bows — the deep, formal bow of the order. The gathered inspectors follow.',
       '어사대장 Jinnok: The 어사대 stand with the south\'s Champion — for the first time in four hundred years.',
-      '어사대장 Jito: The wards on the three shrines are lifted. 풍백 the Wind, 우사 the Rain, 운사 the Clouds — gather them before 노스단 does, and Hwanung himself will answer.',
-      '어사대장 Jito: I ride with you from here. The woods are behind you. Climb, Champion.',
+      '어사대장 Jinnok: The wards on the three shrines are lifted. 풍백 the Wind, 우사 the Rain, 운사 the Clouds — gather them before 노스단 does, and Hwanung himself will answer.',
+      '어사대장 Jinnok: I ride with you from here. The woods are behind you. Climb, Champion.',
     ], () => { this.cutsceneActive = false; });
   }
 }

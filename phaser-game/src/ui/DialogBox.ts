@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 
 export class DialogBox {
   private bg!: Phaser.GameObjects.Rectangle;
@@ -23,26 +24,28 @@ export class DialogBox {
   private root!: Phaser.GameObjects.Container;
 
   constructor(private scene: Phaser.Scene, private W: number, private H: number) {
-    const bx = W / 2, by = H - 68;
+    const bx = W / 2, by = H - 78;
     // All objects are placed at absolute screen-design coordinates, then parented
     // into a container that counteracts the camera zoom so the dialog is always
     // fully visible at the bottom of the screen (see applyZoomCompensation()).
-    this.bg = scene.add.rectangle(bx, by, W - 16, 112, 0x0d0d2e, 0.96)
+    // Box + font are sized large so dialogue stays legible when the 16:9 canvas is
+    // scaled down to fit a phone's narrow top pane.
+    this.bg = scene.add.rectangle(bx, by, W - 16, 148, 0x0d0d2e, 0.96)
       .setStrokeStyle(2, 0xffffff).setVisible(false);
 
-    this.msgText = scene.add.text(16, H - 124, '', {
-      fontSize: '15px', color: '#ffffff', wordWrap: { width: W - 32 }, lineSpacing: 6,
+    this.msgText = scene.add.text(20, H - 146, '', {
+      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8,
     }).setVisible(false);
 
-    this.arrow = scene.add.text(W - 24, H - 20, '▼', { fontSize: '13px', color: '#ffe44e' })
+    this.arrow = scene.add.text(W - 28, H - 24, '▼', { fontSize: '18px', color: '#ffe44e' })
       .setVisible(false);
 
-    this.choiceBg = scene.add.rectangle(W - 80, H - 168, 130, 68, 0x0d0d2e, 0.96)
+    this.choiceBg = scene.add.rectangle(W - 90, H - 196, 150, 84, 0x0d0d2e, 0.96)
       .setStrokeStyle(2, 0xffffff).setVisible(false);
 
     this.choiceItems = [
-      scene.add.text(W - 110, H - 192, '▶ YES', { fontSize: '15px', color: '#ffffff' }).setVisible(false),
-      scene.add.text(W - 110, H - 168, '  NO',  { fontSize: '15px', color: '#aaaaaa' }).setVisible(false),
+      scene.add.text(W - 128, H - 224, '▶ YES', { fontSize: '22px', color: '#ffffff' }).setVisible(false),
+      scene.add.text(W - 128, H - 194, '  NO',  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
     ];
 
     this.root = scene.add.container(0, 0, [
@@ -64,7 +67,7 @@ export class DialogBox {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   show(lines: string[], onDone?: () => void) {
-    this.queue = [...lines];
+    this.queue = lines.map(tr);   // auto-translate any line present in the KO dictionary
     this.onDone = onDone;
     this.inChoice = false;
     this.bg.setVisible(true);

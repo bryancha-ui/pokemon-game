@@ -107,17 +107,18 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
 
   const gamePane = document.createElement('div');
   gamePane.id = 'game';
-  // 16:9 game sits at full width; its height follows that aspect (capped) so the
-  // canvas fills the top pane snugly and the rest of the screen is the deck. The
-  // cap keeps the deck a usable size in landscape too.
+  // The game (play screen) takes the MAJORITY of the height so it always reads
+  // larger than the control deck below it; the 16:9 canvas fits to width within it.
   gamePane.style.cssText =
-    'position:relative;width:100vw;height:min(56vh,calc(100vw*0.5625));' +
-    'flex:0 0 auto;background:#000;overflow:hidden;';
+    'position:relative;width:100vw;flex:1 1 auto;min-height:0;' +
+    'background:#000;overflow:hidden;';
 
   deckEl = document.createElement('div');
   deckEl.id = 'deck';
+  // The control deck is a capped minority of the screen (always shorter than the
+  // game pane), so the playfield stays dominant.
   deckEl.style.cssText =
-    'position:relative;flex:1 1 auto;width:100vw;min-height:0;--u:24px;' +
+    'position:relative;flex:0 0 40vh;height:40vh;max-height:40vh;width:100vw;min-height:0;--u:24px;' +
     'background:linear-gradient(#141a2e,#0b0f1e);border-top:3px solid #33406a;' +
     'box-shadow:inset 0 3px 8px rgba(0,0,0,0.5);touch-action:none;';
 
@@ -125,6 +126,35 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
   buildMoveLayer();
   deckEl.append(controlLayer!, moveLayer!);
   document.body.append(gamePane, deckEl);
+
+  // ── Rotate-to-landscape hint ──────────────────────────────────────────────
+  // A 16:9 game is far bigger in landscape on a phone. Show a dismissible overlay
+  // while the device is held in portrait; once dismissed it stays out of the way.
+  let hintDismissed = false;
+  const rotateHint = document.createElement('div');
+  rotateHint.id = 'rotate-hint';
+  rotateHint.style.cssText =
+    'position:fixed;inset:0;z-index:100000;display:none;flex-direction:column;' +
+    'align-items:center;justify-content:center;gap:18px;background:rgba(6,9,20,0.97);' +
+    'color:#ffe88a;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:28px;';
+  rotateHint.innerHTML =
+    '<style>@keyframes rotHint{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(82deg)}}</style>' +
+    '<div style="font-size:52px;animation:rotHint 1.8s ease-in-out infinite">📱</div>' +
+    '<div style="font-size:22px;font-weight:800">Rotate to landscape</div>' +
+    '<div style="font-size:15px;color:#bcd4ff;max-width:320px">The game is much bigger and easier to read sideways.</div>' +
+    '<button id="rotate-hint-dismiss" style="margin-top:8px;padding:10px 20px;font-size:15px;font-weight:700;' +
+    'color:#0b0f1e;background:#ffe88a;border:none;border-radius:10px;">Play in portrait anyway</button>';
+  document.body.append(rotateHint);
+  const syncHint = () => {
+    const portrait = window.innerHeight > window.innerWidth;
+    rotateHint.style.display = (portrait && !hintDismissed) ? 'flex' : 'none';
+  };
+  rotateHint.querySelector('#rotate-hint-dismiss')!.addEventListener('click', (e) => {
+    e.stopPropagation(); hintDismissed = true; syncHint();
+  });
+  syncHint();
+  window.addEventListener('resize', syncHint);
+  window.addEventListener('orientationchange', () => setTimeout(syncHint, 150));
 
   // Keep the sizing unit in step with the deck's real size across rotate / fold / resize.
   updateUnit();

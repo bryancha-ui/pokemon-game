@@ -4,7 +4,7 @@ import { drawTrainerBody, playerDesign, rivalDesign } from '../data/CharacterSpr
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
-import { mapaeCount, northernLeagueEligible, hasMapae, awardMapae } from '../data/Mapae';
+import { mapaeCount, northernLeagueEligible } from '../data/Mapae';
 
 // ── POST-GAME I — Northern League plaza (exterior) ───────────────────────────────
 // The forecourt of the Northern League: an austere North-Korean-style communist
@@ -12,6 +12,7 @@ import { mapaeCount, northernLeagueEligible, hasMapae, awardMapae } from '../dat
 // state banners, a single gold star, and a stark signboard. The plaza holds a
 // Pokémon Center, storage PC and Poké Mart. When you approach the doors, the Rival
 // runs in for a send-off battle; only after beating them may you enter the hall.
+// Entry requires all 8 마패s — the 7 regional ones plus the final one from Supreme Gwang.
 
 const T = { GROUND: 0, WALL: 1, CARPET: 2, PAVE: 3 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -29,12 +30,12 @@ const PCBOX = { col: 16, row: 17 };
 
 const RIVAL_CLOSER = '__rivalFinal__';
 const RIVAL_TEAM = [
-  { id: 0, level: 70, custom: 'corrpanda' },
-  { id: 0, level: 71, custom: 'squirrel2' },
-  { id: 0, level: 72, custom: 'martbadger' },
-  { id: 0, level: 72, custom: 'chattyscream' },
-  { id: 0, level: 72, custom: 'tokkigongju' },
-  { id: 0, level: 73, custom: RIVAL_CLOSER },
+  { id: 0, level: 72, custom: 'corrpanda' },
+  { id: 0, level: 73, custom: 'squirrel2' },
+  { id: 0, level: 74, custom: 'martbadger' },
+  { id: 0, level: 74, custom: 'chattyscream' },
+  { id: 0, level: 74, custom: 'tokkigongju' },
+  { id: 0, level: 75, custom: RIVAL_CLOSER },
 ];
 
 export class NorthernPlazaScene extends Phaser.Scene {
@@ -83,18 +84,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'NorthernPlazaScene');
 
-    // Returned victorious from 어사대장 Jeongan's final exam → award the 8th 마패.
-    if (this.registry.get('trainerDefeated_eosa-pyeongyang') && !hasMapae(this.registry, 'pyeongyang')) {
-      awardMapae(this.registry, 'pyeongyang');
-      this.time.delayedCall(450, () => {
-        this.cutsceneActive = true;
-        this.dialog.show([
-          '어사대장 Jeongan: ...By the book, and flawless. The capital vouches for you.',
-          '🐎 You received the Pyeongyang 마패 — all EIGHT are yours!',
-          '어사대장 Jeongan: The Northern League is open to you now. Step through the doors when you are ready.',
-        ], () => { this.cutsceneActive = false; });
-      });
-    } else if (!this.registry.get('northPlazaSeen')) {
+    if (!this.registry.get('northPlazaSeen')) {
       this.registry.set('northPlazaSeen', true);
       this.time.delayedCall(500, () => {
         this.cutsceneActive = true;
@@ -365,30 +355,29 @@ export class NorthernPlazaScene extends Phaser.Scene {
       this.dialog.show(['League Warden: Eight southern badges first, southerner. Come back a Champion.'], () => { this.cutsceneActive = false; });
       return;
     }
-    // Holds the seven circuit 마패 but not the capital's — the Warden IS 어사대장 Jeongan,
-    // and his exam is the eighth and final test.
-    if (mapaeCount(this.registry) >= 7 && !hasMapae(this.registry, 'pyeongyang')) {
+    // Check for all 8 마패s including Pyeongseong
+    const currentMapaeCount = mapaeCount(this.registry);
+    if (currentMapaeCount < 8) {
       this.dialog.show([
-        '어사대장 Jeongan (the League Warden): Seven provinces vouch for you. I am the eighth — the capital\'s own inspector.',
-        '어사대장 Jeongan: Pass me and the League is yours. By the book, no tricks. Begin.',
-      ], () => {
-        this.registry.set('trainerName', '어사대장 Jeongan');
-        this.registry.set('trainerKey', 'eosa-pyeongyang');
-        this.registry.set('trainerPokemon', JSON.stringify([
-          { id: 289, level: 76 }, { id: 143, level: 76 }, { id: 474, level: 77 }, { id: 398, level: 77 }, { id: 242, level: 78 },
-        ]));
-        this.registry.set('trainerExpPool', 5200);
-        this.registry.set('trainerReturnScene', 'NorthernPlazaScene');
-        this.registry.set('northPlazaReturnX', (DOOR.col + 0.5) * TILE);
-        this.registry.set('northPlazaReturnY', (DOOR.row + 2) * TILE + 16);
-        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
-      });
+        'League Warden: Halt. The eight 어사대장 must vouch for you — in 마패.',
+        `League Warden: You hold ${currentMapaeCount} of 8 마패. Complete the inspectorate circuit, defeat Supreme Gwang in Pyeongseong, and return.`,
+      ], () => { this.cutsceneActive = false; });
       return;
     }
     this.dialog.show([
-      'League Warden: Halt. The eight 어사대장 must vouch for you — in 마패.',
-      `League Warden: You hold ${mapaeCount(this.registry)} of 8. Complete the inspectorate circuit and return.`,
-    ], () => { this.cutsceneActive = false; });
+      'League Warden: Excellent. All eight 마패 are in your possession, including the final tablet from Supreme Gwang himself.',
+      'League Warden: The Northern League awaits you, Champion. Prove yourself worthy of the title.',
+    ], () => {
+      // Re-seal the northern gauntlet each entry → one-run challenge
+      for (const k of ['north-seorak', 'north-hanseol', 'north-cheolgang', 'north-baekho', 'north-taewang']) {
+        this.registry.remove(`trainerDefeated_${k}`);
+      }
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => {
+        this.registry.set('northColiseumReturnX', 9 * 32 + 16);
+        this.registry.set('northColiseumReturnY', 31 * 32 + 16);
+        this.scene.start('NorthernColiseumScene');
+      });
+    });
   }
   private healTeam() {
     PartySystem.healAll(this.registry);

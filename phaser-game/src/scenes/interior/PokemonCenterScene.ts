@@ -1,6 +1,7 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
 import { PartySystem } from '../../systems/PartySystem';
 import { playJingle } from '../../systems/Music';
+import { recordLastCenter } from '../../systems/Blackout';
 
 export class PokemonCenterScene extends BaseInteriorScene {
   protected bgmKey = 'center';
@@ -11,6 +12,8 @@ export class PokemonCenterScene extends BaseInteriorScene {
     // honour whoever sent us here so the south exit returns to the right city.
     const ret = this.registry.get('pcReturnScene');
     this.returnSceneKey = (typeof ret === 'string' && ret) ? ret : 'WorldMapScene';
+    // Remember this center as the whiteout respawn point.
+    recordLastCenter(this, this.returnSceneKey);
     super.create();
   }
 

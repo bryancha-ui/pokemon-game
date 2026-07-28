@@ -14,7 +14,7 @@ const T = { WALL: 0, FLOOR: 1, WARP: 2, STAIRS: 3 } as const;
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 13, ROWS = 13;
 const SOLID = new Set<Tile>([T.WALL]);
-const BOSS_KEY = 'nosdan-samjiyon-boss-threat';   // '-threat' → battle treats it as a 우두머리 (aura + double HP)
+const BOSS_KEY = 'nosdan-samjiyon-boss';   // a normal-scale trainer battle (no 우두머리 aura / HP buff)
 
 interface Foe { key: string; name: string; label: string; col: number; row: number; line: string; pokemon: string; expPool: number; boss?: boolean; }
 interface Warp { col: number; row: number; toCol: number; toRow: number; }
@@ -27,7 +27,7 @@ const FLOORS: FloorDef[] = [
     walls: [[8, 12, 6, 7]],
     warps: [
       { col: 2, row: 9, toCol: 3, toRow: 5 },     // correct
-      { col: 10, row: 9, toCol: 6, toRow: 10 },   // trap → back toward the entrance
+      { col: 10, row: 9, toCol: 8, toRow: 11 },   // trap → back toward the entrance (a floor tile, not a wall)
     ],
     foes: [
       { key: 'nosdan-ajit-1a', name: '노스단 Grunt', col: 3, row: 3, label: '노스단',
@@ -83,8 +83,8 @@ const FLOORS: FloorDef[] = [
       { key: 'nosdan-ajit-4a', name: '노스단 Grunt', col: 6, row: 8, label: '노스단',
         line: "The 간부 is just above. Over my body — that's the only way up!",
         pokemon: JSON.stringify([{ id: 584, level: 74 }, { id: 615, level: 74 }]), expPool: 2700 },
-      { key: BOSS_KEY, name: '노스단 간부 Seorak', col: 6, row: 3, label: '간부', boss: true,
-        line: "So the 어사대's little champion crawls to the top. We will take Samjiyon, the peak, and everything beyond it. You end HERE.",
+      { key: BOSS_KEY, name: 'Sovereign Clemont', col: 6, row: 3, label: 'Sovereign', boss: true,
+        line: "So the 어사대's little champion crawls to the top. I am Clemont — Sovereign of 노스단. We will take Samjiyon, the peak, and everything beyond it. You end HERE.",
         pokemon: JSON.stringify([{ id: 461, level: 75 }, { id: 473, level: 75 }, { id: 452, level: 76 }, { id: 625, level: 76 }, { id: 614, level: 77 }]), expPool: 4800 },
     ],
   },
@@ -99,8 +99,8 @@ export class NosdanHideoutScene extends Phaser.Scene {
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private px = 6 * TILE + 16;
-  private py = 11 * TILE + 16;
+  private px = 7 * TILE + 16;
+  private py = 11 * TILE + 16;   // bottom-centre entrance — a floor tile on all 4 floors
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private spawnGuard = false;
@@ -122,8 +122,9 @@ export class NosdanHideoutScene extends Phaser.Scene {
     const rx = this.registry.get('nosdanReturnX') as number | undefined;
     const ry = this.registry.get('nosdanReturnY') as number | undefined;
     if (rx !== undefined) { this.px = rx; this.py = ry as number; }
-    else { this.px = 6 * TILE + 16; this.py = 11 * TILE + 16; }
+    else { this.px = 7 * TILE + 16; this.py = 11 * TILE + 16; }
     this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
+    this.ensureOnFloor();   // never strand the player inside a wall (each floor differs)
 
     this.spawnGuard = true;
     this.time.delayedCall(400, () => { this.spawnGuard = false; });
@@ -139,6 +140,19 @@ export class NosdanHideoutScene extends Phaser.Scene {
 
     // Returning victorious from the 간부 at the top → the hold is broken.
     if (this.floor === 4 && this.registry.get(`trainerDefeated_${BOSS_KEY}`)) this.victory();
+  }
+
+  /** If the spawn/return point landed on a solid tile, spiral outward to the nearest floor tile. */
+  private ensureOnFloor() {
+    if (!this.collides(this.px, this.py)) return;
+    for (let radius = 1; radius <= COLS; radius++) {
+      for (let dr = -radius; dr <= radius; dr++) for (let dc = -radius; dc <= radius; dc++) {
+        const col = Math.floor(this.px / TILE) + dc, row = Math.floor(this.py / TILE) + dr;
+        if (col < 1 || col >= COLS - 1 || row < 1 || row >= ROWS - 1) continue;
+        const x = col * TILE + 16, y = row * TILE + 16;
+        if (!this.collides(x, y)) { this.px = x; this.py = y; return; }
+      }
+    }
   }
 
   private buildGrid(def: FloorDef): Tile[][] {
@@ -308,12 +322,12 @@ export class NosdanHideoutScene extends Phaser.Scene {
     this.registry.remove('hideoutFloor');
     this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
     this.dialog.show([
-      '노스단 간부 Seorak: ...Impossible. The whole tower, floor by floor...',
+      'Sovereign Clemont: ...Impossible. The whole tower, floor by floor...',
       'The 노스단 flag is torn down. Their grip on Samjiyon is broken, and the grunts flee down the mountain road.',
       '어사대장 Seolwon now awaits your challenge at the 어사대 Hall.',
     ], () => {
-      this.registry.set('SamjiyonCitySceneReturnX', 13 * 32 + 16);
-      this.registry.set('SamjiyonCitySceneReturnY', 12 * 32 + 16);
+      this.registry.set('SamjiyonCitySceneReturnX', 39 * 32 + 16);
+      this.registry.set('SamjiyonCitySceneReturnY', 14 * 32 + 16);
       this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('SamjiyonCityScene'));
     });
   }

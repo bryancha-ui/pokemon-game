@@ -34,7 +34,7 @@ const SHRINES: Shrine[] = [
 ];
 
 const SOVEREIGN = {
-  key: 'nosdan-sovereign', name: '노스단 Sovereign-Claimant', expPool: 11000,
+  key: 'nosdan-sovereign', name: 'Sovereign Clemont', expPool: 11000,
   pokemon: [
     { id: 0, level: 82, custom: 'halubang' }, { id: 0, level: 83, custom: 'snoqueen' },
     { id: 0, level: 83, custom: 'kkaakdang' }, { id: 0, level: 84, custom: 'komodread' },
@@ -58,6 +58,18 @@ export class SacredPeakScene extends Phaser.Scene {
   private readonly ALTAR = { col: 9, row: 6 };
 
   constructor() { super('SacredPeakScene'); }
+
+  preload() {
+    if (!this.textures.exists('hwanwoong'))   this.load.image('hwanwoong', 'assets/dex/hwanwoong.png');
+    if (!this.textures.exists('nabihalmang')) this.load.image('nabihalmang', 'assets/dex/nabihalmang.png');
+  }
+
+  /** Scale an image so its largest side is maxPx. */
+  private fitSprite(img: Phaser.GameObjects.Image, maxPx: number) {
+    const src = this.textures.get(img.texture.key).getSourceImage();
+    const dim = Math.max((src.width as number) || 1, (src.height as number) || 1);
+    img.setScale(maxPx / dim);
+  }
 
   private defeated(key: string) { return !!this.registry.get(`trainerDefeated_${key}`); }
   private got(key: string): boolean {
@@ -84,6 +96,7 @@ export class SacredPeakScene extends Phaser.Scene {
     this.map = buildMap();
     this.drawMap();
     this.drawShrines();
+    this.drawEscort();
     this.createPlayer();
     this.setupCamera();
     this.setupInput();
@@ -98,8 +111,8 @@ export class SacredPeakScene extends Phaser.Scene {
       this.time.delayedCall(500, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'Above the Northern Reaches the world falls away into a sea of cloud. Three sealed shrines rise along the ridge to the Sacred Peak, where the oldest myth says the heavens once touched the earth.',
-          '어사대장 Jito: 노스단 is already climbing. Reach the Wind, the Rain and the Clouds before they do. I\'ll hold the lower wards and heal you as you pass. Go, Champion.',
+          'The Ancient Altar\'s hidden stair delivers you to a realm above the clouds. Three sealed shrines rise along the ridge to the Sacred Peak, where the oldest myth says the heavens once touched the earth.',
+          '어사대장 Jinnok: 노스단 is already climbing. Reach the Wind, the Rain and the Clouds before they do. I\'ll hold the lower wards and heal you as you pass. Go, Champion.',
         ], () => { this.cutsceneActive = false; });
       });
     }
@@ -131,7 +144,7 @@ export class SacredPeakScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     this.add.text(9 * TILE, 2.4 * TILE, '☀ Altar of the Descent', { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 38.4 * TILE, '↓ Northern Reaches', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 38.4 * TILE, '↓ Ancient Altar (Rangrim)', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawShrines() {
@@ -151,10 +164,26 @@ export class SacredPeakScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, 0x141018, { hair: 0x552266 });
       g.setPosition(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE + 16);
-      this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, '노스단\nSovereign-Claimant', {
+      this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, 'Sovereign\nClemont', {
         fontSize: '8px', color: '#e0a0ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }
+  }
+
+  /** 어사대장 Jinnok (Head of the 어사대) and Prof. Song stand together at the peak —
+   *  both drawn as normalised 2D NPCs so the finale cast is actually present. */
+  private drawEscort() {
+    if (this.hwanungCaught) return;   // the trial is over; they've withdrawn by the ending
+    const npc = (col: number, row: number, body: number, hair: number, label: string, color: string) => {
+      const g = this.add.graphics().setDepth(8);
+      drawNpcBody(g, body, { hair });
+      g.setPosition(col * TILE + 16, row * TILE + 16);
+      this.add.text(col * TILE + 16, row * TILE - 16, label, {
+        fontSize: '8px', color, backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+      }).setOrigin(0.5).setDepth(9);
+    };
+    npc(6, 9, 0x2f6a44, 0xcfd6dc, '어사대장 Jinnok', '#bfe8c8');   // green robe, silver hair
+    npc(5, 9, 0xf0f0f0, 0x553311, 'Prof. Song',    '#cfe3ff');   // white lab coat, brown hair — right beside Jinnok
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────
@@ -229,7 +258,7 @@ export class SacredPeakScene extends Phaser.Scene {
         this.cutsceneActive = true;
         this.dialog.show([
           `A 노스단 squad has forced the ward, nets and cables trained on the thrashing spirit of ${s.name.split(' — ')[0]}.`,
-          '어사대장 Jito: They\'re here. I\'ll scatter them — you reach the spirit! Prove yourself its worthy keeper!',
+          '어사대장 Jinnok: They\'re here. I\'ll scatter them — you reach the spirit! Prove yourself its worthy keeper!',
           `The 어사대 sweep the 노스단 aside. ${s.kr} stills, turns, and regards you. It will let you try.`,
         ], () => this.launchCatch(s.key, s.level, 3));
         return;
@@ -245,9 +274,9 @@ export class SacredPeakScene extends Phaser.Scene {
       this.cutsceneActive = true;
       PartySystem.healAll(this.registry);
       this.dialog.show([
-        '노스단 Sovereign-Claimant: You gathered the three so we wouldn\'t have to. How thoughtful. Hand them over, and Hwanung descends for US — and this broken peninsula finally answers to one throne.',
+        'Sovereign Clemont: You gathered the three so we wouldn\'t have to. How thoughtful. Hand them over, and Hwanung descends for US — and this broken peninsula finally answers to one throne.',
         'Rival (arriving at your side, breathless): Yeah, that\'s a no. They chased you all the way up here, and I chased THEM. Go — I\'ve got your back like always.',
-        '어사대장 Jito: The 어사대 hold the peak. Summon the Sovereign, Champion.',
+        '어사대장 Jinnok: The 어사대 hold the peak. Summon the Sovereign, Champion.',
       ], () => {
         this.registry.set('trainerName', SOVEREIGN.name);
         this.registry.set('trainerKey', SOVEREIGN.key);
@@ -272,13 +301,33 @@ export class SacredPeakScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height;
     const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0).setScrollFactor(0).setDepth(140);
     this.tweens.add({ targets: flash, alpha: 0.7, duration: 1400, yoyo: true });
+
+    // 🌟 환웅 (Hwanung) descends onto the altar — a real 2D sprite floating above it.
+    const hwan = this.add.image(this.ALTAR.col * TILE + 16, (this.ALTAR.row - 1) * TILE, 'hwanwoong')
+      .setDepth(25).setAlpha(0);
+    this.fitSprite(hwan, 96);
+    this.tweens.add({ targets: hwan, alpha: 1, y: this.ALTAR.row * TILE, duration: 1600, ease: 'Sine.out' });
+    this.tweens.add({ targets: hwan, y: '+=6', duration: 1600, yoyo: true, repeat: -1, delay: 1600 });   // gentle hover
+
     this.dialog.show([
       '노스단\'s leader is dragged from the altar. For a moment, the peak is silent.',
       'Then 풍백, 우사 and 운사 rise from your side of their own accord and take their places around the altar — Wind, Rain and Cloud, wheeling in harmony. The sky splits with light.',
-      '📟 Your Pokédex crackles to life on the altar — Professor Song, patched in from the lab.',
-      'Prof. Song (over the Pokédex, awed): He\'s... actually descending. The Sovereign himself — because YOU called him, because you carry the three. If you\'re ever going to catch a god, it\'s now.',
-      '🌟 환웅 (Hwanung), the Sovereign Who Descended, alights upon the altar and regards you — not as prey, but as the one worthy to summon him.',
-    ], () => this.launchCatch('hwanwoong', 88, 2));
+      '🌟 환웅 (Hwanung), the Sovereign Who Descended, alights upon the altar — but the raw energy of his descent screams off the peak, and the god\'s eyes blaze with a fury older than the mountains.',
+      'Prof. Song (at your side, urgent): That awakening energy will tear the peak apart! You need something that can absorb it — 나비할망! Her wings, Champion, NOW!',
+    ], () => {
+      // 나비할망 is released beside you and spreads her wings to soothe the god.
+      const nabi = this.add.image(this.px - 30, this.py - 6, 'nabihalmang').setDepth(24).setAlpha(0).setFlipX(true);
+      this.fitSprite(nabi, 64);
+      this.tweens.add({ targets: nabi, alpha: 1, duration: 700 });
+      this.tweens.add({ targets: hwan, tint: 0xbfe0ff, duration: 1200, delay: 500 });   // rage cools to calm
+      this.dialog.show([
+        'You send out 나비할망. The Grandmother Moth spreads her vast metallic wings and drinks in the storm of light, and the god\'s rage drains away into a deep, ancient calm.',
+        '환웅 lowers his head and regards you at last — not as prey, but as the one worthy to summon him. It steadies itself to test your strength.',
+      ], () => {
+        nabi.destroy();
+        this.launchCatch('hwanwoong', 80, 2);
+      });
+    });
   }
 
   private launchCatch(key: string, level: number, catchRate: number) {
@@ -299,9 +348,9 @@ export class SacredPeakScene extends Phaser.Scene {
     if (this.py > (ROWS - 1) * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-        this.registry.set('northReachesReturnX', 9 * 32 + 16);
-        this.registry.set('northReachesReturnY', 3 * 32 + 16);
-        this.scene.start('NorthernReachesScene');
+        this.registry.set('rgAltarReturnX', 11 * 32 + 16);
+        this.registry.set('rgAltarReturnY', 17 * 32 + 16);
+        this.scene.start('RangrimAltarScene');
       });
     }
   }
@@ -320,22 +369,22 @@ export class SacredPeakScene extends Phaser.Scene {
     for (let i = 0; i < 80; i++) { stars.fillStyle(0xffffff, Math.random() * 0.7 + 0.2); stars.fillCircle(Math.random() * W, Math.random() * H, Math.random() < 0.2 ? 2 : 1); }
     kids.push(stars);
     kids.push(this.add.text(W / 2, 60, '🌟  THE COMPLETE PANTHEON', { fontSize: '24px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
-    kids.push(this.add.text(W / 2, H - 40, '환웅 · 풍백 · 우사 · 운사 · 나비할망 · 천지신령', { fontSize: '15px', color: '#bcd4ff' }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
+    kids.push(this.add.text(W / 2, H - 40, '환웅 · 풍백 · 우사 · 운사 · 나비할망', { fontSize: '15px', color: '#bcd4ff' }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
 
     this.dialog.show([
-      '노스단 is dismantled for good, its new leader imprisoned alongside Ryeo. The founding myth\'s ancient retinue is united under a single trainer for the first time in millennia.',
+      '노스단 is dismantled for good, Sovereign Clemont imprisoned alongside Ryeo. The founding myth\'s ancient retinue is united under a single trainer for the first time in millennia.',
       'Rival (looking up at the clearing sky): You caught a GOD, you know that? An actual god. ...I\'m never going to catch up to you, am I? Good. Wouldn\'t want it any other way.',
-      '어사대장 Jito (bowing, the deepest honour of her order): Four hundred years the 어사대 guarded these peaks against outsiders. Today an outsider guarded them for US. You are no outsider anymore, southerner.',
-      '어사대장 Jito: Carry this 마패. Any 어사대 in any northern city will aid you on sight. The north will remember your name as long as the mountains stand.',
+      '어사대장 Jinnok (bowing, the deepest honour of her order): Four hundred years the 어사대 guarded these peaks against outsiders. Today an outsider guarded them for US. You are no outsider anymore, southerner.',
+      '어사대장 Jinnok: Carry this 마패. Any 어사대 in any northern city will aid you on sight. The north will remember your name as long as the mountains stand.',
       'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Hanbando... it\'s in good hands.',
-      '🏆 You hold 환웅, 풍백, 우사, 운사, 나비할망 and the Spirit of Cheonji — the complete mythological pantheon of Hanbando.',
-      '— TRUE END —',
+      '🏆 You hold 환웅, 풍백, 우사, 운사, 나비할망 — the complete mythological pantheon of Hanbando.',
+      'Prof. Song: Come home, Champion. All of Sudo City is waiting to celebrate you one last time.',
     ], () => {
       this.cameras.main.fadeOut(1200, 0, 0, 0, () => {
         kids.forEach(k => k.destroy());
-        this.registry.set('capitalReturnX', 24 * 32 + 16);
-        this.registry.set('capitalReturnY', 31 * 32 + 16);
-        this.scene.start('CapitolCityScene');
+        // The finale: one last party back in Sudo City, then the ending credits.
+        this.registry.set('finalePartyPending', true);
+        this.scene.start('SudoLabScene');
       });
     });
   }

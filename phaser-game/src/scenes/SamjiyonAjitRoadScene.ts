@@ -66,12 +66,12 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
 
   private readonly SENTRIES: Sentry[] = [
     {
-      key: 'nosdan-ajit-road-1', name: '노스단 Sentry', col: 6, row: 15,
+      key: 'nosdan-ajit-road-1', name: '노스단 Sentry', col: 10, row: 20,
       line: "Halt! This road belongs to 노스단 now. Turn back to your little plateau — the ajit is off-limits!",
       pokemon: JSON.stringify([{ id: 553, level: 72 }, { id: 430, level: 72 }]), expPool: 2400,
     },
     {
-      key: 'nosdan-ajit-road-2', name: '노스단 Sentry', col: 15, row: 22,
+      key: 'nosdan-ajit-road-2', name: '노스단 Sentry', col: 10, row: 11,
       line: "You got past the first post? The 간부 said to let no 어사대 dog near the gate. So you'll have to go through me!",
       pokemon: JSON.stringify([{ id: 452, level: 72 }, { id: 625, level: 73 }]), expPool: 2500,
     },
@@ -102,6 +102,19 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     this.createUI();
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'SamjiyonAjitRoadScene');
+
+    // Cleared both sentries → the last grunt drops the 아지트 key. Award it once.
+    const sentriesDefeated = this.SENTRIES.every(s => this.registry.get(`trainerDefeated_${s.key}`));
+    if (sentriesDefeated && !this.registry.get('hasNosdanKey')) {
+      this.time.delayedCall(600, () => {
+        this.cutsceneActive = true;
+        this.registry.set('hasNosdanKey', true);
+        this.dialog.show([
+          'The last 노스단 grunt flees, dropping a heavy iron key in the snow!',
+          '🔑 You obtained the 노스단 아지트 열쇠! The gate ahead will now unlock.',
+        ], () => { this.cutsceneActive = false; });
+      });
+    }
   }
 
   private drawMap() {
@@ -246,13 +259,27 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   }
 
   private checkGate() {
-    const near = Math.hypot(this.px - (GATE_COL * TILE), this.py - (GATE_ROW * TILE + 24)) < TILE * 1.4;
-    if (!near) return;
-    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    if (this.cutsceneActive) return;
+    const near = Math.hypot(this.px - (GATE_COL * TILE), this.py - (GATE_ROW * TILE + 24)) < TILE * 1.8;
+    const touchingGate = (this.py <= (GATE_ROW + 0.8) * TILE) && (this.px >= 8 * TILE && this.px <= 12 * TILE);
+    if (!near && !touchingGate) return;
+    if (!touchingGate && !Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+
+    // The grunts bar the gate until they're beaten and their key is taken.
+    if (!this.registry.get('hasNosdanKey')) {
+      this.cutsceneActive = true;
+      this.dialog.show([
+        '노스단 grunts bar the gate. "Beat us first if you think you\'re getting in!"',
+      ], () => { this.cutsceneActive = false; });
+      return;
+    }
+
     this.cutsceneActive = true;
-    this.registry.set('hideoutFloor', 1);
-    this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
-    this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('NosdanHideoutScene'));
+    this.dialog.show(['🔑 You unlock the 노스단 아지트 gate with the key.'], () => {
+      this.registry.set('hideoutFloor', 1);
+      this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('NosdanHideoutScene'));
+    });
   }
 
   private checkExit() {
@@ -261,7 +288,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     if (this.py > (ROWS - 1) * TILE && this.px > 8 * TILE && this.px < 13 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-        this.registry.set('SamjiyonCitySceneReturnX', 16 * 32); this.registry.set('SamjiyonCitySceneReturnY', 21 * 32 + 16);
+        this.registry.set('SamjiyonCitySceneReturnX', 38 * 32 + 16); this.registry.set('SamjiyonCitySceneReturnY', 25 * 32 + 16);
         this.scene.start('SamjiyonCityScene');
       });
     }

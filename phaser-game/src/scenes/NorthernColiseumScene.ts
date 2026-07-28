@@ -52,7 +52,7 @@ const MEMBERS: Member[] = [
       'Hanseol: Freeze, southerner — or prove you can weather the cold.',
     ],
     pokemon: [
-      { id: 0, level: 77, custom: 'bosongnun' }, { id: 478, level: 77 },
+      { id: 0, level: 77, custom: 'snoqueen' }, { id: 478, level: 77 },
       { id: 91, level: 78 }, { id: 0, level: 78, custom: 'luninari' }, { id: 0, level: 80, custom: 'snoqueen' },
     ],
     expPool: 6500,
@@ -366,37 +366,22 @@ export class NorthernColiseumScene extends Phaser.Scene {
     const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
     root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
 
-    // The true finale still waits: with the Northern League won, the Spirit of Cheonji
-    // stirs at Baekdu Peak. Route there as a required beat until it's caught.
-    const toBaekdu = !this.registry.get('chapter11Done');
+    // After Northern League victory, return to Sudo City for celebration party
     const lines = [
       'Taewang rises from his throne for the first time — slowly, deliberately.',
       'Taewang: ...In thirty years on this throne, I have beaten every Hanbando Champion sent to me. Every one.',
       'Taewang: Until now.',
       'Taewang (inclining his head — a king\'s respect): The peninsula bred a real trainer at last. Your team is enshrined in the Northern Hall of Fame, beside the north\'s own legends.',
       '🏆 Your team is recorded in the Northern Hall of Fame — the first southern names ever set in this stone!',
+      'Taewang: A celebration awaits in Sudo City. Go, Champion. The whole region will want to honor your achievement.',
     ];
-    if (toBaekdu) {
-      lines.push(
-        'Taewang: ...But you did not climb this far only for my throne. I saw it the moment you entered my hall.',
-        'Prof. Song (comms): The readings off Baekdu Peak just spiked — the Spirit of Cheonji is waking. Only a guardian who has truly proven themselves can still it, and that window is NOW.',
-        `${rivalTrainerName(this.registry)}: Then we don't go home yet. Baekdu Peak — the real summit. Let's finish what we started.`,
-      );
-    } else {
-      lines.push('Taewang: Go home, southerner. Carry word that the north acknowledges Hanbando. You have earned that much — and more.');
-    }
     this.dialog.show(lines, () => {
-      if (toBaekdu) {
-        this.registry.set('baekduCheckpointReturnX', 12 * 32 + 16);
-        this.registry.set('baekduCheckpointReturnY', 44 * 32 + 16);
-        this.cameras.main.fadeOut(900, 0, 0, 0, () => this.scene.start('BaekduCheckpointScene'));
-      } else {
-        this.cameras.main.fadeOut(900, 0, 0, 0, () => {
-          this.registry.set('capitalReturnX', 24 * 32 + 16);
-          this.registry.set('capitalReturnY', 31 * 32 + 16);
-          this.scene.start('CapitolCityScene');
-        });
-      }
+      this.registry.set('sudoPartyPending', true);
+      this.cameras.main.fadeOut(900, 0, 0, 0, () => {
+        this.registry.set('capitalReturnX', 24 * 32 + 16);
+        this.registry.set('capitalReturnY', 31 * 32 + 16);
+        this.scene.start('CapitolCityScene');
+      });
     });
   }
 }

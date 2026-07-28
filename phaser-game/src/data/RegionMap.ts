@@ -48,6 +48,29 @@ export const REGION_NODES: RegionNode[] = [
     nx: 0.285, ny: 0.145, kind: 'city', fly: true, region: 'north', returnKey: 'pyeongyang',
     scenes: ['PyeongyangCityScene'] },
 
+  // ── Northern 어사대 마패 circuit cities ──
+  { id: 'sinuiju', scene: 'SinuijuCityScene', name: 'Sinuiju', kr: '신의주',
+    nx: 0.11, ny: 0.10, kind: 'city', fly: true, region: 'north', returnKey: 'SinuijuCityScene',
+    scenes: ['SinuijuCityScene'] },
+  { id: 'nampo', scene: 'NampoCityScene', name: 'Nampo', kr: '남포',
+    nx: 0.20, ny: 0.21, kind: 'city', fly: true, region: 'north', returnKey: 'NampoCityScene',
+    scenes: ['NampoCityScene'] },
+  { id: 'kaesong', scene: 'KaesongCityScene', name: 'Kaesong', kr: '개성',
+    nx: 0.35, ny: 0.24, kind: 'city', fly: true, region: 'north', returnKey: 'KaesongCityScene',
+    scenes: ['KaesongCityScene'] },
+  { id: 'wonsan', scene: 'WonsanCityScene', name: 'Wonsan', kr: '원산',
+    nx: 0.47, ny: 0.19, kind: 'city', fly: true, region: 'north', returnKey: 'WonsanCityScene',
+    scenes: ['WonsanCityScene'] },
+  { id: 'hamhung', scene: 'HamhungCityScene', name: 'Hamhung', kr: '함흥',
+    nx: 0.52, ny: 0.11, kind: 'city', fly: true, region: 'north', returnKey: 'HamhungCityScene',
+    scenes: ['HamhungCityScene'] },
+  { id: 'samjiyon', scene: 'SamjiyonCityScene', name: 'Samjiyon', kr: '삼지연',
+    nx: 0.55, ny: 0.06, kind: 'city', fly: true, region: 'north', returnKey: 'SamjiyonCityScene',
+    scenes: ['SamjiyonCityScene'] },
+  { id: 'chongjin', scene: 'ChongjinCityScene', name: 'Chongjin', kr: '청진',
+    nx: 0.66, ny: 0.055, kind: 'city', fly: true, region: 'north', returnKey: 'ChongjinCityScene',
+    scenes: ['ChongjinCityScene'] },
+
   // ── Hanbando (the south) ─────────────────────────────────────────────────
   { id: 'waterfall', scene: 'WorldMapScene', name: 'Waterfall City', kr: '폭포시티',
     nx: 0.15, ny: 0.3, kind: 'city', fly: true, region: 'south', returnKey: 'return',
@@ -137,12 +160,13 @@ export const REGION_NODES: RegionNode[] = [
     scenes: ['SunriseCityScene', 'SunrisePCScene', 'SunriseGymScene',
              'SunriseCliff1Scene', 'SunriseCliff2Scene', 'SunriseCliff3Scene'] },
 
+  // Scholar's Road runs from the Capitol up to the League, so both sit just north of Capitol.
   { id: 'scholars', scene: 'ScholarsRoadScene', name: "Scholar's Road", kr: '선비의 길',
-    nx: 0.82, ny: 0.52, kind: 'route', fly: false, region: 'south', returnKey: 'scholarsRoad',
+    nx: 0.54, ny: 0.41, kind: 'route', fly: false, region: 'south', returnKey: 'scholarsRoad',
     scenes: ['ScholarsRoadScene'] },
 
   { id: 'league', scene: 'LeaguePlazaScene', name: 'Pokémon League', kr: '포켓몬 리그',
-    nx: 0.92, ny: 0.49, kind: 'city', fly: true, region: 'south', returnKey: 'leaguePlaza',
+    nx: 0.54, ny: 0.36, kind: 'city', fly: true, region: 'south', returnKey: 'leaguePlaza',
     scenes: ['LeaguePlazaScene', 'PokemonLeagueScene'] },
 ];
 

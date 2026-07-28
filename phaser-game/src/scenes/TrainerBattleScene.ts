@@ -11,6 +11,8 @@ import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { fetchPokemon } from '../data/PokeAPI';
 import { customForm } from '../data/CustomBattle';
 import { PartySystem } from '../systems/PartySystem';
+import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
+import { tr } from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
@@ -435,6 +437,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private typeDialog(text: string, onDone?: () => void) {
+    text = tr(text);   // translate static battle lines present in the KO dictionary
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
@@ -460,7 +463,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       { label: 'POKÉMON',     x: 170, y: 68, cb: () => this.onSwitchPokemon(), enabled: true },
     ];
     actions.forEach(a => {
-      const t = this.add.text(a.x, a.y, a.label, { fontSize: '18px', color: a.enabled ? '#fff' : '#888' })
+      const t = this.add.text(a.x, a.y, tr(a.label), { fontSize: '18px', color: a.enabled ? '#fff' : '#888' })
         .setInteractive({ useHandCursor: a.enabled })
         .on('pointerover',  () => { if (a.enabled) t.setColor('#ffe44e'); })
         .on('pointerout',   () => t.setColor(a.enabled ? '#ffffff' : '#888888'))
@@ -961,16 +964,19 @@ export class TrainerBattleScene extends Phaser.Scene {
     // No healthy Pokémon left → trainer wins.
     const anyHealthy = party.some((e, i) => i !== this.activeSlot && e.hp > 0);
     if (!anyHealthy) {
+      // Losing anywhere in a League gauntlet fails the whole run — the four masters
+      // must be beaten again from the first, in one attempt. Those return to the lobby;
+      // every other loss is a normal whiteout to the nearest Pokémon Center.
+      const inLeague = this.trainerKey.startsWith('e4-') || this.trainerKey.startsWith('champion-') || this.trainerKey.startsWith('north-');
       this.typeDialog(`${this.trainerName}: You're out of Pokémon! Better luck next time.`, () => {
-        PartySystem.healAll(this.registry);
-        // Losing anywhere in a League gauntlet fails the whole run — the four masters
-        // must be beaten again from the first, in one attempt.
-        if (this.trainerKey.startsWith('e4-') || this.trainerKey.startsWith('champion-')) {
-          this.registry.set('leagueRunFailed', true);
-        } else if (this.trainerKey.startsWith('north-')) {
-          this.registry.set('northLeagueRunFailed', true);
+        if (inLeague) {
+          PartySystem.healAll(this.registry);
+          if (this.trainerKey.startsWith('north-')) this.registry.set('northLeagueRunFailed', true);
+          else this.registry.set('leagueRunFailed', true);
+          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start(this._returnScene));
+        } else {
+          this.typeDialog(blackoutMessage(this.registry), () => blackoutToCenter(this));
         }
-        this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start(this._returnScene));
       });
       return;
     }

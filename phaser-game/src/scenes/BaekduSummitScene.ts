@@ -11,9 +11,9 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 import { customForm } from '../data/CustomBattle';
 
-// Sprites depicted on-screen during the capture finale (the Spirit's advent +
+// Sprites depicted on-screen during the capture finale (Hwanwoong's advent +
 // 나비할망's Dancheong shield with the freed trio).
-const FINALE_CAST = ['cheonjisin', 'nabihalmang', 'poongbaek', 'woosa', 'woonsa'] as const;
+const FINALE_CAST = ['hwanwoong', 'nabihalmang', 'poongbaek', 'woosa', 'woonsa'] as const;
 
 // ── Tiles ─────────────────────────────────────────────────────────────────────
 const T = { ROCK: 0, SNOW: 1, DRIFT: 2, GATE: 3, SUMMIT: 4, TOWER: 5, ALTAR: 6, LAKE: 7 } as const;
@@ -90,21 +90,21 @@ export class BaekduSummitScene extends Phaser.Scene {
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private steps = 0; private nextEnc = 10;
   private readonly SPEED = 120; private readonly RUN = 250;
-  // Finale visuals (the Spirit's advent; calmed when the shield goes up).
-  private spiritImg?: Phaser.GameObjects.Image;
-  private spiritCalm = false;
+  // Finale visuals (Hwanwoong's advent; calmed when the shield goes up).
+  private hwanwoongImg?: Phaser.GameObjects.Image;
+  private hwanwoongCalm = false;
 
   private readonly FOES: Foe[] = [
     {
       key: 'baekdu-grunt-1', name: '노스단 Grunt', col: 18, row: 47, label: '노스단\nGrunt',
       line: "노스단 Grunt: The matrix is almost complete. You're too late to matter!",
-      pokemon: [{ id: 0, level: 53, custom: 'corrpanda' }, { id: 0, level: 54, custom: 'palmcockatoo' }],
+      pokemon: [{ id: 0, level: 63, custom: 'corrpanda' }, { id: 0, level: 64, custom: 'palmcockatoo' }],
       expPool: 2300,
     },
     {
       key: 'baekdu-admin-1', name: '노스단 Admin', col: 5, row: 30, label: '노스단\nAdmin',
-      line: "노스단 Admin: Commander Ryeo gave the order. The trio's power will wake the Spirit — and the south will kneel.",
-      pokemon: [{ id: 0, level: 54, custom: 'martbadger' }, { id: 0, level: 55, custom: 'balchataek' }, { id: 0, level: 55, custom: 'foxgeist' }],
+      line: "노스단 Admin: Commander Ryeo gave the order. The trio's power will wake Hwanwoong — and the south will kneel.",
+      pokemon: [{ id: 0, level: 64, custom: 'martbadger' }, { id: 0, level: 65, custom: 'balchataek' }, { id: 0, level: 65, custom: 'foxgeist' }],
       expPool: 2800,
     },
   ];
@@ -122,9 +122,9 @@ export class BaekduSummitScene extends Phaser.Scene {
 
   private get gateOpen() { return !!this.registry.get('trainerDefeated_nosdan-mubaek'); }
   private get caught() {
-    return DexTracker.isCaught(this.registry, 'cheonjisin')
-      || PartySystem.get(this.registry).some(e => e.spriteKey === 'cheonjisin')
-      || (this.registry.get('box') as string ?? '').includes('cheonjisin');
+    return DexTracker.isCaught(this.registry, 'hwanwoong')
+      || PartySystem.get(this.registry).some(e => e.spriteKey === 'hwanwoong')
+      || (this.registry.get('box') as string ?? '').includes('hwanwoong');
   }
 
   create() {
@@ -154,17 +154,17 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'BaekduSummitScene');
 
-    // Returned from the legendary encounter with the Spirit → the ending note.
+    // Returned from the legendary encounter with Hwanwoong → the ending note.
     if (this.caught && !this.registry.get('chapter11Done')) {
       this.time.delayedCall(300, () => this.runEnding());
     } else if (this.registry.get('chapter11Done')) {
-      // Finale already complete — never strand the player at the peak; descend to Sunrise.
+      // Finale already complete — never strand the player at the peak; descend to Altar.
       this.cutsceneActive = true;
       this.time.delayedCall(300, () => {
         this.cameras.main.fadeOut(500, 0, 0, 0, () => {
-          this.registry.set('sunriseCityReturnX', 15 * 32);
-          this.registry.set('sunriseCityReturnY', 3 * 32);
-          this.scene.start('SunriseCityScene');
+          this.registry.set('rgAltarReturnX', 11 * 32 + 16);
+          this.registry.set('rgAltarReturnY', 20 * 32 + 16);
+          this.scene.start('RangrimAltarScene');
         });
       });
     } else if (!this.registry.get('baekduSummitSeen')) {
@@ -208,6 +208,9 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.add.text(12 * TILE, 67.4 * TILE, '↓ the gate', {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
+    this.add.text(0.6 * TILE, 34 * TILE, '← Ancient Altar', {
+      fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
+    }).setOrigin(0, 0.5).setDepth(5);
   }
 
   private drawFoes() {
@@ -249,7 +252,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
-    // Debug: press 0 to replay the Spirit-of-Cheonji capture finale from the top.
+    // Debug: press 0 to replay the Hwanwoong capture finale from the top.
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO).on('down', () => this.debugReplayFinale());
   }
   private createUI() {
@@ -333,7 +336,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.dialog.show([
       'Director Suri stumbles down the path to meet you — pale, shaken, the seventh tablet\'s rubbing clutched in her notes.',
       "Director Suri: I ran the numbers on 노스단's matrix. They didn't. The trio's siphoned energy isn't stabilizing anything — it's CONCENTRATING heat into the magma chamber beneath this peak.",
-      "Director Suri: If that machine runs to completion, it won't just wake the Spirit. It will trigger an eruption that takes the entire northern range with it.",
+      "Director Suri: If that machine runs to completion, it won't just wake Hwanwoong. It will trigger an eruption that takes the entire northern range with it.",
       "Director Suri: I spent thirty years chasing a way to heal this region. I won't let my work be the thing that ends it. You carry the seventh tablet — and 나비할망. Stop them. Please.",
     ], () => { this.cutsceneActive = false; });
   }
@@ -370,12 +373,12 @@ export class BaekduSummitScene extends Phaser.Scene {
       this.registry.set('trainerName', 'Executive Mubaek');
       this.registry.set('trainerKey', 'nosdan-mubaek');
       this.registry.set('trainerPokemon', JSON.stringify([
-        { id: 0,   level: 55, custom: 'corrpanda' },    // Dark — Snarl / screens
-        { id: 0,   level: 56, custom: 'martbadger' },    // Steel/Dark — Iron Defense
-        { id: 553, level: 57 },                           // Krookodile (Ground/Dark) — Earthquake
-        { id: 0,   level: 57, custom: 'snoqueen' },       // Ice — Icicle Crash
-        { id: 0,   level: 58, custom: 'foxgeist' },       // Poison/Ghost — Toxic / Sludge Bomb
-        { id: 0,   level: 59, custom: 'dracopaia' },      // Water/Dragon ace — Blizzard / Draco Meteor
+        { id: 0,   level: 75, custom: 'corrpanda' },    // Dark — Snarl / screens
+        { id: 0,   level: 76, custom: 'martbadger' },    // Steel/Dark — Iron Defense
+        { id: 553, level: 77 },                           // Krookodile (Ground/Dark) — Earthquake
+        { id: 0,   level: 77, custom: 'snoqueen' },       // Ice — Icicle Crash
+        { id: 0,   level: 78, custom: 'foxgeist' },       // Poison/Ghost — Toxic / Sludge Bomb
+        { id: 0,   level: 79, custom: 'dracopaia' },      // Water/Dragon ace — Blizzard / Draco Meteor
       ]));
       this.registry.set('trainerExpPool', 3800);
       this.registry.set('trainerReturnScene', 'BaekduSummitScene');
@@ -396,7 +399,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     }
   }
 
-  /** Debug helper: strip the captured Spirit + finale flags and respawn on the
+  /** Debug helper: strip the captured Hwanwoong + finale flags and respawn on the
    *  plateau so the whole advent → shield → catch sequence replays. (Press 0.) */
   private debugReplayFinale() {
     if (this.cutsceneActive) return;
@@ -406,7 +409,7 @@ export class BaekduSummitScene extends Phaser.Scene {
       try {
         const arr = JSON.parse(raw) as unknown[];
         this.registry.set(key, JSON.stringify(arr.filter(x =>
-          typeof x === 'string' ? x !== 'cheonjisin' : (x as { spriteKey?: string }).spriteKey !== 'cheonjisin')));
+          typeof x === 'string' ? x !== 'hwanwoong' : (x as { spriteKey?: string }).spriteKey !== 'hwanwoong')));
       } catch { /* ignore */ }
     };
     ['party', 'box', 'dexCaught', 'dexSeen'].forEach(strip);
@@ -423,7 +426,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     if (!this.gateOpen || this.caught) return;
     if (this.py > 7 * TILE) return;
     this.cutsceneActive = true;
-    this.playAdvent();   // the Spirit rises from the lake, depicted on-screen
+    this.playAdvent();   // Hwanwoong rises from the lake, depicted on-screen
     const toShield = () => {
       this.playDancheong();   // depict 나비할망 + the freed trio on-screen
       this.dialog.show([
@@ -431,8 +434,8 @@ export class BaekduSummitScene extends Phaser.Scene {
         '나비할망 launches into the center of the storm. Her metallic, dancheong-patterned wings unfurl — wider, and wider — into a vast translucent dome whose patterns exactly match the ancient tablets.',
         "The dome drinks in the chaotic red-and-purple spikes torn from 풍백, 우사, and 운사 — and converts them into a slow, gentle aurora that washes down across the peak.",
         'Far across the Taebaek range, three cries echo — Wind, Rain, and Clouds, set free. The chains of the matrix shatter; the trio scatter back into the wild peaks.',
-        "The Spirit of Cheonji, its borrowed agony lifted, slowly stills. Its corona fades from violent red to a calm, deep blue.",
-        "Prof. Song (comms): Now — while she's calm. This is your chance. End her suffering, or make her yours.",
+        "Hwanwoong, his borrowed agony lifted, slowly stills. His corona fades from violent red to a calm, deep blue.",
+        "Prof. Song (comms): Now — while he's calm. This is your chance. End his suffering, or make him yours.",
       ], this.launchCatch);
     };
     const releasePrompt = () => {
@@ -442,16 +445,16 @@ export class BaekduSummitScene extends Phaser.Scene {
         "▶ RELEASE 나비할망?  (Yes — release her / No — hold on)",
       ], () => {
         this.dialog.showChoice(toShield, () => {
-          this.dialog.show(["You steel yourself and weather another wave of the Spirit's fury..."], releasePrompt);
+          this.dialog.show(["You steel yourself and weather another wave of Hwanwoong's fury..."], releasePrompt);
         });
       });
     };
     if (!this.registry.get('baekduFinaleSeen')) {
       this.registry.set('baekduFinaleSeen', true);
       this.dialog.show([
-        'You burst onto the summit. At the center of the ring of towers, the volcanic lake churns — and the Spirit of Cheonji rises, dragging the siphoned power of the captured trio in a thrashing red-and-purple corona around its body.',
-        'It is not attacking out of malice. It is in agony — the matrix is wrenching at its waking mind, and the trio\'s chained energy feeds the overload.',
-        "Prof. Song (comms): Listen to me — you can't DEFEAT it! That energy isn't the Spirit's, it's 풍백, 우사, and 운사's power forced through it! Every hit you land just feeds the matrix more!",
+        'You burst onto the summit. At the center of the ring of towers, the volcanic lake churns — and Hwanwoong rises, dragging the siphoned power of the captured trio in a thrashing red-and-purple corona around its body.',
+        'He is not attacking out of malice. He is in agony — the matrix is wrenching at his waking mind, and the trio\'s chained energy feeds the overload.',
+        "Prof. Song (comms): Listen to me — you can't DEFEAT him! That energy isn't his, it's 풍백, 우사, and 운사's power forced through him! Every hit you land just feeds the matrix more!",
       ], releasePrompt);
     } else {
       releasePrompt();
@@ -461,8 +464,8 @@ export class BaekduSummitScene extends Phaser.Scene {
   private launchCatch = () => {
     PartySystem.healAll(this.registry);
     if (Inventory.count(this.registry, 'masterball') <= 0) Inventory.add(this.registry, 'masterball', 1);
-    this.registry.set('wildId', 'cheonjisin');
-    this.registry.set('wildLevel', 60);
+    this.registry.set('wildId', 'hwanwoong');
+    this.registry.set('wildLevel', 80);
     this.registry.set('wildCustom', true);
     this.registry.set('wildCatchRate', 3);
     this.registry.set('wildReturnScene', 'BaekduSummitScene');
@@ -479,26 +482,26 @@ export class BaekduSummitScene extends Phaser.Scene {
   }
 
   /**
-   * The Spirit of Cheonji's advent: it rises from the volcanic lake wreathed in a
+   * Hwanwoong's advent: he rises from the volcanic lake wreathed in a
    * thrashing red-and-purple corona (the siphoned trio's power). The corona reads
-   * `spiritCalm`, so when 나비할망's shield goes up it shifts to a calm deep blue.
+   * `hwanwoongCalm`, so when 나비할망's shield goes up it shifts to a calm deep blue.
    */
   private playAdvent() {
-    if (this.spiritImg) return;   // already on-screen this session
+    if (this.hwanwoongImg) return;   // already on-screen this session
     const W = this.scale.width, H = this.scale.height;
     const cx = W / 2, cy = H * 0.40;
 
     const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0014, 0).setOrigin(0.5);
     const corona = this.add.graphics();
     const kids: Phaser.GameObjects.GameObject[] = [dim, corona];
-    const label = this.add.text(cx, cy + 168, '천지신 — Spirit of Cheonji', {
+    const label = this.add.text(cx, cy + 168, '환웅 — Hwanwoong', {
       fontSize: '14px', color: '#ffd6e0', fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
     }).setOrigin(0.5).setAlpha(0);
     let img: Phaser.GameObjects.Image | undefined;
-    if (this.textures.exists('cheonjisin')) {
-      img = this.add.image(cx, H * 0.74, 'cheonjisin').setAlpha(0);
+    if (this.textures.exists('hwanwoong')) {
+      img = this.add.image(cx, H * 0.74, 'hwanwoong').setAlpha(0);
       this.fitOverlay(img, 300);
-      this.spiritImg = img;
+      this.hwanwoongImg = img;
       kids.push(img);
     }
     kids.push(label);
@@ -507,7 +510,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
     root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
 
-    // Entrance: dark sky, the Spirit rises from the lake.
+    // Entrance: dark sky, Hwanwoong rises from the lake.
     this.tweens.add({ targets: dim, alpha: 0.5, duration: 800 });
     this.tweens.add({ targets: label, alpha: 1, duration: 1000, delay: 300 });
     if (img) {
@@ -519,8 +522,8 @@ export class BaekduSummitScene extends Phaser.Scene {
     let phase = 0;
     this.time.addEvent({ delay: 40, loop: true, callback: () => {
       phase += 0.09;
-      const calm = this.spiritCalm;
-      const my = (this.spiritImg?.y ?? cy);
+      const calm = this.hwanwoongCalm;
+      const my = (this.hwanwoongImg?.y ?? cy);
       corona.clear();
       const cA = calm ? 0x3a7adf : 0xcc2244;
       const cB = calm ? 0x7ad6ff : 0x8a2acc;
@@ -555,9 +558,9 @@ export class BaekduSummitScene extends Phaser.Scene {
       return items;
     };
 
-    // The shield calms the risen Spirit (its corona shifts red → blue) and lifts it.
-    this.spiritCalm = true;
-    if (this.spiritImg) this.tweens.add({ targets: this.spiritImg, y: H * 0.30, duration: 1400, ease: 'Sine.Out' });
+    // The shield calms the risen Hwanwoong (his corona shifts red → blue) and lifts him.
+    this.hwanwoongCalm = true;
+    if (this.hwanwoongImg) this.tweens.add({ targets: this.hwanwoongImg, y: H * 0.30, duration: 1400, ease: 'Sine.Out' });
 
     // Light dim (the advent already darkened the sky) + the dancheong dome over 나비할망.
     const domeCx = W / 2, domeCy = H * 0.60;
@@ -615,20 +618,20 @@ export class BaekduSummitScene extends Phaser.Scene {
     }
   }
 
-  /** After the Spirit is caught or stilled — placing the seventh tablet, the harmonization. */
+  /** After Hwanwoong is caught or stilled — placing the seventh tablet, the harmonization. */
   private runEnding() {
     this.registry.set('chapter11Done', true);
     this.registry.set('phase2Complete', true);
-    this.registry.set('phase2Legendary', 'cheonjisin');
+    this.registry.set('phase2Legendary', 'hwanwoong');
     this.cutsceneActive = true;
     this.dialog.show([
-      "The Spirit of Cheonji is yours — its corona gone, the lake mirror-still beneath a clearing sky.",
+      "Hwanwoong is yours — its corona gone, the lake mirror-still beneath a clearing sky.",
       "Rival climbs to the summit, Executive Mubaek defeated behind them, and joins you at the central altar.",
       "Rival: ...We actually did it. Together, then. Like always.",
       "Together, you place the final seventh tablet into the central pedestal. The six towers don't shut down — they HARMONIZE.",
       "The bruised red sky clears. Gentle lines of golden light spread outward from the peak, flowing back down across the entire peninsula, settling the disturbed land and restoring its natural balance.",
       "Prof. Song (comms, quiet with relief): The geothermal readings are stabilizing. The eruption threat is gone. The trio are free. And the whole region is breathing again.",
-      "Prof. Song: You've done something no one has in a thousand years. The south has its guardian in 나비할망. The north now has its balance restored through the Spirit's will. You carry the weight of both now.",
+      "Prof. Song: You've done something no one has in a thousand years. The south has its guardian in 나비할망. The north now has its balance restored through 환웅's power. You carry the weight of both now.",
       "나비할망 folds her glowing wings and settles beside you. The first clean stars appear over Baekdu Peak.",
       "You and the Rival make the long descent together, off the sacred mountain.",
       "▶ Chapter 11 complete. Phase 2: Northern League — COMPLETE ✓",
@@ -653,6 +656,15 @@ export class BaekduSummitScene extends Phaser.Scene {
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('baekduCheckpointReturnX', 12 * 32 + 16); this.registry.set('baekduCheckpointReturnY', 2 * 32);
         this.scene.start('BaekduCheckpointScene');
+      });
+    }
+    // West → to the Ancient Altar (RangrimAltarScene)
+    if (this.px < 1 * TILE && this.py > 25 * TILE && this.py < 45 * TILE) {
+      this.cutsceneActive = true;
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+        this.registry.set('rgAltarReturnX', 11 * 32 + 16);
+        this.registry.set('rgAltarReturnY', 20 * 32 + 16);
+        this.scene.start('RangrimAltarScene');
       });
     }
   }
