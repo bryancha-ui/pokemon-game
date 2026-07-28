@@ -62,6 +62,9 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^Go (.+)!$/,            m => `가랏, ${m[1]}!`],
   [/^A wild (.+) appeared!$/, m => `앗! 야생 ${m[1]}이 나타났다!`],
   [/^You caught (.+)!$/,    m => `${m[1]}을 잡았다!`],
+  [/^(.+) threw a Pokéball!$/, m => `${m[1]}가 몬스터볼을 던졌다!`],
+  [/^(.+) used (.+)!$/,     m => `${m[1]}의 ${m[2]}!`],
+  [/^(.+) is already in battle!$/, m => `${m[1]}은 이미 배틀에 나와 있어!`],
 ];
 
 export function tr(en: string): string {

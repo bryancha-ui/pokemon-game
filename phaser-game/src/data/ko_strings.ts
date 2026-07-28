@@ -91,6 +91,8 @@ export const KO_STRINGS: Record<string, string> = {
   'FIGHT': '싸운다', 'BAG': '가방', 'POKÉMON': '포켓몬', 'RUN': '도망',
   'No usable items in the bag.': '가방에 사용할 수 있는 아이템이 없습니다.',
   'Choose your next Pokémon!': '다음 포켓몬을 선택하세요!',
+  '▶ SPACE to advance  |  A to throw Pokéball': '▶ SPACE 넘기기  |  A 몬스터볼 던지기',
+  'Switch to which Pokémon?': '어느 포켓몬으로 교체할까요?',
 
   // ── Battle: outcome / status lines (static) ──
   'A critical hit!': '급소에 맞았다!',

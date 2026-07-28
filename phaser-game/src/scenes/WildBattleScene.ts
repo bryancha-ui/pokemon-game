@@ -12,6 +12,7 @@ import { customForm } from '../data/CustomBattle';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
+import { tr } from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
@@ -191,7 +192,7 @@ export class WildBattleScene extends Phaser.Scene {
     g.fillEllipse(580, 155, 120, 22);
     g.fillStyle(0x0d0d2e, 0.96); g.fillRect(0, this.H - 120, this.W, 120);
     g.lineStyle(2, 0x5577aa, 1); g.lineBetween(0, this.H - 120, this.W, this.H - 120);
-    this.add.text(this.W / 2, this.H - 108, '▶ SPACE to advance  |  A to throw Pokéball', {
+    this.add.text(this.W / 2, this.H - 108, tr('▶ SPACE to advance  |  A to throw Pokéball'), {
       fontSize: '11px', color: '#5577aa',
     }).setOrigin(0.5).setDepth(2);
   }
@@ -251,6 +252,7 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private typeDialog(text: string, onDone?: () => void) {
+    text = tr(text);
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({
@@ -279,7 +281,7 @@ export class WildBattleScene extends Phaser.Scene {
       { label: 'RUN',      x: 170, y: 68, cb: () => this.onRun() },
     ];
     actions.forEach(a => {
-      const t = this.add.text(a.x, a.y, a.label, { fontSize: '19px', color: '#fff' })
+      const t = this.add.text(a.x, a.y, tr(a.label), { fontSize: '19px', color: '#fff' })
         .setInteractive({ useHandCursor: true })
         .on('pointerover',  () => t.setColor('#ffe44e'))
         .on('pointerout',   () => t.setColor('#ffffff'))

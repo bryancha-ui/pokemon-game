@@ -5,6 +5,7 @@
 import Phaser from 'phaser';
 import { PartySystem } from './PartySystem';
 import { TYPE_COLORS } from '../data/StarterData';
+import { t, tr, typeName } from './i18n';
 
 export function openSwitchPanel(
   scene:        Phaser.Scene,
@@ -37,14 +38,14 @@ export function openSwitchPanel(
 
   // Title
   overlay.add(
-    scene.add.text(cx, cy - 190, title, {
+    scene.add.text(cx, cy - 190, tr(title), {
       fontSize: '18px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5),
   );
 
   // Cancel button (hidden on a forced switch — you must send something out)
   if (allowCancel) {
-    const cancelBtn = scene.add.text(cx + panelW / 2 - 12, cy - 190, '✕  CANCEL', {
+    const cancelBtn = scene.add.text(cx + panelW / 2 - 12, cy - 190, t('✕  CANCEL', '✕  취소'), {
       fontSize: '13px', color: '#aaaaaa',
     }).setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true })
@@ -66,7 +67,7 @@ export function openSwitchPanel(
           .setStrokeStyle(1, 0x1a1a33),
       );
       overlay.add(
-        scene.add.text(cx, rowY, '— empty —', { fontSize: '12px', color: '#333355' })
+        scene.add.text(cx, rowY, t('— empty —', '— 비어 있음 —'), { fontSize: '12px', color: '#333355' })
           .setOrigin(0.5),
       );
       continue;
@@ -88,7 +89,7 @@ export function openSwitchPanel(
       scene.add.rectangle(cx - 310, rowY, 52, 15, typeColor).setAlpha(isFainted ? 0.3 : 1),
     );
     overlay.add(
-      scene.add.text(cx - 310, rowY, entry.type1.toUpperCase(),
+      scene.add.text(cx - 310, rowY, typeName(entry.type1),
         { fontSize: '8px', color: '#fff', fontStyle: 'bold' })
         .setOrigin(0.5).setAlpha(isFainted ? 0.4 : 1),
     );
@@ -122,12 +123,12 @@ export function openSwitchPanel(
     // Status label
     if (isActive) {
       overlay.add(
-        scene.add.text(cx + 320, rowY, 'ACTIVE',
+        scene.add.text(cx + 320, rowY, t('ACTIVE', '출전 중'),
           { fontSize: '10px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5),
       );
     } else if (isFainted) {
       overlay.add(
-        scene.add.text(cx + 320, rowY, 'FAINTED',
+        scene.add.text(cx + 320, rowY, t('FAINTED', '기절'),
           { fontSize: '10px', color: '#cc4444', fontStyle: 'bold' }).setOrigin(0.5),
       );
     }
