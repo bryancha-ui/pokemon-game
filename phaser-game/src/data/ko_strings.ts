@@ -48,7 +48,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   // Scholars' Road (victory road)
   'Hyeonu': '현우', 'Dawon': '다원', 'Munseok': '문석', 'Badge Scanner': '배지 스캐너',
   // 어사대 inspectors (Northern Reaches) + 노스단 ranks
-  '어사대장 Jito': '어사대장 지토', '어사대장 Salmu': '어사대장 살무', '어사대장 Gapcheol': '어사대장 갑철',
+  '어사대장 Salmu': '어사대장 살무', '어사대장 Gapcheol': '어사대장 갑철',
   '노스단 Grunt': '노스단 조무래기', '노스단 Admin': '노스단 간부',
 };
 
