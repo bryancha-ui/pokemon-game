@@ -50,6 +50,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   // 어사대 inspectors (Northern Reaches) + 노스단 ranks
   '어사대장 Salmu': '어사대장 살무', '어사대장 Gapcheol': '어사대장 갑철',
   '노스단 Grunt': '노스단 조무래기', '노스단 Admin': '노스단 간부',
+  'Chaeyeon': '채연', 'Executive Mubaek': '간부 무백', 'Forest Elder': '숲 어르신',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -526,6 +527,67 @@ export const KO_STRINGS: Record<string, string> = {
   'Charming. But the 어사대 do not run on rumor. Show me the trainer beneath the legend.':
     '귀엽군. 하지만 어사대는 소문으로 움직이지 않아. 그 전설 아래의 트레이너를 보여봐.',
   'Iron does not bend for sentiment. Come.': '강철은 감정으로 휘지 않는다. 와라.',
+
+  // ══ Villain arc: Team Suri / 노스단 ══
+  // Sudo Lab revelation (Ch.7)
+  "...You really are something. Okay. Let's go save a giant moth grandmother.":
+    '...너 정말 대단하다. 좋아. 거대 나방 할머니를 구하러 가자.',
+  "A sentence I never thought I'd say.": '평생 할 줄 몰랐던 말이네.',
+  "노스단 has already moved south, toward the Jeju vents. There's no time to lose.":
+    '노스단이 이미 남쪽, 제주 분화구로 이동했어. 지체할 시간이 없어.',
+  'Protect 나비할망 — and through her, the whole south. Go. Now.':
+    '나비할망을 지켜 — 그리고 그녀를 통해 남부 전체를. 가. 지금.',
+  '▶ Chapter 8 — Route 5 & the Ancient Forest — continues your journey south.':
+    '▶ 8장 — 5번 도로 & 고목 숲 — 남쪽으로의 여정이 이어진다.',
+  "Thank you for coming so fast. I finally understand what we're facing.":
+    '이렇게 빨리 와줘서 고마워. 드디어 우리가 뭘 마주하고 있는지 알아냈어.',
+  'Team Suri wants to wake the Spirit of Cheonji and control it — to heal the region. Misguided, dangerous.':
+    '수리단은 천지의 정령을 깨워 통제하려 해 — 지방을 치유하려고. 그릇되고 위험한 생각이지.',
+  "But 노스단 doesn't care about the Spirit. They want to be PRESENT when it wakes —":
+    '하지만 노스단은 정령엔 관심 없어. 그들은 정령이 깨어날 때 그 자리에 있으려 해 —',
+  '— to harvest the catastrophic awakening energy and weaponize it against the south.':
+    '— 그 파국적인 각성 에너지를 수확해 남부를 향한 무기로 삼으려는 거야.',
+  // Jeju Vent (나비할망 + Commander Ryeo)
+  "Turn back! The Director's orders — no one reaches the summit before our transport secures the moth!":
+    '돌아가! 국장님 명령이야 — 우리 수송선이 나방을 확보하기 전엔 누구도 정상에 못 가!',
+  'You climb fast for a tourist. It ends here!': '관광객치곤 빨리 오르는군. 여기서 끝이다!',
+  '나비할망 folds her glowing, dancheong-patterned wings and settles beside you at last.':
+    '나비할망이 단청 무늬로 빛나는 날개를 접고 마침내 네 곁에 내려앉는다.',
+  "She's chosen you as her guardian — and the south's. You truly earned her.":
+    '그녀가 널 자신의 — 그리고 남부의 수호자로 택했어. 넌 그녀를 얻을 자격이 있었어.',
+  'A sound like metal grinding. Commander Ryeo emerges from the shadows of the rig — bloodied, furious, movements sharp with desperation.':
+    '금속이 갈리는 듯한 소리. 사령관 려가 굴착 장치의 그림자에서 나타난다 — 피투성이에, 분노에 차, 절박함으로 날카로운 몸짓으로.',
+  'That moth was supposed to be OUR key to reshaping this peninsula! And you—':
+    '그 나방은 이 반도를 다시 빚을 우리의 열쇠였어! 그런데 네가—',
+  "...Then I'll take it from your corpse. One final test. You and me. No team. Just will.":
+    '...그럼 네 시체에서 빼앗겠어. 마지막 시험이다. 너와 나. 팀도 없이. 오직 의지로.',
+  "...She looks at you like you're not a tool to be used. Like you matter. That's what I never understood about this region. That's what we tried to control.":
+    '...그녀는 널 이용할 도구가 아닌 것처럼 봐. 네가 소중한 것처럼. 그게 내가 이 지방에 대해 끝내 이해하지 못한 거야. 그게 우리가 통제하려 했던 거고.',
+  // Baekdu Summit (matrix / Director Suri sacrifice)
+  "The matrix is almost complete. You're too late to matter!": '매트릭스가 거의 완성됐어. 넌 너무 늦어서 아무 소용 없어!',
+  "Commander Ryeo gave the order. The trio's power will wake Hwanwoong — and the south will kneel.":
+    '사령관 려가 명령을 내렸어. 세 정령의 힘이 환웅을 깨울 거야 — 그리고 남부는 무릎 꿇겠지.',
+  "Keep moving. I'll patch your Pokémon between their patrols. You'll need every one of them at full strength up top.":
+    '계속 움직여. 놈들 순찰 사이사이에 네 포켓몬을 회복시켜 줄게. 위에선 전부 최상의 상태여야 할 거야.',
+  "I ran the numbers on 노스단's matrix. They didn't. The trio's siphoned energy isn't stabilizing anything — it's CONCENTRATING heat into the magma chamber beneath this peak.":
+    '내가 노스단의 매트릭스를 계산해 봤어. 놈들은 안 했지. 세 정령에게서 빨아들인 에너지는 아무것도 안정시키지 못해 — 이 봉우리 아래 마그마 방으로 열을 응집시키고 있어.',
+  "If that machine runs to completion, it won't just wake Hwanwoong. It will trigger an eruption that takes the entire northern range with it.":
+    '그 기계가 완성되면 환웅만 깨우는 게 아니야. 북방 산맥 전체를 삼키는 분화를 일으킬 거야.',
+  "I spent thirty years chasing a way to heal this region. I won't let my work be the thing that ends it. You carry the seventh tablet — and 나비할망. Stop them. Please.":
+    '난 삼십 년을 이 지방을 치유할 방법을 좇았어. 내 일이 이 지방을 끝장내는 게 되게 놔둘 순 없어. 넌 일곱 번째 석판과 나비할망을 지녔지. 놈들을 막아줘. 부탁이야.',
+  "I've got your team — go!": '네 팀은 내가 맡을게 — 가!',
+  'Executive Mubaek: Commander Ryeo retreated. I did not. The matrix completes in minutes, and you will not reach the altar before it does.':
+    '간부 무백: 사령관 려는 물러났지만, 나는 아니야. 매트릭스는 몇 분이면 완성돼. 넌 그 전에 제단에 못 닿아.',
+  "I didn't take the title of Magistrate just for show. Go! I'll break their line — you fix the sky!":
+    '내가 괜히 관찰사 직함을 받은 게 아니야. 가! 놈들 방어선은 내가 뚫을 테니 — 넌 하늘을 되돌려!',
+  // Forest City
+  'Your Pokédex chirps — Professor Song checking in.': '도감이 삑 울린다 — 송 박사의 연락이다.',
+  'The Ancient Keeper Badge is yours — well done. The road climbs north from Forest City, up Route 6 to Dolmoe City. Keep pressing on.':
+    '고대 수호자 배지를 얻었구나 — 잘했어. 숲 시티에서 북쪽으로 6번 도로를 따라 돌뫼 시티까지 길이 오른단다. 계속 나아가.',
+  'The trees whisper of black-coated strangers heading for the eastern coast.':
+    '나무들이 동쪽 해안으로 향하는 검은 코트의 낯선 자들에 대해 속삭여.',
+  'Keeper Noksaek guards the Living Temple. Earn his seal, and he may share what the roots remember.':
+    '수호자 녹색이 생명 신전을 지키지. 그의 인장을 얻으면, 뿌리가 기억하는 것을 나눠줄지도 몰라.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
