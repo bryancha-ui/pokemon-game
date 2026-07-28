@@ -45,6 +45,8 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Night-crew Worker': '야간 작업자', 'Foghorn Keeper': '무적 지기', 'Rail Porter': '철도 짐꾼',
   'Border Guard': '국경 경비병', 'Fur Trader': '모피 상인', 'Ice Fisher': '얼음 낚시꾼',
   'Larch Cutter': '낙엽송 벌목꾼', 'Aurora Watcher': '오로라 관측자', '노스단 Lookout': '노스단 감시병',
+  // Scholars' Road (victory road)
+  'Hyeonu': '현우', 'Dawon': '다원', 'Munseok': '문석', 'Badge Scanner': '배지 스캐너',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -438,6 +440,23 @@ export const KO_STRINGS: Record<string, string> = {
     '맑은 밤이면 세 호수 위로 하늘이 초록과 보라로 타올라. 한반도 어디에도 그런 광경은 없지.',
   "The 노스단 산책로 runs east off the plateau, up to our 아지트. Don't take that path unless you mean to climb.":
     '노스단 산책로는 고원 동쪽으로, 우리 아지트까지 이어져. 오를 각오가 아니면 그 길로 들어서지 마.',
+
+  // ── Gym badge names (Scholars' Road gate + menu badge screen) ──
+  'Shadow Court Badge (Capitol)': '섀도우 코트 배지 (수도)',
+  'Summit Dojo Badge (Baekdu)': '정상 도장 배지 (백두)',
+  'Lantern Stage Badge (Geumgang)': '등불 무대 배지 (금강)',
+  'Tidal Arena Badge (Haean)': '조류 경기장 배지 (해안)',
+  'Ancient Keeper Badge (Forest)': '고대 수호자 배지 (숲)',
+  'Bedrock Badge (Dolmoe)': '암반 배지 (돌뫼)',
+  'Frostbell Badge (Seorae)': '서리종 배지 (서래)',
+  'Stormwatcher Badge (Sunrise)': '폭풍지기 배지 (일출)',
+
+  // ── Scholars' Road trainers ──
+  'Scholar-Trainer Hyeonu': '학자 트레이너 현우',
+  'Ace Trainer Dawon': '에이스 트레이너 다원',
+  'The road tests the prepared. Recite your answer in battle.': '이 길은 준비된 자를 시험한다. 네 답을 배틀로 읊어라.',
+  'Forty years a trainer. The League gate is just over my shoulder — earn your way past me.':
+    '트레이너 생활 사십 년. 리그 관문이 바로 내 어깨 너머에 있다 — 날 지나갈 자격을 얻어라.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
