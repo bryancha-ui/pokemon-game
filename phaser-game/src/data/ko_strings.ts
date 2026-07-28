@@ -51,6 +51,12 @@ export const KO_SPEAKERS: Record<string, string> = {
   '어사대장 Salmu': '어사대장 살무', '어사대장 Gapcheol': '어사대장 갑철',
   '노스단 Grunt': '노스단 조무래기', '노스단 Admin': '노스단 간부',
   'Chaeyeon': '채연', 'Executive Mubaek': '간부 무백', 'Forest Elder': '숲 어르신',
+  // Dolmoe / Seorae (side cities + gyms)
+  'Stonemason': '석공', 'Potter': '옹기장이', 'Child': '아이',
+  'Bawoo': '바우', 'Doran': '도란', 'Sandol': '산돌',
+  'Skater': '스케이터', 'Sculptor': '조각가', 'Innkeeper': '여관 주인', 'Vendor': '노점상',
+  'Tourist': '관광객', 'Coach': '코치', 'Youth': '청년',
+  'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -606,6 +612,44 @@ export const KO_STRINGS: Record<string, string> = {
   'Photographer Seulgi': '사진사 슬기',
   'Bug Catcher Beomseok': '벌레잡이 소년 범석',
   'Dragon Tamer Yunho': '드래곤 조련사 윤호',
+
+  // ── Dolmoe City + Gym ──
+  'Every dolmen in this valley was raised by hand. My grandfather cut those capstones himself.':
+    '이 골짜기의 모든 고인돌은 손으로 세운 거야. 저 덮개돌은 우리 할아버지가 직접 깎으셨지.',
+  '옹기 jars breathe, you know. Ferment anything in them and it keeps through the hardest winter.':
+    '옹기 항아리는 숨을 쉰단다. 뭐든 그 안에 발효시키면 가장 혹독한 겨울도 버티지.',
+  "The Stonemason's Quarry gym lies to the west; the road north climbs into snow toward Seorae. Heal at the Center first if you like.":
+    '석공 채석장 체육관은 서쪽에 있고, 북쪽 길은 눈을 헤치며 서래로 오른다. 원한다면 먼저 센터에서 회복해라.',
+  '↑ Dolmoe Mine (→ Seorae)': '↑ 돌뫼 광산 (→ 서래)',
+  'Mind the rockslides — one wrong push and the quarry pushes back!': '낙석을 조심해 — 잘못 밀면 채석장이 되받아쳐!',
+  'Stone and steel, stone and fist. Break one, the next still stands.': '돌과 강철, 돌과 주먹. 하나를 부숴도 다음이 버티고 서 있지.',
+  "The road climbs on to Seorae, and the snow. Carry your load steady. Leave through the south door when you're ready.":
+    '길은 서래로, 눈 속으로 이어져. 짐을 흔들림 없이 짊어져. 준비되면 남쪽 문으로 나가라.',
+  "You descend onto the quarry floor of the Stonemason's Quarry (석공 채석장)!": '석공 채석장 바닥으로 내려선다!',
+  'Hewn granite tiers, dolmen slabs, and rock-cut carvings loom overhead.':
+    '깎아낸 화강암 층계, 고인돌 판석, 암각 조각이 머리 위로 우뚝 솟아 있다.',
+  'Defeat the two Gym Trainers, then face Leader Sandol — The Bedrock.': '두 체육관 트레이너를 물리치고, 암반 관장 산돌과 맞서라.',
+
+  // ── Seorae Town + Gym ──
+  'The Skate Link is the fastest way east. Keep your balance when the wind picks up!':
+    '스케이트 링크가 동쪽으로 가는 가장 빠른 길이야. 바람이 세지면 균형을 잘 잡아!',
+  'Snow remembers every chisel stroke—until the spring asks it to become water again.':
+    '눈은 끌질 하나하나를 기억해 — 봄이 다시 물이 되라고 청할 때까지.',
+  'The hot spring is open to every traveler. Steam is Seorae’s warmest welcome.':
+    '온천은 모든 여행자에게 열려 있어요. 김은 서래의 가장 따뜻한 환영이죠.',
+  'These frost-berry skewers stay cold all day. Perfect for a hike!': '이 서리열매 꼬치는 하루 종일 시원해요. 등산에 딱이죠!',
+  'The old pine grove shelters more than people realize. Listen closely in the snow.':
+    '오래된 소나무 숲은 사람들 생각보다 많은 걸 품고 있어. 눈 속에서 귀 기울여 봐.',
+  'What a beautiful resort town! I could stay here all winter.': '정말 아름다운 휴양 도시야! 겨우내 여기 머물 수 있겠어.',
+  'The mountain trains champions. Come back strong after your climb.': '산은 챔피언을 단련하지. 등반을 마치고 강해져서 돌아와.',
+  'The snow sculptures here are incredible!': '여기 눈 조각들 정말 대단해!',
+  'Ring the wrong bell, and the winter answers. Let it answer for you!': '엉뚱한 종을 울리면 겨울이 응답하지. 그 응답을 네가 받아봐!',
+  'The frost-bells chose me to slow you. Do not take that lightly.': '서리종이 널 늦추라고 날 골랐어. 가볍게 여기지 마.',
+  "Above Seorae the road drops to Sunrise City, and the first light of Hanbando. Leave by the south door when you're ready.":
+    '서래 위로 길은 일출 시티, 한반도의 첫 빛으로 내려가. 준비되면 남쪽 문으로 나가.',
+  '📟 Your Pokédex buzzes — Professor Song, urgent.': '📟 도감이 울린다 — 송 박사, 긴급.',
+  'A sheet of blue ice, frost-bells hung in rows, hot-spring steam curling at the eaves.':
+    '푸른 얼음판, 줄지어 걸린 서리종, 처마 끝에 감기는 온천의 김.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
