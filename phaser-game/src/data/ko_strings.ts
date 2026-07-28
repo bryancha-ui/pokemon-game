@@ -397,6 +397,48 @@ export const KO_STRINGS: Record<string, string> = {
   'That is the coldest kind of courage. The gate is yours to earn. Begin.':
     '그것이야말로 가장 차가운 용기다. 관문을 얻을 자격이 있다. 시작.',
 
+  // ── 어사대 city + landmark labels ──
+  'Nampo (남포)': '남포', 'Wonsan (원산)': '원산', 'Hamhung (함흥)': '함흥',
+  'Chongjin (청진)': '청진', 'Sinuiju (신의주)': '신의주', 'Samjiyon (삼지연)': '삼지연',
+  '🗼 Nampo Lighthouse (등대)': '🗼 남포 등대', '⚓ Harbour Warehouse (부두)': '⚓ 부두 창고',
+  '🗼 Kalma Lighthouse (등대)': '🗼 칼마 등대', '🐟 Wonsan Seafood Market (수산시장)': '🐟 원산 수산시장',
+  'Nampo Beach': '남포 해변', 'Kalma Beach': '칼마 해변', 'Fogbound Manor': '안개저택',
+  '노스단 산책로 (Nosdan Path)': '노스단 산책로',
+
+  // ── Chongjin NPCs (fog port) ──
+  "Fifty years I've sailed off this coast.": '이 해안에서 오십 년을 항해했지.',
+  'The sea gives, and the sea takes. Lately... it only takes.': '바다는 주고, 바다는 앗아가지. 요즘은... 앗아가기만 해.',
+  'This town gets into your bones, stranger.': '이 마을은 뼛속까지 스며든다네, 나그네.',
+  "Two boats lost this month, right at the pier's edge.": '이번 달에 배 두 척을 잃었어, 바로 부두 끝에서.',
+  "The Chief says it's no accident. ...After what I've seen, I believe him.":
+    '대장님은 사고가 아니라고 해. ...내가 본 걸 생각하면, 그 말이 맞아.',
+  'I sound the horn every hour, on the hour.': '매시 정각마다 무적을 울리지.',
+  'Some nights... I swear something out in the fog answers back.': '어떤 밤엔... 안개 속에서 뭔가가 대답하는 것 같아.',
+  'Everyone says a GHOST lives there! ...I dare you to go in. Heehee!': '다들 거기 유령이 산대! ...들어가 볼 테면 봐. 히히!',
+  "Whose cargo? ...Best not to ask that too loudly. Not in Chongjin.": '누구의 화물이냐고? ...그건 너무 크게 묻지 않는 게 좋아. 여기 청진에선.',
+
+  // ── Sinuiju NPCs (frozen border) ──
+  'Still... from this overlook I can feel it out there, past the frozen Amrok. A whole continent, waiting to be walked.':
+    '그래도... 이 전망대에서 얼어붙은 압록강 너머로 그게 느껴져. 걸어볼 날을 기다리는 대륙 전체가.',
+  "Mind the platform, Champion. These rails haven't felt a train in years, but we sweep them every morning all the same.":
+    '승강장을 조심해요, 챔피언. 이 철로엔 몇 년째 기차가 안 다녔지만, 그래도 매일 아침 쓸어낸답니다.',
+  'Old-timers say when the line to the 미지의 대륙 reopens, the whole plaza will fill with travellers again.':
+    '노인들은 미지의 대륙으로 가는 노선이 다시 열리면 광장이 다시 여행자들로 가득 찰 거라고 해.',
+  'The far bank is another country. The bridge broke years ago — now only the ice connects us, and only in winter.':
+    '건너편 강기슭은 다른 나라야. 다리는 몇 년 전에 끊겼고 — 이제 오직 얼음만이, 그것도 겨울에만 우릴 잇지.',
+  'Sable, ermine, jade from across the river — the Trading Post has it all. If you can pay.':
+    '검은담비, 흰담비, 강 건너 옥까지 — 교역소엔 다 있어. 값을 치를 수 있다면.',
+  'Since you drove that Beartic off, the ice holds firm again. My whole village fishes it once more.':
+    '네가 그 툰베어를 몰아낸 뒤로 얼음이 다시 단단해졌어. 우리 마을 전체가 다시 얼음낚시를 한다네.',
+
+  // ── Samjiyon NPCs (highland plateau) ──
+  "The larch forests run right up to Baekdu's foot. Good timber — if the blizzards let you fell it.":
+    '낙엽송 숲이 백두산 발치까지 이어져. 좋은 목재지 — 눈보라가 베게 놔둔다면.',
+  "On clear nights the sky burns green and violet over the three lakes. There's no sight like it in all Hanbando.":
+    '맑은 밤이면 세 호수 위로 하늘이 초록과 보라로 타올라. 한반도 어디에도 그런 광경은 없지.',
+  "The 노스단 산책로 runs east off the plateau, up to our 아지트. Don't take that path unless you mean to climb.":
+    '노스단 산책로는 고원 동쪽으로, 우리 아지트까지 이어져. 오를 각오가 아니면 그 길로 들어서지 마.',
+
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
   'SPACE to advance': 'SPACE: 넘기기',
