@@ -221,6 +221,10 @@ export class WorldMapScene extends Phaser.Scene {
   /** Authoritative building footprints (+ their 3D model id) for the 3D engine:
    *  the overworld mirror places the named GLB on each exact plot. */
   buildingPlots!: { x: number; y: number; w: number; h: number; model: string }[];
+  /** Only the named landmark buildings rise in 3D (no generic filler boxes). */
+  onlyNamedBuildings = true;
+  /** Vehicles pinned to an exact tile for the 3D engine (the Kaesong bus). */
+  vehiclePlots!: { x: number; y: number; model: string; rot?: number }[];
   private mapGraphics!: Phaser.GameObjects.Graphics;
   private enterPrompt!: Phaser.GameObjects.Text;
   private shoesText!: Phaser.GameObjects.Text;
@@ -273,6 +277,14 @@ export class WorldMapScene extends Phaser.Scene {
     // to the 3D engine so each gets its own distinct GLB on its exact footprint,
     // instead of blurring together as generic extruded boxes.
     this.buildingPlots = BUILDINGS.map(b => ({ x: b.col, y: b.row, w: b.w, h: b.h, model: b.id }));
+    // Only those named landmarks should rise in 3D — the filler residential
+    // blocks looked like stray red-brick boxes, so drop them from the 3D view.
+    this.onlyNamedBuildings = true;
+    // Pin the express bus GLB to its stop (the coach that heads to Kaesong),
+    // once it's unlocked, instead of scattering buses on random roads.
+    this.vehiclePlots = this.busUnlocked()
+      ? [{ x: this.BUS_COL, y: this.BUS_ROW, model: 'bus', rot: Math.PI / 2 }]
+      : [];
 
     // Safety: if spawn lands inside a solid tile, nudge south to the next road
     const spawnRow = Math.floor(this.py / TILE);

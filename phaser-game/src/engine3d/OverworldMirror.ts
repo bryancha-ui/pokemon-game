@@ -193,12 +193,16 @@ export class OverworldMirror {
   private buildTerrainPass(): TerrainResult {
     // Scenes with an authoritative building table (gyms, landmarks) publish it
     // as `buildingPlots` — those become 3D volumes without any detection.
-    const known = (this.scene as unknown as {
+    const sc = this.scene as unknown as {
       buildingPlots?: { x: number; y: number; w: number; h: number; model?: string }[];
-    }).buildingPlots ?? [];
+      onlyNamedBuildings?: boolean;
+      vehiclePlots?: { x: number; y: number; model: string; rot?: number }[];
+    };
+    const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
+      sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;

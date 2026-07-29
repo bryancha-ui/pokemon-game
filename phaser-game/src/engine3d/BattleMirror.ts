@@ -242,6 +242,13 @@ export class BattleMirror {
     }
     if (dw < 70 || dh < 70) return;                     // icons stay 2D
 
+    // Only creatures that have a real generated 3D model become 3D. Everything
+    // else — notably PokeAPI sprites, whose relief extrusion stretched like an
+    // accordion — stays as its flat 2D sprite drawn over the 3D arena (we leave
+    // it on the main camera instead of adopting/ignoring it). The manifest is
+    // primed at game boot, so it's reliably loaded by the time a battle runs.
+    if (!hasModel(im.texture.key)) return;
+
     const src = this.frameCanvas(im);
     if (!src) return;
     const relief = buildRelief(`img:${im.texture.key}:${im.frame?.name ?? 0}`, src);

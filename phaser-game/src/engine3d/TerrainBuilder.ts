@@ -196,6 +196,14 @@ export function buildTerrain(
   tileMap: number[][] | null = null,
   knownPlots: { x: number; y: number; w: number; h: number; model?: string }[] = [],
   sceneKey = '',
+  // When set, only footprints the scene explicitly named (knownPlots with a
+  // `model`) are built as 3D volumes — every other detected building is left as
+  // clean ground (its flat 2D art still gets erased). Declutters towns whose
+  // generic residential blocks looked like stray brick boxes in 3D.
+  onlyNamedBuildings = false,
+  // Vehicles the scene pins to an exact tile (e.g. the express bus at its stop),
+  // placed with a specific model instead of the random road scatter.
+  placedVehicles: { x: number; y: number; model: string; rot?: number }[] = [],
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -668,6 +676,9 @@ export function buildTerrain(
       blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
       continue;
     }
+    // Scene wants only its named landmarks in 3D — the footprint's flat art was
+    // already erased above, so skipping it leaves clean ground, not a brick box.
+    if (onlyNamedBuildings) continue;
     const bg = new THREE.Group();
     bg.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
     group.add(bg);
@@ -678,7 +689,18 @@ export function buildTerrain(
   // ── Vehicles parked along the roads (generated models only) ────────────────
   let lastT = -1;                       // for real-time deltas in update()
   const pendingVehicles: { group: THREE.Group; def: import('./PropModels').PropDef; scale: number; rot: number }[] = [];
-  if (!interior && hasProps('vehicle')) {
+  if (!interior && placedVehicles.length) {
+    // The scene pins its vehicles (e.g. the Kaesong express bus at its stop) —
+    // place those exact models and skip the random road scatter entirely.
+    for (const v of placedVehicles) {
+      const def = propById(v.model);
+      if (!def) continue;
+      const holder = new THREE.Group();
+      holder.position.set(v.x + 0.5, 0, v.y + 0.5);
+      group.add(holder);
+      pendingVehicles.push({ group: holder, def, scale: 1.3, rot: v.rot ?? 0 });
+    }
+  } else if (!interior && hasProps('vehicle')) {
     const vehicleDefs = propsFor('vehicle');
     // A road cell is grey/flat with a long horizontal or vertical run — pick a
     // few well-spaced spots on wide roads so buses sit sensibly on the asphalt.
