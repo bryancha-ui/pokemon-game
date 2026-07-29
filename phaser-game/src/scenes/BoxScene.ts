@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { TYPE_COLORS } from '../data/StarterData';
+import { t } from '../systems/i18n';
 
 /**
  * PC storage box. Left column = party (max 6), right grid = box.
@@ -28,14 +29,14 @@ export class BoxScene extends Phaser.Scene {
     this.cameras.main.fadeIn(150);
     this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x060a14, 0.98);
 
-    this.add.text(this.W / 2, 34, '💻  POKÉMON STORAGE — PC', {
+    this.add.text(this.W / 2, 34, t('💻  POKÉMON STORAGE — PC', '💻  포켓몬 보관 — PC'), {
       fontSize: '22px', color: '#88bbff', fontStyle: 'bold', stroke: '#112244', strokeThickness: 4,
     }).setOrigin(0.5);
-    this.add.text(this.W - 30, 34, '✕ CLOSE', { fontSize: '14px', color: '#aaa' })
+    this.add.text(this.W - 30, 34, t('✕ CLOSE', '✕ 닫기'), { fontSize: '14px', color: '#aaa' })
       .setOrigin(1, 0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.close());
 
-    this.add.text(40, 80, 'PARTY', { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
-    this.add.text(360, 80, 'BOX', { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
+    this.add.text(40, 80, t('PARTY', '동료'), { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
+    this.add.text(360, 80, t('BOX', '보관함'), { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
 
     this.info = this.add.text(this.W / 2, this.H - 50, 'Click a PARTY Pokémon, then a BOX Pokémon to swap them.', {
       fontSize: '13px', color: '#aaccee',
@@ -87,15 +88,15 @@ export class BoxScene extends Phaser.Scene {
       this.makeSlot(e, 360 + col * 300, 104 + row * 64, 280, i === this.selectedBox, 'box', i);
     });
     if (box.length === 0) {
-      this.content.add(this.add.text(500, 250, 'Box is empty.', { fontSize: '14px', color: '#556' }));
+      this.content.add(this.add.text(500, 250, t('Box is empty.', '보관함이 비어 있어요.'), { fontSize: '14px', color: '#556' }));
     }
 
     // Page controls (only when there's more than one page)
     if (pages > 1) {
       const py = 104 + perCol * 64 - 2;   // just below the grid
-      const prev = this.add.text(390, py, '◀ Prev', { fontSize: '14px', color: this.boxPage > 0 ? '#aaccee' : '#445', backgroundColor: '#142033', padding: { x: 8, y: 4 } })
+      const prev = this.add.text(390, py, t('◀ Prev', '◀ 이전'), { fontSize: '14px', color: this.boxPage > 0 ? '#aaccee' : '#445', backgroundColor: '#142033', padding: { x: 8, y: 4 } })
         .setOrigin(0, 0.5);
-      const next = this.add.text(910, py, 'Next ▶', { fontSize: '14px', color: this.boxPage < pages - 1 ? '#aaccee' : '#445', backgroundColor: '#142033', padding: { x: 8, y: 4 } })
+      const next = this.add.text(910, py, t('Next ▶', '다음 ▶'), { fontSize: '14px', color: this.boxPage < pages - 1 ? '#aaccee' : '#445', backgroundColor: '#142033', padding: { x: 8, y: 4 } })
         .setOrigin(1, 0.5);
       if (this.boxPage > 0)         prev.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(-1));
       if (this.boxPage < pages - 1) next.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(1));
@@ -107,20 +108,20 @@ export class BoxScene extends Phaser.Scene {
 
     // Action buttons
     if (this.selectedParty >= 0 && this.selectedBox >= 0) {
-      this.actionButton('⇄ SWAP', this.W / 2, this.H - 86, () => {
+      this.actionButton(t('⇄ SWAP', '⇄ 교체'), this.W / 2, this.H - 86, () => {
         PartySystem.swapWithBox(this.registry, this.selectedParty, this.selectedBox);
-        this.info.setText('Swapped!'); this.selectedParty = this.selectedBox = -1; this.render();
+        this.info.setText(t('Swapped!', '교체했다!')); this.selectedParty = this.selectedBox = -1; this.render();
       });
     } else if (this.selectedParty >= 0) {
-      this.actionButton('→ MOVE TO BOX', this.W / 2, this.H - 86, () => {
-        if (PartySystem.partyToBox(this.registry, this.selectedParty)) { this.info.setText('Moved to box.'); }
-        else this.info.setText('You must keep at least one Pokémon!');
+      this.actionButton(t('→ MOVE TO BOX', '→ 보관함으로'), this.W / 2, this.H - 86, () => {
+        if (PartySystem.partyToBox(this.registry, this.selectedParty)) { this.info.setText(t('Moved to box.', '보관함으로 옮겼다.')); }
+        else this.info.setText(t('You must keep at least one Pokémon!', '최소 한 마리는 데리고 있어야 해!'));
         this.selectedParty = -1; this.render();
       });
     } else if (this.selectedBox >= 0) {
-      this.actionButton('← MOVE TO PARTY', this.W / 2, this.H - 86, () => {
-        if (PartySystem.boxToParty(this.registry, this.selectedBox)) { this.info.setText('Moved to party.'); }
-        else this.info.setText('Your party is full (6).');
+      this.actionButton(t('← MOVE TO PARTY', '← 동료로'), this.W / 2, this.H - 86, () => {
+        if (PartySystem.boxToParty(this.registry, this.selectedBox)) { this.info.setText(t('Moved to party.', '동료로 옮겼다.')); }
+        else this.info.setText(t('Your party is full (6).', '동료가 가득 찼어 (6).'));
         this.selectedBox = -1; this.render();
       });
     }
@@ -148,7 +149,7 @@ export class BoxScene extends Phaser.Scene {
 
   private emptySlot(x: number, y: number, w: number) {
     this.content.add(this.add.rectangle(x + w / 2, y, w, 56, 0x0c0f18).setStrokeStyle(1, 0x1a2030));
-    this.content.add(this.add.text(x + w / 2, y, '— empty —', { fontSize: '12px', color: '#334' }).setOrigin(0.5));
+    this.content.add(this.add.text(x + w / 2, y, t('— empty —', '— 비어 있음 —'), { fontSize: '12px', color: '#334' }).setOrigin(0.5));
   }
 
   private actionButton(label: string, x: number, y: number, cb: () => void) {

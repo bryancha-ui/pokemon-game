@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { POKEDEX, POKEDEX_COUNT, DexEntry } from '../data/Pokedex';
 import { DexTracker } from '../systems/DexTracker';
 import { TYPE_COLORS } from '../data/StarterData';
+import { t, pokeName, typeName } from '../systems/i18n';
 
 const PER_PAGE = 12;     // 3 columns × 4 rows
 const COLS = 3;
@@ -33,16 +34,16 @@ export class PokedexScene extends Phaser.Scene {
     // Header
     const seen = DexTracker.seenCount(this.registry);
     const caught = DexTracker.caughtCount(this.registry);
-    this.add.text(this.W / 2, 34, '📖  HANBANDO POKÉDEX', {
+    this.add.text(this.W / 2, 34, t('📖  HANBANDO POKÉDEX', '📖  한반도 도감'), {
       fontSize: '24px', color: '#ffe44e', fontStyle: 'bold',
       stroke: '#221133', strokeThickness: 4,
     }).setOrigin(0.5);
-    this.add.text(this.W / 2, 64, `Seen ${seen}    ·    Caught ${caught}    ·    Total ${POKEDEX_COUNT}`, {
+    this.add.text(this.W / 2, 64, t(`Seen ${seen}    ·    Caught ${caught}    ·    Total ${POKEDEX_COUNT}`, `발견 ${seen}    ·    잡음 ${caught}    ·    전체 ${POKEDEX_COUNT}`), {
       fontSize: '14px', color: '#aaccff',
     }).setOrigin(0.5);
 
     // Close button
-    this.add.text(this.W - 24, 30, '✕ CLOSE', {
+    this.add.text(this.W - 24, 30, t('✕ CLOSE', '✕ 닫기'), {
       fontSize: '14px', color: '#aaaaaa',
     }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.close())
@@ -50,13 +51,13 @@ export class PokedexScene extends Phaser.Scene {
       .on('pointerout', function (this: Phaser.GameObjects.Text) { this.setColor('#aaa'); });
 
     // Page controls
-    this.add.text(40, this.H - 36, '◀ PREV', { fontSize: '16px', color: '#fff' })
+    this.add.text(40, this.H - 36, t('◀ PREV', '◀ 이전'), { fontSize: '16px', color: '#fff' })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(-1));
-    this.add.text(this.W - 40, this.H - 36, 'NEXT ▶', { fontSize: '16px', color: '#fff' })
+    this.add.text(this.W - 40, this.H - 36, t('NEXT ▶', '다음 ▶'), { fontSize: '16px', color: '#fff' })
       .setOrigin(1, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(1));
     this.pageText = this.add.text(this.W / 2, this.H - 30, '', { fontSize: '13px', color: '#99aacc' }).setOrigin(0.5);
 
-    this.add.text(this.W / 2, this.H - 12, '← → page   ·   click an entry for details   ·   ESC to close', {
+    this.add.text(this.W / 2, this.H - 12, t('← → page   ·   click an entry for details   ·   ESC to close', '← → 페이지   ·   항목을 클릭하면 상세정보   ·   ESC로 닫기'), {
       fontSize: '11px', color: '#667799',
     }).setOrigin(0.5);
 
@@ -91,7 +92,7 @@ export class PokedexScene extends Phaser.Scene {
   private renderPage() {
     this.listContainer.removeAll(true);
     const maxPage = Math.ceil(POKEDEX_COUNT / PER_PAGE) - 1;
-    this.pageText.setText(`Page ${this.page + 1} / ${maxPage + 1}`);
+    this.pageText.setText(t(`Page ${this.page + 1} / ${maxPage + 1}`, `페이지 ${this.page + 1} / ${maxPage + 1}`));
 
     const start = this.page * PER_PAGE;
     const slice = POKEDEX.slice(start, start + PER_PAGE);
@@ -134,18 +135,18 @@ export class PokedexScene extends Phaser.Scene {
     // Name + types (only if seen)
     const nameX = x - w / 2 + 86;
     if (seen) {
-      this.listContainer.add(this.add.text(nameX, y - 22, entry.name, {
+      this.listContainer.add(this.add.text(nameX, y - 22, pokeName(entry.key, entry.name), {
         fontSize: '16px', color: caught ? '#ffffff' : '#bbbbcc', fontStyle: 'bold',
       }));
       const types = [entry.type1, entry.type2].filter(Boolean) as string[];
       types.forEach((t, ti) => {
         const tx = nameX + ti * 64;
         this.listContainer.add(this.add.rectangle(tx + 26, y + 4, 56, 16, TYPE_COLORS[t] ?? 0x666, 1));
-        this.listContainer.add(this.add.text(tx + 26, y + 4, t.toUpperCase(),
+        this.listContainer.add(this.add.text(tx + 26, y + 4, typeName(t).toUpperCase(),
           { fontSize: '9px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
       });
       if (entry.legendary) {
-        this.listContainer.add(this.add.text(nameX, y + 22, '★ Legendary', { fontSize: '10px', color: '#ffcc44' }));
+        this.listContainer.add(this.add.text(nameX, y + 22, t('★ Legendary', '★ 전설'), { fontSize: '10px', color: '#ffcc44' }));
       }
     } else {
       this.listContainer.add(this.add.text(nameX, y - 8, '??????', {
@@ -191,10 +192,10 @@ export class PokedexScene extends Phaser.Scene {
     c.add(panel);
 
     const cx = this.W / 2, cy = this.H / 2;
-    c.add(this.add.text(cx - 340, cy - 200, `No.${String(entry.num).padStart(3, '0')}  ${entry.name}`, {
+    c.add(this.add.text(cx - 340, cy - 200, `No.${String(entry.num).padStart(3, '0')}  ${pokeName(entry.key, entry.name)}`, {
       fontSize: '22px', color: '#ffe44e', fontStyle: 'bold',
     }));
-    if (caught) c.add(this.add.text(cx + 320, cy - 196, '🔴 Caught', { fontSize: '13px', color: '#aaffaa' }).setOrigin(1, 0));
+    if (caught) c.add(this.add.text(cx + 320, cy - 196, t('🔴 Caught', '🔴 잡음'), { fontSize: '13px', color: '#aaffaa' }).setOrigin(1, 0));
 
     // Sprite (left)
     this.loadAndPlaceSpriteBig(entry, cx - 230, cy - 10, caught, c);
@@ -205,22 +206,22 @@ export class PokedexScene extends Phaser.Scene {
     types.forEach((t, ti) => {
       const tx = ix + ti * 76;
       c.add(this.add.rectangle(tx + 32, cy - 150, 68, 20, TYPE_COLORS[t] ?? 0x666, 1));
-      c.add(this.add.text(tx + 32, cy - 150, t.toUpperCase(), { fontSize: '11px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+      c.add(this.add.text(tx + 32, cy - 150, typeName(t).toUpperCase(), { fontSize: '11px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
     });
-    if (entry.ability) c.add(this.add.text(ix, cy - 118, `Ability: ${entry.ability}`, { fontSize: '14px', color: '#aaccff' }));
-    c.add(this.add.text(ix, cy - 92, `Found: ${entry.dist} — ${entry.where}`, { fontSize: '13px', color: '#cccccc', wordWrap: { width: 360 } }));
+    if (entry.ability) c.add(this.add.text(ix, cy - 118, t(`Ability: ${entry.ability}`, `특성: ${entry.ability}`), { fontSize: '14px', color: '#aaccff' }));
+    c.add(this.add.text(ix, cy - 92, t(`Found: ${entry.dist} — ${entry.where}`, `서식지: ${entry.dist} — ${entry.where}`), { fontSize: '13px', color: '#cccccc', wordWrap: { width: 360 } }));
     if (entry.evolvesTo) {
       const to = POKEDEX.find(e => e.key === entry.evolvesTo);
-      c.add(this.add.text(ix, cy - 50, `Evolves into ${to?.name ?? '???'} at Lv. ${entry.evolvesAtLevel}`, {
+      c.add(this.add.text(ix, cy - 50, t(`Evolves into ${to?.name ?? '???'} at Lv. ${entry.evolvesAtLevel}`, `Lv. ${entry.evolvesAtLevel}에 ${to ? pokeName(to.key, to.name) : '???'}(으)로 진화`), {
         fontSize: '13px', color: '#ffcc88',
       }));
     }
     c.add(this.add.text(ix, cy - 16, entry.dexText, {
       fontSize: '14px', color: '#e8e8f0', wordWrap: { width: 380 }, lineSpacing: 5,
     }));
-    if (entry.legendary) c.add(this.add.text(ix, cy + 120, '★ Legendary Pokémon', { fontSize: '14px', color: '#ffcc44', fontStyle: 'bold' }));
+    if (entry.legendary) c.add(this.add.text(ix, cy + 120, t('★ Legendary Pokémon', '★ 전설의 포켓몬'), { fontSize: '14px', color: '#ffcc44', fontStyle: 'bold' }));
 
-    c.add(this.add.text(cx, cy + 198, '[ ESC / click to go back ]', { fontSize: '12px', color: '#8899bb' }).setOrigin(0.5));
+    c.add(this.add.text(cx, cy + 198, t('[ ESC / click to go back ]', '[ ESC / 클릭하면 뒤로 ]'), { fontSize: '12px', color: '#8899bb' }).setOrigin(0.5));
     panel.setInteractive().on('pointerdown', () => this.closeDetail());
     this.detailContainer = c;
   }
