@@ -61,6 +61,10 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Royal Warden': '왕실 관리인',
   // Hanbando League Elite Four + champion
   'Gyeoul': '겨울', 'Hwageum': '화금', 'Saleum': '살음', 'Hwangeum': '황금',
+  // Misc trainers (defeat lines)
+  'Bug Catcher': '벌레잡이 소년', 'Hiker': '등산가', 'Youngster': '꼬마', 'Team Suri': '수리단',
+  'Watchtower Sentry': '망루 감시병', 'Seollan': '설란', '노스단 Soldier': '노스단 병사',
+  '노스단 Sovereign-Claimant': '노스단 군주 참칭자',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -828,6 +832,67 @@ export const KO_STRINGS: Record<string, string> = {
   'Phase 2: Northern League — UNLOCKED': '2막: 북방 리그 — 해금',
   'Post-game unlocked: rechallenge the Rival in the Shadow Court, rematch Champion Hwangeum, explore the postgame world, and track the freed trio — 풍백, 우사, 운사 — at their mountain shrines.':
     '포스트게임 해금: 섀도우 코트에서 라이벌 재도전, 챔피언 황금 재대결, 포스트게임 세계 탐험, 그리고 풀려난 세 정령 — 풍백, 우사, 운사 — 을 산속 사당에서 추적하기.',
+
+  // ══ Trainer battle: flow + defeat lines ══
+  'Loading…': '불러오는 중…',
+  'Choose an item!': '아이템을 선택해!',
+  "Can't run from a trainer!": '트레이너에게서는 도망칠 수 없어!',
+  // Defeat lines (spoken text; speaker auto-translated)
+  'Whoa! Your Pokémon is so strong!': '우와! 네 포켓몬 진짜 세다!',
+  "You've got real mountain spirit, kid.": '너 진짜 산사나이 기질이 있구나, 꼬마.',
+  'No way! I just polished my sneakers…': '말도 안 돼! 방금 운동화도 닦았는데…',
+  "...You're stronger than the locals. The Director will hear of this.": '...현지인들보다 세군. 국장님께 보고하겠어.',
+  "...The Spirit of Cheonji will be awakened. The only question is who controls what happens next — and it will NOT be Team Suri.":
+    '...천지의 정령은 깨어날 거야. 문제는 그다음을 누가 통제하느냐지 — 그건 수리단이 아니야.',
+  "...This changes nothing. The array will be ready when the Spirit wakes. (She withdraws south.)":
+    '...이걸로 달라지는 건 없어. 정령이 깨어날 때 장치는 준비돼 있을 거야. (그녀는 남쪽으로 물러난다.)',
+  "...Okay. Not luck. You're the real thing. My starter's almost ready for its final form. Next time, you won't recognize it.":
+    '...좋아. 운이 아니었어. 넌 진짜야. 내 스타터도 최종 진화가 거의 준비됐어. 다음엔 못 알아볼걸.',
+  "Final form and all — and you STILL beat me. You're the real deal. Let's go save that moth grandmother.":
+    '최종 진화까지 했는데도 — 넌 날 이겼어. 넌 진짜배기야. 그 나방 할머니를 구하러 가자.',
+  "Team Suri isn't the only organization moving through this region anymore. And the other one — they're not here for research.":
+    '이 지방을 움직이는 조직은 이제 수리단만이 아니야. 그리고 다른 하나는 — 연구하러 온 게 아니야.',
+  "...You've beaten me on the cliff. But the array is the real threat — and it is not yet finished.":
+    '...절벽에서 날 이겼군. 하지만 진짜 위협은 장치야 — 아직 완성되지 않았지.',
+  "...Enough. You and your friend fight like the region itself is at your back. Perhaps it is.":
+    '...그만하면 됐어. 너와 네 친구는 마치 이 지방 전체를 등에 업은 듯 싸우는군. 어쩌면 정말 그런지도.',
+  "The perimeter's yours. It won't matter — the towers will hold.": '경계선은 네 거다. 소용없어 — 탑들이 버틸 테니.',
+  'Fall back! Fall back to the courtyard!': '후퇴! 안뜰로 후퇴하라!',
+  "The west light's dead... the courtyard's exposed!": '서쪽 조명이 꺼졌다... 안뜰이 노출됐어!',
+  "Searchlight down! The captain's on her own now.": '탐조등이 나갔다! 이제 대장은 홀로다.',
+  "...The Commander said you might reach this far. I didn't believe her. The gate is yours — but the mountain will not forgive you the way I have.":
+    '...사령관이 네가 여기까지 올지도 모른다고 했지. 난 안 믿었어. 관문은 네 거다 — 하지만 산은 나처럼 널 용서하지 않을 거야.',
+  "You don't understand — the machine doesn't care who wins down here!": '넌 몰라 — 저 기계는 여기서 누가 이기든 상관 안 해!',
+  'Climb all you like. The matrix completes with or without us.': '얼마든지 올라가 봐. 매트릭스는 우리가 있든 없든 완성돼.',
+  "...Six partners, and still you broke through. Go, then. The Spirit will not be so easily reasoned with.":
+    '...여섯 파트너를 두고도 넌 뚫고 왔군. 그럼 가라. 정령은 그리 쉽게 설득되지 않을 거다.',
+  'A clean answer. The road has measured you well.': '깔끔한 답이군. 이 길이 널 제대로 가늠했어.',
+  "My dragons bow to yours. Go — the gate's just above.": '내 드래곤들이 네 것에 고개를 숙인다. 가 — 관문은 바로 위야.',
+  "Forty years, and you've still got something to teach me. Hah! Go on up.": '사십 년인데도 넌 아직 내게 가르칠 게 있군. 하! 올라가라.',
+  "...Yeah. Yeah, that's the trainer I've been chasing this whole time. Go on — the Four are waiting, and so is HE.":
+    '...그래. 그래, 저게 내가 내내 쫓아온 트레이너야. 가 — 사천왕이 기다리고, 그분도 기다려.',
+  "The thaw comes for us all. You've earned the next hall.": '해빙은 우리 모두에게 찾아와. 다음 홀을 얻을 자격이 있어.',
+  'My steel held nothing back, and you broke through it. Impressive.': '내 강철은 아무것도 아끼지 않았는데, 넌 그걸 뚫었어. 인상적이야.',
+  "Like the wind itself — I couldn't pin you down. Go higher.": '바람 그 자체처럼 — 널 붙잡을 수 없었어. 더 높이 올라가.',
+  'The vision held after all. The throne is yours to challenge.': '결국 환영이 버텼군. 옥좌에 도전할 자격은 네 거야.',
+  'Yeah. YEAH. Go show these northerners what a Hanbando trainer looks like. I\'ll be in the stands, losing my voice for you.':
+    '그래. 그렇지! 가서 저 북부인들에게 한반도 트레이너가 어떤지 보여줘. 난 관중석에서 널 위해 목이 터져라 응원할게.',
+  '...You moved the stone. The next hall is yours to enter, southerner.': '...돌을 움직였군. 다음 홀에 들어갈 자격이 있다, 남부인.',
+  "The cold couldn't hold you. Go on — climb higher.": '추위도 널 붙잡지 못했군. 가 — 더 높이 올라가.',
+  'My steel broke before you did. That has not happened in years. Pass.': '내 강철이 너보다 먼저 부서졌다. 몇 년 만의 일이지. 지나가라.',
+  'The white tiger yields. Only the Great King remains above you now.': '백호가 물러선다. 이제 네 위엔 대왕만이 남았다.',
+  '...Thirty years, and the first to take my throne is a southerner. The north acknowledges Hanbando.':
+    '...삼십 년 만에, 내 옥좌를 빼앗은 첫 번째가 남부인이라니. 북부가 한반도를 인정한다.',
+  "...Strong, and you fight clean — no tricks, no cruelty. That tells me more than words. Travel our cities. Show me WHY you're here.":
+    '...강하고, 깨끗하게 싸우는군 — 속임수도, 잔인함도 없이. 그게 말보다 많은 걸 말해줘. 우리 도시들을 여행해라. 네가 왜 여기 왔는지 보여봐.',
+  "...The stars already gave us the shrines. Beating me changes nothing — the Sovereign will descend for US.":
+    '...별들이 이미 우리에게 사당을 알려줬어. 날 이겨도 달라지는 건 없어 — 군주는 우리를 위해 강림한다.',
+  'The trainer beneath the legend is real after all. The order takes note.': '전설 아래의 트레이너는 결국 진짜였군. 우리 어사대가 주목하겠다.',
+  "Iron tested, iron held. You have the 어사대's respect — and mine.": '강철을 시험했고, 강철은 버텼다. 넌 어사대의 존중을 얻었어 — 그리고 나의 존중도.',
+  'The head of the order is satisfied. The wards will open. We climb together, Champion.':
+    '어사대의 수장이 만족했다. 결계가 열릴 거야. 함께 오르자, 챔피언.',
+  '...Impossible. The throne was ours to take — the pantheon, the peninsula, all of it... (The 어사대 close in around the fallen claimant.)':
+    '...말도 안 돼. 옥좌는 우리 것이었어 — 신들도, 반도도, 전부 다... (어사대가 쓰러진 참칭자를 에워싼다.)',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',

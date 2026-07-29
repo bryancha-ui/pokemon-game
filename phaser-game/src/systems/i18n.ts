@@ -71,6 +71,9 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^What\? (.+) is evolving!$/,                       m => `어라? ${m[1]}의 모습이...!`],
   [/^Congratulations! Your ([\s\S]+?)\nevolved into (.+)!$/, m => `축하해! ${m[1]}가\n${m[2]}(으)로 진화했다!`],
   [/^(.+) stopped evolving!$/,                         m => `${m[1]}의 진화가 멈췄다!`],
+  // Trainer battle flow
+  [/^(.+) wants to battle!$/,   m => `${m[1]}가 승부를 걸어왔다!`],
+  [/^You got (.+) for winning!$/, m => `이겨서 ${m[1]}을 얻었다!`],
 ];
 
 export function tr(en: string): string {
