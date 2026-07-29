@@ -66,6 +66,14 @@ export const KO_STRINGS: Record<string, string> = {
     '내 이름은 송. 송남우란다. 하지만 이 지방 사람들은 모두 나를 박사님이라 부르지.',
   'But first — tell me a little about yourself. Are you a boy? Or are you a girl?':
     '하지만 먼저 — 너에 대해 조금 알려주렴. 남자아이니? 아니면 여자아이니?',
+  'This world is inhabited far and wide by wonderful creatures called Pokémon. We live alongside them — as friends, as partners, and sometimes as rivals in battle.':
+    '이 세계는 널리, 포켓몬이라 불리는 멋진 생명체들이 살고 있단다. 우리는 그들과 함께 살아가지 — 친구로, 파트너로, 때로는 배틀의 라이벌로.',
+  'This land is the Hanbando region: a peninsula of pine-needle towns and misty highlands, of volcanic isles in the south and a cold, watchful North.':
+    '이 땅은 한반도 지방 — 솔잎 마을과 안개 낀 고원, 남쪽의 화산섬과 차갑고 경계 어린 북쪽으로 이루어진 반도란다.',
+  'For some, Pokémon are beloved companions. For others, they are a subject of study. I have devoted my whole life to understanding the bond between people and Pokémon.':
+    '누군가에겐 포켓몬은 사랑하는 동반자이고, 누군가에겐 연구의 대상이지. 나는 사람과 포켓몬의 유대를 이해하는 데 평생을 바쳐 왔단다.',
+  "Your very own story is about to unfold. A world of dreams and adventures with Pokémon awaits! Let's go!":
+    '이제 너만의 이야기가 펼쳐지려 하고 있어. 포켓몬과 함께하는 꿈과 모험의 세계가 기다린다! 자, 가자!',
 
   // ── Starter select ──
   'Prof. Song: Welcome! Three Pokémon from this region are waiting for a trainer.\nChoose the one who calls to you.':

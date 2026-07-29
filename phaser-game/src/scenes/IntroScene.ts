@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { playBgm, TRACKS } from '../systems/Music';
+import { t, tr } from '../systems/i18n';
 
 // ── New-game opening — Professor Song's welcome ──────────────────────────────
 // The very first thing a new game shows: Dr. Song Nam-woo (송남우 교수) steps out
@@ -66,7 +67,7 @@ export class IntroScene extends Phaser.Scene {
     }
 
     // Name plate
-    this.add.text(this.W / 2, 40, 'PROF. SONG', {
+    this.add.text(this.W / 2, 40, t('PROF. SONG', '송 박사'), {
       fontSize: '15px', color: '#ffe44e', fontStyle: 'bold', letterSpacing: 3,
       backgroundColor: '#00000066', padding: { x: 10, y: 5 },
     }).setOrigin(0.5);
@@ -91,7 +92,7 @@ export class IntroScene extends Phaser.Scene {
 
   private showLine() {
     this.busy = true;
-    const full = LINES[this.idx];
+    const full = tr(LINES[this.idx]);
     this.textObj.setText('');
     let i = 0;
     // simple typewriter reveal
