@@ -27,7 +27,7 @@ type GO = Phaser.GameObjects.GameObject & {
 interface Tracked {
   obj: GO;
   mesh: THREE.Object3D;
-  mats: THREE.MeshLambertMaterial[] | null;
+  mats: THREE.MeshBasicMaterial[] | null;
   shadow: THREE.Mesh | null;
   kind: 'graphics' | 'image' | 'text' | 'rect';
   hash: number;
@@ -499,7 +499,7 @@ export class OverworldMirror {
     // Fullscreen tints / overlays stay 2D (they're mood layers, not world objects).
     if (w >= this.worldW * 0.9 || h >= this.worldH * 0.9) return;
     const color = (rc.fillColor ?? 0x888888);
-    const mat = new THREE.MeshLambertMaterial({ color });
+    const mat = new THREE.MeshBasicMaterial({ color });
     const box = new THREE.Mesh(new THREE.BoxGeometry(w / PX, Math.min(w, h) / PX * 0.5, h / PX / 2), mat);
     const holder = new THREE.Group();
     holder.add(box);

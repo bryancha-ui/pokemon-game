@@ -230,16 +230,44 @@ export function buildRelief(
   return relief;
 }
 
+/**
+ * Fallback when pixels can't be read (rare CORS-tainted sources): a flat
+ * textured card with the same interface as a relief — always renderable.
+ */
+export function buildFlatCard(
+  key: string,
+  source: HTMLImageElement | HTMLCanvasElement,
+): ReliefMesh | null {
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const W = (source as HTMLImageElement).naturalWidth || source.width;
+  const H = (source as HTMLImageElement).naturalHeight || source.height;
+  if (W < 1 || H < 1) return null;
+  const geo = new THREE.PlaneGeometry(W, H);
+  geo.translate(0, H / 2, 0);          // feet at y=0, centered x
+  const relief: ReliefMesh = {
+    geometry: geo,
+    texture: makeTexture(source as HTMLCanvasElement),
+    pxWidth: W, pxHeight: H,
+    trimX: 0, trimY: 0, origWidth: W, origHeight: H,
+  };
+  cache.set(key, relief);
+  return relief;
+}
+
 /** Material pair for relief meshes: [0] textured artwork faces (alpha cutout),
- *  [1] vertex-colored carved side faces. Apply opacity/tint to both. */
-export function reliefMaterials(tex: THREE.Texture): [THREE.MeshLambertMaterial, THREE.MeshLambertMaterial] {
-  const art = new THREE.MeshLambertMaterial({
+ *  [1] vertex-colored carved side faces. Apply opacity/tint to both.
+ *  UNLIT on purpose: scene lighting washed the original art with a grey/blue
+ *  cast — the sprite must read exactly as the 2D game authored it. Phaser's
+ *  hit-flash tint is a color multiply, which MeshBasic reproduces 1:1. */
+export function reliefMaterials(tex: THREE.Texture): [THREE.MeshBasicMaterial, THREE.MeshBasicMaterial] {
+  const art = new THREE.MeshBasicMaterial({
     map: tex,
     transparent: true,
     alphaTest: 0.22,        // keep soft anti-aliased edges (HOME renders)
     side: THREE.FrontSide,
   });
-  const sides = new THREE.MeshLambertMaterial({
+  const sides = new THREE.MeshBasicMaterial({
     vertexColors: true,
     transparent: true,
   });

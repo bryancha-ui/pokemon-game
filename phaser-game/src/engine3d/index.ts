@@ -86,12 +86,17 @@ class Engine3D {
    *  detectable player (camera-follow overworld or static-camera interior). */
   private pickScene(): { scene: Phaser.Scene; kind: 'battle' | 'overworld' } | null {
     const active = this.game.scene.getScenes(true);
+    // A scene can opt out of 3D entirely (e.g. the multi-floor department store,
+    // whose flat interior + elevator UI must stay pure 2D) by setting disable3D.
+    const opted = (sc: Phaser.Scene) => !!(sc as unknown as { disable3D?: boolean }).disable3D;
     for (let i = active.length - 1; i >= 0; i--) {
       const sc = active[i];
+      if (opted(sc)) continue;
       if (/Battle/i.test(sc.scene.key)) return { scene: sc, kind: 'battle' };
     }
     for (let i = active.length - 1; i >= 0; i--) {
       const sc = active[i];
+      if (opted(sc)) continue;
       if (sc.cameras?.main && OverworldMirror.findPlayer(sc)) return { scene: sc, kind: 'overworld' };
     }
     return null;

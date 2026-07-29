@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
-import { buildRelief, reliefMaterials } from './Extruder';
+import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
 import { getModel, hasModel, primeManifest } from './GlbModels';
 import { MoveFX3D } from './MoveFX3D';
@@ -28,7 +28,7 @@ interface Combatant {
   obj: GO & Phaser.GameObjects.Image;
   holder: THREE.Group;
   inner: THREE.Mesh;
-  mats: THREE.MeshLambertMaterial[];
+  mats: THREE.MeshBasicMaterial[];
   shadow: THREE.Mesh;
   side: 'player' | 'enemy';
   slot: number;
@@ -39,7 +39,8 @@ interface Combatant {
   /** world-units-per-art-pixel, normalized at adoption from the DISPLAY size. */
   scalePx: number;
   /** the sprite's scale at adoption — later tweened scales are applied as ratios. */
-  adoptSX: number; adoptSY: number;
+  baseSX: number | null; baseSY: number | null;
+  lastSX: number; scaleStill: number;
   phase: number;
   /** generated true-3D model (GLB) support */
   glbKey: string | null;
@@ -243,17 +244,19 @@ export class BattleMirror {
     if (dw < 70 || dh < 70) return;                     // icons stay 2D
 
     const src = this.frameCanvas(im);
-    if (!src) return;
     // Creatures WITHOUT a generated 3D model render as a near-flat relief — a 2D
-    // sprite standing upright on the 3D stage at its arena anchor — instead of
-    // the deep extrusion that stretched PokeAPI art like an accordion and left
-    // the raw 2D sprite floating too high. Creatures that DO have a model use
-    // the normal relief only as a brief placeholder until the GLB streams in.
+    // sprite standing upright on the 3D stage at its arena anchor. Creatures
+    // that DO have a model use the relief only until the GLB streams in.
+    // If pixels can't be read at all (CORS-tainted source), fall back to a
+    // flat textured card so a battler is NEVER invisible.
     const has3D = hasModel(im.texture.key);
-    const relief = buildRelief(
+    const relief = (src && buildRelief(
       `img:${im.texture.key}:${im.frame?.name ?? 0}${has3D ? '' : ':flat'}`,
       src,
       has3D ? undefined : 1,
+    )) ?? buildFlatCard(
+      `flat:img:${im.texture.key}:${im.frame?.name ?? 0}`,
+      im.texture.getSourceImage() as HTMLImageElement,
     );
     if (!relief) return;
 
@@ -268,7 +271,9 @@ export class BattleMirror {
     // HOME render both land near the same world height (fixes giant/small
     // battlers when art resolution varies wildly).
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
-    const scale = (2.2 * sizeBias) / relief.pxHeight;
+    // The enemy stands ~2× farther from the camera — bigger stage height.
+    const side0: 'player' | 'enemy' = (im.x ?? 0) < W / 2 ? 'player' : 'enemy';
+    const scale = ((side0 === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
     inner.scale.setScalar(scale);
 
     const holder = new THREE.Group();
@@ -288,13 +293,14 @@ export class BattleMirror {
       base: null, settleTimer: 0,
       lastPos: { x: im.x ?? 0, y: im.y ?? 0 }, speed: 0,
       scalePx: scale,
-      adoptSX: Math.abs(im.scaleX ?? 1) || 1, adoptSY: Math.abs(im.scaleY ?? 1) || 1,
+      baseSX: null, baseSY: null,
+      lastSX: Math.abs(im.scaleX ?? 1), scaleStill: 0,
       phase: Math.random() * Math.PI * 2,
       glbKey: hasModel(im.texture.key) ? im.texture.key : null,
       glb: null,
       // Generated models read smaller than flat art at equal height (they have
       // real depth), so give them extra presence — SwSh-scale battlers.
-      targetH: 2.9 * Math.min(1.25, Math.max(0.95, dh / 220)),
+      targetH: (side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)),
       anim: null,
       fainted: false,
       texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
@@ -306,18 +312,24 @@ export class BattleMirror {
   private refreshCombatant(cb: Combatant): void {
     const im = cb.obj;
     const src = this.frameCanvas(im);
-    if (!src) return;
-    const relief = buildRelief(`img:${im.texture.key}:${im.frame?.name ?? 0}`, src);
+    const has3D = hasModel(im.texture.key);
+    const relief = (src && buildRelief(
+      `img:${im.texture.key}:${im.frame?.name ?? 0}${has3D ? '' : ':flat'}`,
+      src,
+      has3D ? undefined : 1,
+    )) ?? buildFlatCard(
+      `flat:img:${im.texture.key}:${im.frame?.name ?? 0}`,
+      im.texture.getSourceImage() as HTMLImageElement,
+    );
     if (!relief) return;
     cb.inner.geometry = relief.geometry;
     cb.mats[0].map = relief.texture;
     cb.mats[0].needsUpdate = true;
     const dh = im.displayHeight ?? 0;
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
-    cb.scalePx = (2.2 * sizeBias) / relief.pxHeight;
-    cb.adoptSX = Math.abs(im.scaleX ?? 1) || 1;
-    cb.adoptSY = Math.abs(im.scaleY ?? 1) || 1;
-    cb.targetH = 2.9 * Math.min(1.25, Math.max(0.95, dh / 220));
+    cb.scalePx = ((cb.side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
+    cb.baseSX = null; cb.baseSY = null; cb.scaleStill = 0;   // re-settle on the new art
+    cb.targetH = (cb.side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220));
     // A different creature key means a different generated model (or none).
     const nk = hasModel(im.texture.key) ? im.texture.key : null;
     if (cb.glb && nk !== cb.glbKey) {
@@ -428,8 +440,22 @@ export class BattleMirror {
 
       // Idle life: breathing + slight sway while standing.
       const idle = 1 + Math.sin(this.time * 2.4 + cb.phase) * 0.018;
-      const relX = Math.abs(o.scaleX ?? 1) / cb.adoptSX;      // ratio vs adoption
-      const relY = Math.abs(o.scaleY ?? 1) / cb.adoptSY;      // (send-out grow etc.)
+      // Scale baseline is captured only when the sprite is SETTLED (still +
+      // fully visible), so send-out/switch scale tweens read as relative
+      // animation instead of poisoning the battler's size (giant/invisible).
+      const curSX = Math.abs(o.scaleX ?? 1);
+      if (Math.abs(curSX - cb.lastSX) < 1e-4 && (o.alpha ?? 1) > 0.85 && o.visible !== false) {
+        cb.scaleStill += dt;
+        if (cb.scaleStill > 0.25 && cb.baseSX === null && curSX > 1e-4) {
+          cb.baseSX = curSX;
+          cb.baseSY = Math.abs(o.scaleY ?? 1) || curSX;
+        }
+      } else {
+        cb.scaleStill = 0;
+      }
+      cb.lastSX = curSX;
+      const relX = cb.baseSX ? Math.min(3, Math.max(0.2, curSX / cb.baseSX)) : 1;
+      const relY = cb.baseSY ? Math.min(3, Math.max(0.2, Math.abs(o.scaleY ?? 1) / cb.baseSY)) : 1;
       if (cb.glb) {
         // Fainting: the battle fades/drops the sprite — play the topple once.
         const down = (o.alpha ?? 1) < 0.5 || o.visible === false;
@@ -449,14 +475,9 @@ export class BattleMirror {
       const tint = o as { tintTopLeft?: number; isTinted?: boolean; tintFill?: boolean };
       for (const m of cb.mats) {
         m.opacity = o.alpha ?? 1;
-        if (tint.isTinted && tint.tintTopLeft !== undefined) {
-          m.color.set(tint.tintTopLeft);
-          m.emissive.set(tint.tintFill ? 0xffffff : 0x000000);
-          m.emissiveIntensity = tint.tintFill ? 0.85 : 0;
-        } else {
-          m.color.set(0xffffff);
-          m.emissiveIntensity = 0;
-        }
+        // Phaser's hit flash is a multiply tint — identical semantics here.
+        if (tint.isTinted && tint.tintTopLeft !== undefined) m.color.set(tint.tintTopLeft);
+        else m.color.set(0xffffff);
       }
       cb.holder.visible = (o.visible !== false) && ((o.alpha ?? 1) > 0.02);
       cb.shadow.visible = cb.holder.position.y < 0.5;

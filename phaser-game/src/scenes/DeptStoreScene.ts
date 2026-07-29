@@ -42,6 +42,9 @@ const FLOORS: Record<number, FloorDef> = {
 
 export class DeptStoreScene extends Phaser.Scene {
   private playerG!: Phaser.GameObjects.Graphics;
+  /** Keep the multi-floor store (and its elevator UI) in pure 2D — the 3D mirror
+   *  rendered its flat interior as an empty box, hiding everything. */
+  public disable3D = true;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;

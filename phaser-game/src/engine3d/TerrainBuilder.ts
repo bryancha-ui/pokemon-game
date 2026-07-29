@@ -186,6 +186,13 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
   return 'flat';
 }
 
+/** Target 3D height (world units) for a building on a `w`×`d`-tile plot. Bigger
+ *  plots get taller buildings so a landmark GLB fills its footprint instead of
+ *  sitting as a small box on a large lot (e.g. the palace / gym / dept store). */
+function plotHeight(w: number, d: number): number {
+  return Math.max(2.0, Math.min(10, 1.2 + Math.sqrt(w * d) * 0.72));
+}
+
 /**
  * Build terrain from the painted world canvas.
  * `worldW/worldH` are the world's pixel dimensions (from camera bounds).
@@ -639,7 +646,7 @@ export function buildTerrain(
 
   /** Facade+roof volume built from the original painted art (always available). */
   const extrudeBuilding = (b: typeof buildings[number], into: THREE.Object3D, local = false) => {
-    const h = Math.min(4.4, Math.max(2.0, 1.5 + Math.sqrt(b.w * b.d) * 0.42));
+    const h = plotHeight(b.w, b.d);
     const floors = Math.max(1, Math.round(h / 1.15));
     const cx = local ? 0 : b.x + b.w / 2, cz = local ? 0 : b.z + b.d / 2;
     const wallMat = facadeMaterial(b.tint, Math.max(1, Math.round((b.w + b.d) / 2 * 0.8)), floors);
@@ -678,7 +685,7 @@ export function buildTerrain(
       const holder = new THREE.Group();
       holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
       group.add(holder);
-      const h = Math.min(4.4, Math.max(2.0, 1.5 + Math.sqrt(b.w * b.d) * 0.42));
+      const h = plotHeight(b.w, b.d);
       // Named landmark buildings face the street (door side toward +z / camera)
       // rather than a random hash rotation.
       pendingProps.push({ group: holder, def, b, h, wait: 0, rot: 0 });

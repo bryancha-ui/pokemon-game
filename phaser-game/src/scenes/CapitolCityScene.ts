@@ -66,13 +66,15 @@ function buildCityMap(): CTile[][] {
 
   // ── GYM district (rows 2-14) ─────────────────────────────────────────────
   fill(2, 2, 14, CCOLS - 2, PL);  // gym plaza
-  fill(3, 14, 15, 34, B);          // GYM building
-  // Gym entrance gap
-  for (let c = 22; c < 26; c++) map[14][c] = PL;  // door tiles
+  // GYM sits on the RIGHT of the plaza (cols 26-45) so the central N-S road
+  // (cols 22-25) runs clear up to the north gate → Route 2.
+  fill(3, 26, 15, 46, B);          // GYM building
+  // Gym entrance gap (south face, centred on the building)
+  for (let c = 34; c < 38; c++) map[14][c] = PL;  // door tiles
 
   // Gym battle floor marker
-  for (let c = 18; c < 30; c++) map[5][c] = PL;
-  for (let c = 18; c < 30; c++) map[6][c] = PL;
+  for (let c = 30; c < 42; c++) map[5][c] = PL;
+  for (let c = 30; c < 42; c++) map[6][c] = PL;
 
   // ── Tower district (rows 18-33) ──────────────────────────────────────────
   fill(18, 2, 33, CCOLS - 2, SW);
@@ -189,8 +191,8 @@ const LOCATIONS: CityLocation[] = [
     doorRow: 51, doorCol: 35,
     x: 27, y: 44, w: 17, h: 8, roofColor: 0x2a6a9a, wallColor: 0xcfd8e0 },
   { label: "Capitol GYM",      scene: 'CapitolGymScene', model: 'gym',
-    doorRow: 14, doorCol: 23,
-    x: 14, y: 3, w: 20, h: 12, roofColor: 0x222266, wallColor: 0x334477 },
+    doorRow: 14, doorCol: 35,
+    x: 26, y: 3, w: 20, h: 12, roofColor: 0x222266, wallColor: 0x334477 },
 ];
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
