@@ -67,7 +67,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   '노스단 Sovereign-Claimant': '노스단 군주 참칭자',
   'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
   '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
-  'Artist Sora': '화가 소라',
+  'Artist Sora': '화가 소라', 'Dock Worker': '부두 인부',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -1074,6 +1074,34 @@ export const KO_STRINGS: Record<string, string> = {
     '난 밀렵꾼을 잡으러 고원 들판을 순찰해. 여긴 서리 안개가 빨리 몰려와 — 여행자들이 길을 잃지. 근데 너? 넌 먼저 배틀이다.',
   '❄ 서리 안개 (frost mist)': '❄ 서리 안개',
   '⛰ Kaema Plateau (개마고원)': '⛰ 개마고원',
+
+  // ── Jeju Port + northern beaches/mines/highlands (labels + trainers) ──
+  '⚓ Jeju Port (제주 포구)': '⚓ 제주 포구',
+  'Dock Worker: The black-coats unloaded heavy gear an hour ago and marched straight up the vent trail.':
+    '부두 인부: 검은 코트들이 한 시간 전에 무거운 장비를 내리고 곧장 분화구 길로 올라갔어.',
+  'Ahoy! Headed out to that Gyarados? Not before you get past me, landlubber!':
+    '어이! 저 갸라도스한테 가려고? 날 지나가기 전엔 안 돼, 육지것아!',
+  "That beast scared off every fish on the coast. Show me you're tough enough to face it!":
+    '저 괴수가 해안의 물고기를 죄다 쫓아버렸어. 맞설 만큼 강한지 보여줘!',
+  'You surfed all the way out here past the whirlpools? Impressive — now battle me!':
+    '소용돌이를 지나 여기까지 파도타기해 왔다고? 대단하군 — 이제 나랑 배틀이다!',
+  '⚠ Rampaging Gyarados (난동 갸라도스)': '⚠ 난동 갸라도스',
+  "Churned up from the depths, one of Gyarados's 부하 lunges at you!":
+    '심연에서 솟구쳐, 갸라도스의 부하 하나가 네게 달려든다!',
+  'Been casting off this jetty since dawn. Reel in a battle with me!': '새벽부터 이 방파제에서 낚싯대를 던지고 있어. 나랑 한 판 낚아 올려봐!',
+  '🏖 Kalma Beach (갈마 해변)': '🏖 갈마 해변',
+  'Careful down here — the Steelix has the deep gallery. Warm up on me first!': '여긴 조심해 — 강철톤이 깊은 갱도를 차지했어. 나로 먼저 몸 좀 풀어!',
+  '⚠ Berserk Steelix (폭주 강철톤)': '⚠ 폭주 강철톤',
+  '⛏ Hamhung Ore Mine (함흥 광산)': '⛏ 함흥 광산',
+  'The higher you climb Chilbo, the thinner the air — and the fiercer the battles. Prove you belong up here.':
+    '칠보산을 오를수록 공기는 희박해지고 — 배틀은 더 치열해져. 여기 있을 자격이 있음을 증명해.',
+  '☁ 짙은 안개 (dense fog)': '☁ 짙은 안개',
+  '⛰ Chilbo Highlands (칠보산 길)': '⛰ 칠보산 길',
+  'Best mullet on the whole East Sea coast comes from these waters. Reel in a battle with me!':
+    '동해 해안 통틀어 최고의 숭어가 이 물에서 나와. 나랑 한 판 낚아 올려봐!',
+  'Waterfowl gather at the lagoon by the thousand. My flock rules these skies — care to test them?':
+    '석호에 물새가 수천 마리 모여. 내 무리가 이 하늘을 지배하지 — 시험해 볼래?',
+  '🌅 Sijung Coast (시중호 해안길)': '🌅 시중호 해안길',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
