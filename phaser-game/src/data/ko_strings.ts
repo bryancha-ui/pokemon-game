@@ -59,6 +59,8 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아', 'Quarry Worker': '채석장 인부',
   'Observer Park': '관찰자 박', 'Observer': '관찰자', 'Guard': '경비병', 'Curator': '큐레이터',
   'Royal Warden': '왕실 관리인',
+  // Hanbando League Elite Four + champion
+  'Gyeoul': '겨울', 'Hwageum': '화금', 'Saleum': '살음', 'Hwangeum': '황금',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -793,6 +795,39 @@ export const KO_STRINGS: Record<string, string> = {
   '🛡 평성 관문 (Pyeongseong Checkpoint)': '🛡 평성 관문',
   'Royal Warden: The gate to Pyeongseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.':
     '왕실 관리인: 평성으로 가는 문이 네게 열렸다. 수도에서 최고위 광을 찾아라 — 그가 마지막 시험을 쥐고 있다.',
+
+  // ══ Hanbando League (Elite Four + Champion Hwangeum) ══
+  '🏛 Hanbando Pokémon League': '🏛 한반도 포켓몬 리그',
+  'The League is a single trial — best all four masters again, in one unbroken run, to reach the Champion.':
+    '리그는 하나의 시련 — 네 명의 명인을 한 번에, 끊김 없이 다시 꺾어야 챔피언에 이른다.',
+  'Defeat one to unseal the way to the next. Each hall has a healing machine, so your team is restored to full before every match.':
+    '하나를 물리치면 다음으로 가는 길이 열린다. 각 홀엔 회복 장치가 있어, 매 대결 전에 팀이 완전히 회복된다.',
+  'The cold does not rush. Neither will I. Begin.': '추위는 서두르지 않아. 나도 그렇지. 시작.',
+  'Let us see what your edge is made of.': '네 칼날이 무엇으로 벼려졌는지 보자.',
+  'Rise to meet me — or be swept aside.': '일어서서 나와 맞서 — 아니면 휩쓸려 나가.',
+  'Whether the vision holds is up to you. Come.': '환영이 버티는지는 네게 달렸어. 와라.',
+  "Eight gyms, one legendary moth, and you still climbed back up here. I became Champion three years ago and called it a fluke for a year. I don't take many battles seriously anymore.":
+    '체육관 여덟 개, 전설의 나방 하나, 그런데도 넌 여기까지 다시 올라왔군. 나는 삼 년 전 챔피언이 됐고, 일 년은 그걸 요행이라 여겼지. 이젠 어지간한 배틀은 진지하게 임하지 않아.',
+  "This one — I will. Show me everything you've become.": '이번만은 — 진지하게 임하겠다. 네가 되어온 모든 것을 보여봐.',
+  "...Good. Three years I've wondered when someone would come who could do this. I think I've been waiting for you specifically.":
+    '...훌륭해. 삼 년간 이걸 해낼 수 있는 자가 언제 올까 궁금했지. 아무래도 난 바로 널 기다려 왔던 것 같아.',
+  'Hwangeum (extending his hand): Welcome to the Hall of Fame. You earned every step of it.':
+    '황금 (손을 내밀며): 명예의 전당에 온 걸 환영해. 그 한 걸음 한 걸음을 네가 이뤄냈어.',
+  '🏆 Your team is recorded in the Hall of Fame!': '🏆 너의 팀이 명예의 전당에 기록되었다!',
+  '— The credits roll over a montage of the Hanbando League arc — Capitol City, the Diamond Gorge, the tidal coasts, the ancient forest, the Jeju vents, the Jeju Summit —':
+    '— 한반도 리그 여정의 몽타주 위로 크레딧이 흐른다 — 수도 시티, 다이아몬드 협곡, 조수의 해안, 고목 숲, 제주 분화구, 제주 정상 —',
+  'At the bottom of the League steps, your Rival is waiting — because of course they are.':
+    '리그 계단 아래, 라이벌이 기다리고 있다 — 당연하게도.',
+  'Rival: I found something while you were climbing the league. In the far north, beyond Baekdu Peak — old texts, older than the gym records. References to another spirit. One that predates the Dancheong calendar.':
+    '라이벌: 네가 리그를 오르는 동안 뭔가를 찾았어. 저 먼 북쪽, 백두봉 너머 — 체육관 기록보다 오래된 옛 문헌들. 또 다른 정령에 대한 언급. 단청 달력보다도 앞선 존재에 대한 거야.',
+  "Prof. Song (comms): That's... troubling. The north has always been volatile. If something wakes there before we understand it, the whole peninsula could—":
+    '송 박사 (통신): 그건... 심상치 않은데. 북쪽은 늘 불안정했어. 우리가 이해하기도 전에 거기서 뭔가 깨어난다면, 반도 전체가—',
+  "Rival: Easy, Professor. We're barely sitting down. But when you're ready, Champion — the Taebaek range has some climbing left to do.":
+    '라이벌: 진정해요, 박사님. 이제 겨우 한숨 돌리는 중이잖아요. 하지만 준비되면, 챔피언 — 태백 산맥엔 아직 오를 곳이 남아 있어.',
+  'Phase 1: Hanbando League — COMPLETE ✓': '1막: 한반도 리그 — 완료 ✓',
+  'Phase 2: Northern League — UNLOCKED': '2막: 북방 리그 — 해금',
+  'Post-game unlocked: rechallenge the Rival in the Shadow Court, rematch Champion Hwangeum, explore the postgame world, and track the freed trio — 풍백, 우사, 운사 — at their mountain shrines.':
+    '포스트게임 해금: 섀도우 코트에서 라이벌 재도전, 챔피언 황금 재대결, 포스트게임 세계 탐험, 그리고 풀려난 세 정령 — 풍백, 우사, 운사 — 을 산속 사당에서 추적하기.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
