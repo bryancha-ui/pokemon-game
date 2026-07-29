@@ -56,7 +56,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Bawoo': '바우', 'Doran': '도란', 'Sandol': '산돌',
   'Skater': '스케이터', 'Sculptor': '조각가', 'Innkeeper': '여관 주인', 'Vendor': '노점상',
   'Tourist': '관광객', 'Coach': '코치', 'Youth': '청년',
-  'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아',
+  'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아', 'Quarry Worker': '채석장 인부',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -650,6 +650,100 @@ export const KO_STRINGS: Record<string, string> = {
   '📟 Your Pokédex buzzes — Professor Song, urgent.': '📟 도감이 울린다 — 송 박사, 긴급.',
   'A sheet of blue ice, frost-bells hung in rows, hot-spring steam curling at the eaves.':
     '푸른 얼음판, 줄지어 걸린 서리종, 처마 끝에 감기는 온천의 김.',
+
+  // ══ Gyms — complete (trainer names, leader intros/wins, descriptions, badges) ══
+  // Trainer names
+  'Shadow Trainer Miso': '섀도우 트레이너 미소', 'Shadow Trainer Jaemin': '섀도우 트레이너 재민',
+  'Shade Trainer Yuna': '섀도우 트레이너 유나',
+  'Gym Trainer Taeguk': '체육관 트레이너 태극', 'Gym Trainer Nari': '체육관 트레이너 나리',
+  'Gym Trainer Boram': '체육관 트레이너 보람', 'Gym Trainer Junho': '체육관 트레이너 준호',
+  'Gym Trainer Haedo': '체육관 트레이너 해도', 'Gym Trainer Byungchan': '체육관 트레이너 병찬',
+  'Gym Trainer Chungha': '체육관 트레이너 청하', 'Gym Trainer Minho': '체육관 트레이너 민호',
+  'Gym Trainer Bawoo': '체육관 트레이너 바우', 'Gym Trainer Doran': '체육관 트레이너 도란',
+  'Gym Trainer Nunsong': '체육관 트레이너 눈송', 'Attendant Baram': '신전 시종 바람',
+  'Gym Trainer Seongwoo': '체육관 트레이너 성우', 'Gym Trainer Daehwi': '체육관 트레이너 대휘',
+  // Badge names
+  'Summit Seal Badge': '정상 봉인 배지', 'Lantern Stage Badge': '등불 무대 배지',
+  'Tidekeeper Badge': '조수지기 배지', 'Ancient Keeper Badge': '고대 수호자 배지',
+  'Frostbell Badge': '서리종 배지', 'Stormwatcher Badge': '폭풍지기 배지',
+  // Capitol — Leader Jin
+  'A figure steps out from the shadows...': '그림자에서 한 인물이 걸어 나온다...',
+  "I am Jin, Guardian of Capitol City's shadows.": '나는 진, 수도 시티의 그림자를 지키는 자다.',
+  'My Corrpanda and I will test your resolve.': '나의 콜판다와 내가 너의 각오를 시험하겠다.',
+  'Darkness is not evil — it is the truth behind light.': '어둠은 악이 아니야 — 빛 뒤에 숨은 진실이지.',
+  'Come. Show me what you are made of.': '와라. 네가 어떤 자인지 보여봐.',
+  // Baekdu — Byeoksan
+  '(A broad-shouldered man sits cross-legged on a flat boulder, eyes closed. He rises as you approach.)':
+    '(넓은 어깨의 남자가 평평한 바위에 가부좌를 틀고 눈을 감고 있다. 네가 다가가자 일어선다.)',
+  'Come. Show me what that potential looks like.': '와라. 그 잠재력이 어떤 것인지 보여봐.',
+  'The mountain tested you and you stood.': '산이 널 시험했고 넌 버텼다.',
+  'Those black-coated people circling my city — the wild Pokémon near Cheonji Lake have been agitated for weeks.':
+    '내 도시 주위를 맴도는 저 검은 코트의 자들 — 천지 호수 근처의 야생 포켓몬들이 몇 주째 동요하고 있어.',
+  // Geumgang — Namsun
+  'A namsadang performance stage lit by a thousand swaying lanterns.':
+    '천 개의 흔들리는 등불로 밝혀진 남사당 공연 무대.',
+  'Defeat the two Gym Trainers, then face Leader Namsun, the Eternal Performer.':
+    '두 체육관 트레이너를 물리치고, 영원한 광대 관장 남순과 맞서라.',
+  'I am Namsun — the Eternal Performer. I have danced this stage forty years.':
+    '나는 남순 — 영원한 광대야. 이 무대에서 사십 년을 춤췄지.',
+  'Fairy magic is not gentleness. It is the spell that holds a crowd breathless.':
+    '페어리의 마법은 상냥함이 아니야. 관중의 숨을 멎게 하는 주문이지.',
+  'Let us see if your Pokémon can hold mine. Begin!': '네 포켓몬이 내 것을 감당할 수 있는지 보자. 시작!',
+  'A fine performance. The lanterns will remember you.': '멋진 공연이었어. 등불이 널 기억할 거야.',
+  'Beautiful. The lanterns have never shone for a finer challenger.': '아름다워. 등불이 이보다 훌륭한 도전자를 위해 빛난 적은 없었어.',
+  // Haean — Harang
+  'Defeat the two Gym Trainers, then face Leader Harang, the Tidekeeper.':
+    '두 체육관 트레이너를 물리치고, 조수지기 관장 하랑과 맞서라.',
+  'Cold currents, poison spines — the deep is not kind. Show me you can swim in it.':
+    '차가운 해류, 독 가시 — 심해는 자비롭지 않아. 그 속에서 헤엄칠 수 있음을 보여줘.',
+  'I am Harang, the Tidekeeper. I read the sea the way you read a face.':
+    '나는 하랑, 조수지기야. 나는 네가 얼굴을 읽듯 바다를 읽지.',
+  'My Pokémon ride the current and strike when it turns. Can you hold your footing?':
+    '내 포켓몬은 해류를 타고 흐름이 바뀔 때 친다. 발을 딛고 버틸 수 있겠어?',
+  'High tide rises. Let us begin.': '만조가 차오른다. 시작하자.',
+  'The tide turned in your favour. Well earned.': '물결이 네게 유리하게 돌아섰군. 마땅히 얻은 거야.',
+  'The tide chose you. Few can say that.': '파도가 널 택했어. 그렇게 말할 수 있는 자는 드물지.',
+  // Forest — Noksaek
+  'Roots run deeper than you think. Mind your footing.': '뿌리는 네 생각보다 깊어. 발밑을 조심해.',
+  'I am Noksaek, Keeper of the Living Temple. I have tended these roots for a hundred years.':
+    '나는 녹색, 생명 신전의 수호자야. 백 년 동안 이 뿌리들을 돌봐 왔지.',
+  'Grass is not weakness. It is patience that splits stone. Show me yours.':
+    '풀은 나약함이 아니야. 돌을 쪼개는 인내지. 네 것을 보여봐.',
+  'Let the temple judge you. Begin.': '신전이 널 판단하게 하라. 시작.',
+  'The roots accept you. Well fought.': '뿌리가 널 받아들였어. 잘 싸웠다.',
+  'The forest has spoken. You are worthy to pass.': '숲이 말했어. 넌 지나갈 자격이 있다.',
+  // Dolmoe — Sandol
+  "(A broad, quiet man with granite-dust in his hair hefts a chisel-hammer over one shoulder.)":
+    '(머리에 화강암 먼지를 뒤집어쓴, 과묵하고 다부진 남자가 정끌망치를 한쪽 어깨에 둘러멘다.)',
+  "Sandol: Leader Sandol? Gone up to the 고인돌 유적 — the dolmen ruins west of town. Black-coated diggers were sniffing around the old graves.":
+    '채석장 인부: 관장 산돌 말이야? 고인돌 유적으로 올라갔어 — 마을 서쪽의 고인돌 폐허 말이야. 검은 코트의 발굴자들이 옛 무덤 주위를 킁킁대고 있었거든.',
+  'Quarry Worker: Leader Sandol? Gone up to the 고인돌 유적 — the dolmen ruins west of town. Black-coated diggers were sniffing around the old graves.':
+    '채석장 인부: 관장 산돌 말이야? 고인돌 유적으로 올라갔어 — 마을 서쪽의 고인돌 폐허 말이야. 검은 코트의 발굴자들이 옛 무덤 주위를 킁킁대고 있었거든.',
+  'Quarry Worker: No badge today unless you fetch him. Follow the western trail out of the city.':
+    '채석장 인부: 그를 데려오지 않으면 오늘 배지는 없어. 도시 서쪽 오솔길을 따라가.',
+  "The mountain doesn't rush. Doesn't boast. It just endures, and outlasts everything that tries to break it.":
+    '산은 서두르지 않아. 뽐내지도 않지. 그저 견디고, 자신을 부수려는 모든 것보다 오래 버티지.',
+  "Let's see if you've got that in you. Or if you crack.": '네게 그런 게 있는지 보자. 아니면 부서지는지.',
+  "The mountain remembers those who don't crack. It remembers you now.": '산은 부서지지 않는 자를 기억하지. 이제 널 기억한다.',
+  "...Didn't crack. Good. The mountain respects that. Carry it steady.": '...부서지지 않았군. 좋아. 산은 그런 걸 존중해. 흔들림 없이 짊어져.',
+  // Seorae — Yeona
+  'Defeat the two Gym Trainers, then face Leader Yeona — The Winter Bell.':
+    '두 체육관 트레이너를 물리치고, 겨울종 관장 연아와 맞서라.',
+  "You've climbed a long way in the cold to reach me. Most turn back at the treeline.":
+    '나에게 오려고 추위 속을 멀리도 올라왔군. 대부분은 수목한계선에서 돌아서지.',
+  "Winter doesn't ask if you're ready. It simply arrives. So — let it arrive.":
+    '겨울은 네가 준비됐는지 묻지 않아. 그냥 찾아오지. 그러니 — 오게 두렴.',
+  'Yeona: ...The thaw comes even to the deepest winter. You are that thaw. Go warmly.':
+    '연아: ...가장 깊은 겨울에도 해빙은 찾아와. 네가 그 해빙이야. 따뜻하게 가렴.',
+  // Sunrise — Beonge
+  'The panels only turn for the quick. Keep up!': '패널은 빠른 자에게만 돌아가지. 따라와!',
+  'I am Beonge, the Stormwatcher. I have read these skies my whole life.':
+    '나는 번개, 폭풍지기야. 평생 이 하늘을 읽어 왔지.',
+  'Electricity is not power. It is TIMING — the instant the sky decides to strike.':
+    '전기는 힘이 아니야. 타이밍이지 — 하늘이 내리치기로 정하는 그 찰나.',
+  'Five partners ride my current. Show me your timing. Begin!':
+    '다섯 파트너가 내 전류를 타지. 네 타이밍을 보여봐. 시작!',
+  'The storm answered to you. Take the Stormwatcher Badge.': '폭풍이 네게 응답했어. 폭풍지기 배지를 받아.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
