@@ -192,7 +192,7 @@ export class BattleScene extends Phaser.Scene {
       const x = cols[i % 2];
       const y = rows[Math.floor(i / 2)];
       const btn = this.add.text(x, y,
-        `${move.data.name.toUpperCase()}\nPP ${move.pp}/${move.data.pp}  ${move.data.type.toUpperCase()}`,
+        `${tr(move.data.name).toUpperCase()}\nPP ${move.pp}/${move.data.pp}  ${move.data.type.toUpperCase()}`,
         { fontSize: '16px', color: '#fff', lineSpacing: 4 }
       ).setInteractive({ useHandCursor: true })
         .on('pointerover',  () => btn.setColor('#ffff00'))

@@ -1,3 +1,4 @@
+import { tr } from './i18n';
 // ── Mobile "dual-screen" shell + on-screen controls ──────────────────────────
 // On touch devices the page is split like a Nintendo DS: the Phaser game canvas
 // lives on the TOP screen, and a solid control DECK fills the BOTTOM screen so the
@@ -235,7 +236,7 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
       // instead of overflowing, and nothing gets clipped.
       'line-height:1.1;padding:clamp(3px,calc(var(--u)*0.3),12px);text-align:center;overflow:visible;';
     cell.innerHTML =
-      `<div style="font-weight:800;font-size:clamp(13px,calc(var(--u)*0.85),22px);line-height:1.05;word-break:break-word;overflow-wrap:anywhere">${m.data.name.toUpperCase()}</div>` +
+      `<div style="font-weight:800;font-size:clamp(13px,calc(var(--u)*0.85),22px);line-height:1.05;word-break:break-word;overflow-wrap:anywhere">${tr(m.data.name).toUpperCase()}</div>` +
       `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:${col};margin-top:clamp(2px,calc(var(--u)*0.2),8px)">${m.data.type.toUpperCase()}</div>` +
       `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:#cbd3e6;margin-top:clamp(1px,calc(var(--u)*0.1),5px)">PP ${m.pp}/${m.data.pp}</div>`;
     cell.addEventListener('pointerdown', (e) => { e.preventDefault(); onPick(i); });

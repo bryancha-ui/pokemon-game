@@ -487,7 +487,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       const x = cols[i] ?? cols[3];
       const pill = this.add.rectangle(x + 80, 28, 164, 50, TYPE_COLORS[move.data.type] ?? 0x444466, 0.25)
         .setStrokeStyle(1, TYPE_COLORS[move.data.type] ?? 0x444466, 0.8).setOrigin(0.5);
-      const btn = this.add.text(x + 6, 10, move.data.name.toUpperCase(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' })
+      const btn = this.add.text(x + 6, 10, tr(move.data.name).toUpperCase(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' })
         .setInteractive({ useHandCursor: true })
         .on('pointerover',  () => btn.setColor('#ffe44e'))
         .on('pointerout',   () => btn.setColor('#ffffff'))

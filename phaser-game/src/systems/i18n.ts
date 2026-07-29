@@ -63,7 +63,7 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^A wild (.+) appeared!$/, m => `앗! 야생 ${m[1]}이 나타났다!`],
   [/^You caught (.+)!$/,    m => `${m[1]}을 잡았다!`],
   [/^(.+) threw a Pokéball!$/, m => `${m[1]}가 몬스터볼을 던졌다!`],
-  [/^(.+) used (.+)!$/,     m => `${m[1]}의 ${m[2]}!`],
+  [/^(.+) used (.+)!$/,     m => `${m[1]}의 ${KO_STRINGS[m[2]] ?? m[2]}!`],
   [/^(.+) is already in battle!$/, m => `${m[1]}은 이미 배틀에 나와 있어!`],
   [/^Go! (.+)!$/,           m => `가랏! ${m[1]}!`],
   [/^(.+) sent out (.+)!$/, m => `${m[1]}가 ${m[2]}을 내보냈다!`],

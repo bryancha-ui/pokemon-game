@@ -291,7 +291,7 @@ export class RivalBattleScene extends Phaser.Scene {
         .setStrokeStyle(1, typeColor, 0.8).setOrigin(0.5);
       this.movePanel.add(pill);
 
-      const btn = this.add.text(x + 6, 10, move.data.name.toUpperCase(), {
+      const btn = this.add.text(x + 6, 10, tr(move.data.name).toUpperCase(), {
         fontSize: '15px', color: '#fff', fontStyle: 'bold',
       }).setInteractive({ useHandCursor: true })
         .on('pointerover',  () => btn.setColor('#ffe44e'))
