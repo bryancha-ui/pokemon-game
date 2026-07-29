@@ -107,7 +107,7 @@ export class MenuScene extends Phaser.Scene {
       const py = (this.registry.get('lastY') as number) ?? (this.registry.get('returnY') as number) ?? 24 * 32 + 16;
       const ok = SaveManager.save(this.registry, px, py, scene);
       if (ok) saveBtn.setText(tr('💾 SAVED!')).setColor('#aaffaa');
-      else    saveBtn.setText('⚠ SAVE FAILED').setColor('#ff8888');
+      else    saveBtn.setText(tr('⚠ SAVE FAILED')).setColor('#ff8888');
       this.time.delayedCall(1800, () => saveBtn.setText('💾 SAVE').setColor('#ffe44e'));
     });
 
@@ -434,7 +434,7 @@ export class MenuScene extends Phaser.Scene {
         { fontSize: '9px', color: '#8899bb', align: 'center', wordWrap: { width: cellW - 8 } }).setOrigin(0.5, 0));
     });
 
-    const close = this.add.text(cx, cy + 205, '✕ Close', { fontSize: '14px', color: '#aaa' })
+    const close = this.add.text(cx, cy + 205, tr('✕ Close'), { fontSize: '14px', color: '#aaa' })
       .setOrigin(0.5).setInteractive({ useHandCursor: true });
     close.on('pointerover', () => close.setColor('#fff'));
     close.on('pointerout',  () => close.setColor('#aaa'));
@@ -465,7 +465,7 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    const cancel = this.add.text(cx, cy + 176, '✕ Cancel', { fontSize: '14px', color: '#aaa' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const cancel = this.add.text(cx, cy + 176, tr('✕ Cancel'), { fontSize: '14px', color: '#aaa' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     cancel.on('pointerdown', () => overlay.destroy(true));
     overlay.add(cancel);
   }
@@ -500,7 +500,7 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    const cancel = this.add.text(cx, cy + 176, '✕ Cancel', { fontSize: '14px', color: '#aaa' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const cancel = this.add.text(cx, cy + 176, tr('✕ Cancel'), { fontSize: '14px', color: '#aaa' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     cancel.on('pointerdown', () => overlay.destroy(true));
     overlay.add(cancel);
   }

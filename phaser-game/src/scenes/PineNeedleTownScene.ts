@@ -139,10 +139,10 @@ export class PineNeedleTownScene extends Phaser.Scene {
       }).setOrigin(0.5, 1).setDepth(3);
     }
     // Food stall sign
-    this.add.text(21 * TILE, 17 * TILE - 6, '🍢 Tteokbokki Stall', {
+    this.add.text(21 * TILE, 17 * TILE - 6, tr('🍢 Tteokbokki Stall'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#aa3322cc', padding: { x: 3, y: 2 },
     }).setOrigin(0.5, 1).setDepth(5);
-    this.add.text(15 * TILE, 25 * TILE, '↓ Route 2', {
+    this.add.text(15 * TILE, 25 * TILE, tr('↓ Route 2'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     if (this.registry.get('hasHighlandMap')) {

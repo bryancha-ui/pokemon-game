@@ -95,7 +95,7 @@ export class BikeShopScene extends Phaser.Scene {
     this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('🚲 Han River Bicycle Shop'), {
       fontSize: '12px', color: '#dff', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, (ROWS - 0.6) * TILE, '⬇ Exit', {
+    this.add.text(9 * TILE, (ROWS - 0.6) * TILE, tr('⬇ Exit'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
   }

@@ -214,10 +214,10 @@ export class ScholarsRoadScene extends Phaser.Scene {
     this.add.text(12 * TILE, 0.6 * TILE, this.gateOpen ? '↑ Pokémon League' : '⛩ League Gate', {
       fontSize: '10px', color: '#ffe0a0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(13 * TILE, 31.4 * TILE, '⛩ Rest Pavilion', {
+    this.add.text(13 * TILE, 31.4 * TILE, tr('⛩ Rest Pavilion'), {
       fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 57.4 * TILE, '↓ Capitol City', {
+    this.add.text(12 * TILE, 57.4 * TILE, tr('↓ Capitol City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

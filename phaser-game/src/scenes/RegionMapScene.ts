@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { REGION_NODES, RegionNode, nodeForScene, visitedNodeIds, FLY_MOVE } from '../data/RegionMap';
 import { PartySystem } from '../systems/PartySystem';
 
@@ -225,15 +226,15 @@ export class RegionMapScene extends Phaser.Scene {
     const c = this.add.container(0, 0).setDepth(100);
     c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55));
     c.add(this.add.rectangle(W / 2, H / 2, 460, 200, 0x0d1830, 0.99).setStrokeStyle(2, 0x5599dd));
-    c.add(this.add.text(W / 2, H / 2 - 58, '✈  FLY', { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    c.add(this.add.text(W / 2, H / 2 - 58, tr('✈  FLY'), { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
     c.add(this.add.text(W / 2, H / 2 - 18, `Fly to ${node.name}?\n${node.kr}`, {
       fontSize: '15px', color: '#ffffff', align: 'center', lineSpacing: 6,
     }).setOrigin(0.5));
 
-    const flyBtn = this.add.text(W / 2 - 90, H / 2 + 52, '  FLY  ', {
+    const flyBtn = this.add.text(W / 2 - 90, H / 2 + 52, tr('  FLY  '), {
       fontSize: '15px', color: '#0d1830', backgroundColor: '#ffe44e', fontStyle: 'bold', padding: { x: 14, y: 7 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.doFly(node));
-    const cancelBtn = this.add.text(W / 2 + 90, H / 2 + 52, ' CANCEL ', {
+    const cancelBtn = this.add.text(W / 2 + 90, H / 2 + 52, tr(' CANCEL '), {
       fontSize: '15px', color: '#ffffff', backgroundColor: '#33445a', padding: { x: 14, y: 7 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.dismissConfirm());
     c.add([flyBtn, cancelBtn]);

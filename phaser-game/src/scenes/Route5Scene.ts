@@ -149,13 +149,13 @@ export class Route5Scene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 58.4 * TILE, '↓ Haean City', {
+    this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Haean City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#2a5a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, '↑ Forest City', {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Forest City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#2a5a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 19 * TILE, '⛩ Forest Shrine', {
+    this.add.text(12 * TILE, 19 * TILE, tr('⛩ Forest Shrine'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -190,7 +190,7 @@ export class Route5Scene extends Phaser.Scene {
     g.fillStyle(0xffccaa); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x33221a); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(12 * TILE + 16, 25 * TILE - 12, 'Admin Chaeyeon', {
+    this.add.text(12 * TILE + 16, 25 * TILE - 12, tr('Admin Chaeyeon'), {
       fontSize: '8px', color: '#ff8899', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

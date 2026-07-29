@@ -207,8 +207,8 @@ export class StarterSelectScene extends Phaser.Scene {
     const q = this.add.text(0, -25, '', {
       fontSize: '14px', color: '#ffffff', align: 'center',
     }).setOrigin(0.5);
-    const yes = this.add.text(-60, 12, '▶ YES', { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
-    const no  = this.add.text(60,  12, '  NO',  { fontSize: '16px', color: '#888888' }).setOrigin(0.5);
+    const yes = this.add.text(-60, 12, tr('▶ YES'), { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
+    const no  = this.add.text(60,  12, tr('  NO'),  { fontSize: '16px', color: '#888888' }).setOrigin(0.5);
     this.confirmPanel.add([bg, q, yes, no]);
     this.confirmPanel.setData('q', q);
     this.confirmPanel.setData('yes', yes);

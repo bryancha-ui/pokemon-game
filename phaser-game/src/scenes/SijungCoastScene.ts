@@ -159,8 +159,8 @@ export class SijungCoastScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(9.5 * TILE, 51.4 * TILE, '↓ Wonsan', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9.5 * TILE, 0.7 * TILE, '↑ Hamhung', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9.5 * TILE, 51.4 * TILE, tr('↓ Wonsan'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9.5 * TILE, 0.7 * TILE, tr('↑ Hamhung'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(3.5 * TILE, 26 * TILE, '시중호\n(Sijung Lagoon)', { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(21.5 * TILE, 34 * TILE, '동해\nEast Sea', { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(3.5 * TILE, 12 * TILE, '함흥 평야\nHamhung Plain', { fontSize: '8px', color: '#fff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
@@ -180,7 +180,7 @@ export class SijungCoastScene extends Phaser.Scene {
     const sx = 2 * TILE + 4, sy = 1 * TILE + 8;
     sg.fillStyle(0x555a63); sg.fillRect(sx, sy, 40, 18);
     for (let i = 0; i < 3; i++) { sg.fillStyle(0x6a7078); sg.fillRect(sx + 4 + i * 13, sy - 22, 7, 24); sg.fillStyle(0xd8d8d8, 0.55); sg.fillCircle(sx + 7 + i * 13, sy - 26, 6); }
-    this.add.text(sx + 20, sy - 34, '🏭 Hamhung Steelworks', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
+    this.add.text(sx + 20, sy - 34, tr('🏭 Hamhung Steelworks'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
   }
 
   private drawTrainers() {

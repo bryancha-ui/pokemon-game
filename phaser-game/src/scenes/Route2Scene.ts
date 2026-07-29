@@ -171,7 +171,7 @@ export class Route2Scene extends Phaser.Scene {
     this.add.text(17 * TILE + 16, 20 * TILE - 4, tr('🏯 Roadside Pavilion'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
     }).setOrigin(0.5, 1).setDepth(5);
-    this.add.text(12 * TILE, 58 * TILE, '↓ Capitol City', {
+    this.add.text(12 * TILE, 58 * TILE, tr('↓ Capitol City'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(12 * TILE, 1.5 * TILE, tr('↑ Pine Needle Town'), {

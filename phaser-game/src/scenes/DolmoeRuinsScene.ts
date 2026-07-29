@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -145,7 +146,7 @@ export class DolmoeRuinsScene extends Phaser.Scene {
     g.generateTexture(key, this.W * IT, this.H * IT); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text((this.W - 1.4) * IT, 10 * IT, '→ Dolmoe City', {
+    this.add.text((this.W - 1.4) * IT, 10 * IT, tr('→ Dolmoe City'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(this.W / 2 * IT, 0.6 * IT, '🗿 고인돌 유적 — DOLMEN RUINS', {
@@ -172,7 +173,7 @@ export class DolmoeRuinsScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(10);
     g.setPosition(x, y);
     drawNpcBody(g, 0x6a5030, { hair: 0x888888, skin: 0xe8c9a0 });
-    this.add.text(x, y - 26, 'LEADER SANDOL', { fontSize: '8px', color: '#e8ddc8', backgroundColor: '#00000088', padding: { x: 2, y: 1 } })
+    this.add.text(x, y - 26, tr('LEADER SANDOL'), { fontSize: '8px', color: '#e8ddc8', backgroundColor: '#00000088', padding: { x: 2, y: 1 } })
       .setOrigin(0.5).setDepth(11).setName('__sandolLabel__');
   }
 

@@ -182,13 +182,13 @@ export class KaesongCityScene extends Phaser.Scene {
       }).setOrigin(0.5, 1).setDepth(3);
     }
 
-    this.add.text(16 * TILE, 1.4 * TILE, '⛰ Songak Mountain', {
+    this.add.text(16 * TILE, 1.4 * TILE, tr('⛰ Songak Mountain'), {
       fontSize: '10px', color: '#dfffd0', backgroundColor: '#1a3a1a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 11.4 * TILE, '🌉 Seonjukgyo', {
+    this.add.text(10 * TILE, 11.4 * TILE, tr('🌉 Seonjukgyo'), {
       fontSize: '8px', color: '#cfe8ff', backgroundColor: '#1a3a5a99', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(18 * TILE, 23.4 * TILE, '↓ Northern Circuit', {
+    this.add.text(18 * TILE, 23.4 * TILE, tr('↓ Northern Circuit'), {
       fontSize: '9px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

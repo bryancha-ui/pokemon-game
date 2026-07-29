@@ -184,10 +184,10 @@ export class RyesongValleyScene extends Phaser.Scene {
     jang.fillStyle(0x000000); jang.fillRect(-4, -30, 3, 3); jang.fillRect(1, -30, 3, 3); jang.fillRect(-3, -24, 6, 2);
     this.add.text(9 * TILE + 4, 30 * TILE - 20, '장승', { fontSize: '8px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(12 * TILE, 53.4 * TILE, '↓ Kaesong', {
+    this.add.text(12 * TILE, 53.4 * TILE, tr('↓ Kaesong'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, '↑ Nampo', {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Nampo'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

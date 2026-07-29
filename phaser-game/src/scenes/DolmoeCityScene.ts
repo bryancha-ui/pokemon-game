@@ -102,7 +102,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     this.add.text(11 * TILE, 0.5 * TILE, tr('↑ Dolmoe Mine (→ Seorae)'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(11 * TILE, 21.5 * TILE, '↓ Route 6', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 21.5 * TILE, tr('↓ Route 6'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawBuildings() {
@@ -111,13 +111,13 @@ export class DolmoeCityScene extends Phaser.Scene {
     g.fillStyle(0x6a655c); g.fillRect(3*TILE, 4*TILE, 6*TILE, 5*TILE);
     g.fillStyle(0x4a2a12); g.fillTriangle(3*TILE-4, 4*TILE, 6*TILE, 2.4*TILE, 9*TILE+4, 4*TILE);
     g.fillStyle(0x2a2018); g.fillRect(GYM.col*TILE, (GYM.row-1)*TILE, TILE, TILE);   // door
-    this.add.text(6*TILE, 3.4*TILE, '⛏ QUARRY GYM', { fontSize: '9px', color: '#e8ddc8', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(6*TILE, 3.4*TILE, tr('⛏ QUARRY GYM'), { fontSize: '9px', color: '#e8ddc8', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
     // Pokémon Center (rows 4-8, cols 14-19).
     g.fillStyle(0xe8e8ee); g.fillRect(14*TILE, 4*TILE, 6*TILE, 5*TILE);
     g.fillStyle(0xcc2233); g.fillTriangle(14*TILE-4, 4*TILE, 17*TILE, 2.4*TILE, 20*TILE+4, 4*TILE);
     g.fillStyle(0xffffff); g.fillRect(16*TILE+8, 2.9*TILE, 6, 2); g.fillRect(16*TILE+10, 2.9*TILE-2, 2, 6);
     g.fillStyle(0x225588); g.fillRect(NURSE.col*TILE, (NURSE.row-1)*TILE, TILE, TILE);   // door
-    this.add.text(17*TILE, 3.4*TILE, '✚ Pokémon Center', { fontSize: '9px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(17*TILE, 3.4*TILE, tr('✚ Pokémon Center'), { fontSize: '9px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
     // (No nurse stands outside — the Pokémon Center is enterable, with the nurse inside.)
 
     // Poké Mart (rows 4-8, cols 23-28) — an ordinary blue-roofed mart on the east row.
@@ -125,7 +125,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     g.fillStyle(0x2a6a9a); g.fillTriangle(23*TILE-4, 4*TILE, 26*TILE, 2.4*TILE, 29*TILE+4, 4*TILE);
     g.lineStyle(2, 0x11333a); g.strokeTriangle(23*TILE-4, 4*TILE, 26*TILE, 2.4*TILE, 29*TILE+4, 4*TILE);
     g.fillStyle(0x11557a); g.fillRect(MART.col*TILE, (MART.row-1)*TILE, TILE, TILE);   // door
-    this.add.text(26*TILE, 3.4*TILE, '🛒 Poké Mart', { fontSize: '9px', color: '#eaf4ff', backgroundColor: '#11557acc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(26*TILE, 3.4*TILE, tr('🛒 Poké Mart'), { fontSize: '9px', color: '#eaf4ff', backgroundColor: '#11557acc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
 
     // West gate — the road out to the great 고인돌 유적 (dolmen ruins) beyond the city.
     this.add.text(1.6 * TILE, 11.5 * TILE, '← 고인돌 유적', {
@@ -231,7 +231,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     }
     for (const t of TOWNS) {
       if (Math.hypot(this.px - (t.col * TILE + 16), this.py - (t.row * TILE + 16)) < TILE * 1.3) {
-        this.enterPrompt.setText('SPACE — Talk').setVisible(true);
+        this.enterPrompt.setText(tr('SPACE — Talk')).setVisible(true);
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
           this.cutsceneActive = true;
           this.dialog.show([t.line], () => { this.cutsceneActive = false; });

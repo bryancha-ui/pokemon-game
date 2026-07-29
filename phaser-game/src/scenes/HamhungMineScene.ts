@@ -130,7 +130,7 @@ export class HamhungMineScene extends Phaser.Scene {
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
-    this.add.text(11 * TILE, 0.6 * TILE, '↑ Hamhung', { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Hamhung'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private spawnThreat() {

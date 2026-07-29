@@ -169,13 +169,13 @@ export class HanRiverParkScene extends Phaser.Scene {
     }
 
     // Labels
-    this.add.text(23 * TILE, 1.2 * TILE, '🌉 Han River', {
+    this.add.text(23 * TILE, 1.2 * TILE, tr('🌉 Han River'), {
       fontSize: '11px', color: '#dff', backgroundColor: '#1a3a5a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(23 * TILE, 12.8 * TILE, '⛩ Riverside Pavilion', {
+    this.add.text(23 * TILE, 12.8 * TILE, tr('⛩ Riverside Pavilion'), {
       fontSize: '9px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(23 * TILE, 25.4 * TILE, '↓ Capitol City', {
+    this.add.text(23 * TILE, 25.4 * TILE, tr('↓ Capitol City'), {
       fontSize: '9px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

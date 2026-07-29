@@ -183,7 +183,7 @@ export class BaekduPassScene extends Phaser.Scene {
     this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Pine Needle Town'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, '↑ Baekdu City', {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Baekdu City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -217,7 +217,7 @@ export class BaekduPassScene extends Phaser.Scene {
       this.drawGruntSprite(g);
       this.grunts.push(g);
     }
-    this.add.text(12 * TILE + 16, 27 * TILE - 12, 'Team Suri', {
+    this.add.text(12 * TILE + 16, 27 * TILE - 12, tr('Team Suri'), {
       fontSize: '9px', color: '#ff6677', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
     // Ranger Sooyeon, arguing nearby
@@ -228,7 +228,7 @@ export class BaekduPassScene extends Phaser.Scene {
     r.fillStyle(0xffcc99); r.fillRect(-6, -20, 12, 11);
     r.fillStyle(0x3a2a18); r.fillRect(-7, -21, 14, 5);             // hat brim
     r.fillStyle(0x000000); r.fillRect(-3, -15, 2, 2); r.fillRect(1, -15, 2, 2);
-    this.add.text(8 * TILE + 16, 27 * TILE - 12, 'Ranger Sooyeon', {
+    this.add.text(8 * TILE + 16, 27 * TILE - 12, tr('Ranger Sooyeon'), {
       fontSize: '8px', color: '#9fe0a0', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

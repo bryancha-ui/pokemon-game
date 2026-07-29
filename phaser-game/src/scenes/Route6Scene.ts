@@ -135,10 +135,10 @@ export class Route6Scene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 58.4 * TILE, '↓ Forest City', {
+    this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Forest City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#2a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, '↑ Dolmoe City', {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Dolmoe City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#aa6a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

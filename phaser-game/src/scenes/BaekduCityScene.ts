@@ -151,10 +151,10 @@ export class BaekduCityScene extends Phaser.Scene {
     this.add.text(6 * TILE, 20 * TILE, tr('♨ Hot Spring Inn'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#aa5522cc', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(15 * TILE, 25.4 * TILE, '↓ Highland Pass', {
+    this.add.text(15 * TILE, 25.4 * TILE, tr('↓ Highland Pass'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text((COLS - 0.6) * TILE, 12.5 * TILE, 'Diamond Gorge →', {
+    this.add.text((COLS - 0.6) * TILE, 12.5 * TILE, tr('Diamond Gorge →'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#2a6a8a99', padding: { x: 3, y: 2 },
     }).setOrigin(1, 0.5).setDepth(5);
   }
@@ -168,7 +168,7 @@ export class BaekduCityScene extends Phaser.Scene {
     g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x101010); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0xcc2233); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(this.suriCol * TILE + 16, this.suriRow * TILE - 10, 'Team Suri', {
+    this.add.text(this.suriCol * TILE + 16, this.suriRow * TILE - 10, tr('Team Suri'), {
       fontSize: '8px', color: '#ff6677', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

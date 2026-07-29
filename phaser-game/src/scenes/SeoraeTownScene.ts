@@ -190,10 +190,10 @@ export class SeoraeTownScene extends Phaser.Scene {
     if (variant % 2 === 0) {
       g.fillStyle(0x5a9ac8); g.fillTriangle(x - 28, y - 5, x - 12, y - 18, x - 15, y + 15);
       g.fillTriangle(x + 28, y - 5, x + 12, y - 18, x + 15, y + 15);
-      this.add.text(x, y + 42, 'Snow Guardian', { fontSize: '7px', color: '#2d6178', backgroundColor: '#f0fffabb', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
+      this.add.text(x, y + 42, tr('Snow Guardian'), { fontSize: '7px', color: '#2d6178', backgroundColor: '#f0fffabb', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
     } else {
       g.fillStyle(0x6ab5d8); g.fillTriangle(x - 20, y - 42, x, y - 56, x + 20, y - 42);
-      this.add.text(x, y + 42, 'Ice Bell', { fontSize: '7px', color: '#2d6178', backgroundColor: '#f0fffabb', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
+      this.add.text(x, y + 42, tr('Ice Bell'), { fontSize: '7px', color: '#2d6178', backgroundColor: '#f0fffabb', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
     }
   }
 
@@ -201,7 +201,7 @@ export class SeoraeTownScene extends Phaser.Scene {
     const x = 38 * TILE, y = 25 * TILE;
     g.fillStyle(0x9edceb, 0.9); g.fillRect(x, y, 9 * TILE, 3 * TILE);
     g.lineStyle(2, 0xffffff, 0.85); for (let c = 0; c < 9; c++) g.lineBetween(x + c * TILE, y + 8, x + (c + 1) * TILE, y + 2 * TILE + 16);
-    this.add.text(SKATE_LINK.col * TILE, (SKATE_LINK.row - 1) * TILE, '⛸ SKATE LINK', { fontSize: '12px', color: '#24536c', fontStyle: 'bold', stroke: '#fff', strokeThickness: 2 }).setOrigin(0.5).setDepth(5);
+    this.add.text(SKATE_LINK.col * TILE, (SKATE_LINK.row - 1) * TILE, tr('⛸ SKATE LINK'), { fontSize: '12px', color: '#24536c', fontStyle: 'bold', stroke: '#fff', strokeThickness: 2 }).setOrigin(0.5).setDepth(5);
   }
 
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
@@ -270,7 +270,7 @@ export class SeoraeTownScene extends Phaser.Scene {
       return;
     }
     for (const townsperson of TOWNSFOLK) if (distance(townsperson.col, townsperson.row) < TILE * 1.25) {
-      this.enterPrompt.setText('SPACE — Talk').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Talk')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) { this.cutsceneActive = true; this.dialog.show([townsperson.line], () => { this.cutsceneActive = false; }); }
       return;
     }

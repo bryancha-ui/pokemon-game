@@ -452,7 +452,7 @@ export class WorldMapScene extends Phaser.Scene {
     }).setScrollFactor(0).setDepth(100);
 
     // Running shoes indicator
-    this.shoesText = this.add.text(8, 456, '👟 RUNNING', {
+    this.shoesText = this.add.text(8, 456, tr('👟 RUNNING'), {
       fontSize: '12px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 6, y: 3 },
     }).setScrollFactor(0).setDepth(100).setVisible(false);
 
@@ -460,7 +460,7 @@ export class WorldMapScene extends Phaser.Scene {
     this.cutsceneDialog = new DialogBox(this, 1280, 720);
 
     // Save toast notification
-    this.saveToast = this.add.text(400, 440, '💾  Game Saved', {
+    this.saveToast = this.add.text(400, 440, tr('💾  Game Saved'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099',
       padding: { x: 10, y: 5 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setAlpha(0);

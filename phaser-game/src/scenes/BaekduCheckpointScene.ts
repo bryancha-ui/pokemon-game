@@ -180,7 +180,7 @@ export class BaekduCheckpointScene extends Phaser.Scene {
     this.add.text(12 * TILE, 0.6 * TILE, this.gateOpen ? '↑ Baekdu Peak — the climb' : '⛓ The Iron Gate', {
       fontSize: '10px', color: '#ffd0d0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 45.4 * TILE, '↓ back south', {
+    this.add.text(12 * TILE, 45.4 * TILE, tr('↓ back south'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

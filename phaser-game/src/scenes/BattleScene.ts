@@ -181,7 +181,7 @@ export class BattleScene extends Phaser.Scene {
     const bg = this.add.rectangle(this.W / 2 - 80, 62, this.W * 0.78, 124, 0x111133).setStrokeStyle(1, 0xffffff);
     this.movePanel.add(bg);
 
-    const back = this.add.text(this.W - 40, 10, '← BACK', { fontSize: '14px', color: '#aaa' })
+    const back = this.add.text(this.W - 40, 10, tr('← BACK'), { fontSize: '14px', color: '#aaa' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); });
     this.movePanel.add(back);

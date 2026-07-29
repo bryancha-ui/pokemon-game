@@ -150,14 +150,14 @@ export class HaeanCityScene extends Phaser.Scene {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
-    this.add.text(15 * TILE, 25.4 * TILE, '🌊 Harbour', {
+    this.add.text(15 * TILE, 25.4 * TILE, tr('🌊 Harbour'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#1a4a8acc', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(2 * TILE, 12.5 * TILE, '← Coastal Road', {
+    this.add.text(2 * TILE, 12.5 * TILE, tr('← Coastal Road'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#2a6a8a99', padding: { x: 3, y: 2 },
     }).setOrigin(0, 0.5).setDepth(5);
     if (this.registry.get('chapter7Done')) {
-      this.add.text((COLS - 0.5) * TILE, 12.5 * TILE, 'Ancient Forest →', {
+      this.add.text((COLS - 0.5) * TILE, 12.5 * TILE, tr('Ancient Forest →'), {
         fontSize: '9px', color: '#fff', backgroundColor: '#2a6a2a99', padding: { x: 3, y: 2 },
       }).setOrigin(1, 0.5).setDepth(5);
     }

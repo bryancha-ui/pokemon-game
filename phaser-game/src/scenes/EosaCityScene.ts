@@ -230,7 +230,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
     this.add.text(this.scale.width / 2, 22, cfg.name, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     if (cfg.next) this.add.text(14 * TILE, 0.5 * TILE, '⬆ ' + cfg.next.scene.replace('Scene', ''), { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    if (cfg.prev) this.add.text(14 * TILE, (this.rows - 0.5) * TILE, '⬇ back', { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    if (cfg.prev) this.add.text(14 * TILE, (this.rows - 0.5) * TILE, tr('⬇ back'), { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
@@ -313,7 +313,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
   private checkNpcs(): boolean {
     for (const n of this.cfg.npcs ?? []) {
       if (Math.hypot(this.px - (n.col * TILE + 16), this.py - (n.row * TILE + 16)) > TILE * 1.3) continue;
-      this.enterPrompt.setText('SPACE — Talk').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Talk')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.cutsceneActive = true; this.enterPrompt.setVisible(false);
         this.dialog.show(n.lines, () => { this.cutsceneActive = false; });

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { vanishesAfterDefeat } from '../data/Villains';
@@ -142,7 +143,7 @@ export class CapitolGymScene extends Phaser.Scene {
     this.add.text(W / 2, H - IT / 2, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
 
     // "GYM" text
-    this.add.text(W / 2, IT, 'CAPITOL GYM', {
+    this.add.text(W / 2, IT, tr('CAPITOL GYM'), {
       fontSize: '11px', color: '#cc88ff', fontStyle: 'bold',
       stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
@@ -174,7 +175,7 @@ export class CapitolGymScene extends Phaser.Scene {
     // Purple aura
     g.lineStyle(2, 0xaa44ff, 0.5); g.strokeCircle(0, 0, 20);
 
-    this.add.text(x, y - 30, 'LEADER JIN', {
+    this.add.text(x, y - 30, tr('LEADER JIN'), {
       fontSize: '9px', color: '#cc88ff', fontStyle: 'bold',
       backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(10);

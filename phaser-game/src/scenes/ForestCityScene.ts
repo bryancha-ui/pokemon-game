@@ -190,7 +190,7 @@ export class ForestCityScene extends Phaser.Scene {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
-    this.add.text(15 * TILE, 25.4 * TILE, '↓ Ancient Forest', {
+    this.add.text(15 * TILE, 25.4 * TILE, tr('↓ Ancient Forest'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(15 * TILE, 0.5 * TILE, tr('↑ Route 6 · Dolmoe City'), {
@@ -206,7 +206,7 @@ export class ForestCityScene extends Phaser.Scene {
     g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0xdddddd); g.fillRect(-6, -20, 12, 4); g.fillStyle(0xeeeeee); g.fillRect(-5, -9, 10, 4);
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(this.elderCol * TILE + 16, this.elderRow * TILE - 10, 'Forest Elder', {
+    this.add.text(this.elderCol * TILE + 16, this.elderRow * TILE - 10, tr('Forest Elder'), {
       fontSize: '8px', color: '#aef0a0', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

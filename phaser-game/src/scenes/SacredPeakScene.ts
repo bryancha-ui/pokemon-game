@@ -165,7 +165,7 @@ export class SacredPeakScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, 0x141018, { hair: 0x552266 });
       g.setPosition(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE + 16);
-      this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, 'Sovereign\nClemont', {
+      this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, tr('Sovereign\nClemont'), {
         fontSize: '8px', color: '#e0a0ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }

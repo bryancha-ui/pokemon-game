@@ -204,7 +204,7 @@ export class DeptStoreScene extends Phaser.Scene {
       // Directory board
       this.add.text(2.2 * TILE, 6 * TILE, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'),
         { fontSize: '8px', color: '#334', backgroundColor: '#e8e0d0dd', padding: { x: 4, y: 3 }, lineSpacing: 2 }).setOrigin(0, 0).setDepth(5);
-      this.add.text(7.5 * TILE, 10.2 * TILE, '🚪 exit', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
+      this.add.text(7.5 * TILE, 10.2 * TILE, tr('🚪 exit'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
     }
 
     if (this.floor === 6) {
@@ -289,10 +289,10 @@ export class DeptStoreScene extends Phaser.Scene {
     const near1F = this.floor === 1 && this.near(this.clerkAt.col, this.clerkAt.row + 1, 1.4);
 
     this.prompt.setVisible(false);
-    if (nearElevator) { this.prompt.setText('SPACE — Elevator').setVisible(true); }
+    if (nearElevator) { this.prompt.setText(tr('SPACE — Elevator')).setVisible(true); }
     else if (nearClerk) { this.prompt.setText(this.floor === 6 ? 'SPACE — Vending machine' : 'SPACE — Shop').setVisible(true); }
-    else if (nearCollector) { this.prompt.setText('SPACE — Talk').setVisible(true); }
-    else if (near1F) { this.prompt.setText('SPACE — Info').setVisible(true); }
+    else if (nearCollector) { this.prompt.setText(tr('SPACE — Talk')).setVisible(true); }
+    else if (near1F) { this.prompt.setText(tr('SPACE — Info')).setVisible(true); }
 
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     if (nearElevator) { this.openElevator(); return; }
@@ -338,7 +338,7 @@ export class DeptStoreScene extends Phaser.Scene {
     const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(80);
     layer.add(this.add.rectangle(cx, cy, this.scale.width, this.scale.height, 0x000000, 0.55));
     layer.add(this.add.rectangle(cx, cy, 320, 380, 0x10142a, 0.99).setStrokeStyle(2, 0x88aacc));
-    layer.add(this.add.text(cx, cy - 158, '🛗  ELEVATOR', { fontSize: '16px', color: '#cfe', fontStyle: 'bold' }).setOrigin(0.5));
+    layer.add(this.add.text(cx, cy - 158, tr('🛗  ELEVATOR'), { fontSize: '16px', color: '#cfe', fontStyle: 'bold' }).setOrigin(0.5));
 
     for (let fl = 6, i = 0; fl >= 1; fl--, i++) {
       const y = cy - 118 + i * 40;

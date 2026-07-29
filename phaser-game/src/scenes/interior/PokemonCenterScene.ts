@@ -87,7 +87,7 @@ export class PokemonCenterScene extends BaseInteriorScene {
     // Nurse Joy (heals)
     const nurse = this.createNPCGraphic(7, 2, 0xffffff, 0xff88aa, true, 0);
     (nurse as NPC & { role?: string }).role = 'nurse';
-    this.add.text(this.tile(7, 2).x + 16, this.tile(7, 2).y - 6, 'Nurse Joy',
+    this.add.text(this.tile(7, 2).x + 16, this.tile(7, 2).y - 6, tr('Nurse Joy'),
       { fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(nurse);
@@ -95,7 +95,7 @@ export class PokemonCenterScene extends BaseInteriorScene {
     // Mart Clerk (shop)
     const clerk = this.createNPCGraphic(3, 6, 0x33aa66, 0x223322, false, 0);
     (clerk as NPC & { role?: string }).role = 'clerk';
-    this.add.text(this.tile(3, 6).x + 16, this.tile(3, 6).y - 6, 'Mart Clerk',
+    this.add.text(this.tile(3, 6).x + 16, this.tile(3, 6).y - 6, tr('Mart Clerk'),
       { fontSize: '10px', color: '#aaffcc', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(clerk);
@@ -103,7 +103,7 @@ export class PokemonCenterScene extends BaseInteriorScene {
     // PC (storage box)
     const pc = this.createNPCGraphic(13, 6, 0x4466cc, 0x112244, false, 0);
     (pc as NPC & { role?: string }).role = 'pc';
-    this.add.text(this.tile(13, 6).x + 16, this.tile(13, 6).y - 6, '💻 PC',
+    this.add.text(this.tile(13, 6).x + 16, this.tile(13, 6).y - 6, tr('💻 PC'),
       { fontSize: '10px', color: '#aaccff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(pc);

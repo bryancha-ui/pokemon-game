@@ -74,7 +74,7 @@ export class PokemonLabScene extends BaseInteriorScene {
     // Professor Song — white lab coat, greying hair — standing before the table.
     this.song = this.createNPCGraphic(7, 5, 0xffffff, 0x9a9088, false, 0);
     const p = this.tile(7, 5);
-    this.add.text(p.x + 16, p.y - 18, '🔬 Prof. Song', {
+    this.add.text(p.x + 16, p.y - 18, tr('🔬 Prof. Song'), {
       fontSize: '9px', color: '#bfe4ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(16);
     this.npcs.push(this.song);

@@ -107,10 +107,10 @@ export class JejuVentsPortScene extends Phaser.Scene {
     this.add.text(COLS * TILE / 2, 0.8 * TILE, tr('🌋 Jeju Vents Portal'), {
       fontSize: '11px', color: '#ffa0a0', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, '⬇ Jeju City', {
+    this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, tr('⬇ Jeju City'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(COLS * TILE / 2, 1.8 * TILE, '⬆ Summit Trail', {
+    this.add.text(COLS * TILE / 2, 1.8 * TILE, tr('⬆ Summit Trail'), {
       fontSize: '9px', color: '#ffaa55', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

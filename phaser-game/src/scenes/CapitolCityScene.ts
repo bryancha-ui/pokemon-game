@@ -302,7 +302,7 @@ export class CapitolCityScene extends Phaser.Scene {
     g.fillStyle(0x6a5a3a); g.fillRect(x - 22, y - 26, 6, 40); g.fillRect(x + 16, y - 26, 6, 40);
     g.fillStyle(0x8a6a3a); g.fillRect(x - 28, y - 30, 56, 8);
     g.fillStyle(0x4a3a20); g.fillRect(x - 26, y - 22, 52, 4);
-    this.add.text(x, y - 38, '⛩ Scholars\' Road', {
+    this.add.text(x, y - 38, tr('⛩ Scholars\' Road'), {
       fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(7);
   }
@@ -330,7 +330,7 @@ export class CapitolCityScene extends Phaser.Scene {
     const stopY  = this.py - TILE * 1.6;    // halts just in front of the champion
 
     const prof = this.add.graphics().setDepth(21);
-    const tag  = this.add.text(this.px, startY - 30, 'Professor Song', {
+    const tag  = this.add.text(this.px, startY - 30, tr('Professor Song'), {
       fontSize: '10px', color: '#bfe4ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(22);
     this.drawProfessor(prof, this.px, startY, 0);
@@ -571,7 +571,7 @@ export class CapitolCityScene extends Phaser.Scene {
     screen.add(this.add.rectangle(cx, cy, sw, sh, 0x0a1a2a));
     // "LIVE" badge
     screen.add(this.add.rectangle(cx - sw / 2 + 44, cy - sh / 2 + 24, 60, 24, 0xcc2222));
-    screen.add(this.add.text(cx - sw / 2 + 44, cy - sh / 2 + 24, '● LIVE', { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+    screen.add(this.add.text(cx - sw / 2 + 44, cy - sh / 2 + 24, tr('● LIVE'), { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
     // News graphic — mountains + lake
     const g = this.add.graphics().setScrollFactor(0).setDepth(151);
     g.fillStyle(0x223344); g.fillTriangle(cx - 180, cy + 60, cx - 90, cy - 60, cx, cy + 60);
@@ -735,7 +735,7 @@ export class CapitolCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, 1280, 720);
     this.add.rectangle(640, 22, 420, 34, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.locationText = this.add.text(640, 22, '🏙 Capitol City', {
+    this.locationText = this.add.text(640, 22, tr('🏙 Capitol City'), {
       fontSize: '15px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(640, 690, '', {

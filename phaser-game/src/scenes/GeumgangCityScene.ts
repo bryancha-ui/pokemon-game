@@ -135,7 +135,7 @@ export class GeumgangCityScene extends Phaser.Scene {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
-    this.add.text(15 * TILE, 25.4 * TILE, '↓ Diamond Gorge', {
+    this.add.text(15 * TILE, 25.4 * TILE, tr('↓ Diamond Gorge'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(15 * TILE, 0.6 * TILE, tr('↑ Coastal Road (Route 4)'), {
@@ -152,7 +152,7 @@ export class GeumgangCityScene extends Phaser.Scene {
     g.fillStyle(0xffccaa); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x33221a); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(this.chaeCol * TILE + 16, this.chaeRow * TILE - 12, 'Team Suri Admin', {
+    this.add.text(this.chaeCol * TILE + 16, this.chaeRow * TILE - 12, tr('Team Suri Admin'), {
       fontSize: '8px', color: '#ff8899', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

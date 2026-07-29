@@ -103,7 +103,7 @@ export class CheonjiyeonWaterfallScene extends Phaser.Scene {
     g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(COLS * TILE / 2, 0.8 * TILE, '💧 Cheonjiyeon Waterfall', {
+    this.add.text(COLS * TILE / 2, 0.8 * TILE, tr('💧 Cheonjiyeon Waterfall'), {
       fontSize: '13px', color: '#bfeef8', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, tr('⬇ Return to Jeju City'), {

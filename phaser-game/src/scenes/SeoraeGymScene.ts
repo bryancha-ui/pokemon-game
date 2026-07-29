@@ -121,7 +121,7 @@ export class SeoraeGymScene extends Phaser.Scene {
     this.add.image(0, 0, texKey).setOrigin(0, 0).setDepth(0);
 
     this.add.text(W / 2, H - IT / 2, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
-    this.add.text(W / 2, IT * 1.7, '🔔 FROSTBELL SHRINE', {
+    this.add.text(W / 2, IT * 1.7, tr('🔔 FROSTBELL SHRINE'), {
       fontSize: '11px', color: '#26506a', fontStyle: 'bold', stroke: '#fff', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
     if (this.trainers.every(t => t.defeated) && !this.registry.get('seoraeGymDefeated'))

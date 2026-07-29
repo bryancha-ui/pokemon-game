@@ -98,7 +98,7 @@ export class BeachPavilionScene extends Phaser.Scene {
     g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(COLS * TILE / 2, 0.8 * TILE, '🏖️ Beach Pavilion', {
+    this.add.text(COLS * TILE / 2, 0.8 * TILE, tr('🏖️ Beach Pavilion'), {
       fontSize: '13px', color: '#88ddff', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, tr('⬇ Return to Jeju City'), {

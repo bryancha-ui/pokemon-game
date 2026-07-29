@@ -143,7 +143,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(14 * TILE, 28.4 * TILE, '↓ Scholars\' Road', {
+    this.add.text(14 * TILE, 28.4 * TILE, tr('↓ Scholars\' Road'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -218,7 +218,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     cg.fillStyle(0xffffff); cg.fillRect(px - 4, py - 58, 8, 4); cg.fillRect(px - 2, py - 62, 4, 12);
     cg.fillStyle(0x88ccff, 0.8); cg.fillRect(px - 22, py - 36, 14, 14); cg.fillRect(px + 8, py - 36, 14, 14);
     cg.fillStyle(0x6b4a28); cg.fillRect(px - 8, py - 20, 16, 16);
-    this.add.text(px, py - 70, '🏥 Pokémon Center', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(px, py - 70, tr('🏥 Pokémon Center'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.drawAttendant(px, py, 0xff7799, 0xffffff);   // Nurse (pink)
 
     // Storage PC terminal beside the Center.
@@ -229,7 +229,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     pg.fillStyle(0x12161f); pg.fillRect(qx - 14, qy - 30, 28, 22);    // monitor body
     pg.fillStyle(0x2a8acc); pg.fillRect(qx - 11, qy - 27, 22, 16);    // screen
     pg.fillStyle(0x7fd0ff, 0.85); pg.fillRect(qx - 9, qy - 25, 9, 4); pg.fillRect(qx - 9, qy - 19, 14, 3);
-    this.add.text(qx, qy - 40, '💻 PC', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(qx, qy - 40, tr('💻 PC'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
 
     // Poké Mart stall (blue roof) behind the clerk.
     const mx = MART.col * TILE + 16, my = MART.row * TILE + 16;
@@ -238,7 +238,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     mg.fillStyle(0x2a6aaa); mg.fillTriangle(mx - 36, my - 44, mx, my - 64, mx + 36, my - 44);
     mg.fillStyle(0xffe44e); mg.fillRect(mx - 16, my - 40, 32, 8);
     mg.fillStyle(0x88ccff, 0.8); mg.fillRect(mx - 22, my - 28, 14, 12); mg.fillRect(mx + 8, my - 28, 14, 12);
-    this.add.text(mx, my - 68, '🛒 Poké Mart', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(mx, my - 68, tr('🛒 Poké Mart'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.drawAttendant(mx, my, 0x2a8a5a, 0xffe0a0);   // Mart clerk (green apron)
 
     // Atmosphere NPCs.

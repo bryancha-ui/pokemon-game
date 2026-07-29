@@ -134,7 +134,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10.5 * TILE, 29.4 * TILE, '↓ Samjiyon', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10.5 * TILE, 29.4 * TILE, tr('↓ Samjiyon'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawTower() {
@@ -158,7 +158,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     for (const cx of [bx + 12, bx + bw - 20]) { bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + 6, 10, bh - 16); bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 5, by + 6 + (bh - 16) / 2, 3); }
 
     this.add.text(10.5 * TILE, 0.6 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '10px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(6);
-    this.add.text(GATE_COL * TILE - 8, GATE_ROW * TILE + 40, 'SPACE — Enter', { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(GATE_COL * TILE - 8, GATE_ROW * TILE + 40, tr('SPACE — Enter'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 
   private drawSentries() {

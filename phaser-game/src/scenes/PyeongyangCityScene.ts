@@ -173,7 +173,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     g.fillStyle(0x50535c); g.fillTriangle(sx - 16, sBase, sx + 16, sBase, sx, sBase - 180);
     g.fillStyle(0x3c3f47); g.fillRect(sx - 18, sBase, 36, 16);
     g.fillStyle(0xd8b44a); g.fillTriangle(sx - 7, sBase - 180, sx + 7, sBase - 180, sx, sBase - 205);   // gold finial
-    this.add.text(sx, sBase + 24, 'The Grand Obelisk', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(sx, sBase + 24, tr('The Grand Obelisk'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
 
     // Bronze statue on the central plaza.
     const tx = 22 * TILE + 16, tBase = 16 * TILE;
@@ -182,7 +182,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     s.fillStyle(0x9a7b3a);                                                   // bronze figure
     s.fillRect(tx - 10, tBase - 50, 20, 52); s.fillRect(tx - 24, tBase - 38, 14, 8); s.fillRect(tx + 10, tBase - 42, 16, 8);
     s.fillCircle(tx, tBase - 58, 10);
-    this.add.text(tx, tBase + 28, 'The Great Statue', { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(tx, tBase + 28, tr('The Great Statue'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
 
     // Heroic monument arch - northern landmark
     const ax = 15.5 * TILE + 16, aBase = 8 * TILE;
@@ -191,7 +191,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     a.fillStyle(0x3a3d45); a.fillRect(ax - 30, aBase - 50, 60, 60);           // arch opening
     a.fillStyle(0x2a2c34); a.fillRect(ax - 35, aBase - 55, 70, 70);           // arch inner
     a.fillStyle(0xd8b44a); a.fillRect(ax - 3, aBase - 58, 6, 6);             // gold keystone
-    this.add.text(ax, aBase + 12, 'Triumphal Arch', { fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(ax, aBase + 12, tr('Triumphal Arch'), { fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(4);
 
     // Palace building - seat of government
     const px = 15.5 * TILE + 16, pBase = 26 * TILE;
@@ -200,7 +200,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     p.fillStyle(0x4a4d55); p.fillRect(px - 55, pBase - 55, 110, 20);          // palace upper
     p.fillStyle(0x5a5d65); p.fillRect(px - 40, pBase - 65, 80, 15);           // palace roof
     p.fillStyle(0xd8b44a); p.fillRect(px - 5, pBase - 70, 10, 10);            // palace spire
-    this.add.text(px, pBase + 16, 'The Palace', { fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(4);
+    this.add.text(px, pBase + 16, tr('The Palace'), { fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(4);
 
     this.add.text(15.5 * TILE, 4.4 * TILE, '평성 · PYEONGSEONG', {
       fontSize: '14px', color: '#ffe88a', backgroundColor: '#000000aa', padding: { x: 8, y: 3 },

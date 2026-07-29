@@ -206,10 +206,10 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.add.text(12 * TILE, 0.6 * TILE, tr('🌋 Cheonji — the summit lake'), {
       fontSize: '10px', color: '#ffd0d0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 67.4 * TILE, '↓ the gate', {
+    this.add.text(12 * TILE, 67.4 * TILE, tr('↓ the gate'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(0.6 * TILE, 34 * TILE, '← Ancient Altar', {
+    this.add.text(0.6 * TILE, 34 * TILE, tr('← Ancient Altar'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0, 0.5).setDepth(5);
   }

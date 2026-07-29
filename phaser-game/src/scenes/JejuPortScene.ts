@@ -155,7 +155,7 @@ export class JejuPortScene extends Phaser.Scene {
     g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x222222); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(this.workerCol * TILE + 16, this.workerRow * TILE - 12, 'Dock Worker', {
+    this.add.text(this.workerCol * TILE + 16, this.workerRow * TILE - 12, tr('Dock Worker'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }

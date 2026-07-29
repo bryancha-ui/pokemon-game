@@ -220,10 +220,10 @@ export class PokemonLeagueScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(9 * TILE, 0.6 * TILE, '👑 Champion\'s Hall', {
+    this.add.text(9 * TILE, 0.6 * TILE, tr('👑 Champion\'s Hall'), {
       fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 32.4 * TILE, '↓ Scholars\' Road', {
+    this.add.text(9 * TILE, 32.4 * TILE, tr('↓ Scholars\' Road'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

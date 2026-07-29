@@ -132,10 +132,10 @@ export class SeoraePassScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10 * TILE, (ROWS - 1.4) * TILE, '↓ Dolmoe Mine', {
+    this.add.text(10 * TILE, (ROWS - 1.4) * TILE, tr('↓ Dolmoe Mine'), {
       fontSize: '10px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 0.6 * TILE, '↑ Seorae Town', {
+    this.add.text(10 * TILE, 0.6 * TILE, tr('↑ Seorae Town'), {
       fontSize: '10px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

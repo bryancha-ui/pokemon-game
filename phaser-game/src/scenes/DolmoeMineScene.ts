@@ -151,10 +151,10 @@ export class DolmoeMineScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10 * TILE, (ROWS - 1.4) * TILE, '↓ Dolmoe City', {
+    this.add.text(10 * TILE, (ROWS - 1.4) * TILE, tr('↓ Dolmoe City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 0.6 * TILE, '↑ Seorae Pass', {
+    this.add.text(10 * TILE, 0.6 * TILE, tr('↑ Seorae Pass'), {
       fontSize: '10px', color: '#cfefff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(10 * TILE, 34.9 * TILE, tr('⛏ SPACE: ride the cart'), {

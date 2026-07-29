@@ -292,7 +292,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x110022).setStrokeStyle(1, 0x9933cc);
     this.movePanel.add(bg);
     this.movePanel.add(
-      this.add.text(this.W - 30, 10, '← BACK', { fontSize: '12px', color: '#aaa' })
+      this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
         .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()),
     );
     const cols = [14, 200, 390, 576];
@@ -332,7 +332,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.bagPanel = this.add.container(0, this.H - 120).setDepth(10);
     const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x110022).setStrokeStyle(1, 0x9933cc);
     this.bagPanel.add(bg);
-    this.bagPanel.add(this.add.text(this.W - 30, 10, '← BACK', { fontSize: '12px', color: '#aaa' })
+    this.bagPanel.add(this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); this.typeDialog(`What will ${this.player.name.toUpperCase()} do?`); }));
 

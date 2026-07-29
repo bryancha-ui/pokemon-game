@@ -290,20 +290,20 @@ export class RouteScene extends Phaser.Scene {
     this.add.image(0, 0, texKey).setOrigin(0, 0).setDepth(0);
 
     // Route labels (text objects are already efficient — one draw call each)
-    this.add.text(13 * TILE, 3 * TILE, '← Waterfall City', {
+    this.add.text(13 * TILE, 3 * TILE, tr('← Waterfall City'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     // Disguijar Nest sign
-    this.add.text(13 * TILE, 11 * TILE, '🪺 Disguijar Nest', {
+    this.add.text(13 * TILE, 11 * TILE, tr('🪺 Disguijar Nest'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#2a6a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(13 * TILE, 11 * TILE + 14, tr('← walk in the grass to find them'), {
       fontSize: '7px', color: '#aaddaa', backgroundColor: '#00000066', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(13 * TILE, 36 * TILE + 4, '⛰ Cave Entrance', {
+    this.add.text(13 * TILE, 36 * TILE + 4, tr('⛰ Cave Entrance'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(13 * TILE, 78 * TILE + 4, 'CAPITOL CITY →', {
+    this.add.text(13 * TILE, 78 * TILE + 4, tr('CAPITOL CITY →'), {
       fontSize: '11px', color: '#ffe44e', backgroundColor: '#000000aa', padding: { x: 5, y: 3 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -412,7 +412,7 @@ export class RouteScene extends Phaser.Scene {
       fontSize: '10px', color: '#cccccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
 
-    this.saveToast = this.add.text(400, 455, '💾 Saved', {
+    this.saveToast = this.add.text(400, 455, tr('💾 Saved'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(52).setAlpha(0);
 

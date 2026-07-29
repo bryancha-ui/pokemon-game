@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../../systems/i18n';
 import { DialogBox } from '../../ui/DialogBox';
 import { drawTrainerBody, playerDesign } from '../../data/CharacterSprite';
 import { playBgm } from '../../systems/Music';
@@ -237,7 +238,7 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, 1280, 720);
 
-    this.interactPrompt = this.add.text(400, 8, 'SPACE  to talk', {
+    this.interactPrompt = this.add.text(400, 8, tr('SPACE  to talk'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099',
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(210).setVisible(false);

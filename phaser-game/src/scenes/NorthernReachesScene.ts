@@ -219,7 +219,7 @@ export class NorthernReachesScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     this.add.text(10 * TILE, 1.4 * TILE, tr('⛰ Out of the woods → Sacred Peak'), { fontSize: '8px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 50.6 * TILE, '↓ Border tunnels', { fontSize: '9px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10 * TILE, 50.6 * TILE, tr('↓ Border tunnels'), { fontSize: '9px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawMembers() {

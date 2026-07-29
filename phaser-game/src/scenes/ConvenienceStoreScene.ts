@@ -91,13 +91,13 @@ export class ConvenienceStoreScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
     const cg = this.add.graphics().setDepth(8); drawNpcBody(cg, 0xd85a3a, { hair: 0x2a2622 });
     cg.setPosition(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 16 + 20);
-    this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, 'Store Clerk', {
+    this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, tr('Store Clerk'), {
       fontSize: '8px', color: '#ffd0a0', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);
     this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('🏪 Han River Convenience Store'), {
       fontSize: '12px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, (ROWS - 0.6) * TILE, '⬇ Exit', {
+    this.add.text(9 * TILE, (ROWS - 0.6) * TILE, tr('⬇ Exit'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
   }

@@ -140,10 +140,10 @@ export abstract class CliffClimbScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 42.4 * TILE, '↓ back down', {
+    this.add.text(12 * TILE, 42.4 * TILE, tr('↓ back down'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(11 * TILE, 0.6 * TILE, '↑ higher', {
+    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ higher'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#aa6a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }

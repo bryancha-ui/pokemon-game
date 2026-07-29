@@ -166,10 +166,10 @@ export class AhobiryongPassScene extends Phaser.Scene {
     for (let i = 0; i < 5; i++) { cg.fillStyle(i % 2 ? 0x7a7064 : 0x8f867a, 1); const w = 22 - i * 3.5; cg.fillEllipse(cx, cy - i * 7, w, 6); }
     this.add.text(cx, cy - 44, '돌탑', { fontSize: '8px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(11.5 * TILE, 51.4 * TILE, '↓ Nampo', {
+    this.add.text(11.5 * TILE, 51.4 * TILE, tr('↓ Nampo'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(11.5 * TILE, 0.7 * TILE, '↑ Wonsan', {
+    this.add.text(11.5 * TILE, 0.7 * TILE, tr('↑ Wonsan'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
