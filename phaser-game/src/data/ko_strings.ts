@@ -67,6 +67,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   '노스단 Sovereign-Claimant': '노스단 군주 참칭자',
   'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
   '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
+  'Artist Sora': '화가 소라',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -1042,6 +1043,29 @@ export const KO_STRINGS: Record<string, string> = {
   '▶ Chapter 11 complete. Phase 2: Northern League — COMPLETE ✓': '▶ 11장 완료. 2막: 북방 리그 — 완료 ✓',
   'Post-game begins: The world is yours to explore, and some say the 어사대 still stirs in the unreached corners of the realm.':
     '포스트게임 시작: 세계는 네가 탐험할 몫이고, 어떤 이들은 어사대가 아직 닿지 않은 세상의 구석에서 꿈틀댄다고 말한다.',
+
+  // ── Route 3 / Kaesong / Pine Needle Studio / Kaema Plateau ──
+  'A woman in a dark, silver-trimmed coat blocks the gorge. This is no Team Suri grunt.':
+    '은빛 테두리의 어두운 코트를 입은 여자가 협곡을 막는다. 이건 수리단 조무래기가 아니다.',
+  'Commander Ryeo: We have no quarrel with you. Step aside.': '사령관 려: 너와는 다툴 일 없어. 비켜.',
+  '어사대장 Hyeon presents a small bronze horse-tablet — a 마패.': '어사대장 현이 작은 청동 말 패 하나를 내민다 — 마패다.',
+  '🐎 You received the Kaesong 마패! (1 of 8 the Northern League requires.)':
+    '🐎 개성 마패를 받았다! (북방 리그에 필요한 8개 중 1개.)',
+  '어사대장 Hyeon: Seven Chiefs remain, across the northern provinces. Earn all eight and the League gate at the far north will know you by them.':
+    '어사대장 현: 북방 지방 곳곳에 일곱 어사대장이 남아 있다. 여덟을 모두 얻으면 저 먼 북쪽의 리그 관문이 그것으로 널 알아볼 것이다.',
+  'The Seonjukgyo bridge arches over the stream toward the 어사대 Hall, once a Confucian academy.':
+    '선죽교가 개울 위로 아치를 그리며 어사대 전당으로 이어진다, 한때 성균관이었던 곳.',
+  'Take it back to Artist Sora!': '화가 소라에게 돌려주자!',
+  'Artist Sora: Please, take these — a TM for Calm Mind, and a hand-painted map of the highland region.':
+    '화가 소라: 이걸 받아줘 — 자기암시 기술머신하고, 손으로 그린 고원 지방 지도야.',
+  '📀 Received TM — Calm Mind!  (Check your Bag to teach it.)': '📀 기술머신 — 자기암시를 받았다!  (가방에서 가르칠 수 있어.)',
+  '🗺️ Received the Highland Map!': '🗺️ 고원 지도를 받았다!',
+  'Artist Sora: One more thing... while searching, did you see those black markings near the northern pass?':
+    '화가 소라: 한 가지 더... 찾는 동안, 북쪽 고갯길 근처의 그 검은 표식들 봤어?',
+  'I patrol the highland fields for poachers. The frost mist rolls in fast up here — travellers get lost. But you? You battle first.':
+    '난 밀렵꾼을 잡으러 고원 들판을 순찰해. 여긴 서리 안개가 빨리 몰려와 — 여행자들이 길을 잃지. 근데 너? 넌 먼저 배틀이다.',
+  '❄ 서리 안개 (frost mist)': '❄ 서리 안개',
+  '⛰ Kaema Plateau (개마고원)': '⛰ 개마고원',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
