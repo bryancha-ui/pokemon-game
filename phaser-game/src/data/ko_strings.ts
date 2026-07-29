@@ -65,6 +65,8 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Bug Catcher': '벌레잡이 소년', 'Hiker': '등산가', 'Youngster': '꼬마', 'Team Suri': '수리단',
   'Watchtower Sentry': '망루 감시병', 'Seollan': '설란', '노스단 Soldier': '노스단 병사',
   '노스단 Sovereign-Claimant': '노스단 군주 참칭자',
+  'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
+  '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -893,6 +895,62 @@ export const KO_STRINGS: Record<string, string> = {
     '어사대의 수장이 만족했다. 결계가 열릴 거야. 함께 오르자, 챔피언.',
   '...Impossible. The throne was ours to take — the pantheon, the peninsula, all of it... (The 어사대 close in around the fallen claimant.)':
     '...말도 안 돼. 옥좌는 우리 것이었어 — 신들도, 반도도, 전부 다... (어사대가 쓰러진 참칭자를 에워싼다.)',
+
+  // ── Forest Shrine (lullaby quest, cont.) ──
+  'Heart first, then Dusk, then Dawn. Let the old lullaby lead you.': '먼저 중심, 그다음 황혼, 그다음 새벽. 오래된 자장가가 널 이끌게 하렴.',
+  'The vines guarding the inner altar loosen and draw back.': '안쪽 제단을 지키던 덩굴이 느슨해지며 물러난다.',
+  'Beyond them, something small and sorrowful drifts in the candlelight... still keeping the rhythm.':
+    '그 너머, 작고 슬픈 무언가가 촛불 속을 떠돈다... 여전히 박자를 지키면서.',
+  "Traveler — you carry the Keeper's seal. Then perhaps the forest sent you.":
+    '나그네여 — 그대는 수호자의 인장을 지녔군. 그렇다면 어쩌면 숲이 그대를 보낸 것이겠지.',
+  'Our 목탁 is gone. For a hundred years its beat sang the tree-spirits to sleep.':
+    '우리의 목탁이 사라졌소. 백 년 동안 그 소리가 나무 정령들을 잠재웠는데.',
+  'Without it the Ancient Forest wakes in grief. The spirits you see are not cruel — only frightened.':
+    '그것 없이는 고목 숲이 슬픔 속에 깨어나오. 그대가 보는 정령들은 잔인한 게 아니라 — 그저 겁에 질린 것이오.',
+  'The thief fled to the inner altar, but the roused guardians bar the aisle, and the prayer-gate is sealed.':
+    '도둑은 안쪽 제단으로 달아났지만, 깨어난 수호령들이 통로를 막고, 기도의 문이 봉인되었소.',
+
+  // ── Jeju Vents (ascent, cont.) ──
+  '🌋 Jeju Vents — The Ascent (제주 분화구)': '🌋 제주 분화구 — 등정',
+  'The vent trail rises sharply from the port — a long, switchbacked climb through lava and ash.':
+    '분화구 길이 항구에서 가파르게 솟는다 — 용암과 재를 지나는 길고 구불구불한 오르막.',
+  'For the Director!': '국장님을 위하여!',
+  'The vent summit is quiet — only wind, steam and black rock. Nothing stirs here yet.':
+    '분화구 정상은 고요하다 — 오직 바람, 김, 검은 바위뿐. 아직 아무것도 움직이지 않는다.',
+  'Commander Ryeo: Tighten the restraint field! Her wings can neutralize the Cheonji energy — secure her and the weapon completes itself even without the lake!':
+    '사령관 려: 억제장을 조여! 저 나방의 날개는 천지 에너지를 중화할 수 있어 — 저것을 확보하면 호수 없이도 무기가 완성된다!',
+  '노스단 Operative: Commander, her output is climbing—': '노스단 대원: 사령관님, 저것의 출력이 치솟고 있습니다—',
+  'Commander Ryeo staggers backward, her Pokémon recalled. She looks at the towering moth beside you — at the glow of her wings — and something breaks in her expression.':
+    '사령관 려가 비틀거리며 물러서고, 포켓몬을 회수한다. 네 곁에 우뚝 선 나방을 바라본다 — 그 날개의 빛을 — 그러자 그녀의 표정에서 무언가가 무너진다.',
+  'Prof. Song: Reach the Hanbando League, prove yourself champion. Then the world opens up. The north has lessons too.':
+    '송 박사: 한반도 리그에 도달해, 챔피언임을 증명해. 그러면 세계가 열릴 거야. 북쪽에도 배울 것들이 있단다.',
+
+  // ── Baekdu Checkpoint (노스단 garrison) ──
+  'The plane sets down on a wind-scoured snowfield at the foot of Baekdu. The highland pass ahead has been sealed — a fortified 노스단 checkpoint blocks the trail, with an iron gate, watchtowers, and searchlights sweeping the snow.':
+    '비행기가 백두산 발치의 바람에 깎인 설원에 내려앉는다. 앞쪽 고원 고갯길은 봉쇄되었다 — 요새화된 노스단 검문소가 철문, 망루, 눈밭을 훑는 탐조등과 함께 길을 막고 있다.',
+  'The southern road ends at this gate. You should have turned back.': '남쪽 길은 이 문에서 끝난다. 돌아섰어야 했어.',
+  'Hold the line! Nothing reaches the towers!': '전선을 사수하라! 아무것도 탑에 닿지 못하게!',
+  'The east light stays lit. Come and put it out.': '동쪽 조명은 켜져 있다. 와서 꺼봐.',
+  '노스단 Garrison Officer: This pass is closed by order of the Commander. The southern road ends here. There is nothing past this gate but the future of the north.':
+    '노스단 수비대 장교: 이 고갯길은 사령관의 명으로 폐쇄됐다. 남쪽 길은 여기서 끝이야. 이 문 너머엔 오직 북방의 미래뿐이다.',
+  "Chaeyeon: This is a full garrison — they've dug in. We push through one position at a time, take the watchtowers, and force the gate. Stay close. I'll keep your team standing.":
+    '채연: 완전한 수비대야 — 진지를 구축했어. 한 거점씩 밀고 나가, 망루를 점령하고, 문을 강행 돌파하자. 바짝 붙어. 네 팀은 내가 계속 세워둘게.',
+  'Gate Captain Seollan: My searchlights still sweep this courtyard. Cut them both before you dare approach my gate.':
+    '문지기 대장 설란: 내 탐조등이 아직 이 안뜰을 훑고 있다. 감히 내 문에 다가오기 전에 둘 다 꺼라.',
+
+  // ── Dolmoe Ruins (대장승 Daejangseung) ──
+  'The great sealed capstone splits with a groan like the mountain waking...': '거대한 봉인된 덮개돌이 산이 깨어나는 듯한 신음과 함께 갈라진다...',
+  'From the broken dolmen rises 대장승 Daejangseung — a towering guardian-totem of the ancestors, eyes blazing, furious at the desecration.':
+    '부서진 고인돌에서 대장승이 일어선다 — 조상들의 우뚝 솟은 수호 토템, 눈을 이글거리며, 신성모독에 분노한다.',
+  '대장승 Daejangseung looms over the shattered dolmen, radiating ancient wrath.': '대장승이 부서진 고인돌 위로 우뚝 솟아, 태고의 분노를 내뿜는다.',
+  'Daejangseung: (It fixes its blazing gaze on you — soothe it in battle, or catch it with a Poké Ball!)':
+    '대장승: (이글거리는 시선을 네게 고정한다 — 배틀로 달래거나, 몬스터볼로 잡아라!)',
+  'Spent and settled, 대장승 Daejangseung sinks back into the mended dolmen, its wrath eased. The ruins fall quiet.':
+    '기운을 다하고 가라앉은 대장승이 아문 고인돌 속으로 도로 잠긴다, 분노가 누그러진 채. 폐허가 고요해진다.',
+  'Sandol: The 노스단 will answer for this another day. The ancestors rest — thanks to you.':
+    '산돌: 노스단은 언젠가 이 일에 대가를 치를 거야. 조상들은 안식한다 — 네 덕분에.',
+  "Sandol: Come to the Quarry when you're ready. A challenger who guards the old stones has earned my full attention.":
+    '산돌: 준비되면 채석장으로 와. 옛 돌을 지킨 도전자는 내 온전한 관심을 얻을 자격이 있지.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
