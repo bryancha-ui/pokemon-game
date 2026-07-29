@@ -952,6 +952,65 @@ export const KO_STRINGS: Record<string, string> = {
   "Sandol: Come to the Quarry when you're ready. A challenger who guards the old stones has earned my full attention.":
     '산돌: 준비되면 채석장으로 와. 옛 돌을 지킨 도전자는 내 온전한 관심을 얻을 자격이 있지.',
 
+  // ══ Capitol hub: champion return → Fly → northern invite → reunion → Part II ══
+  'The cause was just. The method was wrong. I know the difference now.': '대의는 옳았어. 방법이 틀렸지. 이제 그 차이를 알아.',
+  'Freed from the matrix, 풍백, 우사, and 운사 return to roaming the wild peaks — Wind on the high ridges, Rain in the storm valleys, Clouds at the cloud-wreathed summits.':
+    '매트릭스에서 풀려난 풍백, 우사, 운사가 야생의 봉우리로 돌아가 떠돈다 — 바람은 높은 능선에, 비는 폭풍의 골짜기에, 구름은 구름에 감긴 정상에.',
+  "Professor Song: There's one road left to walk. The Hanbando Pokémon League sits beyond the mountains — and Scholars' Road begins right here, behind the palace where your journey started.":
+    '송 박사: 이제 걸어야 할 길이 하나 남았어. 한반도 포켓몬 리그가 산 너머에 있고 — 선비의 길이 바로 여기, 네 여정이 시작된 궁궐 뒤에서 시작돼.',
+  "Professor Song: The HM stays in your Bag — teach Fly to any Flying-type. Then open the Town Map, pick a city you've visited, and Fly straight there.":
+    '송 박사: 비전머신은 가방에 남아 있어 — 비행 타입 아무에게나 하늘을날기를 가르쳐. 그런 다음 마을 지도를 열어, 가본 도시를 골라 곧장 날아가.',
+  "Professor Song: And there's something else. Word from beyond the northern border — the Northern League, and the eight 어사대 provinces that guard the road to it. They've heard of you.":
+    '송 박사: 그리고 한 가지 더. 북쪽 국경 너머에서 소식이 왔어 — 북방 리그, 그리고 그곳으로 가는 길을 지키는 여덟 어사대 지방. 그들이 네 소문을 들었대.',
+  "Professor Song: They say a coach runs from Waterfall City now, all the way up to Kaesong — first of the eight. If you mean to go north, that bus is how you'll get there. Go — see the region you saved, and the one beyond it.":
+    '송 박사: 폭포 시티에서 개성까지 — 여덟 곳 중 첫 번째까지 버스가 다닌다더군. 북쪽으로 갈 생각이면 그 버스로 가면 돼. 가 — 네가 구한 지방을, 그리고 그 너머의 지방을 보렴.',
+  'Champion Hwangeum: ...You actually did it. You beat Taewang. Three years I carried that loss — you lifted it clean off me. Thank you.':
+    '챔피언 황금: ...정말 해냈군. 태왕을 이기다니. 삼 년간 그 패배를 짊어졌는데 — 네가 깨끗이 걷어내 줬어. 고마워.',
+  "Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Hanbando's history.":
+    '송 박사: 리그 둘, 남과 북. 한반도 역사를 통틀어 너 같은 트레이너는 없었어.',
+  "Rival: I always said I'd catch up to you someday. ...Yeah, I'm nowhere close. And honestly? I have never been prouder to lose.":
+    '라이벌: 언젠가 널 따라잡겠다고 늘 말했지. ...그래, 근처도 못 갔어. 그리고 솔직히? 이렇게 자랑스럽게 진 적은 없어.',
+  'Admin Chaeyeon: Even the people you once fought stood in this crowd tonight. The region you healed came out for you.':
+    '간부 채연: 네가 한때 맞서 싸운 사람들조차 오늘 밤 이 인파 속에 서 있었어. 네가 치유한 지방이 널 위해 나온 거야.',
+  'Leader Byeoksan: Every Gym in Hanbando shut its doors today. Tonight — we drink to the Champion of Champions!':
+    '관장 벽산: 오늘 한반도의 모든 체육관이 문을 닫았어. 오늘 밤 — 챔피언 중의 챔피언을 위해 건배하자!',
+  'The plaza erupts. Lanterns go up over the Han River, the markets roll out food, and music starts.':
+    '광장이 터져 나온다. 한강 위로 등불이 오르고, 시장은 음식을 내오고, 음악이 시작된다.',
+  '🎉  The Capitol throws a party in your honour!': '🎉  수도가 너를 기리는 파티를 연다!',
+  'Hwangeum: For one night — no titles, no battles. Just us and the region we love. Eat. Dance. You earned this.':
+    '황금: 하룻밤만은 — 직함도, 배틀도 없이. 그저 우리와 우리가 사랑하는 지방뿐. 먹고. 춤춰. 넌 이걸 누릴 자격이 있어.',
+  "Rival: Come on, Champion — one last race. First to the fountain! ...For old times' sake.":
+    '라이벌: 자, 챔피언 — 마지막으로 한 판 달리기. 분수까지 먼저! ...옛정을 봐서.',
+  'The night blurs into music and light. For the first time since your journey began, there is nothing left to fight for. Only this.':
+    '밤이 음악과 빛 속으로 흐려진다. 여정을 시작한 이래 처음으로, 싸워야 할 것이 아무것도 없다. 오직 이것뿐.',
+  "📟 Your Pokédex buzzes before you're even fully awake — an incoming call from Professor Song.":
+    '📟 채 잠에서 깨기도 전에 도감이 울린다 — 송 박사의 전화다.',
+  'Prof. Song (over the Pokédex, quietly): Champion. I let you have your night — you deserved a hundred of them. But those reports I mentioned...':
+    '송 박사 (도감 너머로, 조용히): 챔피언. 너에게 그 밤을 누리게 했어 — 백 번은 누릴 자격이 있었으니까. 하지만 내가 말했던 그 보고들 말이야...',
+  'Prof. Song: Something is stirring in the sealed northern reaches. 노스단 is moving again — and this time they reach for something far older than the Spirit of Cheonji.':
+    '송 박사: 봉인된 북방 관문에서 무언가 꿈틀대고 있어. 노스단이 다시 움직이고 있어 — 이번엔 천지의 정령보다 훨씬 오래된 무언가를 노리고 있어.',
+  "Prof. Song: Rest today. Tomorrow, the last road begins. I'll call again when it's time.  (To be continued…)":
+    '송 박사: 오늘은 쉬어. 내일, 마지막 길이 시작돼. 때가 되면 다시 연락할게.  (다음에 계속…)',
+  "Prof. Song (over the Pokédex, grim): 노스단. Again — but bigger. With Commander Ryeo imprisoned, someone new has taken the banner, and they've abandoned the old plan entirely.":
+    '송 박사 (도감 너머로, 심각하게): 노스단이야. 또 — 하지만 더 커졌어. 사령관 려가 투옥되자, 누군가 새로 깃발을 잡았고, 옛 계획을 완전히 버렸어.',
+  "Prof. Song: I'm sending an image to your Pokédex now — an old scroll. A radiant figure descending, three spirits at its side. They reach for the one power above all others. 환웅 — Hwanung, the Sovereign Who Descended.":
+    '송 박사: 지금 네 도감으로 이미지를 보내고 있어 — 오래된 두루마리야. 세 정령을 곁에 두고 강림하는 빛나는 존재. 그들은 무엇보다 위대한 단 하나의 힘을 노려. 환웅 — 강림한 군주.',
+  'Prof. Song: If 노스단 captures Hwanung, they command the very force that shaped the region — north and south, in a single stroke.':
+    '송 박사: 노스단이 환웅을 잡으면, 이 지방을 빚어낸 바로 그 힘을 손에 넣어 — 남과 북을, 단번에.',
+  'Prof. Song: But the Sovereign only descends for one who has gathered his three attendants — 풍백 the Wind, 우사 the Rain, 운사 the Clouds. Find and catch them before 노스단 does.':
+    '송 박사: 하지만 군주는 세 시종을 모은 자에게만 강림해 — 바람의 풍백, 비의 우사, 구름의 운사. 노스단보다 먼저 그들을 찾아 잡아.',
+  "Prof. Song: One more thing. The northern reaches are guarded by the 어사대 — the Royal Inspectorate. They trust outsiders even less than 노스단 does. You'll have to earn them, city by city.":
+    '송 박사: 한 가지 더. 북방 관문은 어사대 — 왕실 감찰부가 지켜. 그들은 노스단보다도 외지인을 안 믿어. 도시 하나하나 신뢰를 얻어야 할 거야.',
+  "Prof. Song: Ready the strongest team you have ever fielded, then take the road north. I'll stay on the Pokédex the whole way. Shall we go?":
+    '송 박사: 네가 꾸린 가장 강한 팀을 준비하고, 북쪽 길에 올라. 가는 내내 내가 도감으로 함께할게. 갈까?',
+  '📟 Your Pokédex buzzes — Professor Song.': '📟 도감이 울린다 — 송 박사.',
+  'Prof. Song (over the Pokédex): The northern reaches are waiting, Champion — and 노스단 is already climbing toward the shrines. Ready to head north?':
+    '송 박사 (도감 너머로): 북방 관문이 기다리고 있어, 챔피언 — 그리고 노스단은 이미 사당을 향해 오르고 있어. 북쪽으로 갈 준비됐어?',
+  '❄  Beyond the border tunnels — into the Northern Reaches…': '❄  국경 터널 너머 — 북방 관문으로…',
+  'NEWS: Researchers from the Hanbando Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...':
+    '뉴스: 한반도 포켓몬 연구소의 연구원들이 천지 호수 근처의 희귀 포켓몬 이동과 연관된 패턴을 조사하고 있습니다...',
+  'Route 2 is now open to the NORTH of the city.': '이제 도시 북쪽으로 2번 도로가 열렸다.',
+
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
   'SPACE to advance': 'SPACE: 넘기기',
