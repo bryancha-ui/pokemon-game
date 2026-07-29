@@ -265,6 +265,14 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
     m => `송 박사: 이 활기찬 젊은 트레이너가 네 라이벌이 될 거야, ${m[1]}. 그 아이의 이름은?`],
   [/^Prof\. Song: Now you're all set, (.+)! (.+) is waiting to see how far you'll go\. I hope you enjoy your adventure!$/,
     m => `송 박사: 이제 다 됐구나, ${m[1]}! ${m[2]}가 네가 얼마나 멀리 갈지 지켜보고 있어. 즐거운 모험이 되길 바란다!`],
+  // Waterfall City — rival departure cutscene (speaker is the rival's chosen name)
+  [/^(.+): Hey, (.+)! Stop right there\.$/,        m => `${S(m[1])}: 야, ${m[2]}! 거기 서.`],
+  [/^(.+): You think you can just leave town with (.+)\?$/, m => `${S(m[1])}: 그 ${P(m[2])} 데리고 그냥 마을을 뜰 수 있을 것 같아?`],
+  [/^(.+): I chose (.+)\.\nWe have both been waiting for this\.$/, m => `${S(m[1])}: 난 ${P(m[2])}(으)로 정했어.\n우리 둘 다 이 순간을 기다려왔잖아.`],
+  // Waterfall City — Mom (home) and Prof. Song (lab), embedding the starter's name
+  [/^Mom: So you chose (.+)! I'm so proud of you\.$/, m => `엄마: ${P(m[1])}(으)로 정했구나! 정말 자랑스러워.`],
+  [/^Prof\. Song: How is (.+) settling in\? A fine choice — I can tell you two already trust each other\.$/,
+    m => `송 박사: ${P(m[1])}(은)는 잘 적응하고 있니? 훌륭한 선택이야 — 너희 둘은 벌써 서로를 믿고 있는 게 보이는구나.`],
 ];
 
 export function tr(en: string): string {

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, t } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -475,7 +475,7 @@ export class WorldMapScene extends Phaser.Scene {
 
   private addLabels() {
     const label = (text: string, col: number, row: number) =>
-      this.add.text(col * TILE + TILE / 2, row * TILE + TILE / 2, text, {
+      this.add.text(col * TILE + TILE / 2, row * TILE + TILE / 2, tr(text), {
         fontSize: '8px', color: '#000', backgroundColor: '#ffffffaa',
         padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(5);
@@ -645,7 +645,8 @@ export class WorldMapScene extends Phaser.Scene {
     }
 
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${this.buildingLabel(near)}`).setVisible(true);
+      const lbl = this.buildingLabel(near);
+      this.enterPrompt.setText(t(`SPACE — Enter ${lbl}`, `SPACE — ${lbl} 입장`)).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         this.registry.set('returnX', near.doorCol * TILE + TILE / 2);
         this.registry.set('returnY', (near.doorRow + 1) * TILE + TILE / 2);
@@ -746,6 +747,6 @@ export class WorldMapScene extends Phaser.Scene {
 
   /** A building's display label — the rival's house is named after the (gender-based) rival. */
   private buildingLabel(b: BuildingDef): string {
-    return b.id === 'rival' ? `${rivalTrainerName(this.registry)}'s House` : b.label;
+    return b.id === 'rival' ? `${rivalTrainerName(this.registry)}${t("'s House", '네 집')}` : tr(b.label);
   }
 }

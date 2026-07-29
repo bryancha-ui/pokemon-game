@@ -209,6 +209,19 @@ export const KO_SPEAKERS: Record<string, string> = {
 };
 
 export const KO_STRINGS: Record<string, string> = {
+  'Waterfall': '폭포',
+  // ── Waterfall City — rival-home / cutscene NPC lines ──
+  'We battle. Right here, right now!': '배틀하자. 바로 여기서, 지금 당장!',
+  'Oh, it\'s you. You finally got started?': '오, 너구나. 드디어 시작한 거야?',
+  'I\'ve been training every day.\nDon\'t expect it to be easy.': '난 매일 훈련해왔어.\n쉬울 거라고 기대하지 마.',
+  'My Pokémon will be the strongest.\nCount on it.': '내 포켓몬이 제일 강해질 거야.\n장담하지.',
+  'Still here? Go train.': '아직도 여기 있어? 가서 훈련해.',
+  'When we battle, I won\'t hold back.': '우리가 배틀할 땐, 봐주지 않을 거야.',
+  'I heard you battled near the waterfall.': '폭포 근처에서 배틀했다며.',
+  'Don\'t get overconfident.': '너무 자만하지 마.',
+  '...What? Stop staring at my trophies.': '...뭐? 내 트로피 그만 쳐다봐.',
+  'Go get your own.': '네 것도 가서 따와.',
+
   // ── Signpost / UI / move labels (auto-added) ──
   'Body Slam': '몸통박치기',
   'Hyper Beam': '파괴광선',
