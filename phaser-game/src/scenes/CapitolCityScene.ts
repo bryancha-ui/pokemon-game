@@ -76,6 +76,11 @@ function buildCityMap(): CTile[][] {
   for (let c = 30; c < 42; c++) map[5][c] = PL;
   for (let c = 30; c < 42; c++) map[6][c] = PL;
 
+  // North passage: a clear road on the LEFT of the gym running up to the Route 2
+  // gate, so the way north is obvious and separate from the gym on the right.
+  fill(0, 9, 18, 13, R);            // left N-S passage (rows 0-17, cols 9-12)
+  for (let c = 22; c < 26; c++) { map[0][c] = TR; map[1][c] = TR; }  // close old central opening
+
   // ── Tower district (rows 18-33) ──────────────────────────────────────────
   fill(18, 2, 33, CCOLS - 2, SW);
   fill(19, 31, 33, 44, T);          // Capitol Tower
@@ -218,8 +223,9 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
   public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
-  /** Only these named landmark GLBs rise in 3D — no generic filler boxes. */
-  public onlyNamedBuildings = true;
+  /** Landmarks use their named GLBs; the residential district's apartment blocks
+   *  still rise as procedural 3D buildings (keep the district's 3D design). */
+  public onlyNamedBuildings = false;
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;

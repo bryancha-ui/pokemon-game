@@ -725,7 +725,10 @@ export function buildTerrain(
       if (c < 0 || r < 0 || c >= cols || r >= rows) return false;
       if (cells[r * cols + c] !== 'flat') return false;
       const hsl = rgbToHsl(...cellColors[r * cols + c]);
-      return hsl.s < 0.18 && hsl.l > 0.18 && hsl.l < 0.55;
+      // Real asphalt is a mid-grey; the lower bound is raised so a dark cave
+      // floor (kept walkable via caveFloorHint) is never mistaken for a road —
+      // otherwise buses spawned inside Route 1's cave.
+      return hsl.s < 0.18 && hsl.l > 0.32 && hsl.l < 0.55;
     };
     for (let r = 2; r < rows - 2 && spots.length < 6; r += 3) {
       for (let c = 2; c < cols - 2 && spots.length < 6; c += 3) {
