@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { ITEMS, ItemDef, Inventory, formatMoney } from '../systems/Items';
+import { t, tr } from '../systems/i18n';
 
 /** Default stock sold in town marts. */
 const STOCK = ['potion', 'superpotion', 'hyperpotion', 'antidote', 'paralyzeheal', 'fullheal',
@@ -38,19 +39,19 @@ export class ShopScene extends Phaser.Scene {
     this.cameras.main.fadeIn(150);
     this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x07070f, 0.97);
 
-    this.add.text(this.W / 2, 36, this.shopTitle, {
+    this.add.text(this.W / 2, 36, tr(this.shopTitle), {
       fontSize: '24px', color: '#66ddaa', fontStyle: 'bold', stroke: '#113322', strokeThickness: 4,
     }).setOrigin(0.5);
     this.moneyText = this.add.text(this.W - 30, 36, '', { fontSize: '18px', color: '#ffe44e' }).setOrigin(1, 0.5);
 
-    this.add.text(30, 36, '✕ EXIT', { fontSize: '15px', color: '#aaa' })
+    this.add.text(30, 36, t('✕ EXIT', '✕ 나가기'), { fontSize: '15px', color: '#aaa' })
       .setOrigin(0, 0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.close())
       .on('pointerover', function (this: Phaser.GameObjects.Text) { this.setColor('#fff'); })
       .on('pointerout',  function (this: Phaser.GameObjects.Text) { this.setColor('#aaa'); });
 
     this.feedbackText = this.add.text(this.W / 2, this.H - 28, '', { fontSize: '14px', color: '#aaffaa' }).setOrigin(0.5);
-    this.add.text(this.W / 2, this.H - 8, 'Click BUY ×1 or BUY ×5   ·   ESC to exit', { fontSize: '11px', color: '#778' }).setOrigin(0.5);
+    this.add.text(this.W / 2, this.H - 8, t('Click BUY ×1 or BUY ×5   ·   ESC to exit', '구매 ×1 또는 구매 ×5 클릭   ·   ESC로 나가기'), { fontSize: '11px', color: '#778' }).setOrigin(0.5);
 
     // Item rows
     const startY = 86, rowH = 52;
@@ -82,7 +83,7 @@ export class ShopScene extends Phaser.Scene {
   private makeBuyButton(x: number, y: number, def: ItemDef, qty: number) {
     const btn = this.add.rectangle(x, y, 96, 30, 0x1a3a5a).setStrokeStyle(1, 0x3a6aaa)
       .setInteractive({ useHandCursor: true });
-    const lbl = this.add.text(x, y, `BUY ×${qty}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    const lbl = this.add.text(x, y, `${t('BUY', '구매')} ×${qty}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     btn.on('pointerover', () => btn.setFillStyle(0x2a5a8a));
     btn.on('pointerout',  () => btn.setFillStyle(0x1a3a5a));
     btn.on('pointerdown', () => this.buy(def, qty));
@@ -92,11 +93,11 @@ export class ShopScene extends Phaser.Scene {
   private buy(def: ItemDef, qty: number) {
     const total = def.price * qty;
     if (!Inventory.spend(this.registry, total)) {
-      this.flash(`Not enough money for ${qty}× ${def.name}.`, '#ff8888');
+      this.flash(t(`Not enough money for ${qty}× ${def.name}.`, `${def.name} ${qty}개를 살 돈이 부족해요.`), '#ff8888');
       return;
     }
     Inventory.add(this.registry, def.key, qty);
-    this.flash(`Bought ${qty}× ${def.name}!  (-${formatMoney(total)})`, '#aaffaa');
+    this.flash(t(`Bought ${qty}× ${def.name}!  (-${formatMoney(total)})`, `${def.name} ${qty}개 구매!  (-${formatMoney(total)})`), '#aaffaa');
     this.refresh();
   }
 

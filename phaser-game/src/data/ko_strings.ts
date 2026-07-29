@@ -1159,6 +1159,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Shop Clerk: These carbon frames on the rack? Someday, maybe. For now, the rental treats you fine.':
     '가게 점원: 진열대의 이 카본 프레임들이요? 언젠가는요. 지금은 대여용으로도 충분할 거예요.',
   'SPACE — Shop': 'SPACE — 상점',
+  '🏪  POKÉ MART': '🏪  포켓몬 마트',
   'Store Clerk: Welcome! Drinks, rice balls, remedies — the riverside classics.':
     '편의점 점원: 어서 오세요! 음료, 주먹밥, 상비약 — 강변의 필수품이죠.',
   'Pharmacist: Potions, cures, Poké Balls — all your travelling needs.':
