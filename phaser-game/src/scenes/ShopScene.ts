@@ -106,10 +106,11 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private refresh() {
-    this.moneyText.setText(`Money: ${formatMoney(Inventory.money(this.registry))}`);
+    const money = formatMoney(Inventory.money(this.registry));
+    this.moneyText.setText(t(`Money: ${money}`, `소지금: ${money}`));
     this.rows.forEach(r => {
       const n = Inventory.count(this.registry, r.def.key);
-      r.ownedText.setText(n > 0 ? `(have ${n})` : '');
+      r.ownedText.setText(n > 0 ? t(`(have ${n})`, `(보유 ${n})`) : '');
     });
   }
 

@@ -102,7 +102,7 @@ export class BoxScene extends Phaser.Scene {
       if (this.boxPage > 0)         prev.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(-1));
       if (this.boxPage < pages - 1) next.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.changePage(1));
       this.content.add([prev, next]);
-      this.content.add(this.add.text(650, py, `Box ${this.boxPage + 1} / ${pages}   (wheel · ← →)`, {
+      this.content.add(this.add.text(650, py, t(`Box ${this.boxPage + 1} / ${pages}   (wheel · ← →)`, `박스 ${this.boxPage + 1} / ${pages}   (휠 · ← →)`), {
         fontSize: '13px', color: '#ffe44e',
       }).setOrigin(0.5));
     }

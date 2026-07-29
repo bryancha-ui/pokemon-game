@@ -273,6 +273,57 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^Mom: So you chose (.+)! I'm so proud of you\.$/, m => `엄마: ${P(m[1])}(으)로 정했구나! 정말 자랑스러워.`],
   [/^Prof\. Song: How is (.+) settling in\? A fine choice — I can tell you two already trust each other\.$/,
     m => `송 박사: ${P(m[1])}(은)는 잘 적응하고 있니? 훌륭한 선택이야 — 너희 둘은 벌써 서로를 믿고 있는 게 보이는구나.`],
+  // ── Battle results / wild capture / EXP / TM ──
+  [/^(.+) fainted! You win!$/,  m => `${P(m[1])}은 쓰러졌다! 승리!`],
+  [/^(.+) fainted! You lose!$/, m => `${P(m[1])}은 쓰러졌다! 패배...`],
+  [/^(.+) fainted\.\.\.$/,      m => `${P(m[1])}은 쓰러졌다...`],
+  [/^Leader Jin: (.+), step forward!$/,          m => `관장 진: ${P(m[1])}, 나서라!`],
+  [/^Leader Jin: You are strong\. (.+), come!$/, m => `관장 진: 강하구나. ${P(m[1])}, 나와라!`],
+  [/^Oh no! (.+) broke free!$/, m => `이런! ${P(m[1])}이 튀어나왔다!`],
+  [/^(.+) joined the party!\n(.+) was sent to the PC\.$/, m => `${P(m[1])}이 동료에 합류했다!\n${P(m[2])}은 PC로 보내졌다.`],
+  [/^(.+) was sent to the PC\.$/, m => `${P(m[1])}은 PC로 보내졌다.`],
+  [/^Swap a Pokémon for (.+), or send it to the PC\?$/, m => `${P(m[1])}을 위해 포켓몬을 교체할까, 아니면 PC로 보낼까?`],
+  [/^✨ Gotcha! (.+) was caught!\nAdded to your party!$/, m => `✨ 좋았어! ${P(m[1])}을 잡았다!\n동료에 추가됐다!`],
+  [/^✨ Gotcha! (.+) was caught!\nBut your party is full\.$/, m => `✨ 좋았어! ${P(m[1])}을 잡았다!\n하지만 동료가 가득 찼다.`],
+  [/^✨ (.+) grew to Lv\. (\d+)!\nMax HP: (\d+)$/, m => `✨ ${P(m[1])}(은)는 Lv. ${m[2]}로 성장했다!\n최대 HP: ${m[3]}`],
+  [/^\n✨ (.+) grew to Lv\. (\d+)!$/, m => `\n✨ ${P(m[1])}(은)는 Lv. ${m[2]}로 성장했다!`],
+  [/^Received: TM — (.+)!  \(Check your Bag to teach it\.\)$/, m => `받았다: 기술머신 — ${KO_STRINGS[m[1]] ?? m[1]}!  (가방에서 가르칠 수 있어.)`],
+  // ── Trainer battle flow ──
+  [/^(.+) sent out (.+)\.\nWill you switch your Pokémon\?$/, m => `${S(m[1])}가 ${P(m[2])}을 내보냈다.\n포켓몬을 교체할까?`],
+  [/^([\s\S]+)\nYou got (.+) for winning!$/, m => `${tr(m[1])}\n이겨서 ${m[2]}을 얻었다!`],
+  // ── Rival battle ──
+  [/^(.+): Tch\. You got me this time\.\n(.+) gained (\d+) EXP!$/, m => `${S(m[1])}: 쳇. 이번엔 네가 이겼군.\n${P(m[2])}(은)는 ${m[3]} 경험치를 얻었다!`],
+  [/^You lost\.\.\.\n(.+): Don't give up\. Come back stronger!\nMom healed your Pokémon at home\.$/, m => `졌다...\n${S(m[1])}: 포기하지 마. 더 강해져서 돌아와!\n엄마가 집에서 네 포켓몬을 회복시켜줬다.`],
+  // ── Menu — moves / lead / badges ──
+  [/^(.+) forgot (.+) and learned (.+)!$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 잊고 ${KO_STRINGS[m[3]] ?? m[3]}(을)를 배웠다!`],
+  [/^(.+) already knows (.+)\.$/, m => `${P(m[1])}(은)는 이미 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 알고 있어.`],
+  [/^(.+) did not learn (.+)\.$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배우지 않았다.`],
+  [/^(.+) wants to learn (.+)\.$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배우고 싶어해.`],
+  [/^(.+) learned (.+)!$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배웠다!`],
+  [/^(.+) is now your lead!$/, m => `${P(m[1])}(을)를 선두로 지정했다!`],
+  [/^(\d+) of (\d+) badges collected\. Tap to view your case\.$/, m => `배지 ${m[2]}개 중 ${m[1]}개 획득. 탭하면 배지 케이스를 봐.`],
+  [/^Teach (.+) to…$/, m => `${KO_STRINGS[m[1]] ?? m[1]}(을)를 누구에게 가르칠까…`],
+  [/^Use (.+) on…$/, m => `${KO_STRINGS[m[1]] ?? m[1]}(을)를 누구에게 쓸까…`],
+  // ── Quiz / checkpoints ──
+  [/^Question (\d+) of (\d+)\.$/, m => `${m[2]}문제 중 ${m[1]}번.`],
+  [/^어사대장 Hyeon: (\d+) of (\d+)\. A clear and ordered mind\. The academy is satisfied\.$/, m => `어사대장 현: ${m[2]}문제 중 ${m[1]}개 정답. 맑고 정연한 정신이군. 학원은 만족한다.`],
+  [/^어사대장 Hyeon: (\d+) of (\d+)\. Not yet — a scholar who guesses is no scholar\.$/, m => `어사대장 현: ${m[2]}문제 중 ${m[1]}개 정답. 아직이다 — 찍는 자는 학자가 아니다.`],
+  [/^Receptionist: (\d+) of the Elite Four down already — the whole region is talking about you\.$/, m => `안내원: 벌써 사천왕 중 ${m[1]}명 격파 — 온 지역이 네 이야기로 떠들썩해.`],
+  [/^League Warden: You hold (\d+) of 8 마패\. Complete the inspectorate circuit, defeat Supreme Gwang in Pyeongseong, and return\.$/, m => `리그 문지기: 너는 8개 중 ${m[1]}개의 마패를 지녔다. 어사대 순회를 마치고, 평성에서 총수 광을 이기고 돌아와라.`],
+  [/^Royal Warden: You bear (\d+) of the (\d+) regional tablets\. Complete the circuit and return\.$/, m => `왕실 관리인: 너는 ${m[2]}개 중 ${m[1]}개의 지방 석판을 지녔다. 순회를 마치고 돌아오라.`],
+  [/^Supreme Gwang: You have (\d+) of the 7 regional 마패\. Return when you have mastered all seven regional trials\.$/, m => `총수 광: 너는 7개 중 ${m[1]}개의 지방 마패를 지녔다. 일곱 지방 시험을 모두 통달한 뒤에 돌아오라.`],
+  // ── Starter select / badge scanner ──
+  [/^Choose (.+)\?$/, m => `${P(m[1])}(으)로 정할까?`],
+  [/^Badge Scanner: Scanning trainer credentials\.\.\. (\d+) \/ (\d+) badges detected\.$/, m => `배지 스캐너: 트레이너 자격 확인 중... ${m[2]}개 중 ${m[1]}개 배지 감지됨.`],
+  [/^Badge Scanner: Scanning trainer credentials\.\.\. all (\d+) region badges verified\.$/, m => `배지 스캐너: 트레이너 자격 확인 중... ${m[1]}개 지역 배지 전부 확인됨.`],
+  [/^Badge Scanner: The gate is sealed\. Still missing: (.+)\.$/, m => `배지 스캐너: 관문이 봉인돼 있다. 아직 부족: ${m[1]}.`],
+  // ── Starter select — Prof. Song hands over the Pokédex ──
+  [/^Prof\. Song: Excellent choice! (.+) is happy to travel with you\.\nAnd take this — your very own Pokédex! Press M, open your BAG,\nand select the Pokémon Encyclopedia to study every Pokémon you meet\.$/,
+    m => `송 박사: 훌륭한 선택이야! ${P(m[1])}(은)는 너와 함께 여행하게 되어 기뻐하고 있어.\n그리고 이걸 받아 — 너만의 포켓몬 도감이야! M을 눌러 가방을 열고,\n포켓몬 도감을 선택해 만나는 모든 포켓몬을 조사해봐.`],
+  // ── EXP-to-next-level suffix + map / city signposts ──
+  [/^([\s\S]+)  \((\d+) to next level\)$/, m => `${tr(m[1])}  (다음 레벨까지 ${m[2]})`],
+  [/^📍 You are here — (.+) \((.+)\)$/, m => `📍 현재 위치 — ${m[2]}`],
+  [/^🏙 Capitol City( — .+)?$/, m => `🏙 캐피톨 시티${m[1] ? tr(m[1]) : ''}`],
 ];
 
 export function tr(en: string): string {
