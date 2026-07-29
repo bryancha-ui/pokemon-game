@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { SaveManager } from '../utils/SaveManager';
 import { STARTERS } from '../data/StarterData';
 import { playBgm, stopBgm } from '../systems/Music';
@@ -281,7 +282,7 @@ export class TitleScene extends Phaser.Scene {
   /** If a backup exists (from a previous delete / New Game), offer to restore it. */
   private drawRestoreOption() {
     if (!SaveManager.hasBackup()) return;
-    const t = this.add.text(this.W / 2, this.H * 0.75, '↩  Restore previous save', {
+    const t = this.add.text(this.W / 2, this.H * 0.75, tr('↩  Restore previous save'), {
       fontSize: '13px', color: '#88ccff', backgroundColor: '#00000055', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setDepth(6).setInteractive({ useHandCursor: true });
     t.on('pointerover', () => t.setColor('#ffffff'));
@@ -350,15 +351,15 @@ export class TitleScene extends Phaser.Scene {
     const c = this.add.container(0, 0).setDepth(60);
     c.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.72));
     c.add(this.add.rectangle(cx, cy, 580, 230, 0x1a0d2e, 0.99).setStrokeStyle(2, 0x8855bb));
-    c.add(this.add.text(cx, cy - 66, 'Start a new game?', { fontSize: '24px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
-    c.add(this.add.text(cx, cy - 18, 'Your current saved game will be erased.\nAre you sure you want to start over?', {
+    c.add(this.add.text(cx, cy - 66, tr('Start a new game?'), { fontSize: '24px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    c.add(this.add.text(cx, cy - 18, tr('Your current saved game will be erased.\nAre you sure you want to start over?'), {
       fontSize: '15px', color: '#ddd', align: 'center', lineSpacing: 5,
     }).setOrigin(0.5));
-    const no = this.add.text(cx - 120, cy + 58, '  No, keep my save  ', { fontSize: '16px', color: '#fff', backgroundColor: '#33445a', padding: { x: 12, y: 8 } })
+    const no = this.add.text(cx - 120, cy + 58, tr('  No, keep my save  '), { fontSize: '16px', color: '#fff', backgroundColor: '#33445a', padding: { x: 12, y: 8 } })
       .setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerover', () => { this.confirmChoice = 0; this.refreshConfirm(); })
       .on('pointerdown', () => this.resolveConfirm(false));
-    const yes = this.add.text(cx + 120, cy + 58, '  Yes, start over  ', { fontSize: '16px', color: '#fff', backgroundColor: '#7a2233', padding: { x: 12, y: 8 } })
+    const yes = this.add.text(cx + 120, cy + 58, tr('  Yes, start over  '), { fontSize: '16px', color: '#fff', backgroundColor: '#7a2233', padding: { x: 12, y: 8 } })
       .setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerover', () => { this.confirmChoice = 1; this.refreshConfirm(); })
       .on('pointerdown', () => this.resolveConfirm(true));

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -231,7 +232,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, `🏢 노스단 아지트 — ${this.floor}F / 4F`, {
       fontSize: '13px', color: '#ff8aa0', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  (warp pads teleport you)  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  (warp pads teleport you)  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

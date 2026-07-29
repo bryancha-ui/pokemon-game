@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawGymLeader } from '../data/CharacterSprite';
 import { vanishesAfterDefeat } from '../data/Villains';
@@ -127,7 +128,7 @@ export class GeumgangGymScene extends Phaser.Scene {
       fontSize: '11px', color: '#ffc0e8', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
     if (this.trainers.every(t => t.defeated) && !this.registry.get('geumgangGymDefeated')) {
-      this.add.text(W / 2, IT * 2.4, '← LEADER NAMSUN →', { fontSize: '9px', color: '#ffd0ef' })
+      this.add.text(W / 2, IT * 2.4, tr('← LEADER NAMSUN →'), { fontSize: '9px', color: '#ffd0ef' })
         .setOrigin(0.5).setDepth(5);
     }
   }

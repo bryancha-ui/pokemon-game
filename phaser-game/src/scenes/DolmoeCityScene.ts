@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -100,7 +101,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(11 * TILE, 0.5 * TILE, '↑ Dolmoe Mine (→ Seorae)', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.5 * TILE, tr('↑ Dolmoe Mine (→ Seorae)'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(11 * TILE, 21.5 * TILE, '↓ Route 6', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
@@ -181,7 +182,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     this.add.rectangle(this.scale.width / 2, 22, 380, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
     this.add.text(this.scale.width / 2, 22, '⛏ Dolmoe City — 돌뫼 시티', { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 40, '', { fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 10, y: 5 } }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: enter / heal  M: menu', { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: enter / heal  M: menu'), { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
 
   update(_: number, delta: number) {
@@ -219,7 +220,7 @@ export class DolmoeCityScene extends Phaser.Scene {
     const nurD = Math.hypot(this.px - (NURSE.col * TILE + 16), this.py - (NURSE.row * TILE + 16));
     const martD = Math.hypot(this.px - (MART.col * TILE + 16), this.py - (MART.row * TILE + 16));
     if (martD < TILE * 1.3) {
-      this.enterPrompt.setText('SPACE — Enter the Poké Mart').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Enter the Poké Mart')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.registry.set('martReturnScene', this.scene.key);
         this.registry.set('dolmoeReturnX', MART.col * TILE + 16); this.registry.set('dolmoeReturnY', (MART.row + 1) * TILE + 16);
@@ -239,7 +240,7 @@ export class DolmoeCityScene extends Phaser.Scene {
       }
     }
     if (gymD < TILE * 1.3) {
-      this.enterPrompt.setText('SPACE — Enter the Stonemason\'s Quarry').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Enter the Stonemason\'s Quarry')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.registry.set('dolmoeReturnX', GYM.col * TILE + 16); this.registry.set('dolmoeReturnY', (GYM.row + 1) * TILE + 16);
         this.cutsceneActive = true;
@@ -248,7 +249,7 @@ export class DolmoeCityScene extends Phaser.Scene {
       return;
     }
     if (nurD < TILE * 1.3) {
-      this.enterPrompt.setText('SPACE — Enter the Pokémon Center').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Enter the Pokémon Center')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.registry.set('dolmoeReturnX', NURSE.col * TILE + 16); this.registry.set('dolmoeReturnY', (NURSE.row + 1) * TILE + 16);
         this.cutsceneActive = true;

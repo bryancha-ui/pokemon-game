@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -184,7 +185,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     this.add.text(cx, bodyTop - 31, '한반도 포켓몬 리그', {
       fontSize: '13px', color: '#f4d68a', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(cx, baseY - 70, '⬆ THE POKÉMON LEAGUE', {
+    this.add.text(cx, baseY - 70, tr('⬆ THE POKÉMON LEAGUE'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(6);
   }
@@ -289,13 +290,13 @@ export class LeaguePlazaScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏯 The Pokémon League', {
+    this.add.text(this.scale.width / 2, 22, tr('🏯 The Pokémon League'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: enter  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: enter  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

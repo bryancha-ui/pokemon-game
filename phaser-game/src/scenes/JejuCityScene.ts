@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
@@ -404,10 +405,10 @@ export class JejuCityScene extends Phaser.Scene {
     }
 
     // Directional signs
-    this.add.text(21 * TILE, 0.5 * TILE, '⬆ Vents & Summit Trail', {
+    this.add.text(21 * TILE, 0.5 * TILE, tr('⬆ Vents & Summit Trail'), {
       fontSize: '9px', color: '#ffb0a0', backgroundColor: '#000000aa', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(6);
-    this.add.text(21 * TILE, (ROWS - 0.5) * TILE, '⬇ Black-Sand Beach → Ferry', {
+    this.add.text(21 * TILE, (ROWS - 0.5) * TILE, tr('⬇ Black-Sand Beach → Ferry'), {
       fontSize: '9px', color: '#bfe8ff', backgroundColor: '#000000aa', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(6);
   }
@@ -435,10 +436,10 @@ export class JejuCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏝️ Jeju City — Island Heart', {
+    this.add.text(this.scale.width / 2, 22, tr('🏝️ Jeju City — Island Heart'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: enter  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: enter  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

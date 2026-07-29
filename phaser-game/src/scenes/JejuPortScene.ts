@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -138,10 +139,10 @@ export class JejuPortScene extends Phaser.Scene {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
-    this.add.text(13 * TILE, 0.6 * TILE, '↑ Vent Trail (the climb)', {
+    this.add.text(13 * TILE, 0.6 * TILE, tr('↑ Vent Trail (the climb)'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#7a3a1a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(13 * TILE, 22.4 * TILE, '↓ Ferry → back to Haean City', {
+    this.add.text(13 * TILE, 22.4 * TILE, tr('↓ Ferry → back to Haean City'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#1a4a6a99', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -181,13 +182,13 @@ export class JejuPortScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 360, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⚓ Jeju Port (제주 포구)', {
+    this.add.text(this.scale.width / 2, 22, tr('⚓ Jeju Port (제주 포구)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: enter/talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: enter/talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

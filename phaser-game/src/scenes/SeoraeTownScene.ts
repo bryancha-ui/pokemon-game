@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -115,8 +116,8 @@ export class SeoraeTownScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(24 * TILE, 41.5 * TILE, '↓ Seorae Pass · Dolmoe', { fontSize: '9px', color: '#123', backgroundColor: '#ffffffbb', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(43 * TILE, 24 * TILE, '⛸ Skate Link → Sunrise City', { fontSize: '9px', color: '#123', backgroundColor: '#dff6ffdd', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(24 * TILE, 41.5 * TILE, tr('↓ Seorae Pass · Dolmoe'), { fontSize: '9px', color: '#123', backgroundColor: '#ffffffbb', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(43 * TILE, 24 * TILE, tr('⛸ Skate Link → Sunrise City'), { fontSize: '9px', color: '#123', backgroundColor: '#dff6ffdd', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawTown() {
@@ -126,7 +127,7 @@ export class SeoraeTownScene extends Phaser.Scene {
     // A broad frozen plaza makes the enlarged town feel like a destination, not a corridor.
     g.fillStyle(0xa9d9e9, 0.72); g.fillEllipse(24 * TILE, 26 * TILE, 14 * TILE, 8 * TILE);
     g.lineStyle(3, 0xffffff, 0.8); g.strokeEllipse(24 * TILE, 26 * TILE, 14 * TILE, 8 * TILE);
-    this.add.text(24 * TILE, 26 * TILE - 4, '⛸  FROSTBELL PLAZA  ⛸', { fontSize: '11px', color: '#2d6178', fontStyle: 'bold', stroke: '#fff', strokeThickness: 2 }).setOrigin(0.5).setDepth(5);
+    this.add.text(24 * TILE, 26 * TILE - 4, tr('⛸  FROSTBELL PLAZA  ⛸'), { fontSize: '11px', color: '#2d6178', fontStyle: 'bold', stroke: '#fff', strokeThickness: 2 }).setOrigin(0.5).setDepth(5);
 
     this.drawSkateLink(g);
     // Pine trees scattered across town for forest feel
@@ -221,7 +222,7 @@ export class SeoraeTownScene extends Phaser.Scene {
     this.add.rectangle(this.scale.width / 2, 22, 390, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
     this.add.text(this.scale.width / 2, 22, '🔔 Seorae Town — 서래 마을', { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 40, '', { fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 10, y: 5 } }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: enter / talk  M: menu', { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: enter / talk  M: menu'), { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
 
   update(_: number, delta: number) {
@@ -254,12 +255,12 @@ export class SeoraeTownScene extends Phaser.Scene {
   private checkInteractions() {
     const distance = (col: number, row: number) => Math.hypot(this.px - (col * TILE + 16), this.py - (row * TILE + 16));
     if (distance(GYM.col, GYM.row) < TILE * 1.35) {
-      this.enterPrompt.setText('SPACE — Enter the Frostbell Shrine').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Enter the Frostbell Shrine')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.enterScene('SeoraeGymScene', GYM.col, GYM.row);
       return;
     }
     if (distance(CENTER.col, CENTER.row) < TILE * 1.35) {
-      this.enterPrompt.setText('SPACE — Enter the Pokémon Center').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Enter the Pokémon Center')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.enterScene('SeoraePCScene', CENTER.col, CENTER.row);
       return;
     }
@@ -274,7 +275,7 @@ export class SeoraeTownScene extends Phaser.Scene {
       return;
     }
     if (distance(SKATE_LINK.col, SKATE_LINK.row) < TILE * 1.7) {
-      this.enterPrompt.setText('SPACE — Ask about the Skate Link').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Ask about the Skate Link')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) { this.cutsceneActive = true; this.dialog.show(['Skate Link Attendant: The ice lane is clear to Sunrise City. Follow the blue markers and enjoy the glide!'], () => { this.cutsceneActive = false; }); }
       return;
     }

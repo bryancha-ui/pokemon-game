@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -217,10 +218,10 @@ export class Route5Scene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🌳 Route 5 — The Ancient Forest (고목 숲길)', {
+    this.add.text(this.scale.width / 2, 22, tr('🌳 Route 5 — The Ancient Forest (고목 숲길)'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -342,7 +343,7 @@ export class Route5Scene extends Phaser.Scene {
     const sx = 12 * TILE, sy = 23 * TILE + 16;   // shrine steps (row 23, cols 11–12)
     const near = Math.hypot(this.px - sx, this.py - sy) < TILE * 1.4;
     if (!this.shrinePrompt) {
-      this.shrinePrompt = this.add.text(this.scale.width / 2, 46, 'SPACE — Enter the Forest Shrine', {
+      this.shrinePrompt = this.add.text(this.scale.width / 2, 46, tr('SPACE — Enter the Forest Shrine'), {
         fontSize: '12px', color: '#fff', backgroundColor: '#000000cc', padding: { x: 8, y: 4 },
       }).setOrigin(0.5).setScrollFactor(0).setDepth(60).setVisible(false);
     }

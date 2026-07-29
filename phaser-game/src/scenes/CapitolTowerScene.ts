@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
+import { tr } from '../systems/i18n';
 
 export class CapitolTowerScene extends BaseInteriorScene {
   protected readonly COLS = 16;
@@ -59,7 +60,7 @@ export class CapitolTowerScene extends BaseInteriorScene {
 
     // City view text (top)
     const tp = this.tile(8, 0);
-    this.add.text(tp.x, tp.y - 20, '▶  City View — 563m above ground', {
+    this.add.text(tp.x, tp.y - 20, tr('▶  City View — 563m above ground'), {
       fontSize: '8px', color: '#88ccff', backgroundColor: '#001122aa', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
 

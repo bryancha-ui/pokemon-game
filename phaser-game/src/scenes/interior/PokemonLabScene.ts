@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../../systems/i18n';
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
 
 // ── Prof. Song's Pokémon Lab (walkable interior) ─────────────────────────────
@@ -64,7 +65,7 @@ export class PokemonLabScene extends BaseInteriorScene {
 
     // Signage
     const banner = this.tile(4, 0);
-    this.add.text(banner.x + 128, banner.y + 32, "Prof. Song's Pokémon Lab", {
+    this.add.text(banner.x + 128, banner.y + 32, tr("Prof. Song's Pokémon Lab"), {
       fontSize: '13px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
   }

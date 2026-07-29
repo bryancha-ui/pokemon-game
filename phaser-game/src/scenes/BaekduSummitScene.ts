@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
@@ -202,7 +203,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 0.6 * TILE, '🌋 Cheonji — the summit lake', {
+    this.add.text(12 * TILE, 0.6 * TILE, tr('🌋 Cheonji — the summit lake'), {
       fontSize: '10px', color: '#ffd0d0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(12 * TILE, 67.4 * TILE, '↓ the gate', {
@@ -258,10 +259,10 @@ export class BaekduSummitScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏔 Baekdu Peak — The Final Confrontation', {
+    this.add.text(this.scale.width / 2, 22, tr('🏔 Baekdu Peak — The Final Confrontation'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu  [0: replay finale]', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu  [0: replay finale]'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

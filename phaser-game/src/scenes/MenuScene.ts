@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { STARTERS, TYPE_COLORS } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
@@ -105,7 +106,7 @@ export class MenuScene extends Phaser.Scene {
       const px = (this.registry.get('lastX') as number) ?? (this.registry.get('returnX') as number) ?? 22 * 32 + 16;
       const py = (this.registry.get('lastY') as number) ?? (this.registry.get('returnY') as number) ?? 24 * 32 + 16;
       const ok = SaveManager.save(this.registry, px, py, scene);
-      if (ok) saveBtn.setText('💾 SAVED!').setColor('#aaffaa');
+      if (ok) saveBtn.setText(tr('💾 SAVED!')).setColor('#aaffaa');
       else    saveBtn.setText('⚠ SAVE FAILED').setColor('#ff8888');
       this.time.delayedCall(1800, () => saveBtn.setText('💾 SAVE').setColor('#ffe44e'));
     });
@@ -164,7 +165,7 @@ export class MenuScene extends Phaser.Scene {
 
     if (party.length === 0) {
       const t = this.add.text(cx, cy + 20,
-        "You have no Pokémon yet.\nVisit Prof. Song's Lab to choose your starter!",
+        tr("You have no Pokémon yet.\nVisit Prof. Song's Lab to choose your starter!"),
         { fontSize: '14px', color: '#cccccc', align: 'center', lineSpacing: 8 },
       ).setOrigin(0.5);
       this.contentContainer.add(t);
@@ -188,7 +189,7 @@ export class MenuScene extends Phaser.Scene {
 
     // Hint
     this.contentContainer.add(this.add.text(cx, cy + 196,
-      'Tap a Pokémon to make it your lead (first in battle).',
+      tr('Tap a Pokémon to make it your lead (first in battle).'),
       { fontSize: '11px', color: '#8899bb' }).setOrigin(0.5));
 
     // Empty slots
@@ -544,7 +545,7 @@ export class MenuScene extends Phaser.Scene {
     overlay.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.6));
     overlay.add(this.add.rectangle(cx, cy, 480, 400, 0x10142a, 0.99).setStrokeStyle(2, 0x5577aa));
     overlay.add(this.add.text(cx, cy - 168, `${entry.name} wants to learn ${move}.`, { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
-    overlay.add(this.add.text(cx, cy - 144, 'Which move should it forget?', { fontSize: '12px', color: '#9ab' }).setOrigin(0.5));
+    overlay.add(this.add.text(cx, cy - 144, tr('Which move should it forget?'), { fontSize: '12px', color: '#9ab' }).setOrigin(0.5));
 
     current.forEach((m, j) => {
       const y = cy - 110 + j * 46;

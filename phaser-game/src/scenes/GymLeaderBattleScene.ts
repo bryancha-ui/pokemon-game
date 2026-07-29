@@ -340,7 +340,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const heals = ITEMS.filter(it => (inv[it.key] ?? 0) > 0 &&
       (it.category === 'heal' || it.category === 'status' || it.category === 'revive'));
     if (heals.length === 0) {
-      this.bagPanel.add(this.add.text(this.W / 2 - 60, 50, 'No usable items. Buy some at a Poké Mart!',
+      this.bagPanel.add(this.add.text(this.W / 2 - 60, 50, tr('No usable items. Buy some at a Poké Mart!'),
         { fontSize: '14px', color: '#ccc' }).setOrigin(0.5));
       return;
     }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawNpcBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -231,7 +232,7 @@ export class JejuVentScene extends Phaser.Scene {
     this.add.text(12 * TILE, 67.5 * TILE, '↓ Jeju Port', {
       fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.6 * TILE, '⛰ Summit — the Vents', {
+    this.add.text(12 * TILE, 0.6 * TILE, tr('⛰ Summit — the Vents'), {
       fontSize: '10px', color: '#ffd0a0', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -293,10 +294,10 @@ export class JejuVentScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🌋 Jeju Vents — The Ascent (제주 분화구)', {
+    this.add.text(this.scale.width / 2, 22, tr('🌋 Jeju Vents — The Ascent (제주 분화구)'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

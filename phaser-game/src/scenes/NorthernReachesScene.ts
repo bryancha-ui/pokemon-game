@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -217,7 +218,7 @@ export class NorthernReachesScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10 * TILE, 1.4 * TILE, '⛰ Out of the woods → Sacred Peak', { fontSize: '8px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10 * TILE, 1.4 * TILE, tr('⛰ Out of the woods → Sacred Peak'), { fontSize: '8px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(10 * TILE, 50.6 * TILE, '↓ Border tunnels', { fontSize: '9px', color: '#123', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
@@ -263,10 +264,10 @@ export class NorthernReachesScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 470, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🌲 The Northern Reaches — Snow-Woods', {
+    this.add.text(this.scale.width / 2, 22, tr('🌲 The Northern Reaches — Snow-Woods'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: challenge / answer  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge / answer  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

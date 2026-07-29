@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -93,7 +94,7 @@ export class ConvenienceStoreScene extends Phaser.Scene {
     this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, 'Store Clerk', {
       fontSize: '8px', color: '#ffd0a0', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);
-    this.add.text(COLS * TILE / 2, 0.6 * TILE, '🏪 Han River Convenience Store', {
+    this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('🏪 Han River Convenience Store'), {
       fontSize: '12px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(9 * TILE, (ROWS - 0.6) * TILE, '⬇ Exit', {
@@ -137,7 +138,7 @@ export class ConvenienceStoreScene extends Phaser.Scene {
   private checkClerk() {
     const near = Math.hypot(this.px - (this.CLERK.col * TILE + 16), this.py - (this.CLERK.row * TILE + 16)) < TILE * 1.6;
     this.prompt.setVisible(near);
-    if (near) this.prompt.setText('SPACE — Shop');
+    if (near) this.prompt.setText(tr('SPACE — Shop'));
     if (!near || !Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     this.cutsceneActive = true; this.prompt.setVisible(false);
     this.dialog.show(['Store Clerk: Welcome! Drinks, rice balls, remedies — the riverside classics.'], () => {

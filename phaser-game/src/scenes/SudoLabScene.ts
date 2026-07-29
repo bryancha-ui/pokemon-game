@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -192,7 +193,7 @@ export class SudoLabScene extends Phaser.Scene {
       fontSize: '11px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(W / 2, H - 12, 'SPACE to continue', {
+    this.add.text(W / 2, H - 12, tr('SPACE to continue'), {
       fontSize: '11px', color: '#7f93b5',
     }).setOrigin(0.5).setDepth(8);
   }

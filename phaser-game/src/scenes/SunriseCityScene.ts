@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -213,10 +214,10 @@ export class SunriseCityScene extends Phaser.Scene {
     label(34.5, 4.6, '🔭 Observatory', '#fff', '#1a3a6a99');
     label(8, 16.4, '🐟 Fish Market', '#fff', '#5a3a1a99');
     label(28, 20.6, '🌳 Seaside Park', '#dfffd0', '#1a4a1a99');
-    this.add.text(20 * TILE, 2.5 * TILE, '⛰ The Sunrise Cliffs', {
+    this.add.text(20 * TILE, 2.5 * TILE, tr('⛰ The Sunrise Cliffs'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#aa5a1acc', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(20 * TILE, 27.4 * TILE, '↓ Eastern Shore Road', {
+    this.add.text(20 * TILE, 27.4 * TILE, tr('↓ Eastern Shore Road'), {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -258,7 +259,7 @@ export class SunriseCityScene extends Phaser.Scene {
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: enter/talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: enter/talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

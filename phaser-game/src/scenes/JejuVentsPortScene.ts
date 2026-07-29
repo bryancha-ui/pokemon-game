@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -103,7 +104,7 @@ export class JejuVentsPortScene extends Phaser.Scene {
     g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(COLS * TILE / 2, 0.8 * TILE, '🌋 Jeju Vents Portal', {
+    this.add.text(COLS * TILE / 2, 0.8 * TILE, tr('🌋 Jeju Vents Portal'), {
       fontSize: '11px', color: '#ffa0a0', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, '⬇ Jeju City', {
@@ -136,10 +137,10 @@ export class JejuVentsPortScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 380, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🌋 Jeju Vents Portal', {
+    this.add.text(this.scale.width / 2, 22, tr('🌋 Jeju Vents Portal'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -258,7 +259,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD move  SPACE enter/exam  C bike  M menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD move  SPACE enter/exam  C bike  M menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

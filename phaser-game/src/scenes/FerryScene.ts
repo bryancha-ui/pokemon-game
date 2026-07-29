@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -156,7 +157,7 @@ export class FerryScene extends Phaser.Scene {
     this.add.text(10 * TILE, 1 * TILE, this.riggingDone ? '↑ Disembark — Jeju City' : '↑ Bow', {
       fontSize: '10px', color: '#fff', backgroundColor: '#1a4a6a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 33 * TILE, '↓ Disembark — Haean City', {
+    this.add.text(10 * TILE, 33 * TILE, tr('↓ Disembark — Haean City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#1a4a6a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -214,10 +215,10 @@ export class FerryScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 380, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛴️ The Overnight Ferry (남해 연락선)', {
+    this.add.text(this.scale.width / 2, 22, tr('⛴️ The Overnight Ferry (남해 연락선)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -336,7 +337,7 @@ export class FerryScene extends Phaser.Scene {
     ], () => {
       this.cutsceneActive = false;
       // refresh signpost
-      this.add.text(10 * TILE, 1 * TILE, '↑ Disembark — Jeju Vents', {
+      this.add.text(10 * TILE, 1 * TILE, tr('↑ Disembark — Jeju Vents'), {
         fontSize: '10px', color: '#fff', backgroundColor: '#1a4a6a99', padding: { x: 4, y: 2 },
       }).setOrigin(0.5).setDepth(5);
     });

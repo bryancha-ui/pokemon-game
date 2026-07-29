@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
@@ -156,7 +157,7 @@ export class DolmoeMineScene extends Phaser.Scene {
     this.add.text(10 * TILE, 0.6 * TILE, '↑ Seorae Pass', {
       fontSize: '10px', color: '#cfefff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 34.9 * TILE, '⛏ SPACE: ride the cart', {
+    this.add.text(10 * TILE, 34.9 * TILE, tr('⛏ SPACE: ride the cart'), {
       fontSize: '8px', color: '#ffe9a0', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -199,7 +200,7 @@ export class DolmoeMineScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '⛏ Dolmoe Mine (돌뫼 광산)', {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk/ride  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk/ride  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

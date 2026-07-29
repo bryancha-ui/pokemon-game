@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -179,7 +180,7 @@ export class BaekduPassScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 58.4 * TILE, '↓ Pine Needle Town', {
+    this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Pine Needle Town'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(12 * TILE, 0.7 * TILE, '↑ Baekdu City', {
@@ -270,7 +271,7 @@ export class BaekduPassScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '🏔️ Baekdu Highland Pass (백두 고갯길)', {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

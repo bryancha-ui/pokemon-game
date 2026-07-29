@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -185,7 +186,7 @@ export class Route6Scene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '🌅 Route 6 — Eastern Shore Road (동해 해안도로)', {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -294,7 +295,7 @@ export class Route6Scene extends Phaser.Scene {
     const onShore = (col === 16 || col === 17) && this.facing === 3;   // sand edge, facing the sea
     if (!this.registry.get('haeanGymDefeated') || !onShore) { this.surfPrompt?.setVisible(false); return; }
     if (!this.surfPrompt) {
-      this.surfPrompt = this.add.text(this.scale.width / 2, 46, '🌊 SPACE — Surf out to sea', {
+      this.surfPrompt = this.add.text(this.scale.width / 2, 46, tr('🌊 SPACE — Surf out to sea'), {
         fontSize: '12px', color: '#fff', backgroundColor: '#0a3a5acc', padding: { x: 8, y: 4 },
       }).setOrigin(0.5).setScrollFactor(0).setDepth(60).setVisible(false);
     }

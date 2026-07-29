@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -174,7 +175,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '❄ 신의주 얼음 동굴 — 5 stages to the heart', {
       fontSize: '13px', color: '#eaf6ff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD/Arrows: move  (slide back down the entry side to escape any stage)  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD/Arrows: move  (slide back down the entry side to escape any stage)  M: menu'), {
       fontSize: '10px', color: '#cbe6f5', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

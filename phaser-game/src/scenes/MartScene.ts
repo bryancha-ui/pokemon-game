@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
+import { tr } from '../systems/i18n';
 
 // A Poké Mart interior: walk up to the clerk at the counter and press SPACE to open
 // the shopping menu (ShopScene). Returns to whatever city launched it (martReturnScene).
@@ -22,7 +23,7 @@ export class MartScene extends BaseInteriorScene {
 
     // Sign
     this.drawRect(g, 1, 1, this.COLS - 2, 1, 0x2a6a9a, 0x11557a);
-    this.add.text(400, this.tile(0, 1).y + 16, '🏪  POKÉ MART  🏪', {
+    this.add.text(400, this.tile(0, 1).y + 16, tr('🏪  POKÉ MART  🏪'), {
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
 

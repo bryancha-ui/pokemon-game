@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { TYPE_COLORS } from '../data/StarterData';
 import { t } from '../systems/i18n';
@@ -38,10 +39,10 @@ export class BoxScene extends Phaser.Scene {
     this.add.text(40, 80, t('PARTY', '동료'), { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
     this.add.text(360, 80, t('BOX', '보관함'), { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' });
 
-    this.info = this.add.text(this.W / 2, this.H - 50, 'Click a PARTY Pokémon, then a BOX Pokémon to swap them.', {
+    this.info = this.add.text(this.W / 2, this.H - 50, tr('Click a PARTY Pokémon, then a BOX Pokémon to swap them.'), {
       fontSize: '13px', color: '#aaccee',
     }).setOrigin(0.5);
-    this.add.text(this.W / 2, this.H - 24, 'You must keep at least one Pokémon in your party.   ·   ESC to close', {
+    this.add.text(this.W / 2, this.H - 24, tr('You must keep at least one Pokémon in your party.   ·   ESC to close'), {
       fontSize: '11px', color: '#667',
     }).setOrigin(0.5);
 

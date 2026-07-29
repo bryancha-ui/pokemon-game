@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -183,7 +184,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
       fog.fillStyle(0xe4ebf2, Math.max(0, a));
       for (let c = 0; c < COLS; c += 2) fog.fillEllipse(c * TILE + 24, r * TILE + 16, 60, 34);
     }
-    this.add.text(11 * TILE, 4 * TILE, '☁ 짙은 안개 (dense fog)', { fontSize: '8px', color: '#20303a', backgroundColor: '#e4ebf2cc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(16);
+    this.add.text(11 * TILE, 4 * TILE, tr('☁ 짙은 안개 (dense fog)'), { fontSize: '8px', color: '#20303a', backgroundColor: '#e4ebf2cc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(16);
   }
 
   private drawTrainers() {
@@ -225,10 +226,10 @@ export class ChilboHighlandsScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛰ Chilbo Highlands (칠보산 길)', {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ Chilbo Highlands (칠보산 길)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -446,7 +447,7 @@ export class WorldMapScene extends Phaser.Scene {
   // ── UI ────────────────────────────────────────────────────────────────────
   private createUI() {
     // Controls hint
-    this.add.text(8, 480, 'WASD/Arrows  |  SPACE: enter  |  SHIFT: run  |  M: menu', {
+    this.add.text(8, 480, tr('WASD/Arrows  |  SPACE: enter  |  SHIFT: run  |  M: menu'), {
       fontSize: '11px', color: '#cccccc', backgroundColor: '#00000099', padding: { x: 6, y: 3 },
     }).setScrollFactor(0).setDepth(100);
 
@@ -575,7 +576,7 @@ export class WorldMapScene extends Phaser.Scene {
     if (!this.busUnlocked()) return;
     const bx = this.BUS_COL * 32 + 30, by = this.BUS_ROW * 32 + 12;
     if (Math.hypot(this.px - bx, this.py - by) > 32 * 1.8) return;
-    this.enterPrompt.setText('SPACE — 🚌 Express Bus to Kaesong (개성)').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — 🚌 Express Bus to Kaesong (개성)')).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
       this.enterPrompt.setVisible(false);
       this.cutsceneActive = true;
@@ -607,7 +608,7 @@ export class WorldMapScene extends Phaser.Scene {
     bus.fillStyle(0x222222); bus.fillCircle(34, 18, 8); bus.fillCircle(126, 18, 8);
     bus.setPosition(-200, H * 0.8 - 6);
     this.tweens.add({ targets: bus, x: W + 240, duration: 3000, ease: 'Sine.easeIn' });
-    const cap = this.add.text(W / 2, H * 0.14, '🚌  The express coach rolls north across the old border to Kaesong…', {
+    const cap = this.add.text(W / 2, H * 0.14, tr('🚌  The express coach rolls north across the old border to Kaesong…'), {
       fontSize: '15px', color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5, align: 'center', wordWrap: { width: W * 0.8 },
     }).setOrigin(0.5);
     const root = this.add.container(0, 0, [g, bus, cap]).setScrollFactor(0).setDepth(200);

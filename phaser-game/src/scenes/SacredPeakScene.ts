@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -143,8 +144,8 @@ export class SacredPeakScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(9 * TILE, 2.4 * TILE, '☀ Altar of the Descent', { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 38.4 * TILE, '↓ Ancient Altar (Rangrim)', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 2.4 * TILE, tr('☀ Altar of the Descent'), { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 38.4 * TILE, tr('↓ Ancient Altar (Rangrim)'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawShrines() {
@@ -210,7 +211,7 @@ export class SacredPeakScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '☀ The Sacred Peak — 환웅의 강림', {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: interact  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: interact  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -368,7 +369,7 @@ export class SacredPeakScene extends Phaser.Scene {
     const stars = this.add.graphics().setScrollFactor(0).setDepth(151);
     for (let i = 0; i < 80; i++) { stars.fillStyle(0xffffff, Math.random() * 0.7 + 0.2); stars.fillCircle(Math.random() * W, Math.random() * H, Math.random() < 0.2 ? 2 : 1); }
     kids.push(stars);
-    kids.push(this.add.text(W / 2, 60, '🌟  THE COMPLETE PANTHEON', { fontSize: '24px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
+    kids.push(this.add.text(W / 2, 60, tr('🌟  THE COMPLETE PANTHEON'), { fontSize: '24px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
     kids.push(this.add.text(W / 2, H - 40, '환웅 · 풍백 · 우사 · 운사 · 나비할망', { fontSize: '15px', color: '#bcd4ff' }).setOrigin(0.5).setScrollFactor(0).setDepth(152));
 
     this.dialog.show([

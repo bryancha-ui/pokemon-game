@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
+import { tr } from '../systems/i18n';
 import { Inventory } from '../systems/Items';
 
 /**
@@ -62,7 +63,7 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
     const found       = !!this.registry.get('smeargleFound');
     if (questActive && !found) {
       const sme = this.createNPCGraphic(12, 9, 0xe8d8b8, 0x8a5a2a, false, 1);
-      this.add.text(this.tile(12, 9).x + 16, this.tile(12, 9).y - 6, 'Smeargle?', {
+      this.add.text(this.tile(12, 9).x + 16, this.tile(12, 9).y - 6, tr('Smeargle?'), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5, 1).setDepth(16);
       (sme as NPC & { isSmeargle?: boolean }).isSmeargle = true;

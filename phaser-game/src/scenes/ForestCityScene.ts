@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -192,7 +193,7 @@ export class ForestCityScene extends Phaser.Scene {
     this.add.text(15 * TILE, 25.4 * TILE, '↓ Ancient Forest', {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(15 * TILE, 0.5 * TILE, '↑ Route 6 · Dolmoe City', {
+    this.add.text(15 * TILE, 0.5 * TILE, tr('↑ Route 6 · Dolmoe City'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -239,7 +240,7 @@ export class ForestCityScene extends Phaser.Scene {
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: enter/talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: enter/talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

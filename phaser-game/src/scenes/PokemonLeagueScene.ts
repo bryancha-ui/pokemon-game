@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -261,10 +262,10 @@ export class PokemonLeagueScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏛 Hanbando Pokémon League', {
+    this.add.text(this.scale.width / 2, 22, tr('🏛 Hanbando Pokémon League'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: challenge  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -362,7 +363,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
       this.tweens.add({ targets: moth, alpha: 1, duration: 1500 });
       kids.push(moth);
     }
-    const title = this.add.text(W / 2, H * 0.04, '🏆 HALL OF FAME', {
+    const title = this.add.text(W / 2, H * 0.04, tr('🏆 HALL OF FAME'), {
       fontSize: '26px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
     }).setOrigin(0.5);
     kids.push(title);

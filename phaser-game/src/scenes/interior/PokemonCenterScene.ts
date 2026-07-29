@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
+import { tr } from '../../systems/i18n';
 import { PartySystem } from '../../systems/PartySystem';
 import { playJingle } from '../../systems/Music';
 import { recordLastCenter } from '../../systems/Blackout';
@@ -39,7 +40,7 @@ export class PokemonCenterScene extends BaseInteriorScene {
 
     // ── PC Sign ──
     this.drawRect(g, 1, 1, this.COLS - 2, 1, 0xcc2244, 0xaa0022);
-    this.add.text(400, this.tile(0, 1).y + 16, '🏥  POKÉMON CENTER  🏥', {
+    this.add.text(400, this.tile(0, 1).y + 16, tr('🏥  POKÉMON CENTER  🏥'), {
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
 

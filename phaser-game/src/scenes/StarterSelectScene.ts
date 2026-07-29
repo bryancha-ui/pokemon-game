@@ -77,7 +77,7 @@ export class StarterSelectScene extends Phaser.Scene {
     g.lineBetween(400, 10, 400, 110); g.lineBetween(330, 60, 470, 60);
     // Title banner
     g.fillStyle(0x1a3a5c, 0.88); g.fillRect(50, 8, 270, 38);
-    this.add.text(185, 27, "Prof. Song's Pokémon Lab", {
+    this.add.text(185, 27, tr("Prof. Song's Pokémon Lab"), {
       fontSize: '14px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5);
   }

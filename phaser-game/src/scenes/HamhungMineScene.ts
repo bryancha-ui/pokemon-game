@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
@@ -142,7 +143,7 @@ export class HamhungMineScene extends Phaser.Scene {
     g.fillStyle(0xff5a2a, 1); g.fillCircle(-5, -3, 3.4); g.fillCircle(5, -3, 3.4);                  // glowing eyes
     g.fillStyle(0x000000, 1); g.fillCircle(-5, -2, 1.5); g.fillCircle(5, -2, 1.5);
     g.lineStyle(2, 0x2a2a2a, 1); g.beginPath(); g.moveTo(-10, -8); g.lineTo(-2, -5); g.moveTo(10, -8); g.lineTo(2, -5); g.strokePath();
-    const label = this.add.text(0, -32, '⚠ Berserk Steelix (폭주 강철톤)', { fontSize: '9px', color: '#ff9a6a', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
+    const label = this.add.text(0, -32, tr('⚠ Berserk Steelix (폭주 강철톤)'), { fontSize: '9px', color: '#ff9a6a', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const cont = this.add.container(THREAT.col * TILE + 16, THREAT.row * TILE + 16, [g, label]).setDepth(9);
     this.tweens.add({ targets: cont, y: cont.y - 5, duration: 540, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.threatG = cont;
@@ -173,8 +174,8 @@ export class HamhungMineScene extends Phaser.Scene {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', { fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
     this.add.rectangle(this.scale.width / 2, 22, 360, 30, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛏ Hamhung Ore Mine (함흥 광산)', { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD move  SPACE act  M menu   ·   Subdue the Steelix in the deep gallery', { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, 22, tr('⛏ Hamhung Ore Mine (함흥 광산)'), { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD move  SPACE act  M menu   ·   Subdue the Steelix in the deep gallery'), { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
 
   update(_: number, delta: number) {
@@ -236,7 +237,7 @@ export class HamhungMineScene extends Phaser.Scene {
     if (!this.missionTaken || this.steelixDone) return false;
     const tx = THREAT.col * TILE + 16, ty = THREAT.row * TILE + 16;
     if (Math.hypot(this.px - tx, this.py - ty) > TILE * 1.5) return false;
-    this.enterPrompt.setText('SPACE — Subdue the Steelix').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — Subdue the Steelix')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     this.dialog.show([

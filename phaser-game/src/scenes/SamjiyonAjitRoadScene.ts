@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -156,7 +157,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     const bn = this.add.graphics().setDepth(4);
     for (const cx of [bx + 12, bx + bw - 20]) { bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + 6, 10, bh - 16); bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 5, by + 6 + (bh - 16) / 2, 3); }
 
-    this.add.text(10.5 * TILE, 0.6 * TILE, '🏢 노스단 아지트 (Team North HQ)', { fontSize: '10px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(10.5 * TILE, 0.6 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '10px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(6);
     this.add.text(GATE_COL * TILE - 8, GATE_ROW * TILE + 40, 'SPACE — Enter', { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 
@@ -196,10 +197,10 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛰ 노스단 아지트 진입로 (HQ Approach)', {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ 노스단 아지트 진입로 (HQ Approach)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  C: bike  SPACE: enter/talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: enter/talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -173,7 +174,7 @@ export class DeptStoreScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 20, `🏬 Capitol Dept. Store — ${FLOORS[this.floor].name}`, {
       fontSize: '12px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: talk / use elevator  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: talk / use elevator  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
 
@@ -201,7 +202,7 @@ export class DeptStoreScene extends Phaser.Scene {
       this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, 'Receptionist',
         { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
       // Directory board
-      this.add.text(2.2 * TILE, 6 * TILE, '📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop',
+      this.add.text(2.2 * TILE, 6 * TILE, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'),
         { fontSize: '8px', color: '#334', backgroundColor: '#e8e0d0dd', padding: { x: 4, y: 3 }, lineSpacing: 2 }).setOrigin(0, 0).setDepth(5);
       this.add.text(7.5 * TILE, 10.2 * TILE, '🚪 exit', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
     }
@@ -215,7 +216,7 @@ export class DeptStoreScene extends Phaser.Scene {
       g.setPosition(9 * TILE + 16, 6 * TILE + 16);
       drawNpcBody(g, 0x5a7a9a, { hair: 0x2a2018 });
       this.add.text(9 * TILE + 16, 6 * TILE - 8, 'Collector', { fontSize: '8px', color: '#cfe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
-      this.add.text(this.scale.width / 2, 66, '— Balcony over Capitol City —', { fontSize: '11px', color: '#fff', backgroundColor: '#00000066', padding: { x: 6, y: 2 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+      this.add.text(this.scale.width / 2, 66, tr('— Balcony over Capitol City —'), { fontSize: '11px', color: '#fff', backgroundColor: '#00000066', padding: { x: 6, y: 2 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     }
   }
 
@@ -347,7 +348,7 @@ export class DeptStoreScene extends Phaser.Scene {
       layer.add(txt);
       this.elevatorBtns.push({ fl, txt });
     }
-    layer.add(this.add.text(cx, cy + 150, '↑ ↓ select    SPACE go    X cancel', { fontSize: '11px', color: '#9ab' }).setOrigin(0.5));
+    layer.add(this.add.text(cx, cy + 150, tr('↑ ↓ select    SPACE go    X cancel'), { fontSize: '11px', color: '#9ab' }).setOrigin(0.5));
     this.elevatorLayer = layer;
 
     // Start on the first floor that isn't the current one.

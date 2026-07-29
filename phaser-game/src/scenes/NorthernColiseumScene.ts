@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -208,7 +209,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
       this.add.text(c * TILE + 16, r * TILE + 16, '★', { fontSize: '12px', color: '#ffe14a' }).setOrigin(0.5).setDepth(5);
     this.add.text(9 * TILE, 1.4 * TILE, '★', { fontSize: '44px', color: '#ffe14a', stroke: '#7a5a00', strokeThickness: 4 }).setOrigin(0.5).setDepth(5);
     this.add.text(9 * TILE, 3.0 * TILE, '👑 Taewang\'s Throne', { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 32.4 * TILE, '↓ Back to the plaza', { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 32.4 * TILE, tr('↓ Back to the plaza'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawMembers() {
@@ -248,7 +249,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
     this.add.text(this.scale.width / 2, 22, '🏯 Northern League — 북방 리그', {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: challenge  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

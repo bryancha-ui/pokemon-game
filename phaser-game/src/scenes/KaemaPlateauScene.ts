@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -191,7 +192,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
       mist.fillStyle(0xeaf1f6, Math.max(0, a));
       for (let c = 0; c < COLS; c += 2) mist.fillEllipse(c * TILE + 24, r * TILE + 16, 60, 34);
     }
-    this.add.text(11 * TILE, 4 * TILE, '❄ 서리 안개 (frost mist)', { fontSize: '8px', color: '#25404e', backgroundColor: '#eaf1f6cc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(16);
+    this.add.text(11 * TILE, 4 * TILE, tr('❄ 서리 안개 (frost mist)'), { fontSize: '8px', color: '#25404e', backgroundColor: '#eaf1f6cc', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(16);
   }
 
   private drawTrainers() {
@@ -233,10 +234,10 @@ export class KaemaPlateauScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛰ Kaema Plateau (개마고원)', {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ Kaema Plateau (개마고원)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -474,7 +475,7 @@ export class CapitolCityScene extends Phaser.Scene {
       festive.push(l);
       this.tweens.add({ targets: l, y: 40 + Math.random() * H * 0.6, duration: 2200 + Math.random() * 2200, yoyo: true, repeat: -1, delay: Math.random() * 1500 });
     }
-    const banner = this.add.text(W / 2, 74, '🎉  The Capitol throws a party in your honour!', {
+    const banner = this.add.text(W / 2, 74, tr('🎉  The Capitol throws a party in your honour!'), {
       fontSize: '18px', color: '#ffe44e', fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(152);
     festive.push(banner);
@@ -535,7 +536,7 @@ export class CapitolCityScene extends Phaser.Scene {
     g.fillStyle(0x22314e, 1); g.fillTriangle(W * 0.44, H, W * 0.7, H * 0.2, W * 0.98, H);
     g.fillStyle(0xffffff, 0.85); g.fillTriangle(W * 0.7, H * 0.2, W * 0.66, H * 0.3, W * 0.74, H * 0.3);
     for (let i = 0; i < 60; i++) g.fillStyle(0xffffff, Math.random()), g.fillCircle(Math.random() * W, Math.random() * H * 0.7, Math.random() < 0.5 ? 1 : 2);
-    const cap = this.add.text(W / 2, H * 0.12, '❄  Beyond the border tunnels — into the Northern Reaches…', {
+    const cap = this.add.text(W / 2, H * 0.12, tr('❄  Beyond the border tunnels — into the Northern Reaches…'), {
       fontSize: '17px', color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5, align: 'center',
     }).setOrigin(0.5);
     const root = this.add.container(0, 0, [g, cap]).setScrollFactor(0).setDepth(200);
@@ -550,7 +551,7 @@ export class CapitolCityScene extends Phaser.Scene {
     if (!this.registry.get('sunriseGymDefeated')) return;   // 8th badge opens the road to the Hanbando League
     const wx = this.SCHOLARS_GATE.col * TILE + 16, wy = this.SCHOLARS_GATE.row * TILE + 16;
     if (Math.hypot(this.px - wx, this.py - wy) > TILE * 1.4) return;
-    this.enterPrompt.setText('SPACE — Scholars\' Road → Pokémon League').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — Scholars\' Road → Pokémon League')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
     this.cutsceneActive = true;
     this.registry.set('scholarsRoadReturnX', 12 * 32 + 16);
@@ -578,7 +579,7 @@ export class CapitolCityScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 0.8); g.fillTriangle(cx + 80, cy - 80, cx + 64, cy - 50, cx + 96, cy - 50);
     g.fillStyle(0x4488cc); g.fillEllipse(cx + 30, cy + 80, 220, 40);
     screen.add(g);
-    screen.add(this.add.text(cx, cy + sh / 2 - 26, 'HANBANDO NEWS — Baekdu Highland', {
+    screen.add(this.add.text(cx, cy + sh / 2 - 26, tr('HANBANDO NEWS — Baekdu Highland'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#000000aa', padding: { x: 6, y: 3 },
     }).setOrigin(0.5));
 
@@ -740,7 +741,7 @@ export class CapitolCityScene extends Phaser.Scene {
     this.enterPrompt = this.add.text(640, 690, '', {
       fontSize: '14px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 10, y: 5 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(640, 710, 'WASD: move  SPACE: enter  M: menu  SHIFT: run', {
+    this.add.text(640, 710, tr('WASD: move  SPACE: enter  M: menu  SHIFT: run'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

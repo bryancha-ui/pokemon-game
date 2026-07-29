@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawGymLeader } from '../data/CharacterSprite';
 import { vanishesAfterDefeat } from '../data/Villains';
@@ -143,7 +144,7 @@ export class BaekduGymScene extends Phaser.Scene {
       fontSize: '11px', color: '#ffe0a0', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
     if (this.trainers.every(t => t.defeated) && !this.registry.get('baekduGymDefeated')) {
-      this.add.text(W / 2, IT * 2.4, '← LEADER BYEOKSAN →', { fontSize: '9px', color: '#ffcf70' })
+      this.add.text(W / 2, IT * 2.4, tr('← LEADER BYEOKSAN →'), { fontSize: '9px', color: '#ffcf70' })
         .setOrigin(0.5).setDepth(5);
     }
   }

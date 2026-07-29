@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -296,7 +297,7 @@ export class RouteScene extends Phaser.Scene {
     this.add.text(13 * TILE, 11 * TILE, '🪺 Disguijar Nest', {
       fontSize: '9px', color: '#fff', backgroundColor: '#2a6a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(13 * TILE, 11 * TILE + 14, '← walk in the grass to find them', {
+    this.add.text(13 * TILE, 11 * TILE + 14, tr('← walk in the grass to find them'), {
       fontSize: '7px', color: '#aaddaa', backgroundColor: '#00000066', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(13 * TILE, 36 * TILE + 4, '⛰ Cave Entrance', {
@@ -399,7 +400,7 @@ export class RouteScene extends Phaser.Scene {
     this.dialog = new DialogBox(this, 1280, 720);
 
     this.add.rectangle(400, 22, 360, 34, 0x000000, 0.65).setScrollFactor(0).setDepth(50);
-    this.locationText = this.add.text(400, 22, '🗺 Route 1 — Mountain Pass', {
+    this.locationText = this.add.text(400, 22, tr('🗺 Route 1 — Mountain Pass'), {
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
 
@@ -407,7 +408,7 @@ export class RouteScene extends Phaser.Scene {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 6, y: 3 },
     }).setScrollFactor(0).setDepth(51);
 
-    this.add.text(400, 490, 'WASD/Arrows: move  |  SHIFT: run  |  M: menu', {
+    this.add.text(400, 490, tr('WASD/Arrows: move  |  SHIFT: run  |  M: menu'), {
       fontSize: '10px', color: '#cccccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
 

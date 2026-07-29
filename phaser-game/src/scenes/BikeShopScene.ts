@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -91,7 +92,7 @@ export class BikeShopScene extends Phaser.Scene {
     this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, 'Shop Clerk', {
       fontSize: '8px', color: '#aef0c0', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);
-    this.add.text(COLS * TILE / 2, 0.6 * TILE, '🚲 Han River Bicycle Shop', {
+    this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('🚲 Han River Bicycle Shop'), {
       fontSize: '12px', color: '#dff', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(9 * TILE, (ROWS - 0.6) * TILE, '⬇ Exit', {
@@ -135,7 +136,7 @@ export class BikeShopScene extends Phaser.Scene {
   private checkClerk() {
     const near = Math.hypot(this.px - (this.CLERK.col * TILE + 16), this.py - (this.CLERK.row * TILE + 16)) < TILE * 1.6;
     this.prompt.setVisible(near);
-    if (near) this.prompt.setText('SPACE — talk to Shop Clerk');
+    if (near) this.prompt.setText(tr('SPACE — talk to Shop Clerk'));
     if (!near || !Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     this.cutsceneActive = true; this.prompt.setVisible(false);
     if (!hasBike(this.registry)) {

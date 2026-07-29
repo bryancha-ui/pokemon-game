@@ -344,7 +344,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     g.fillEllipse(180, 280, 160, 28); g.fillEllipse(580, 155, 120, 22);
     g.fillStyle(0x0d0d2e, 0.96); g.fillRect(0, this.H - 120, this.W, 120);
     g.lineStyle(2, 0x5577aa); g.lineBetween(0, this.H - 120, this.W, this.H - 120);
-    this.add.text(this.W / 2, this.H - 108, '▶ SPACE to advance',
+    this.add.text(this.W / 2, this.H - 108, tr('▶ SPACE to advance'),
       { fontSize: '11px', color: '#5577aa' }).setOrigin(0.5).setDepth(2);
   }
 
@@ -521,7 +521,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const usable = ITEMS.filter(it => (inv[it.key] ?? 0) > 0 &&
       (it.category === 'heal' || it.category === 'status' || it.category === 'revive'));
     if (usable.length === 0) {
-      this.bagPanel.add(this.add.text(30, 40, 'No usable items in the bag.', { fontSize: '15px', color: '#ccc' }));
+      this.bagPanel.add(this.add.text(30, 40, tr('No usable items in the bag.'), { fontSize: '15px', color: '#ccc' }));
       return;
     }
     const cols = [20, 250, 480, 710];

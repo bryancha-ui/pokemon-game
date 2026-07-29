@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -159,7 +160,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(15.5 * TILE, 0.5 * TILE, '↑ Grand Avenue → Northern League', {
+    this.add.text(15.5 * TILE, 0.5 * TILE, tr('↑ Grand Avenue → Northern League'), {
       fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -282,13 +283,13 @@ export class PyeongyangCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 460, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏙 Pyeongseong — the Northern Capital', {
+    this.add.text(this.scale.width / 2, 22, tr('🏙 Pyeongseong — the Northern Capital'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 40, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 10, y: 5 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SPACE: interact  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: interact  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -337,7 +338,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     if (Math.hypot(this.px - cx, this.py - cy) > TILE * 2) { this.enterPrompt.setVisible(false); return; }
     
     if (!this.hasAllMapae) {
-      this.enterPrompt.setText('SPACE — Talk to Supreme Gwang').setVisible(true);
+      this.enterPrompt.setText(tr('SPACE — Talk to Supreme Gwang')).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.enterPrompt.setVisible(false);
         this.cutsceneActive = true;
@@ -350,7 +351,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
       return;
     }
     
-    this.enterPrompt.setText('SPACE — Challenge Supreme Gwang').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — Challenge Supreme Gwang')).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
       this.enterPrompt.setVisible(false);
       this.cutsceneActive = true;
@@ -371,7 +372,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
   private checkGate() {
     const gx = (GATE.col + 0.5) * TILE, gy = GATE.row * TILE + 16;
     if (Math.hypot(this.px - gx, this.py - gy) > TILE * 1.8) { this.enterPrompt.setVisible(false); return; }
-    this.enterPrompt.setText('SPACE — Grand Avenue → Northern League').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — Grand Avenue → Northern League')).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
       this.enterPrompt.setVisible(false);
       this.cutsceneActive = true;

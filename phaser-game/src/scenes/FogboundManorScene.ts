@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
@@ -166,7 +167,7 @@ export class FogboundManorScene extends Phaser.Scene {
     g.fillStyle(0xff3a3a, 1); g.fillCircle(-5, -3, 3.6); g.fillCircle(5, -3, 3.6);              // burning eyes
     g.fillStyle(0x000000, 1); g.fillCircle(-5, -2, 1.6); g.fillCircle(5, -2, 1.6);
     g.fillStyle(0xffffff, 0.9); for (let i = -2; i <= 2; i++) g.fillRect(i * 4 - 1, 3, 3, 4);   // toothy grin
-    const label = this.add.text(0, -32, '⚠ Fog-Wraith Gengar (안개 팬텀)', { fontSize: '9px', color: '#d89aff', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
+    const label = this.add.text(0, -32, tr('⚠ Fog-Wraith Gengar (안개 팬텀)'), { fontSize: '9px', color: '#d89aff', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const cont = this.add.container(THREAT.col * TILE + 16, THREAT.row * TILE + 16, [g, label]).setDepth(18);
     this.tweens.add({ targets: cont, y: cont.y - 6, duration: 620, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.tweens.add({ targets: cont, alpha: { from: 1, to: 0.55 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });  // flickers in and out
@@ -222,8 +223,8 @@ export class FogboundManorScene extends Phaser.Scene {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', { fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
     this.add.rectangle(this.scale.width / 2, 22, 360, 30, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏚 Fogbound Manor (안개저택)', { fontSize: '13px', color: '#d8c8ff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD move  SPACE act  M menu   ·   Find the Fog-Wraith in the séance hall', { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, 22, tr('🏚 Fogbound Manor (안개저택)'), { fontSize: '13px', color: '#d8c8ff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD move  SPACE act  M menu   ·   Find the Fog-Wraith in the séance hall'), { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
 
   update(_: number, delta: number) {
@@ -333,7 +334,7 @@ export class FogboundManorScene extends Phaser.Scene {
     if (!this.missionTaken || this.gengarDone) return false;
     const tx = THREAT.col * TILE + 16, ty = THREAT.row * TILE + 16;
     if (Math.hypot(this.px - tx, this.py - ty) > TILE * 1.5) return false;
-    this.enterPrompt.setText('SPACE — Face the Fog-Wraith').setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — Face the Fog-Wraith')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     this.dialog.show([

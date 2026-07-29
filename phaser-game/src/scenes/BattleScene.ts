@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
@@ -30,7 +31,7 @@ export class BattleScene extends Phaser.Scene {
 
   async create() {
     this.createBackground();
-    this.dialogText = this.add.text(20, this.H - 90, 'Loading...', {
+    this.dialogText = this.add.text(20, this.H - 90, tr('Loading...'), {
       fontSize: '18px', color: '#fff', wordWrap: { width: this.W * 0.6 - 40 }
     });
 

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -167,13 +168,13 @@ export class Route2Scene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     // Pavilion roof + label
-    this.add.text(17 * TILE + 16, 20 * TILE - 4, '🏯 Roadside Pavilion', {
+    this.add.text(17 * TILE + 16, 20 * TILE - 4, tr('🏯 Roadside Pavilion'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
     }).setOrigin(0.5, 1).setDepth(5);
     this.add.text(12 * TILE, 58 * TILE, '↓ Capitol City', {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 1.5 * TILE, '↑ Pine Needle Town', {
+    this.add.text(12 * TILE, 1.5 * TILE, tr('↑ Pine Needle Town'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#2a6a2a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -258,7 +259,7 @@ export class Route2Scene extends Phaser.Scene {
     this.locationText = this.add.text(this.scale.width / 2, 22, '⛰ Route 2 — Scholar\'s Road (선비길)', {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, 'WASD: move  SHIFT: run  SPACE: talk  M: menu', {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }

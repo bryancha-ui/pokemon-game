@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr } from '../systems/i18n';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { SaveManager } from '../utils/SaveManager';
 import { playBgm } from '../systems/Music';
@@ -105,7 +106,7 @@ export class CheonjiyeonWaterfallScene extends Phaser.Scene {
     this.add.text(COLS * TILE / 2, 0.8 * TILE, '💧 Cheonjiyeon Waterfall', {
       fontSize: '13px', color: '#bfeef8', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, '⬇ Return to Jeju City', {
+    this.add.text(COLS * TILE / 2, (ROWS - 0.8) * TILE, tr('⬇ Return to Jeju City'), {
       fontSize: '10px', color: '#aaffff', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
 
