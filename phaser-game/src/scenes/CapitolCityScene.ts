@@ -168,25 +168,27 @@ interface CityLocation {
   doorRow: number; doorCol: number;
   x: number; y: number; w: number; h: number;
   roofColor: number; wallColor: number;
+  /** 3D building model id (props.json) placed on this footprint. */
+  model: string;
 }
 
 const LOCATIONS: CityLocation[] = [
-  { label: "Pokémon Center",   scene: 'CapitolPCScene',
+  { label: "Pokémon Center",   scene: 'CapitolPCScene', model: 'pokecenter',
     doorRow: 51, doorCol: 7,
     x: 3, y: 44, w: 10, h: 8, roofColor: 0xcc2244, wallColor: 0xffffff },
-  { label: "Capitol Tower",    scene: 'CapitolTowerScene',
+  { label: "Capitol Tower",    scene: 'CapitolTowerScene', model: 'tower',
     doorRow: 32, doorCol: 37,
     x: 31, y: 19, w: 13, h: 14, roofColor: 0x1144cc, wallColor: 0x445566 },
-  { label: "Ancient Palace",   scene: 'CapitolPalaceScene',
+  { label: "Ancient Palace",   scene: 'CapitolPalaceScene', model: 'palace',
     doorRow: 30, doorCol: 11,
     x: 3, y: 18, w: 18, h: 13, roofColor: 0x8a4a1a, wallColor: 0xd4a870 },
-  { label: "Central Market",   scene: 'CapitolMarketScene',
+  { label: "Central Market",   scene: 'CapitolMarketScene', model: 'mart',
     doorRow: 51, doorCol: 17,
     x: 15, y: 44, w: 6, h: 8, roofColor: 0xee8833, wallColor: 0xffcc88 },
-  { label: "Dept. Store (6F)", scene: 'DeptStoreScene',
+  { label: "Dept. Store (6F)", scene: 'DeptStoreScene', model: 'deptstore',
     doorRow: 51, doorCol: 35,
     x: 27, y: 44, w: 17, h: 8, roofColor: 0x2a6a9a, wallColor: 0xcfd8e0 },
-  { label: "Capitol GYM",      scene: 'CapitolGymScene',
+  { label: "Capitol GYM",      scene: 'CapitolGymScene', model: 'gym',
     doorRow: 14, doorCol: 23,
     x: 14, y: 3, w: 20, h: 12, roofColor: 0x222266, wallColor: 0x334477 },
 ];
@@ -213,7 +215,9 @@ export class CapitolCityScene extends Phaser.Scene {
 
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
-  public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h }));
+  public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
+  /** Only these named landmark GLBs rise in 3D — no generic filler boxes. */
+  public onlyNamedBuildings = true;
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;

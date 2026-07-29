@@ -36,6 +36,48 @@
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/fbee8199-620a-4737-8e0b-a17603efb770.glb"
     },
     {
+      "id": "deptstore",
+      "role": "building",
+      "tags": ["shop"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/49b4f058-e47b-405f-b5ad-ed5b7419e2a5.glb"
+    },
+    {
+      "id": "gym",
+      "role": "building",
+      "tags": ["gym"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/641beb58-4927-4fbd-b568-da867172591a.glb"
+    },
+    {
+      "id": "palace",
+      "role": "building",
+      "tags": ["traditional"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/cc7a7249-9392-48cd-9f4e-d5fc902ec535.glb"
+    },
+    {
+      "id": "mart",
+      "role": "building",
+      "tags": ["shop"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/29638717-a3d7-47db-85bc-291d9eb2c09b.glb"
+    },
+    {
+      "id": "tower",
+      "role": "building",
+      "tags": ["landmark"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/28923c39-4dde-4858-a7c8-db795da61c78.glb"
+    },
+    {
+      "id": "convenience",
+      "role": "building",
+      "tags": ["shop"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/a412a0e9-ed1e-4029-80ea-3721a63f8d47.glb"
+    },
+    {
+      "id": "bikeshop",
+      "role": "building",
+      "tags": ["shop"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/3bce9d76-b9ea-4322-9905-c4ef10f3e59c.glb"
+    },
+    {
       "id": "bus",
       "role": "vehicle",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/5cbaedf8-b605-4f72-bde4-70ab3949cffc.glb"

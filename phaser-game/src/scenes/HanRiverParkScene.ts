@@ -25,10 +25,10 @@ const COLORS: Record<Tile, number> = {
 };
 const SOLID = new Set<Tile>([T.WATER, T.BUILDING, T.TREE, T.BENCH]);
 
-interface Spot { label: string; scene?: string; x: number; y: number; w: number; h: number; doorCol: number; doorRow: number; roof: number; }
+interface Spot { label: string; scene?: string; x: number; y: number; w: number; h: number; doorCol: number; doorRow: number; roof: number; model?: string; }
 const BUILDINGS: Spot[] = [
-  { label: '🚲 Bicycle Shop', x: 5,  y: 12, w: 5, h: 4, doorCol: 7,  doorRow: 16, roof: 0x2a8a5a },
-  { label: '🏪 Convenience Store', x: 33, y: 12, w: 5, h: 4, doorCol: 35, doorRow: 16, roof: 0xd85a3a },
+  { label: '🚲 Bicycle Shop', x: 5,  y: 12, w: 5, h: 4, doorCol: 7,  doorRow: 16, roof: 0x2a8a5a, model: 'bikeshop' },
+  { label: '🏪 Convenience Store', x: 33, y: 12, w: 5, h: 4, doorCol: 35, doorRow: 16, roof: 0xd85a3a, model: 'convenience' },
 ];
 
 function buildMap(): Tile[][] {
@@ -77,6 +77,10 @@ const PICNICS: Picnicker[] = [
 
 export class HanRiverParkScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** The bike shop + convenience store get their own 3D GLBs; only those named
+   *  landmarks rise in 3D, so no stray generic box blocks the river view. */
+  public buildingPlots = BUILDINGS.map(b => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: b.model! }));
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
