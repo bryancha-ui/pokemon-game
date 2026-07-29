@@ -6,7 +6,7 @@ import { buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { makeBlobShadow } from './Props';
 import { buildTerrain, PX, TerrainResult } from './TerrainBuilder';
-import { ThreeStage } from './ThreeStage';
+import { disposeDeep, ThreeStage } from './ThreeStage';
 
 // ── Overworld mirror ─────────────────────────────────────────────────────────
 // Watches a running Phaser scene (which keeps 100% of the game logic) and
@@ -38,6 +38,8 @@ interface Tracked {
   phase: number;
   /** aspect of the last rasterized art (w/h) — wide art = riding pose. */
   aspect: number;
+  /** for images: texture signature so runtime setTexture swaps rebuild the mesh */
+  texSig?: string;
 }
 
 const WORLD_COVER = 0.42;      // graphics covering ≥42% of the world = part of the map painting
@@ -54,12 +56,17 @@ export class OverworldMirror {
   private mapGraphics = new Set<GO>();
   private mapImages = new Set<GO>();
   private mapHashes = new Map<GO, number>();
+  private mapImgSigs = new Map<GO, number>();
+  private static sigCanvas: HTMLCanvasElement | null = null;
   private playerObj: GO | null = null;
   private worldX = 0; private worldY = 0;
   private worldW = 0; private worldH = 0;
   private built = false;
   private time = 0;
   private mapRedrawCooldown = 0;
+  private isInterior = false;
+  /** set when a map layer arrives after the terrain was built (late-drawn maps) */
+  private needsTerrainRebuild = false;
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
   // Full 3D protagonist (replaces the player's flat relief with an animated model).
   private hero: PlayerModel | null = null;
@@ -101,7 +108,9 @@ export class OverworldMirror {
     if (!this.playerObj) return false;
 
     const b = cam.getBounds();
+    let hadBounds = false;
     if (b.width > 0 && b.height > 0) {
+      hadBounds = true;
       this.worldX = b.x; this.worldY = b.y;
       this.worldW = b.width; this.worldH = b.height;
     } else {
@@ -145,12 +154,12 @@ export class OverworldMirror {
     this.groundCanvas.height = Math.min(4096, this.worldH);
     this.redrawGround();
 
-    const isInterior = (this.worldW <= 1400 && this.worldH <= 900);
-    const t = buildTerrain(this.groundCanvas, this.worldW, this.worldH, isInterior, this.readTileMap());
-    this.terrain = t;
-    this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
-    t.group.position.set(this.worldX / PX, 0, this.worldY / PX);   // world-space origin
-    this.root.add(t.group);
+    // Interior = a static-camera room (no scroll bounds). Size alone is NOT a
+    // signal: small towns (e.g. 32×24-tile villages) are outdoors and need sky,
+    // buildings and daylight — only true rooms skip those.
+    this.isInterior = !hadBounds && (this.worldW <= 1500 && this.worldH <= 1000);
+    const t = this.buildTerrainPass();
+    const isInterior = this.isInterior;
     this.stage.setEnvironment(isInterior && t.env !== 'cave' ? 'interior' : t.env);
     this.rig.setMode(isInterior ? 'interior' : 'overworld');
     this.rig.setWorldBounds(
@@ -178,6 +187,54 @@ export class OverworldMirror {
     const expectRows = Math.round(this.worldH / PX), expectCols = Math.round(this.worldW / PX);
     if (Math.abs(rows - expectRows) > 1 || Math.abs(cols - expectCols) > 1) return null;
     return m as number[][];
+  }
+
+  /** Build (or rebuild) the 3D terrain from the current ground canvas. */
+  private buildTerrainPass(): TerrainResult {
+    // Scenes with an authoritative building table (gyms, landmarks) publish it
+    // as `buildingPlots` — those become 3D volumes without any detection.
+    const known = (this.scene as unknown as {
+      buildingPlots?: { x: number; y: number; w: number; h: number; model?: string }[];
+    }).buildingPlots ?? [];
+    const t = buildTerrain(
+      this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
+      this.readTileMap(), known, this.scene.scene.key,
+    );
+    this.terrain = t;
+    this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
+    t.group.position.set(this.worldX / PX, 0, this.worldY / PX);   // world-space origin
+    this.root.add(t.group);
+    return t;
+  }
+
+  /** Some scenes paint their map a beat late (cutscene fades, delayed draws).
+   *  When a world-covering layer arrives after the terrain was built, rebuild
+   *  it — environment, buildings and props were computed from a blank canvas. */
+  private rebuildTerrain(): void {
+    if (!this.groundCanvas || !this.terrain) return;
+    this.root.remove(this.terrain.group);
+    disposeDeep(this.terrain.group);
+    const t = this.buildTerrainPass();
+    this.stage.setEnvironment(this.isInterior && t.env !== 'cave' ? 'interior' : t.env);
+  }
+
+  /** Cheap content signature of a map image's texture (8×8 downsample sum) —
+   *  scenes sometimes repaint their baked map after we composited it. */
+  private imageSig(im: Phaser.GameObjects.Image): number {
+    try {
+      if (!OverworldMirror.sigCanvas) {
+        OverworldMirror.sigCanvas = document.createElement('canvas');
+        OverworldMirror.sigCanvas.width = OverworldMirror.sigCanvas.height = 8;
+      }
+      const c = OverworldMirror.sigCanvas;
+      const ctx = c.getContext('2d')!;
+      ctx.clearRect(0, 0, 8, 8);
+      ctx.drawImage(im.texture.getSourceImage() as CanvasImageSource, 0, 0, 8, 8);
+      const d = ctx.getImageData(0, 0, 8, 8).data;
+      let h = 0;
+      for (let i = 0; i < d.length; i += 4) h = (h * 31 + d[i] + d[i + 1] + d[i + 2]) | 0;
+      return h;
+    } catch { return 0; }
   }
 
   // ── Ground painting ──
@@ -253,7 +310,11 @@ export class OverworldMirror {
 
     if (obj instanceof Phaser.GameObjects.Graphics) {
       if (this.mapGraphics.has(obj) || this.isMapPainting(obj)) {
-        if (!this.mapGraphics.has(obj)) { this.mapGraphics.add(obj); this.redrawGround(); }
+        if (!this.mapGraphics.has(obj)) {
+          this.mapGraphics.add(obj);
+          this.redrawGround();
+          if (this.built) this.needsTerrainRebuild = true;
+        }
         this.hideFrom2D(obj);
         return;
       }
@@ -262,7 +323,11 @@ export class OverworldMirror {
     }
     if (obj instanceof Phaser.GameObjects.Image || obj instanceof Phaser.GameObjects.Sprite) {
       if (this.mapImages.has(obj) || this.isMapImage(obj)) {
-        if (!this.mapImages.has(obj)) { this.mapImages.add(obj); this.redrawGround(); }
+        if (!this.mapImages.has(obj)) {
+          this.mapImages.add(obj);
+          this.redrawGround();
+          if (this.built) this.needsTerrainRebuild = true;
+        }
         this.hideFrom2D(obj);
         return;
       }
@@ -361,8 +426,23 @@ export class OverworldMirror {
       obj: im, mesh: holder, mats, shadow, kind: 'image', hash: 0,
       footY, halfW, baseColor: new THREE.Color(0xffffff), phase: Math.random() * Math.PI * 2,
       aspect: relief.pxWidth / Math.max(1, relief.pxHeight),
+      texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
     });
     this.hideFrom2D(im);
+  }
+
+  /** Rebuild an image's relief when the game swaps its texture at runtime. */
+  private refreshImage(t: Tracked, im: GO & Phaser.GameObjects.Image): void {
+    const src = this.frameCanvas(im);
+    if (!src) return;
+    const relief = buildRelief(`img:${im.texture.key}:${im.frame?.name ?? 0}`, src);
+    if (!relief) return;
+    const inner = t.mesh.children[0] as THREE.Mesh;
+    inner.geometry = relief.geometry;
+    if (t.mats) { t.mats[0].map = relief.texture; t.mats[0].needsUpdate = true; }
+    t.footY = (im.displayOriginY ?? (im.height ?? 0) / 2);
+    t.halfW = (relief.pxWidth / 2) / PX;
+    t.aspect = relief.pxWidth / Math.max(1, relief.pxHeight);
   }
 
   private frameCanvas(im: Phaser.GameObjects.Image): HTMLCanvasElement | null {
@@ -430,17 +510,39 @@ export class OverworldMirror {
   update(dt: number): void {
     if (!this.built) { this.tryBuild(); return; }
     this.time += dt;
+    if (this.needsTerrainRebuild) {
+      this.needsTerrainRebuild = false;
+      this.rebuildTerrain();
+    }
     this.terrain?.update(this.time);
 
     // Map graphics occasionally redraw (doors opening, cut trees): re-composite at most ~2Hz.
     this.mapRedrawCooldown -= dt;
     if (this.mapRedrawCooldown <= 0) {
       this.mapRedrawCooldown = 0.5;
+      let dirty = false;
       for (const g of this.mapGraphics) {
         const buf = (g as unknown as { commandBuffer?: unknown[] }).commandBuffer;
         if (!buf) continue;
         const h = hashCommands(buf);
-        if (this.mapHashes.get(g) !== h) { this.redrawGround(); break; }
+        if (this.mapHashes.get(g) !== h) { dirty = true; break; }
+      }
+      if (!dirty) {
+        // Baked map textures can be repainted after we composited them
+        // (detail passes, delayed draws) — watch their pixel content too.
+        for (const gi of this.mapImages) {
+          const im = gi as unknown as Phaser.GameObjects.Image;
+          const sig = this.imageSig(im);
+          if (this.mapImgSigs.get(gi) !== sig) {
+            this.mapImgSigs.set(gi, sig);
+            dirty = true;
+            break;
+          }
+        }
+      }
+      if (dirty) {
+        this.redrawGround();
+        this.needsTerrainRebuild = true;
       }
     }
 
@@ -480,6 +582,11 @@ export class OverworldMirror {
         }
       }
       if (t.kind === 'graphics') this.refreshGraphics(t);
+      if (t.kind === 'image') {
+        const im = o as GO & Phaser.GameObjects.Image;
+        const sig = `${im.texture.key}:${im.frame?.name ?? 0}`;
+        if (sig !== t.texSig) { t.texSig = sig; this.refreshImage(t, im); }
+      }
       if (t.kind === 'text') {
         // Billboard: face camera, hover above its anchor point.
         t.mesh.position.set((o.x ?? 0) / PX, 1.6, (o.y ?? 0) / PX);
@@ -505,6 +612,59 @@ export class OverworldMirror {
     if (fx?.isRunning) this.rig.addShake(0.25);
 
     this.rig.update(dt, playerPos);
+    if (playerPos) this.fadeOccluders(playerPos, dt);
+  }
+
+  // ── See-through buildings ──
+  // Any building standing between the camera and the player fades to a ghost
+  // so tall city blocks never hide the hero (the classic third-person fix).
+  private tmpA = new THREE.Vector3();
+  private fadeOccluders(playerPos: THREE.Vector3, dt: number): void {
+    const t = this.terrain;
+    if (!t || !t.blockers.length) return;
+    const cam = this.stage.camera.position;
+    const cx = cam.x, cz = cam.z;
+    const px = playerPos.x, pz = playerPos.z;
+    const dx = px - cx, dz = pz - cz;
+    const segLen2 = dx * dx + dz * dz || 1;
+
+    for (const b of t.blockers) {
+      b.node.getWorldPosition(this.tmpA);
+      const bx = this.tmpA.x, bz = this.tmpA.z;
+      // closest point on the camera→player segment (XZ)
+      const k = Math.max(0, Math.min(1, ((bx - cx) * dx + (bz - cz) * dz) / segLen2));
+      const qx = cx + dx * k, qz = cz + dz * k;
+      const dist = Math.hypot(bx - qx, bz - qz);
+      const blocking = k > 0.04 && k < 0.985 && dist < b.r;
+      const target = blocking ? 1 : 0;
+      if (Math.abs(b.fade - target) < 0.01 && target === 0 && b.fade === 0) continue;
+      b.fade += (target - b.fade) * Math.min(1, dt * 8);
+      if (b.fade < 0.01 && target === 0) { b.fade = 0; this.applyFade(b.node, 0); continue; }
+      this.applyFade(b.node, b.fade);
+    }
+  }
+
+  private applyFade(node: THREE.Object3D, fade: number): void {
+    node.traverse(o => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.material) return;
+      const ud = mesh.userData as { fadeMats?: THREE.Material[] };
+      // Clone materials once per mesh so shared (GLB prop) materials elsewhere
+      // in the city aren't ghosted along with this one building.
+      if (!ud.fadeMats) {
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        const clones = mats.map(m => m.clone());
+        mesh.material = Array.isArray(mesh.material) ? clones : clones[0];
+        ud.fadeMats = clones;
+        mesh.userData.sharedMat = false;
+      }
+      for (const m of ud.fadeMats) {
+        const mm = m as THREE.Material & { opacity: number; transparent: boolean; depthWrite: boolean };
+        mm.transparent = fade > 0.01;
+        mm.opacity = 1 - fade * 0.82;
+        mm.depthWrite = fade < 0.5;
+      }
+    });
   }
 
   /** Swap the protagonist's flat relief for the animated 3D model, and drive

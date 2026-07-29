@@ -218,6 +218,9 @@ export class WorldMapScene extends Phaser.Scene {
   private wasd!: { up: Phaser.Input.Keyboard.Key; down: Phaser.Input.Keyboard.Key; left: Phaser.Input.Keyboard.Key; right: Phaser.Input.Keyboard.Key };
   private interactKey!: Phaser.Input.Keyboard.Key;
   private map!: Tile[][];
+  /** Authoritative building footprints (+ their 3D model id) for the 3D engine:
+   *  the overworld mirror places the named GLB on each exact plot. */
+  buildingPlots!: { x: number; y: number; w: number; h: number; model: string }[];
   private mapGraphics!: Phaser.GameObjects.Graphics;
   private enterPrompt!: Phaser.GameObjects.Text;
   private shoesText!: Phaser.GameObjects.Text;
@@ -265,6 +268,11 @@ export class WorldMapScene extends Phaser.Scene {
     this.registry.remove('returnX'); this.registry.remove('returnY');
 
     this.map = buildMap();
+
+    // Publish the four landmark buildings (home / rival / lab / Pokémon Center)
+    // to the 3D engine so each gets its own distinct GLB on its exact footprint,
+    // instead of blurring together as generic extruded boxes.
+    this.buildingPlots = BUILDINGS.map(b => ({ x: b.col, y: b.row, w: b.w, h: b.h, model: b.id }));
 
     // Safety: if spawn lands inside a solid tile, nudge south to the next road
     const spawnRow = Math.floor(this.py / TILE);

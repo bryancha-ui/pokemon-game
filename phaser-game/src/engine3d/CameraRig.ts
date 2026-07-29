@@ -9,7 +9,9 @@ import * as THREE from 'three';
 export type RigMode = 'overworld' | 'interior' | 'battle';
 
 const PRESET = {
-  overworld: { back: 5.6, up: 5.2, lookAhead: 2.0, lookUp: 0.9, fov: 47, damp: 4.2 },
+  // Steeper city-friendly angle: the camera sits higher and closer so even
+  // tall buildings south of the player rarely cross the view line.
+  overworld: { back: 4.6, up: 6.6, lookAhead: 1.8, lookUp: 0.8, fov: 49, damp: 4.2 },
   interior:  { back: 4.4, up: 4.2, lookAhead: 1.2, lookUp: 0.7, fov: 46, damp: 5.0 },
 } as const;
 
@@ -21,8 +23,8 @@ export class CameraRig {
   private hasSnapped = false;
 
   // Battle rig state
-  private battleBase = new THREE.Vector3(-2.7, 2.35, 5.9);
-  private battleLook = new THREE.Vector3(0.45, 0.95, -0.75);
+  private battleBase = new THREE.Vector3(-2.5, 2.6, 5.5);
+  private battleLook = new THREE.Vector3(0.35, 1.1, -0.6);
   private focus = new THREE.Vector3();
   private focusAmt = 0;                // 0..1 punch-in toward focus point
   private shake = 0;

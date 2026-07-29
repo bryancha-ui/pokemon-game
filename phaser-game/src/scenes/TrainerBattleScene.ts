@@ -358,12 +358,12 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
-    this.add.rectangle(660, 318, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(552, 292, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
-    this.playerLvText = this.add.text(730, 292, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
-    this.add.rectangle(660, 320, HP_W + 6, 10, 0x333355);
-    this.playerHpBar  = this.add.rectangle(570, 320, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
-    this.playerHpText = this.add.text(552, 330, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
+    this.add.rectangle(1030, 545, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
+    this.playerNameText = this.add.text(922, 519, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
+    this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
+    this.playerHpBar  = this.add.rectangle(940, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
+    this.playerHpText = this.add.text(922, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
   }
 
   private createSprites() {
@@ -474,7 +474,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private createMovePanel() {
     this.movePanel = this.add.container(0, this.H - 120).setDepth(10).setVisible(false);
-    const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x111133).setStrokeStyle(1, 0x5577aa);
+    const bg = this.add.rectangle(this.W / 2, 60, this.W - 16, 120, 0x111133, 0.95).setStrokeStyle(1, 0x5577aa);
     this.movePanel.add(bg);
     this.movePanel.add(
       this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
@@ -482,7 +482,7 @@ export class TrainerBattleScene extends Phaser.Scene {
         .on('pointerdown', () => this.playerAction()),
     );
 
-    const cols = [14, 200, 390, 576];
+    const cols = [40, 226, 412, 598];
     this.player.moves.forEach((move, i) => {
       const x = cols[i] ?? cols[3];
       const pill = this.add.rectangle(x + 80, 28, 164, 50, TYPE_COLORS[move.data.type] ?? 0x444466, 0.25)
@@ -512,7 +512,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private rebuildBagPanel() {
     this.bagPanel.removeAll(true);
-    const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x111133).setStrokeStyle(1, 0x5577aa);
+    const bg = this.add.rectangle(this.W / 2, 60, this.W - 16, 120, 0x111133, 0.95).setStrokeStyle(1, 0x5577aa);
     this.bagPanel.add(bg);
     this.bagPanel.add(this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()));

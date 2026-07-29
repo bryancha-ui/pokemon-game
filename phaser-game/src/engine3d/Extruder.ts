@@ -79,13 +79,16 @@ export function buildRelief(
   if (tx1 < 0) return null;                         // fully transparent
   const tw = tx1 - tx0 + 1, th = ty1 - ty0 + 1;
 
-  // ── Coarse occupancy grid (cap resolution so huge art stays cheap) ──
-  // A cell only counts as solid when ≥12% of its pixels are opaque, so barely-
-  // touched edge cells don't produce floating slabs outside the silhouette.
-  // Each solid cell also records its average color for painting side faces.
-  const GRID = Math.max(1, Math.ceil(Math.max(tw, th) / 48));
+  // ── Occupancy grid (finer resolution; two-tier solidity test) ──
+  // A cell is "core" when ≥10% of its pixels are opaque. Cells with even a
+  // sliver of coverage (≥2.5%) are kept too as long as they touch the body —
+  // that preserves thin tails, crests, whiskers and wing tips which the old
+  // flat threshold amputated — while isolated specks (which caused floating
+  // slabs outside the silhouette) still get dropped.
+  const GRID = Math.max(1, Math.ceil(Math.max(tw, th) / 72));
   const gw = Math.ceil(tw / GRID), gh = Math.ceil(th / GRID);
   const occ = new Uint8Array(gw * gh);
+  const cover = new Float32Array(gw * gh);
   const cellCol = new Float32Array(gw * gh * 3);
   for (let gy = 0; gy < gh; gy++) {
     for (let gx = 0; gx < gw; gx++) {
@@ -100,13 +103,35 @@ export function buildRelief(
         }
       }
       const idx = gy * gw + gx;
-      occ[idx] = n / total >= 0.12 ? 1 : 0;
+      cover[idx] = n / total;
+      occ[idx] = cover[idx] >= 0.10 ? 1 : 0;
       if (n > 0) {
         cellCol[idx * 3] = (rr / n) / 255;
         cellCol[idx * 3 + 1] = (gg / n) / 255;
         cellCol[idx * 3 + 2] = (bb / n) / 255;
       }
     }
+  }
+  // Grow the body outward into faintly-covered neighbors (thin extremities can
+  // span several cells, so iterate: each pass reclaims the next link of a tail).
+  for (let pass = 0; pass < 4; pass++) {
+    let changed = false;
+    for (let gy = 0; gy < gh; gy++) {
+      for (let gx = 0; gx < gw; gx++) {
+        const idx = gy * gw + gx;
+        if (occ[idx] || cover[idx] < 0.025) continue;
+        let touch = false;
+        for (let dy = -1; dy <= 1 && !touch; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = gx + dx, ny = gy + dy;
+            if (nx >= 0 && ny >= 0 && nx < gw && ny < gh && occ[ny * gw + nx]) { touch = true; break; }
+          }
+        }
+        if (touch) { occ[idx] = 1; changed = true; }
+      }
+    }
+    if (!changed) break;
   }
 
   // ── Greedy horizontal slabs → extruded boxes ──
@@ -211,7 +236,7 @@ export function reliefMaterials(tex: THREE.Texture): [THREE.MeshLambertMaterial,
   const art = new THREE.MeshLambertMaterial({
     map: tex,
     transparent: true,
-    alphaTest: 0.3,
+    alphaTest: 0.22,        // keep soft anti-aliased edges (HOME renders)
     side: THREE.FrontSide,
   });
   const sides = new THREE.MeshLambertMaterial({

@@ -210,6 +210,10 @@ export class CapitolCityScene extends Phaser.Scene {
   private cycling = false;
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits arm once the player has stepped away from here
+
+  /** Authoritative building rectangles (tiles) for the 3D renderer — includes
+   *  the Gym and every landmark, so none depend on color detection. */
+  public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h }));
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;

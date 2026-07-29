@@ -3,7 +3,7 @@ import {
   InstancedProp, WallBuilder, makeFlowers, makeGrassTufts, makePines,
   makeRocks, makeTrees, makeWater, toonRamp,
 } from './Props';
-import { getProp, hasProps, pickProp, primeProps, propFailed, propsFor } from './PropModels';
+import { getProp, hasProps, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
 
 // ── Terrain builder ──────────────────────────────────────────────────────────
@@ -24,6 +24,10 @@ export interface TerrainResult {
   cols: number; rows: number;
   /** detected building plots (debug/inspection) */
   plots: { x: number; z: number; w: number; d: number }[];
+  /** occluders the camera may need to see through (buildings/props) */
+  blockers: { node: THREE.Object3D; r: number; fade: number }[];
+  /** environment classifier inputs (debug) */
+  envStats: { dark: number; vivid: number; light: number };
 }
 
 interface HSL { h: number; s: number; l: number }
@@ -112,19 +116,20 @@ function swapFacade(mat: THREE.MeshToonMaterial, tex: THREE.Texture): void {
 // ── Roof texture (generated asset; falls back to the painted footprint) ─────
 let roofLoaded: THREE.Texture | null = null;
 let roofTried = false;
-const roofWaiters: { mat: THREE.MeshToonMaterial; w: number; d: number }[] = [];
+const roofWaiters: { mat: THREE.MeshBasicMaterial; w: number; d: number }[] = [];
 
 function roofMaterial(
   groundTex: THREE.Texture,
   b: { x: number; z: number; w: number; d: number },
   cols: number, rows: number,
-): THREE.MeshToonMaterial {
+): THREE.MeshBasicMaterial {
   // Default: the building's own painted footprint (keeps the original design).
   const crop = groundTex.clone();
   crop.repeat.set(b.w / cols, b.d / rows);
   crop.offset.set(b.x / cols, (rows - (b.z + b.d)) / rows);
   crop.needsUpdate = true;
-  const mat = new THREE.MeshToonMaterial({ map: crop, gradientMap: toonRamp() });
+  // Unlit for the same reason as the ground: the roof IS the original painting.
+  const mat = new THREE.MeshBasicMaterial({ map: crop });
 
   if (roofLoaded) {
     applyRoof(mat, roofLoaded, b.w, b.d);
@@ -148,7 +153,7 @@ function roofMaterial(
   return mat;
 }
 
-function applyRoof(mat: THREE.MeshToonMaterial, tex: THREE.Texture, w: number, d: number): void {
+function applyRoof(mat: THREE.MeshBasicMaterial, tex: THREE.Texture, w: number, d: number): void {
   const t = tex.clone();
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(1, Math.round(d / 3)));
@@ -167,7 +172,8 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
   const caveFloor = cavey && l >= 0.18;
   // Blue-roofed buildings would read as water, so only calm (low-detail) blue
   // counts as a water surface — window grids and roof tiling are busy.
-  if (h >= 185 && h <= 255 && s > 0.28 && l > 0.2 && l < 0.75 && variance < 420) return 'water';
+  // (l ≥ 0.32: dark navy building roofs must not read as water)
+  if (h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
   if (h >= 60 && h <= 170) {                                          // green family
     if (l < 0.26) return snowy ? 'pine' : 'tree';
     if (s > 0.42 && l < 0.46) return 'grass';
@@ -188,6 +194,8 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
 export function buildTerrain(
   ground: HTMLCanvasElement, worldW: number, worldH: number, interior = false,
   tileMap: number[][] | null = null,
+  knownPlots: { x: number; y: number; w: number; h: number; model?: string }[] = [],
+  sceneKey = '',
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -199,7 +207,9 @@ export function buildTerrain(
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.LinearFilter;
   tex.generateMipmaps = false;
-  const groundMat = new THREE.MeshToonMaterial({ map: tex, gradientMap: toonRamp() });
+  // Unlit: the painted map must read EXACTLY as the 2D game authored it —
+  // toon shading multiplies dark palettes (basalt Jeju, caves) into black.
+  const groundMat = new THREE.MeshBasicMaterial({ map: tex });
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(cols, rows), groundMat);
   plane.rotation.x = -Math.PI / 2;
   plane.position.set(cols / 2, 0, rows / 2);
@@ -240,7 +250,7 @@ export function buildTerrain(
   };
 
   // Snow detection: overall very light, low-sat map → use pines + snow env.
-  let lightCells = 0, darkCells = 0, total = 0;
+  let lightCells = 0, darkCells = 0, vividCells = 0, total = 0;
   const cellColors: [number, number, number][] = new Array(cols * rows);
   const cellVar = new Float32Array(cols * rows);
   for (let r = 0; r < rows; r++) {
@@ -252,10 +262,14 @@ export function buildTerrain(
       total++;
       if (hsl.l > 0.78 && hsl.s < 0.3) lightCells++;
       if (hsl.l < 0.16) darkCells++;
+      if (hsl.s > 0.35 && hsl.l > 0.25) vividCells++;
     }
   }
   const snowy = lightCells / total > 0.4;
-  const cavey = darkCells / total > 0.45;
+  const caveNamed = /cave|mine|vent|cavern|tunnel|grotto|hideout|ruins/i.test(sceneKey);
+  const cavey = caveNamed
+    ? darkCells / total > 0.3
+    : darkCells / total > 0.45 && vividCells / total < 0.02;   // dark-toned outdoor towns (basalt Jeju: vivid≈5%) stay daylight; true caves have almost no vivid color
   const env: EnvProfile = cavey ? 'cave' : snowy ? 'snow' : 'day';
 
   // ── Classify + spawn ──
@@ -273,7 +287,27 @@ export function buildTerrain(
   // per-cell color variance — while roads/grass/water paint flat. Contiguous
   // high-variance regions of walkable-classified cells become extruded
   // buildings: facade walls + the original painted footprint as the roof.
-  const buildings: { x: number; z: number; w: number; d: number; tint: number }[] = [];
+  const buildings: { x: number; z: number; w: number; d: number; tint: number; model?: string }[] = [];
+
+  // Authoritative plots first: scenes that know their building rectangles
+  // (e.g. a LOCATIONS table) publish them via `scene.buildingPlots`, so
+  // landmark buildings like gyms never depend on color heuristics.
+  if (!interior) {
+    for (const p of knownPlots) {
+      if (p.w < 2 || p.h < 2 || p.x < 0 || p.y < 0 || p.x + p.w > cols || p.y + p.h > rows) continue;
+      let mr = 0, mg = 0, mb = 0, n = 0;
+      for (let zz = p.y; zz < p.y + p.h; zz++) {
+        for (let xx = p.x; xx < p.x + p.w; xx++) {
+          const cc = cellColors[zz * cols + xx];
+          mr += cc[0]; mg += cc[1]; mb += cc[2]; n++;
+          cells[zz * cols + xx] = 'building';
+        }
+      }
+      const tint = new THREE.Color(mr / n / 255, mg / n / 255, mb / n / 255)
+        .lerp(new THREE.Color(0xffffff), 0.45).getHex();
+      buildings.push({ x: p.x, z: p.y, w: p.w, d: p.h, tint, model: p.model });
+    }
+  }
 
   // Preferred path: the scene's own tile grid. Buildings are rectangular blocks
   // of a dedicated tile id, so components of the discrete grid identify plots
@@ -290,6 +324,7 @@ export function buildTerrain(
       for (let c = 0; c < cols; c++) {
         const idx = r * cols + c;
         if (seen[idx]) continue;
+        if (cells[idx] === 'building') { seen[idx] = 1; continue; }   // claimed by a known plot
         const id = tileMap[r][c];
         // Skip terrain classes we already render (ground, water, foliage) and
         // any tile that unambiguously blankets the map (roads, grass, pavement).
@@ -311,7 +346,7 @@ export function buildTerrain(
           for (const [nx, nz] of [[cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1]] as const) {
             if (nx < 0 || nz < 0 || nx >= cols || nz >= rows) continue;
             const ni = nz * cols + nx;
-            if (!seen[ni] && tileMap[nz][nx] === id) { seen[ni] = 1; queue.push(ni); }
+            if (!seen[ni] && tileMap[nz][nx] === id && cells[ni] !== 'building') { seen[ni] = 1; queue.push(ni); }
           }
         }
         if (comp.length < 6) continue;
@@ -327,9 +362,21 @@ export function buildTerrain(
         const bw = x1 - x0 + 1, bd = z1 - z0 + 1;
         if (bw < 2 || bd < 2 || bw > 26 || bd > 26) continue;
         if (comp.length / (bw * bd) < 0.75) continue;          // must be a solid block
+        // Rock outcrops and cliff blocks on wild routes form solid tile
+        // rectangles too — but they paint in wall/rock tones. That's terrain,
+        // not architecture: leave them to the cliff extruder.
+        let wallish = 0;
+        for (const i2 of comp) {
+          const cl = cells[i2];
+          if (cl === 'wall-low' || cl === 'wall-high' || cl === 'rock') wallish++;
+        }
+        if (wallish / comp.length >= 0.78) continue;   // grey-roofed houses stay; pure rock goes
         let mr = 0, mg = 0, mb = 0;
         for (const i2 of comp) { const cc = cellColors[i2]; mr += cc[0]; mg += cc[1]; mb += cc[2]; }
         const n = comp.length;
+        // Tiny 3×2 patches (flowerbeds, planters) aren't buildings — real
+        // structures in this game are at least 3×3.
+        if (comp.length < 9 || bw < 3 || bd < 3) continue;
         const tint = new THREE.Color(mr / n / 255, mg / n / 255, mb / n / 255)
           .lerp(new THREE.Color(0xffffff), 0.45).getHex();
         for (let zz = z0; zz <= z1; zz++) {
@@ -342,7 +389,11 @@ export function buildTerrain(
 
   // Second pass: buildings painted as scene overlays never reach the tile grid,
   // so also scan the artwork for busy blocks that aren't already plots.
-  if (!interior && !cavey) {
+  // OPT-IN: only where there is evidence of a town (authoritative plots or
+  // tile-grid buildings) — wild routes' busy mountain/cave shading otherwise
+  // sprouts phantom buildings all over the field.
+  const urbanEvidence = knownPlots.length > 0 || buildings.length >= 2;
+  if (!interior && !cavey && urbanEvidence) {
     // Seeds: busy cells (window grids, roof tiling, signage) sitting on
     // otherwise walkable ground.
     const cand = new Uint8Array(cols * rows);
@@ -455,6 +506,23 @@ export function buildTerrain(
     }
   }
 
+  // Suppress overlapping plots — known plots come first, so heuristic
+  // re-detections of the same building (or fragments inside it) are dropped.
+  {
+    const kept: typeof buildings = [];
+    for (const b of buildings) {
+      let overlapped = false;
+      for (const k of kept) {
+        const ix = Math.max(0, Math.min(b.x + b.w, k.x + k.w) - Math.max(b.x, k.x));
+        const iz = Math.max(0, Math.min(b.z + b.d, k.z + k.d) - Math.max(b.z, k.z));
+        if ((ix * iz) / (b.w * b.d) > 0.35) { overlapped = true; break; }
+      }
+      if (!overlapped) kept.push(b);
+    }
+    buildings.length = 0;
+    buildings.push(...kept);
+  }
+
   let nTree = 0, nGrass = 0, nFlower = 0, nRock = 0;
   for (let i = 0; i < cols * rows; i++) {
     const cell = cells[i];
@@ -549,8 +617,8 @@ export function buildTerrain(
   // plots (deterministically chosen, fitted to the footprint); otherwise the
   // engine extrudes facade+roof volumes from the original painted art.
   primeProps();
-  const buildingDefs = propsFor('building');
-  const pendingProps: { group: THREE.Group; def: import('./PropModels').PropDef; b: typeof buildings[number]; h: number; wait: number }[] = [];
+  const blockers: { node: THREE.Object3D; r: number; fade: number }[] = [];
+  const pendingProps: { group: THREE.Group; def: import('./PropModels').PropDef; b: typeof buildings[number]; h: number; wait: number; rot?: number }[] = [];
 
   /** Facade+roof volume built from the original painted art (always available). */
   const extrudeBuilding = (b: typeof buildings[number], into: THREE.Object3D, local = false) => {
@@ -580,18 +648,31 @@ export function buildTerrain(
   // the default is the procedural facade+roof extruded straight from each
   // scene's own painted art, which keeps every city looking like itself. Flip
   // USE_GENERIC_BUILDING_GLBS back on once tagged per-building models land.
-  const USE_GENERIC_BUILDING_GLBS = false;
+  // Generic building GLBs (house/hanok/…) were being stamped onto EVERY detected
+  // footprint, so the same one or two models blanketed every town. So a footprint
+  // only gets a GLB when the SCENE names a specific model for it (b.model — e.g.
+  // Waterfall City's home / rival / lab / Pokémon Center published via
+  // scene.buildingPlots). Every other footprint falls back to the procedural
+  // facade+roof extruded straight from that scene's own painted art, so each
+  // city keeps looking like itself.
   for (const b of buildings) {
-    if (USE_GENERIC_BUILDING_GLBS && buildingDefs.length) {
-      const def = pickProp(buildingDefs, b.x * 31 + b.z * 17)!;
+    const def = b.model ? propById(b.model) : null;
+    if (def) {
       const holder = new THREE.Group();
       holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
       group.add(holder);
       const h = Math.min(4.4, Math.max(2.0, 1.5 + Math.sqrt(b.w * b.d) * 0.42));
-      pendingProps.push({ group: holder, def, b, h, wait: 0 });
+      // Named landmark buildings face the street (door side toward +z / camera)
+      // rather than a random hash rotation.
+      pendingProps.push({ group: holder, def, b, h, wait: 0, rot: 0 });
+      blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
       continue;
     }
-    extrudeBuilding(b, group);
+    const bg = new THREE.Group();
+    bg.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+    group.add(bg);
+    extrudeBuilding(b, bg, true);
+    blockers.push({ node: bg, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
   }
 
   // ── Vehicles parked along the roads (generated models only) ────────────────
@@ -639,6 +720,8 @@ export function buildTerrain(
   return {
     group, env, cols, rows,
     plots: buildings.map(b => ({ x: b.x, z: b.z, w: b.w, d: b.d })),
+    blockers,
+    envStats: { dark: darkCells / total, vivid: vividCells / total, light: lightCells / total },
     update(t: number) {
       const dt = lastT < 0 ? 0 : Math.max(0, Math.min(0.5, t - lastT));
       lastT = t;
@@ -670,7 +753,7 @@ export function buildTerrain(
           p.h,
         );
         model.scale.multiplyScalar(fit);
-        model.rotation.y = ((p.b.x * 7 + p.b.z * 13) % 4) * (Math.PI / 2);
+        model.rotation.y = p.rot ?? ((p.b.x * 7 + p.b.z * 13) % 4) * (Math.PI / 2);
         p.group.add(model);
         pendingProps.splice(i, 1);
       }

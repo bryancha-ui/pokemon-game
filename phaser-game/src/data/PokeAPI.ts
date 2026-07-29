@@ -10,7 +10,7 @@ const BASE = 'https://pokeapi.co/api/v2';
 // round-trip. We cache results in memory (instant within a session) and mirror
 // them to localStorage (instant across reloads), so each species/move is fetched
 // from the network at most once, ever.
-const POKE_CACHE = 'pokeapi_pokemon_v1';
+const POKE_CACHE = 'pokeapi_pokemon_v2';   // v2: spriteUrl now prefers HOME 3D renders
 const MOVE_CACHE = 'pokeapi_move_v1';
 
 const pokeMem = new Map<string, PokemonData>();
@@ -54,7 +54,12 @@ export async function fetchPokemon(idOrName: number | string): Promise<PokemonDa
     baseSpAtk: stat('special-attack'),
     baseSpDef: stat('special-defense'),
     baseSpd:   stat('speed'),
-    spriteUrl: json.sprites.front_default as string,
+    // Prefer the Pokémon HOME renders (portraits of the actual 3D models) over
+    // the 96px pixel sprites — they extrude into far better 3D battlers and
+    // match the game's 3D presentation. Fallback chain keeps older entries safe.
+    spriteUrl: (json.sprites?.other?.home?.front_default
+      ?? json.sprites?.other?.['official-artwork']?.front_default
+      ?? json.sprites.front_default) as string,
   };
   pokeMem.set(id, data);
   saveDisk(POKE_CACHE, id, data);

@@ -204,12 +204,12 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.enemyHpBar   = track(this.add.rectangle(30, 52, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.enemyHpText  = track(this.add.text(14, 62, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
-    track(this.add.rectangle(this.W - 130, this.H - 318, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
-    this.playerNameText = track(this.add.text(this.W - 258, this.H - 346, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
-    this.playerLvText = track(this.add.text(this.W - 12, this.H - 346, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(this.W - 130, this.H - 316, HP_W + 8, 12, 0x333355));
-    this.playerHpBar  = track(this.add.rectangle(this.W - 258, this.H - 316, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
-    this.playerHpText = track(this.add.text(this.W - 258, this.H - 304, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
+    track(this.add.rectangle(this.W - 130, this.H - 175, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
+    this.playerNameText = track(this.add.text(this.W - 258, this.H - 203, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
+    this.playerLvText = track(this.add.text(this.W - 12, this.H - 203, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
+    track(this.add.rectangle(this.W - 130, this.H - 173, HP_W + 8, 12, 0x333355));
+    this.playerHpBar  = track(this.add.rectangle(this.W - 258, this.H - 173, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    this.playerHpText = track(this.add.text(this.W - 258, this.H - 161, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
   }
 
   private createSprites() {
@@ -295,7 +295,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
         .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()),
     );
-    const cols = [14, 200, 390, 576];
+    const cols = [40, 226, 412, 598];
     this.player.moves.forEach((move, i) => {
       const x = cols[i] ?? cols[3];
       const pill = this.add.rectangle(x + 80, 28, 164, 50, TYPE_COLORS[move.data.type] ?? 0x330066, 0.25)

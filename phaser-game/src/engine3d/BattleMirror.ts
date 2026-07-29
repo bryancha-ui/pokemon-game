@@ -48,10 +48,13 @@ interface Combatant {
   /** battle motion driver (clip playback or procedural) */
   anim: CreatureAnimator | null;
   fainted: boolean;
+  /** texture signature — rebuilt when the game swaps the sprite's texture
+   *  (async PokeAPI art arriving, party switches). */
+  texSig: string;
 }
 
 const ANCHORS = {
-  player: [new THREE.Vector3(-1.7, 0, 1.7), new THREE.Vector3(-3.1, 0, 2.4)],
+  player: [new THREE.Vector3(-1.85, 0, 1.15), new THREE.Vector3(-3.2, 0, 1.9)],
   enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(3.4, 0, -3.2)],
 };
 
@@ -250,12 +253,12 @@ export class BattleMirror {
     const mats = reliefMaterials(relief.texture);
     const inner = new THREE.Mesh(relief.geometry, mats);
     inner.userData.sharedGeo = true;
-    // Normalize creature height to ~2.1 world units of stage presence, scaled
-    // by how large the battle draws this sprite relative to a 220px baseline.
-    // (Display height already includes the game's own setScale, so tweened
-    // scale changes later are applied as ratios against the adoption scale.)
-    const sizeBias = Math.min(1.5, Math.max(0.7, dh / 220));
-    const scale = (2.1 * sizeBias) / relief.pxHeight;
+    // Normalize creature height to a consistent stage presence. The bias from
+    // the 2D display size is kept NARROW so a 96px pixel sprite and a 512px
+    // HOME render both land near the same world height (fixes giant/small
+    // battlers when art resolution varies wildly).
+    const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
+    const scale = (2.2 * sizeBias) / relief.pxHeight;
     inner.scale.setScalar(scale);
 
     const holder = new THREE.Group();
@@ -279,11 +282,42 @@ export class BattleMirror {
       phase: Math.random() * Math.PI * 2,
       glbKey: hasModel(im.texture.key) ? im.texture.key : null,
       glb: null,
-      targetH: 2.1 * sizeBias,
+      // Generated models read smaller than flat art at equal height (they have
+      // real depth), so give them extra presence — SwSh-scale battlers.
+      targetH: 2.9 * Math.min(1.25, Math.max(0.95, dh / 220)),
       anim: null,
       fainted: false,
+      texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
     });
     this.scene.cameras.main.ignore(im);
+  }
+
+  /** Rebuild a battler's relief + scale factors for its CURRENT texture. */
+  private refreshCombatant(cb: Combatant): void {
+    const im = cb.obj;
+    const src = this.frameCanvas(im);
+    if (!src) return;
+    const relief = buildRelief(`img:${im.texture.key}:${im.frame?.name ?? 0}`, src);
+    if (!relief) return;
+    cb.inner.geometry = relief.geometry;
+    cb.mats[0].map = relief.texture;
+    cb.mats[0].needsUpdate = true;
+    const dh = im.displayHeight ?? 0;
+    const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
+    cb.scalePx = (2.2 * sizeBias) / relief.pxHeight;
+    cb.adoptSX = Math.abs(im.scaleX ?? 1) || 1;
+    cb.adoptSY = Math.abs(im.scaleY ?? 1) || 1;
+    cb.targetH = 2.9 * Math.min(1.25, Math.max(0.95, dh / 220));
+    // A different creature key means a different generated model (or none).
+    const nk = hasModel(im.texture.key) ? im.texture.key : null;
+    if (cb.glb && nk !== cb.glbKey) {
+      cb.holder.remove(cb.glb);
+      cb.glb = null;
+      cb.anim = null;
+      cb.inner.visible = true;
+    }
+    cb.glbKey = nk;
+    cb.fainted = false;
   }
 
   private frameCanvas(im: Phaser.GameObjects.Image): HTMLCanvasElement | null {
@@ -318,6 +352,15 @@ export class BattleMirror {
     for (const cb of this.combatants.values()) {
       const o = cb.obj;
       if (!o.scene) { dead.push(o); continue; }
+
+      // The game swaps sprite textures at runtime (async PokeAPI art arriving,
+      // party switches). Rebuild this battler's mesh + scale when that happens —
+      // otherwise the old geometry stretches the new image like an accordion.
+      const sig = `${o.texture.key}:${o.frame?.name ?? 0}`;
+      if (sig !== cb.texSig) {
+        cb.texSig = sig;
+        this.refreshCombatant(cb);
+      }
 
       // The manifest loads asynchronously, so a creature adopted before it
       // arrived still resolves to its generated model once the list is in.

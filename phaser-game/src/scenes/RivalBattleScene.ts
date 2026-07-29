@@ -159,12 +159,12 @@ export class RivalBattleScene extends Phaser.Scene {
     this.rivalHpText = track(this.add.text(14, 62, `${this.rival.hp}/${this.rival.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     // Player HUD — bottom right
-    track(this.add.rectangle(670, 330, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
-    track(this.add.text(550, 302, `${pokeNameEn(this.player.name).toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
-    this.playerLvText = track(this.add.text(730, 302, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(670, 330, this.HP_BAR_W + 8, 12, 0x333355));
-    this.playerHpBar  = track(this.add.rectangle(570, 330, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
-    this.playerHpText = track(this.add.text(550, 340, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
+    track(this.add.rectangle(1030, 545, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
+    track(this.add.text(910, 517, `${pokeNameEn(this.player.name).toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
+    this.playerLvText = track(this.add.text(1090, 517, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
+    track(this.add.rectangle(1030, 547, this.HP_BAR_W + 8, 12, 0x333355));
+    this.playerHpBar  = track(this.add.rectangle(930, 547, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    this.playerHpText = track(this.add.text(910, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     // Type badges
     this.drawTypeBadges(14, 76, this.player);

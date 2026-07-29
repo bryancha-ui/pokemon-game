@@ -102,3 +102,9 @@ export function pickProp(list: PropDef[], seed: number): PropDef | null {
   if (!list.length) return null;
   return list[Math.abs(Math.round(seed)) % list.length];
 }
+
+/** Look up a specific prop by id — used to place a named building (a scene's
+ *  Pokémon Center / lab / home) on its exact authored footprint. */
+export function propById(id: string): PropDef | null {
+  return (props ?? []).find(p => p.id === id) ?? null;
+}

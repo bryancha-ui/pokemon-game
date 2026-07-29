@@ -1,21 +1,39 @@
 {
   "props": [
     {
-      "id": "house",
+      "id": "home",
       "role": "building",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/fbee8199-620a-4737-8e0b-a17603efb770.glb"
+      "tags": ["home"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/5c8d3ebc-4b0d-4efc-b0da-bb902b5d402e.glb"
+    },
+    {
+      "id": "rival",
+      "role": "building",
+      "tags": ["home"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/74f59825-3dcd-41da-9847-ed278f332f35.glb"
+    },
+    {
+      "id": "lab",
+      "role": "building",
+      "tags": ["lab"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/fa6c8385-b062-4202-a8c5-84c112059eb5.glb"
     },
     {
       "id": "pokecenter",
       "role": "building",
       "tags": ["center"],
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b70667d6-a2da-4500-9f43-3c8b3770d13f.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/160ad098-d253-4c65-a00c-6b6f3907e220.glb"
     },
     {
       "id": "hanok",
       "role": "building",
       "tags": ["traditional"],
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/2c30f29a-f274-4bdb-b3ef-30e70cf61e2c.glb"
+    },
+    {
+      "id": "house",
+      "role": "building",
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/fbee8199-620a-4737-8e0b-a17603efb770.glb"
     },
     {
       "id": "bus",
