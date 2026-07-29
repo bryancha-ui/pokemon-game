@@ -5,6 +5,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { findForm } from '../data/StarterData';
 import { customForm } from '../data/CustomBattle';
 import { POKEDEX, dexKeyFor } from '../data/Pokedex';
+import { tr } from '../systems/i18n';
 
 /** Resolve the correct sprite URL for any starter/custom/dex key. */
 function spriteUrlForKey(key: string): string {
@@ -186,6 +187,7 @@ export class EvolutionScene extends Phaser.Scene {
   // ── Typewriter ──────────────────────────────────────────────────────────────
 
   private typeText(text: string, onDone?: () => void) {
+    text = tr(text);
     this.dialogText.setText('');
     let i = 0;
     const ev = this.time.addEvent({

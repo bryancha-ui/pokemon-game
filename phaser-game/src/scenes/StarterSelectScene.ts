@@ -3,6 +3,7 @@ import { STARTERS, StarterDef, TYPE_COLORS } from '../data/StarterData';
 import { PartySystem } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { rivalTrainerName } from '../data/CharacterSprite';
+import { t, tr } from '../systems/i18n';
 
 export class StarterSelectScene extends Phaser.Scene {
   private selectedIdx = 0;
@@ -175,7 +176,7 @@ export class StarterSelectScene extends Phaser.Scene {
     });
 
     // Ability
-    const abil = this.add.text(0, 80, `Ability: ${s.ability}`, {
+    const abil = this.add.text(0, 80, `${t('Ability', '특성')}: ${s.ability}`, {
       fontSize: '10px', color: '#555555',
     }).setOrigin(0.5);
     c.add(abil);
@@ -192,7 +193,7 @@ export class StarterSelectScene extends Phaser.Scene {
     this.flavText = this.add.text(400, 460, '', {
       fontSize: '12px', color: '#e8e0cc', wordWrap: { width: 760 }, align: 'center',
     }).setOrigin(0.5).setDepth(9);
-    this.add.text(400, 492, '◀ ▶ to browse     SPACE to choose', {
+    this.add.text(400, 492, tr('◀ ▶ to browse     SPACE to choose'), {
       fontSize: '11px', color: '#ffe44e',
     }).setOrigin(0.5).setDepth(9);
   }
@@ -343,6 +344,7 @@ export class StarterSelectScene extends Phaser.Scene {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private typewriterText(target: Phaser.GameObjects.Text, text: string, delay: number, onDone?: () => void) {
+    text = tr(text);
     target.setText('');
     let i = 0;
     const ev = this.time.addEvent({
