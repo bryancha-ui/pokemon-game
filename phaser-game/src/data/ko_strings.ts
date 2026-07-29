@@ -68,6 +68,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
   '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
   'Artist Sora': '화가 소라', 'Dock Worker': '부두 인부', 'Trader': '상인',
+  'Shop Clerk': '가게 점원', 'Store Clerk': '편의점 점원', 'Pharmacist': '약사', 'Gift Clerk': '선물 가게 점원',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -1145,6 +1146,31 @@ export const KO_STRINGS: Record<string, string> = {
     '무적 소리가 자장가처럼 잦아들 때까지 쉰다. 팀이 완전히 회복되어 깨어난다!',
   'Trader: The bridge to the far bank is broken, but the trade never stops. Careful who you deal with here, Champion.':
     '상인: 건너편으로 가는 다리는 끊겼지만, 거래는 결코 멈추지 않아. 여기선 누구와 거래할지 조심해, 챔피언.',
+
+  // ── Han River shops (bike / store / dept) + park ──
+  'SPACE — talk to Shop Clerk': 'SPACE — 가게 점원과 대화',
+  'Shop Clerk: A visiting Champion at MY little shop? An honour — take a Bicycle, on the house.':
+    '가게 점원: 내 작은 가게에 챔피언이 오시다니? 영광이에요 — 자전거 하나 가져가세요, 무료로.',
+  '🚲 You received the Bicycle!': '🚲 자전거를 받았다!',
+  'Shop Clerk: Press C out on the road to hop on. The riverside path runs all the way to the bridge — enjoy the ride!':
+    '가게 점원: 길에서 C를 눌러 올라타세요. 강변길이 다리까지 쭉 이어져요 — 즐거운 라이딩 되세요!',
+  'Shop Clerk: Everything running smoothly? Good. Press C anywhere to ride.':
+    '가게 점원: 다 잘 굴러가나요? 좋아요. 아무 데서나 C를 눌러 타세요.',
+  'Shop Clerk: These carbon frames on the rack? Someday, maybe. For now, the rental treats you fine.':
+    '가게 점원: 진열대의 이 카본 프레임들이요? 언젠가는요. 지금은 대여용으로도 충분할 거예요.',
+  'SPACE — Shop': 'SPACE — 상점',
+  'Store Clerk: Welcome! Drinks, rice balls, remedies — the riverside classics.':
+    '편의점 점원: 어서 오세요! 음료, 주먹밥, 상비약 — 강변의 필수품이죠.',
+  'Pharmacist: Potions, cures, Poké Balls — all your travelling needs.':
+    '약사: 상처약, 치료제, 몬스터볼 — 여행에 필요한 모든 것.',
+  'Gift Clerk: Take home a little piece of Hanbando!': '선물 가게 점원: 한반도의 작은 조각을 집으로 가져가세요!',
+  'The Han River opens wide before you — sunlight scattering off the water, a great bridge striding across to the far bank.':
+    '한강이 눈앞에 넓게 펼쳐진다 — 물 위로 흩어지는 햇살, 건너편 강기슭까지 성큼 뻗은 거대한 다리.',
+  'Cyclists whir along the riverside road; families picnic on the lawns; cherry petals drift over the promenade.':
+    '자전거들이 강변길을 스쳐 지나고, 가족들이 잔디밭에서 소풍을 즐기며, 벚꽃잎이 산책로 위로 흩날린다.',
+  'A perfect place to breathe between battles. (Rent a bike at the shop, grab a snack at the store, or just take it in.)':
+    '배틀 사이에 숨 돌리기 완벽한 곳. (가게에서 자전거를 빌리거나, 상점에서 간식을 사거나, 그냥 풍경을 즐기세요.)',
+  '🚲 Han River Park (한강공원)': '🚲 한강공원',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
