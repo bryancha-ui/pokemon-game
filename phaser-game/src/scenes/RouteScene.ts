@@ -183,6 +183,9 @@ export class RouteScene extends Phaser.Scene {
   private stepsSinceEncounter = 0;
   private nextEncounterAt = 12;
   private inCave = false;
+  /** Tell the 3D engine this route has a dark cave section whose floor must stay
+   *  walkable ground (not extrude into walls that bury the player). */
+  caveFloorHint = true;
   private cutsceneActive = false;
   private cycling = false;
   private spawnGuard = false;
@@ -275,7 +278,10 @@ export class RouteScene extends Phaser.Scene {
       for (let c = 0; c < RCOLS; c++) {
         const tile = this.map[r][c];
         if (tile === RT.CAVE_PATH || tile === RT.CAVE_WALL) {
-          g.fillStyle(0x000000, 0.35);
+          // Kept light enough that the 3D pass still reads the cave FLOOR as
+          // walkable ground (composited lightness stays above the cave-floor
+          // threshold) rather than extruding it into player-burying walls.
+          g.fillStyle(0x000000, 0.22);
           g.fillRect(c * TILE, r * TILE, TILE, TILE);
         }
       }

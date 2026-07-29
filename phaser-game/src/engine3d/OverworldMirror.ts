@@ -197,12 +197,14 @@ export class OverworldMirror {
       buildingPlots?: { x: number; y: number; w: number; h: number; model?: string }[];
       onlyNamedBuildings?: boolean;
       vehiclePlots?: { x: number; y: number; model: string; rot?: number }[];
+      caveFloorHint?: boolean;
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
+      sc.caveFloorHint ?? false,
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;

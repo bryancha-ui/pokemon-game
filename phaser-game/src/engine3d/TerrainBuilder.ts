@@ -204,6 +204,11 @@ export function buildTerrain(
   // Vehicles the scene pins to an exact tile (e.g. the express bus at its stop),
   // placed with a specific model instead of the random road scatter.
   placedVehicles: { x: number; y: number; model: string; rot?: number }[] = [],
+  // Mixed scenes (an outdoor route with a cave section) that aren't dark enough
+  // to auto-detect as a cave, but whose dark walkable floor must NOT extrude
+  // into walls that bury the player, set this. Only the classifier's cave-floor
+  // rule is affected — lighting stays daylight.
+  caveFloorHint = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -279,6 +284,10 @@ export function buildTerrain(
     ? darkCells / total > 0.3
     : darkCells / total > 0.45 && vividCells / total < 0.02;   // dark-toned outdoor towns (basalt Jeju: vivid≈5%) stay daylight; true caves have almost no vivid color
   const env: EnvProfile = cavey ? 'cave' : snowy ? 'snow' : 'day';
+  // The cave-floor rule (don't extrude dark walkable floor) applies to real dark
+  // caves AND to mixed scenes that ask for it via caveFloorHint — without
+  // turning the whole scene's lighting to cave mode.
+  const classifyCavey = cavey || caveFloorHint;
 
   // ── Classify + spawn ──
   const cells: Cell[] = new Array(cols * rows);
@@ -286,7 +295,7 @@ export function buildTerrain(
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
       const [rr, gg, bb] = cellColors[i];
-      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], cavey);
+      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey);
     }
   }
 
