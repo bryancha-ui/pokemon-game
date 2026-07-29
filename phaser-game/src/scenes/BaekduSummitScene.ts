@@ -131,7 +131,7 @@ export class BaekduSummitScene extends Phaser.Scene {
 
     playBgm(this, 'baekdupeak');
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.steps = 0;
-    this.spiritImg = undefined; this.spiritCalm = false;
+    this.hwanwoongImg = undefined; this.hwanwoongCalm = false;
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('baekduSummitReturnX') as number | undefined;
     const ry = this.registry.get('baekduSummitReturnY') as number | undefined;
