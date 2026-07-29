@@ -298,6 +298,7 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^(.+) forgot (.+) and learned (.+)!$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 잊고 ${KO_STRINGS[m[3]] ?? m[3]}(을)를 배웠다!`],
   [/^(.+) already knows (.+)\.$/, m => `${P(m[1])}(은)는 이미 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 알고 있어.`],
   [/^(.+) did not learn (.+)\.$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배우지 않았다.`],
+  [/^(.+) wants to learn (.+), but it already knows 4 moves\.$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배우고 싶어하지만, 이미 기술을 4개 배웠어.`],
   [/^(.+) wants to learn (.+)\.$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배우고 싶어해.`],
   [/^(.+) learned (.+)!$/, m => `${P(m[1])}(은)는 ${KO_STRINGS[m[2]] ?? m[2]}(을)를 배웠다!`],
   [/^(.+) is now your lead!$/, m => `${P(m[1])}(을)를 선두로 지정했다!`],

@@ -3,7 +3,7 @@ import { STARTERS, StarterDef, TYPE_COLORS } from '../data/StarterData';
 import { PartySystem } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { rivalTrainerName } from '../data/CharacterSprite';
-import { t, tr } from '../systems/i18n';
+import { t, tr, pokeNameEn } from '../systems/i18n';
 
 export class StarterSelectScene extends Phaser.Scene {
   private selectedIdx = 0;
@@ -158,7 +158,7 @@ export class StarterSelectScene extends Phaser.Scene {
     }
 
     // Name
-    const name = this.add.text(0, 32, s.data.name, {
+    const name = this.add.text(0, 32, pokeNameEn(s.data.name), {
       fontSize: '16px', color: '#1a2a4a', fontStyle: 'bold',
     }).setOrigin(0.5);
     c.add(name);

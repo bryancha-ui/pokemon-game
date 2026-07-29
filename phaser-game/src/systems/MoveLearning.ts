@@ -3,6 +3,7 @@ import { Pokemon, MoveData } from '../battle/Pokemon';
 import { PartySystem } from './PartySystem';
 import { levelUpMoves } from '../data/Learnsets';
 import { TYPE_COLORS } from '../data/StarterData';
+import { t, tr, typeName } from './i18n';
 
 /** Moves newly learned crossing from `oldLevel` → `newLevel` (by level range). */
 function newMoves(spriteKey: string, t1: string | undefined, t2: string | undefined,
@@ -96,8 +97,8 @@ function askForget(scene: Phaser.Scene, mon: Pokemon, newMove: MoveData,
 
   mon.moves.forEach((m, j) => {
     const c = (TYPE_COLORS as Record<string, number>)[m.data.type] ?? 0x666666;
-    const kind = m.data.category === 'status' ? 'STATUS' : `Pow ${m.data.power}`;
-    row(cy - 128 + j * 52, m.data.name, `${m.data.type.toUpperCase()}  ·  ${kind}`, c,
+    const kind = m.data.category === 'status' ? t('STATUS', '변화') : `${t('Pow', '위력')} ${m.data.power}`;
+    row(cy - 128 + j * 52, tr(m.data.name), `${typeName(m.data.type)}  ·  ${kind}`, c,
       () => { layer.destroy(true); cb(j); });
   });
 

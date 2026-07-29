@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, typeName } from '../systems/i18n';
 import { STARTERS, TYPE_COLORS } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
@@ -551,9 +551,9 @@ export class MenuScene extends Phaser.Scene {
       const y = cy - 110 + j * 46;
       const r = this.add.rectangle(cx, y, 420, 40, 0x14223a).setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
       overlay.add(r);
-      overlay.add(this.add.text(cx - 195, y - 8, m.name, { fontSize: '14px', color: '#fff' }));
-      const kind = m.category === 'status' ? 'STATUS' : `Pow ${m.power}`;
-      overlay.add(this.add.text(cx - 195, y + 9, `${m.type.toUpperCase()}  ·  ${kind}`, { fontSize: '10px', color: '#9ab' }));
+      overlay.add(this.add.text(cx - 195, y - 8, tr(m.name), { fontSize: '14px', color: '#fff' }));
+      const kind = m.category === 'status' ? t('STATUS', '변화') : `${t('Pow', '위력')} ${m.power}`;
+      overlay.add(this.add.text(cx - 195, y + 9, `${typeName(m.type)}  ·  ${kind}`, { fontSize: '10px', color: '#9ab' }));
       r.on('pointerover', () => r.setFillStyle(0x1a4488));
       r.on('pointerout',  () => r.setFillStyle(0x14223a));
       r.on('pointerdown', () => {
