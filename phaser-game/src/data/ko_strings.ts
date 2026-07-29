@@ -58,6 +58,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Tourist': '관광객', 'Coach': '코치', 'Youth': '청년',
   'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아', 'Quarry Worker': '채석장 인부',
   'Observer Park': '관찰자 박', 'Observer': '관찰자', 'Guard': '경비병', 'Curator': '큐레이터',
+  'Royal Warden': '왕실 관리인',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -768,6 +769,30 @@ export const KO_STRINGS: Record<string, string> = {
   'Welcome to the Capitol Palace Museum!': '수도 궁궐 박물관에 오신 걸 환영합니다!',
   'That artifact was used by the first city founder.': '저 유물은 도시의 첫 창건자가 사용했습니다.',
   'And that sword? It slayed a shadow beast long ago...': '그리고 저 검이요? 아주 오래전 그림자 짐승을 베었죠...',
+
+  // ── Rangrim Mountains / Nosdan Hideout / Cheonji ──
+  '⛰ 낭림산 기슭 (Rangrim Foothills)': '⛰ 낭림산 기슭',
+  '↑ 하부 동굴 (Lower Cavern)': '↑ 하부 동굴',
+  '⛰ 낭림 하부 동굴 (Lower Cavern)': '⛰ 낭림 하부 동굴',
+  'Far as you climb, runt. 노스단 owns this tower now — and soon all of Samjiyon!':
+    '올라올 테면 올라와, 애송이. 노스단이 이제 이 탑을 차지했어 — 곧 삼지연 전체도!',
+  'The 노스단 flag is torn down. Their grip on Samjiyon is broken, and the grunts flee down the mountain road.':
+    '노스단 깃발이 찢겨 내려온다. 삼지연에 대한 그들의 지배가 무너지고, 조무래기들은 산길 아래로 달아난다.',
+  'A profound peace settles over you as you gaze across the ancient waters. This is a place of deep contemplation, where the sacred waters gather in eternal stillness.':
+    '태고의 물결을 바라보노라니 깊은 평화가 내려앉는다. 이곳은 깊은 사색의 장소, 성스러운 물이 영원한 고요 속에 모이는 곳이다.',
+
+  // ── Northern League (coliseum, cont.) ──
+  "(The hall's healing machine restores your team to full health.)": '(홀의 회복 장치가 네 팀을 완전히 회복시킨다.)',
+  'Taewang rises from his throne for the first time — slowly, deliberately.': '태왕이 처음으로 옥좌에서 일어선다 — 천천히, 신중하게.',
+  'Taewang: ...In thirty years on this throne, I have beaten every Hanbando Champion sent to me. Every one.':
+    '태왕: ...이 옥좌에 앉은 삼십 년간, 내게 보내진 모든 한반도 챔피언을 이겼다. 하나도 빠짐없이.',
+  "Taewang (inclining his head — a king's respect): The peninsula bred a real trainer at last. Your team is enshrined in the Northern Hall of Fame, beside the north's own legends.":
+    '태왕 (고개를 숙이며 — 왕의 예우): 반도가 마침내 진짜 트레이너를 길러냈군. 너의 팀은 북방 명예의 전당에, 북부 자신의 전설들 곁에 봉안된다.',
+
+  // ── Pyeongseong Checkpoint ──
+  '🛡 평성 관문 (Pyeongseong Checkpoint)': '🛡 평성 관문',
+  'Royal Warden: The gate to Pyeongseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.':
+    '왕실 관리인: 평성으로 가는 문이 네게 열렸다. 수도에서 최고위 광을 찾아라 — 그가 마지막 시험을 쥐고 있다.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
