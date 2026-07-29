@@ -1,0 +1,222 @@
+import * as THREE from 'three';
+
+// ── Sprite → 3D relief extruder ──────────────────────────────────────────────
+// Converts any 2D artwork (creature PNGs, rasterized character graphics, text
+// labels) into a real 3D mesh: the opaque silhouette is scanned on a coarse
+// grid, merged into horizontal slabs, and extruded with depth so the art gains
+// genuine volume while staying 100% recognizable — the original art IS the
+// texture. Results are cached by key so walk-cycle frames and repeated
+// creatures cost nothing after first build.
+
+export interface ReliefMesh {
+  geometry: THREE.BufferGeometry;
+  texture: THREE.Texture;
+  /** Size of the source art in pixels (after trim). */
+  pxWidth: number; pxHeight: number;
+  /** Offset of trimmed art from the original top-left, px. */
+  trimX: number; trimY: number;
+  origWidth: number; origHeight: number;
+}
+
+const cache = new Map<string, ReliefMesh>();
+
+export function clearReliefCache(): void {
+  for (const r of cache.values()) { r.geometry.dispose(); r.texture.dispose(); }
+  cache.clear();
+}
+
+function makeTexture(canvas: HTMLCanvasElement | HTMLImageElement): THREE.Texture {
+  const tex = new THREE.Texture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter;             // keep the pixel-art crisp
+  tex.minFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/** Draw an image/canvas into a fresh canvas so we can read pixels. */
+function toCanvas(src: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement {
+  if (src instanceof HTMLCanvasElement) return src;
+  const c = document.createElement('canvas');
+  c.width = src.naturalWidth || src.width;
+  c.height = src.naturalHeight || src.height;
+  c.getContext('2d')!.drawImage(src, 0, 0);
+  return c;
+}
+
+/**
+ * Build (or fetch from cache) a relief mesh for the given artwork.
+ * `key` must uniquely identify the art content (texture key + frame + hash).
+ * `depthPx` is the extrusion thickness in source pixels (auto if omitted).
+ */
+export function buildRelief(
+  key: string,
+  source: HTMLImageElement | HTMLCanvasElement,
+  depthPx?: number,
+): ReliefMesh | null {
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const canvas = toCanvas(source);
+  const W = canvas.width, H = canvas.height;
+  if (W < 1 || H < 1) return null;
+  let data: Uint8ClampedArray;
+  try {
+    data = canvas.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, W, H).data;
+  } catch { return null; }                          // tainted canvas — shouldn't happen locally
+
+  // ── Trim transparent border ──
+  let tx0 = W, ty0 = H, tx1 = -1, ty1 = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (data[(y * W + x) * 4 + 3] > 24) {
+        if (x < tx0) tx0 = x; if (x > tx1) tx1 = x;
+        if (y < ty0) ty0 = y; if (y > ty1) ty1 = y;
+      }
+    }
+  }
+  if (tx1 < 0) return null;                         // fully transparent
+  const tw = tx1 - tx0 + 1, th = ty1 - ty0 + 1;
+
+  // ── Coarse occupancy grid (cap resolution so huge art stays cheap) ──
+  // A cell only counts as solid when ≥12% of its pixels are opaque, so barely-
+  // touched edge cells don't produce floating slabs outside the silhouette.
+  // Each solid cell also records its average color for painting side faces.
+  const GRID = Math.max(1, Math.ceil(Math.max(tw, th) / 48));
+  const gw = Math.ceil(tw / GRID), gh = Math.ceil(th / GRID);
+  const occ = new Uint8Array(gw * gh);
+  const cellCol = new Float32Array(gw * gh * 3);
+  for (let gy = 0; gy < gh; gy++) {
+    for (let gx = 0; gx < gw; gx++) {
+      const px0 = tx0 + gx * GRID, py0 = ty0 + gy * GRID;
+      const px1 = Math.min(tx0 + tw, px0 + GRID), py1 = Math.min(ty0 + th, py0 + GRID);
+      let n = 0, rr = 0, gg = 0, bb = 0;
+      const total = Math.max(1, (px1 - px0) * (py1 - py0));
+      for (let y = py0; y < py1; y++) {
+        for (let x = px0; x < px1; x++) {
+          const i4 = (y * W + x) * 4;
+          if (data[i4 + 3] > 40) { n++; rr += data[i4]; gg += data[i4 + 1]; bb += data[i4 + 2]; }
+        }
+      }
+      const idx = gy * gw + gx;
+      occ[idx] = n / total >= 0.12 ? 1 : 0;
+      if (n > 0) {
+        cellCol[idx * 3] = (rr / n) / 255;
+        cellCol[idx * 3 + 1] = (gg / n) / 255;
+        cellCol[idx * 3 + 2] = (bb / n) / 255;
+      }
+    }
+  }
+
+  // ── Greedy horizontal slabs → extruded boxes ──
+  // Front/back faces carry the artwork texture (material group 0); side, top
+  // and bottom faces are painted with the cell's average color via vertex
+  // colors (material group 1) so silhouette edges look cleanly "carved"
+  // instead of smearing neighboring texture rows.
+  const depth = depthPx ?? Math.max(3, Math.min(tw, th) * 0.16);
+  const pos: number[] = [], uv: number[] = [], norm: number[] = [], col: number[] = [];
+  const idxTex: number[] = [], idxSide: number[] = [];
+  const U = (px: number) => (tx0 + px) / W;
+  const V = (px: number) => 1 - (ty0 + px) / H;     // three.js UV origin bottom-left
+
+  // Art plane: x → right, y → up (art top at +h), z → thickness.
+  const quad = (
+    into: number[],
+    ax: number, ay: number, az: number, bx: number, by: number, bz: number,
+    cx: number, cy: number, cz: number, dx: number, dy: number, dz: number,
+    nx: number, ny: number, nz: number,
+    ua: number, va: number, ub: number, vb: number, uc: number, vc: number, ud: number, vd: number,
+    r = 1, g = 1, b = 1,
+  ) => {
+    const base = pos.length / 3;
+    pos.push(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz);
+    for (let k = 0; k < 4; k++) { norm.push(nx, ny, nz); col.push(r, g, b); }
+    uv.push(ua, va, ub, vb, uc, vc, ud, vd);
+    into.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  };
+
+  const yUp = (py: number) => th - py;              // art px y → mesh y (art bottom = 0)
+  const hz = depth / 2;
+
+  for (let gy = 0; gy < gh; gy++) {
+    let gx = 0;
+    while (gx < gw) {
+      if (!occ[gy * gw + gx]) { gx++; continue; }
+      let run = gx;
+      while (run < gw && occ[gy * gw + run]) run++;
+      const x0 = gx * GRID, x1 = Math.min(tw, run * GRID);
+      const y0 = gy * GRID, y1 = Math.min(th, (gy + 1) * GRID);
+      const mid = gy * gw + ((gx + run - 1) >> 1);
+      const cr = cellCol[mid * 3], cg = cellCol[mid * 3 + 1], cb2 = cellCol[mid * 3 + 2];
+      const edge = 0.82;                            // side faces slightly darker (fake AO)
+      // front (+z)
+      quad(idxTex, x0, yUp(y1), hz, x1, yUp(y1), hz, x1, yUp(y0), hz, x0, yUp(y0), hz,
+        0, 0, 1, U(x0), V(y1), U(x1), V(y1), U(x1), V(y0), U(x0), V(y0));
+      // back (−z) — mirrored so the art reads correctly from behind
+      quad(idxTex, x1, yUp(y1), -hz, x0, yUp(y1), -hz, x0, yUp(y0), -hz, x1, yUp(y0), -hz,
+        0, 0, -1, U(x1), V(y1), U(x0), V(y1), U(x0), V(y0), U(x1), V(y0));
+      // top (only if cell above is empty)
+      if (gy === 0 || !occ[(gy - 1) * gw + gx]) {
+        quad(idxSide, x0, yUp(y0), hz, x1, yUp(y0), hz, x1, yUp(y0), -hz, x0, yUp(y0), -hz,
+          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, cr, cg, cb2);
+      }
+      // bottom (only if cell below empty)
+      if (gy === gh - 1 || !occ[(gy + 1) * gw + gx]) {
+        quad(idxSide, x0, yUp(y1), -hz, x1, yUp(y1), -hz, x1, yUp(y1), hz, x0, yUp(y1), hz,
+          0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, cr * edge, cg * edge, cb2 * edge);
+      }
+      // left side
+      if (gx === 0 || !occ[gy * gw + gx - 1]) {
+        const lc = gy * gw + gx;
+        quad(idxSide, x0, yUp(y1), -hz, x0, yUp(y1), hz, x0, yUp(y0), hz, x0, yUp(y0), -hz,
+          -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          cellCol[lc * 3] * edge, cellCol[lc * 3 + 1] * edge, cellCol[lc * 3 + 2] * edge);
+      }
+      // right side
+      if (run === gw || !occ[gy * gw + run]) {
+        const rc = gy * gw + (run - 1);
+        quad(idxSide, x1, yUp(y1), hz, x1, yUp(y1), -hz, x1, yUp(y0), -hz, x1, yUp(y0), hz,
+          1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          cellCol[rc * 3] * edge, cellCol[rc * 3 + 1] * edge, cellCol[rc * 3 + 2] * edge);
+      }
+      gx = run;
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(norm, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.setIndex([...idxTex, ...idxSide]);
+  geo.addGroup(0, idxTex.length, 0);                // textured artwork faces
+  geo.addGroup(idxTex.length, idxSide.length, 1);   // vertex-colored carved sides
+  // Center on x, feet at y=0, centered depth.
+  geo.translate(-tw / 2, 0, 0);
+
+  const relief: ReliefMesh = {
+    geometry: geo,
+    texture: makeTexture(canvas),
+    pxWidth: tw, pxHeight: th,
+    trimX: tx0, trimY: ty0, origWidth: W, origHeight: H,
+  };
+  cache.set(key, relief);
+  return relief;
+}
+
+/** Material pair for relief meshes: [0] textured artwork faces (alpha cutout),
+ *  [1] vertex-colored carved side faces. Apply opacity/tint to both. */
+export function reliefMaterials(tex: THREE.Texture): [THREE.MeshLambertMaterial, THREE.MeshLambertMaterial] {
+  const art = new THREE.MeshLambertMaterial({
+    map: tex,
+    transparent: true,
+    alphaTest: 0.3,
+    side: THREE.FrontSide,
+  });
+  const sides = new THREE.MeshLambertMaterial({
+    vertexColors: true,
+    transparent: true,
+  });
+  return [art, sides];
+}

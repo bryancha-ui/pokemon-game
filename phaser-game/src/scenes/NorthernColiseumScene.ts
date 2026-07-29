@@ -246,7 +246,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏯 Northern League — 북방 리그', {
+    this.add.text(this.scale.width / 2, 22, tr('🏯 Northern League — 북방 리그'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
@@ -341,7 +341,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
     kids.push(stars);
     // The gold star of the fortress, presiding over the ceremony.
     kids.push(this.add.text(W / 2, H * 0.12, '★', { fontSize: '54px', color: '#ffe14a', stroke: '#7a5a00', strokeThickness: 5 }).setOrigin(0.5));
-    kids.push(this.add.text(W / 2, H * 0.045, '🏆 NORTHERN HALL OF FAME · 북방 명예의 전당', {
+    kids.push(this.add.text(W / 2, H * 0.045, tr('🏆 NORTHERN HALL OF FAME · 북방 명예의 전당'), {
       fontSize: '23px', color: '#ffe88a', fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
     }).setOrigin(0.5));
 

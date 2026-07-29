@@ -237,7 +237,7 @@ export class NorthernReachesScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, 0x9a7ac0);
       g.setPosition(q.col * TILE + 16, q.row * TILE + 16);
-      this.add.text(q.col * TILE + 16, q.row * TILE - 15, '어사대 Inspector\n❓ Quiz Ward', {
+      this.add.text(q.col * TILE + 16, q.row * TILE - 15, tr('어사대 Inspector\n❓ Quiz Ward'), {
         fontSize: '8px', color: '#213', backgroundColor: '#e8d8ffcc', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }

@@ -200,7 +200,7 @@ export class SunriseCityScene extends Phaser.Scene {
         bg.lineStyle(1, 0x222222); bg.strokeCircle(cx, cy, 2.4);
       }
       const isGym = b.scene === 'SunriseGymScene';
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, isGym ? '🏟️ Sunrise Gym — 8th Badge' : b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, isGym ? '🏟️ Sunrise Gym — 8th Badge' : tr(b.label), {
         fontSize: isGym ? '10px' : '9px', color: isGym ? '#ffe44e' : '#fff', fontStyle: isGym ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
@@ -253,7 +253,7 @@ export class SunriseCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🌅 Sunrise City (일출 시티)', {
+    this.add.text(this.scale.width / 2, 22, tr('🌅 Sunrise City (일출 시티)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
@@ -359,7 +359,7 @@ export class SunriseCityScene extends Phaser.Scene {
       if (Math.hypot(dx, dy) < TILE * 1.3) { near = b; break; }
     }
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         const b = near;
         if (b.scene === '__SHOP__') { this.registry.set('martReturnScene', this.scene.key); this.registry.set('sunriseCityReturnX', b.doorCol * TILE + TILE / 2); this.registry.set('sunriseCityReturnY', (b.y + b.h) * TILE + TILE / 2); this.cutsceneActive = true; this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('MartScene')); return; }

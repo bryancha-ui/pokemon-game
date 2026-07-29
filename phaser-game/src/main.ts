@@ -139,6 +139,7 @@ import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
 import { setupMobileShell } from './systems/TouchControls';
 import { initI18n } from './systems/i18n';
 import { PokemonFxPlugin } from './systems/PokemonFx';
+import { bootstrap3D } from './engine3d';
 
 // On touch devices, split the page DS-style (game on top, control deck below) and
 // mount the game into the top pane so the controls never cover it. ?touch=1 forces it.
@@ -154,6 +155,10 @@ const game = new Phaser.Game({
   render: {
     powerPreference: 'high-performance',   // prefer the discrete GPU on dual-GPU laptops
     antialias: true,
+    // Transparent canvas lets the engine3d WebGL layer show through underneath
+    // while Phaser keeps drawing all UI (and, in 2D mode, the whole game) on top.
+    // The page behind the canvas is black, so 2D mode looks identical to before.
+    transparent: true,
   },
   // Global "Pokémon-like" post-FX (colour grade + bloom + vignette) on every scene.
   plugins: {
@@ -172,3 +177,9 @@ const game = new Phaser.Game({
 initI18n(game);   // load the saved KO/EN language preference before any scene renders
 
 (window as unknown as { __game: Phaser.Game }).__game = game;
+
+// ── 3D rendering layer ───────────────────────────────────────────────────────
+// Renders the game world in 3D (terrain, extruded characters & creatures,
+// third-person + cinematic battle cameras) beneath the Phaser canvas, which
+// keeps drawing all UI. Game logic is untouched. Press F3 to toggle 2D ↔ 3D.
+bootstrap3D(game);

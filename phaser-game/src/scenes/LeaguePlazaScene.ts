@@ -245,7 +245,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     for (const t of TALKERS) {
       const x = t.col * TILE + 16, y = t.row * TILE + 16;
       this.drawAttendant(x, y, t.coat, t.cap);
-      this.add.text(x, y - 26, t.label, {
+      this.add.text(x, y - 26, tr(t.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(9);
     }
@@ -345,7 +345,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
       { x: MART.col * TILE + 16,  y: MART.row * TILE + 16, prompt: 'SPACE — Shop (Poké Mart)', act: () => this.openMart() },
       ...TALKERS.map(t => ({
         x: t.col * TILE + 16, y: t.row * TILE + 16,
-        prompt: `SPACE — Talk to ${t.label}`,
+        prompt: `${tr('SPACE — Talk to')} ${tr(t.label)}`,
         act: () => {
           this.cutsceneActive = true;
           this.dialog.show(this.linesFor(t), () => { this.cutsceneActive = false; });
@@ -355,7 +355,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     let near: typeof targets[number] | null = null;
     for (const t of targets) { if (Math.hypot(this.px - t.x, this.py - t.y) < TILE * 1.5) { near = t; break; } }
     if (!near) { this.enterPrompt.setVisible(false); return; }
-    this.enterPrompt.setText(near.prompt).setVisible(true);
+    this.enterPrompt.setText(tr(near.prompt)).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) { this.enterPrompt.setVisible(false); near.act(); }
   }
 

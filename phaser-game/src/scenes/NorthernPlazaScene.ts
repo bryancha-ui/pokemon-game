@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -143,7 +143,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
     // The great central gold star.
     this.add.text(10 * TILE, 1.5 * TILE, '★', { fontSize: '46px', color: '#ffe14a', stroke: '#7a5a00', strokeThickness: 4 }).setOrigin(0.5).setDepth(3);
     // Austere signboard above the door.
-    this.add.text(10 * TILE, 7.1 * TILE, '북방 리그 · NORTHERN LEAGUE', {
+    this.add.text(10 * TILE, 7.1 * TILE, tr('북방 리그 · NORTHERN LEAGUE'), {
       fontSize: '11px', color: '#ffe88a', backgroundColor: '#000000aa', padding: { x: 6, y: 2 },
     }).setOrigin(0.5).setDepth(3);
   }
@@ -211,7 +211,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏯 Northern League — 북방 리그', {
+    this.add.text(this.scale.width / 2, 22, tr('🏯 Northern League — 북방 리그'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 40, '', {
@@ -274,7 +274,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
     this.facing = 1; this.drawChar();
 
     const rg = this.add.graphics().setDepth(25);
-    const tag = this.add.text(18 * TILE, DOOR.row * TILE + 6, 'Rival', {
+    const tag = this.add.text(18 * TILE, DOOR.row * TILE + 6, speakerName('Rival'), {
       fontSize: '10px', color: '#bfe4ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(26);
     const startX = 18 * TILE, stopX = (DOOR.col + 0.5) * TILE, yy = (DOOR.row + 1) * TILE + 4;

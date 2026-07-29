@@ -204,7 +204,7 @@ function buildMoveLayer(): void {
   layer.style.cssText = 'position:absolute;inset:0;display:none;flex-direction:column;padding:calc(var(--u)*0.5);box-sizing:border-box;pointer-events:none;';
   const title = document.createElement('div');
   title.textContent = 'CHOOSE A MOVE';
-  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:clamp(13px,calc(var(--u)*1),24px);text-align:center;letter-spacing:2px;margin:clamp(2px,calc(var(--u)*0.3),10px) 0 clamp(3px,calc(var(--u)*0.4),12px);flex:0 0 auto;';
+  title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:clamp(12px,calc(var(--u)*0.8),20px);text-align:center;letter-spacing:2px;margin:clamp(1px,calc(var(--u)*0.15),5px) 0 clamp(2px,calc(var(--u)*0.25),8px);flex:0 0 auto;';
   const grid = document.createElement('div');
   grid.className = '__movegrid';
   grid.style.cssText = 'flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:calc(var(--u)*0.5);pointer-events:auto;';
@@ -235,10 +235,11 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
       // Fonts are clamped so they never blow up on big/unfolded screens; the name wraps
       // instead of overflowing, and nothing gets clipped.
       'line-height:1.1;padding:clamp(3px,calc(var(--u)*0.3),12px);text-align:center;overflow:visible;';
+    // Type + PP share one line so a cell needs only two rows of text — on short
+    // landscape decks three rows overflowed the cell box, clipping the last line.
     cell.innerHTML =
       `<div style="font-weight:800;font-size:clamp(13px,calc(var(--u)*0.85),22px);line-height:1.05;word-break:break-word;overflow-wrap:anywhere">${tr(m.data.name).toUpperCase()}</div>` +
-      `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:${col};margin-top:clamp(2px,calc(var(--u)*0.2),8px)">${m.data.type.toUpperCase()}</div>` +
-      `<div style="font-size:clamp(9px,calc(var(--u)*0.6),14px);color:#cbd3e6;margin-top:clamp(1px,calc(var(--u)*0.1),5px)">PP ${m.pp}/${m.data.pp}</div>`;
+      `<div style="font-size:clamp(9px,calc(var(--u)*0.55),14px);margin-top:clamp(2px,calc(var(--u)*0.2),8px)"><span style="color:${col}">${m.data.type.toUpperCase()}</span><span style="color:#cbd3e6"> · PP ${m.pp}/${m.data.pp}</span></div>`;
     cell.addEventListener('pointerdown', (e) => { e.preventDefault(); onPick(i); });
     grid.append(cell);
   });

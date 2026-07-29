@@ -103,8 +103,8 @@ export class CheonjiScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10 * TILE, 0.6 * TILE, '천지 (Cheonji) — the crater lake', { fontSize: '10px', color: '#eaf6ff', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, (ROWS - 0.6) * TILE, '↓ 제단의 방 (Altar Hall)', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10 * TILE, 0.6 * TILE, tr('천지 (Cheonji) — the crater lake'), { fontSize: '10px', color: '#eaf6ff', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10 * TILE, (ROWS - 0.6) * TILE, tr('↓ 제단의 방 (Altar Hall)'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
@@ -127,7 +127,7 @@ export class CheonjiScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 380, 30, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '❄ 천지 (Cheonji Lake)', { fontSize: '13px', color: '#eaf6ff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, 22, tr('❄ 천지 (Cheonji Lake)'), { fontSize: '13px', color: '#eaf6ff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: exit  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);

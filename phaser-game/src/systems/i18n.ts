@@ -324,7 +324,7 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   // ── EXP-to-next-level suffix + map / city signposts ──
   [/^([\s\S]+)  \((\d+) to next level\)$/, m => `${tr(m[1])}  (다음 레벨까지 ${m[2]})`],
   [/^📍 You are here — (.+) \((.+)\)$/, m => `📍 현재 위치 — ${m[2]}`],
-  [/^🏙 Capitol City( — .+)?$/, m => `🏙 캐피톨 시티${m[1] ? tr(m[1]) : ''}`],
+  [/^🏙 Capitol City( — .+)?$/, m => `🏙 소올 시티${m[1] ? tr(m[1]) : ''}`],
   [/^Teach (.+) to a Pokémon to fly between cities\.   ·   ESC\/M: close$/, m => `${KO_STRINGS[m[1]] ?? m[1]}을(를) 포켓몬에게 가르치면 도시 사이를 즉시 비행할 수 있어.   ·   ESC/M: 닫기`],
 ];
 

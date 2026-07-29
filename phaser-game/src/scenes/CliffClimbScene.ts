@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -154,7 +154,7 @@ export abstract class CliffClimbScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, tr.color);
       g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }

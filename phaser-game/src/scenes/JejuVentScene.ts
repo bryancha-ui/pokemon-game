@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawNpcBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -249,7 +249,7 @@ export class JejuVentScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
       g.fillStyle(0x101010); g.fillRect(-6, -21, 12, 5);
       g.fillStyle(0xcc2233); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), {
         fontSize: '8px', color: '#ff8899', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }
@@ -560,7 +560,7 @@ export class JejuVentScene extends Phaser.Scene {
     const rx = this.px, ry = this.py - 2 * TILE;            // Ryeo stands a couple tiles north
     const ryeo = this.buildCommanderRyeo(true).setPosition(rx, ry);   // normal scale (1) = player size
 
-    const rLabel = this.add.text(rx, ry - 24, 'Commander Ryeo', {
+    const rLabel = this.add.text(rx, ry - 24, speakerName('Commander Ryeo'), {
       fontSize: '8px', color: '#ff99bb', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5);
 
@@ -578,7 +578,7 @@ export class JejuVentScene extends Phaser.Scene {
     drawNpcBody(songG, 0xe6e6ea, { hair: 0x4a4038 });                // white lab coat, greying hair
     songG.fillStyle(0x222222, 1); songG.fillRect(-6, -16, 12, 1);    // glasses bar
     songG.fillStyle(0x8a1a1a, 1); songG.fillRect(-1, -7, 2, 4);      // tie
-    const gLabel = this.add.text(this.px + TILE, this.py - 24, 'Prof. Song', {
+    const gLabel = this.add.text(this.px + TILE, this.py - 24, speakerName('Prof. Song'), {
       fontSize: '8px', color: '#aef0c0', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5);
 
@@ -609,10 +609,10 @@ export class JejuVentScene extends Phaser.Scene {
     const label = this.add.text(W / 2, H * 0.30, '🦋 나비할망', {
       fontSize: '18px', color: '#aee9ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
     }).setOrigin(0.5).setAlpha(0);
-    const rLabel = this.add.text(W * 0.13, H * 0.46, 'Cmdr Ryeo', {
+    const rLabel = this.add.text(W * 0.13, H * 0.46, speakerName('Cmdr Ryeo'), {
       fontSize: '9px', color: '#ff99bb', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setAlpha(0);
-    const sLabel = this.add.text(W * 0.87, H * 0.46, 'Dir. Suri', {
+    const sLabel = this.add.text(W * 0.87, H * 0.46, speakerName('Dir. Suri'), {
       fontSize: '9px', color: '#ffdd88', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setAlpha(0);
 

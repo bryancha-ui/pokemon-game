@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -203,7 +203,7 @@ export class Route2Scene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
       this.drawTrainerSprite(g, tr.color);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 10, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 10, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }
@@ -225,7 +225,7 @@ export class Route2Scene extends Phaser.Scene {
     g.fillStyle(0xdddddd); g.fillRect(-6, -20, 12, 4);      // white hair
     g.fillStyle(0xeeeeee); g.fillRect(-5, -9, 10, 4);       // white beard
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
-    this.add.text(17 * TILE + 16, 21 * TILE - 8, 'Harabeoji', {
+    this.add.text(17 * TILE + 16, 21 * TILE - 8, speakerName('Harabeoji'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }
@@ -256,7 +256,7 @@ export class Route2Scene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 380, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.locationText = this.add.text(this.scale.width / 2, 22, '⛰ Route 2 — Scholar\'s Road (선비길)', {
+    this.locationText = this.add.text(this.scale.width / 2, 22, tr('⛰ Route 2 — Scholar\'s Road (선비길)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {

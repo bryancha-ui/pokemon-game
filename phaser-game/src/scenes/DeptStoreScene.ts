@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -171,7 +171,7 @@ export class DeptStoreScene extends Phaser.Scene {
 
     // Floor banner
     this.add.rectangle(this.scale.width / 2, 20, 360, 30, 0x000000, 0.55).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 20, `🏬 Capitol Dept. Store — ${FLOORS[this.floor].name}`, {
+    this.add.text(this.scale.width / 2, 20, `${tr('🏬 Capitol Dept. Store —')} ${tr(FLOORS[this.floor].name)}`, {
       fontSize: '12px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: talk / use elevator  M: menu'), {
@@ -199,7 +199,7 @@ export class DeptStoreScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(10);
       g.setPosition(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 16);
       drawNpcBody(g, 0xcc6688, { hair: 0x2a2018 });
-      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, 'Receptionist',
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, speakerName('Receptionist'),
         { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
       // Directory board
       this.add.text(2.2 * TILE, 6 * TILE, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'),
@@ -210,12 +210,12 @@ export class DeptStoreScene extends Phaser.Scene {
     if (this.floor === 6) {
       // Vending machine (buy drinks)
       this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 20, '🥤', { fontSize: '20px' }).setOrigin(0.5).setDepth(6);
-      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 4, 'Vending', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 4, speakerName('Vending'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
       // City-watcher NPC (a gift once)
       const g = this.add.graphics().setDepth(10);
       g.setPosition(9 * TILE + 16, 6 * TILE + 16);
       drawNpcBody(g, 0x5a7a9a, { hair: 0x2a2018 });
-      this.add.text(9 * TILE + 16, 6 * TILE - 8, 'Collector', { fontSize: '8px', color: '#cfe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
+      this.add.text(9 * TILE + 16, 6 * TILE - 8, speakerName('Collector'), { fontSize: '8px', color: '#cfe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
       this.add.text(this.scale.width / 2, 66, tr('— Balcony over Capitol City —'), { fontSize: '11px', color: '#fff', backgroundColor: '#00000066', padding: { x: 6, y: 2 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     }
   }
@@ -342,7 +342,7 @@ export class DeptStoreScene extends Phaser.Scene {
 
     for (let fl = 6, i = 0; fl >= 1; fl--, i++) {
       const y = cy - 118 + i * 40;
-      const txt = this.add.text(cx, y, `${fl}F · ${FLOORS[fl].name.split('· ')[1]}`, {
+      const txt = this.add.text(cx, y, tr(FLOORS[fl].name), {
         fontSize: '13px', color: '#fff', backgroundColor: '#24406a', padding: { x: 12, y: 6 },
       }).setOrigin(0.5);
       layer.add(txt);

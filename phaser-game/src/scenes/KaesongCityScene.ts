@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -176,7 +176,7 @@ export class KaesongCityScene extends Phaser.Scene {
       for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 16);
       const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
       bg.fillStyle(0x5a3a1a); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? '🏛️ 어사대 Hall — Chief Hyeon' : b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? '🏛️ 어사대 Hall — Chief Hyeon' : tr(b.label), {
         fontSize: b.hall ? '10px' : '9px', color: b.hall ? '#ffe44e' : '#fff', fontStyle: b.hall ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
@@ -198,7 +198,7 @@ export class KaesongCityScene extends Phaser.Scene {
     g.setPosition(CHIEF.col * TILE + 16, CHIEF.row * TILE + 16);
     drawNpcBody(g, 0x3a4a8a, { hair: 0x2a2622 });      // deep-blue scholar's robe
     g.fillStyle(0xd8c060, 1); g.fillRect(-8, -9, 16, 1); g.fillRect(-1, -8, 2, 9);   // gold trim
-    this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, '어사대장 Hyeon', {
+    this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, speakerName('어사대장 Hyeon'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }
@@ -226,7 +226,7 @@ export class KaesongCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏯 Kaesong (개성)', {
+    this.add.text(this.scale.width / 2, 22, tr('🏯 Kaesong (개성)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
@@ -373,7 +373,7 @@ export class KaesongCityScene extends Phaser.Scene {
     if (!near) return;
     // The Hall's "door" is the Chief's exam — handled by checkChief; don't double-prompt.
     if (near.hall) return;
-    this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+    this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     const b = near;
     this.registry.set('kaesongReturnX', b.doorCol * TILE + TILE / 2);

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
@@ -173,7 +173,7 @@ export class DolmoeMineScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
       g.fillStyle(0xffe066); g.fillRect(-5, -23, 10, 4);   // miner's headlamp band
       g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9).setName(`${tr.key}__label`);
     }
@@ -197,7 +197,7 @@ export class DolmoeMineScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 360, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '⛏ Dolmoe Mine (돌뫼 광산)', {
+    this.add.text(this.scale.width / 2, 22, tr('⛏ Dolmoe Mine (돌뫼 광산)'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk/ride  M: menu'), {

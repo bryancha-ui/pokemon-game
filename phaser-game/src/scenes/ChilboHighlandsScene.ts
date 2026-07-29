@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -165,8 +165,8 @@ export class ChilboHighlandsScene extends Phaser.Scene {
 
     this.add.text(10.5 * TILE, 51.4 * TILE, tr('↓ Hamhung'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(10.5 * TILE, 0.7 * TILE, tr('↑ Chongjin'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(15 * TILE, 10 * TILE, '칠보산\n(Mt. Chilbo)', { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(21.5 * TILE, 40 * TILE, '동해\nEast Sea', { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(15 * TILE, 10 * TILE, tr('칠보산\n(Mt. Chilbo)'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(21.5 * TILE, 40 * TILE, tr('동해\nEast Sea'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawIcons() {
@@ -198,7 +198,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
       g.fillStyle(0x3a2410); g.fillRect(-6, -22, 12, 5);
       g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 14, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 14, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }

@@ -149,7 +149,7 @@ export class DolmoeRuinsScene extends Phaser.Scene {
     this.add.text((this.W - 1.4) * IT, 10 * IT, tr('→ Dolmoe City'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(this.W / 2 * IT, 0.6 * IT, '🗿 고인돌 유적 — DOLMEN RUINS', {
+    this.add.text(this.W / 2 * IT, 0.6 * IT, tr('🗿 고인돌 유적 — DOLMEN RUINS'), {
       fontSize: '11px', color: '#e8ddc8', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
   }

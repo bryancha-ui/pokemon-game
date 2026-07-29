@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -438,7 +438,7 @@ export class RouteScene extends Phaser.Scene {
     kisun.setPosition(13 * TILE + 48, 5 * TILE + 16);
     this.drawKisun(kisun);
 
-    this.add.text(13 * TILE + 48, 5 * TILE - 8, 'Kisun', {
+    this.add.text(13 * TILE + 48, 5 * TILE - 8, speakerName('Kisun'), {
       fontSize: '9px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(13);
 
@@ -531,7 +531,7 @@ export class RouteScene extends Phaser.Scene {
       g.setPosition(wx, wy);
       this.drawTrainerSprite(g, tr.color);
 
-      this.add.text(wx, wy - 24, tr.label, {
+      this.add.text(wx, wy - 24, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088',
         padding: { x: 3, y: 2 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);

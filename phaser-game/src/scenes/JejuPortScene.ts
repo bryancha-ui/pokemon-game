@@ -135,7 +135,7 @@ export class JejuPortScene extends Phaser.Scene {
       for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 14, 14, 16);
       const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
       bg.fillStyle(0x6b4a28); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, tr(b.label), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
@@ -251,7 +251,7 @@ export class JejuPortScene extends Phaser.Scene {
       if (Math.hypot(dx, dy) < TILE * 1.3) { near = b; break; }
     }
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         const b = near;
         if (b.scene === '__SHOP__') { this.registry.set('martReturnScene', this.scene.key); this.registry.set('jejuPortReturnX', b.doorCol * TILE + TILE / 2); this.registry.set('jejuPortReturnY', (b.y + b.h) * TILE + TILE / 2); this.cutsceneActive = true; this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('MartScene')); return; }

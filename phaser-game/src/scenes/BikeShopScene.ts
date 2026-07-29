@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -89,7 +89,7 @@ export class BikeShopScene extends Phaser.Scene {
     // clerk
     const cg = this.add.graphics().setDepth(8); drawNpcBody(cg, 0x2a8a5a, { hair: 0x2a2622 });
     cg.setPosition(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 16 + 20);
-    this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, 'Shop Clerk', {
+    this.add.text(this.CLERK.col * TILE + 16, this.CLERK.row * TILE + 4, speakerName('Shop Clerk'), {
       fontSize: '8px', color: '#aef0c0', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);
     this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('🚲 Han River Bicycle Shop'), {

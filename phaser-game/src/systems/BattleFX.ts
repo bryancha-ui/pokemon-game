@@ -21,6 +21,13 @@ export function playMoveFX(
   onImpact: () => void,
 ): void {
   const color = (TYPE_COLORS as Record<string, number>)[move.type] ?? 0xffffff;
+  // Visual-layer hook only: lets the 3D renderer mirror this move as a 3D
+  // effect (projectile / impact burst). No game behavior depends on it.
+  scene.events.emit('pk3d-movefx', {
+    attacker, target, color,
+    category: move.category, moveType: move.type, moveName: move.name,
+    power: move.power ?? 0, effectiveness,
+  });
   const ax = attacker.x, ay = attacker.y;
   const tx = target.x, ty = target.y;
 

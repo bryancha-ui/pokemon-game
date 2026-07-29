@@ -146,6 +146,10 @@ function buildCityMap(): CTile[][] {
   fill(51, 2, 53, CCOLS - 2, R);
   fill(68, 2, 70, CCOLS - 2, R);
 
+  // ── West trailhead: the central road runs through the tree border to the
+  //    map's west edge — the dedicated path to Scholars' Road (post-8th badge).
+  fill(34, 0, 36, 2, R);
+
   // ── East avenue out to the Han River Park (rows 60-62) ──────────────────────
   // A grand tree-lined boulevard running from the central road east, opening a gate
   // to the riverside district. It runs BETWEEN the residential blocks (which sit to
@@ -291,6 +295,19 @@ export class CapitolCityScene extends Phaser.Scene {
     }
 
     if (this.registry.get('sunriseGymDefeated')) this.drawScholarsGate();
+    this.drawExitSigns();
+  }
+
+  // ── Edge-exit signposts (Han River Park east gate, Scholars' Road west path) ──
+  private drawExitSigns() {
+    this.add.text((CCOLS - 3) * TILE, 60.4 * TILE, tr('Han River Park →'), {
+      fontSize: '9px', color: '#d8f0ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(1, 0.5).setDepth(7);
+    if (this.registry.get('sunriseGymDefeated')) {
+      this.add.text(3 * TILE, 33.3 * TILE, tr('← Scholars\' Road'), {
+        fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+      }).setOrigin(0, 0.5).setDepth(7);
+    }
   }
 
   // ── Scholars' Road trailhead (post-Baekdu) ─────────────────────────────────
@@ -679,7 +696,7 @@ export class CapitolCityScene extends Phaser.Scene {
       g.fillStyle(0xddaa44); g.fillCircle(dx + TILE - 10, dy + TILE / 2, 3);
 
       // Label
-      this.add.text((loc.x + loc.w / 2) * TILE, (loc.y - 1.8) * TILE, loc.label, {
+      this.add.text((loc.x + loc.w / 2) * TILE, (loc.y - 1.8) * TILE, tr(loc.label), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
@@ -687,7 +704,7 @@ export class CapitolCityScene extends Phaser.Scene {
 
   private addCityLabels() {
     const lbl = (text: string, col: number, row: number, size = 8) =>
-      this.add.text(col * TILE, row * TILE, text, {
+      this.add.text(col * TILE, row * TILE, tr(text), {
         fontSize: `${size}px`, color: '#222', backgroundColor: '#ffffff88', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(4);
 
@@ -786,6 +803,7 @@ export class CapitolCityScene extends Phaser.Scene {
     this.checkSouthExit();
     this.checkNorthExit();
     this.checkEastExit();
+    this.checkWestExit();
     this.locationText.setText(`🏙 Capitol City${this.py < 20 * TILE ? ' — Gym District' : this.py < 40 * TILE ? ' — Tower Quarter' : this.py < 55 * TILE ? ' — Commercial' : ''}`);
   }
 
@@ -823,7 +841,7 @@ export class CapitolCityScene extends Phaser.Scene {
       if (Math.sqrt(dx2 * dx2 + dy2 * dy2) < TILE * 1.4) { near = loc; break; }
     }
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         const loc = near;
         this.registry.set('capitalReturnX', loc.doorCol * TILE + TILE / 2);
@@ -852,6 +870,21 @@ export class CapitolCityScene extends Phaser.Scene {
         this.registry.set('hanRiverReturnY', 24 * 32 + 16);
         this.scene.start('HanRiverParkScene');
       });
+    }
+  }
+
+  /** West edge, central-road rows → Scholars' Road (opens with the 8th badge,
+   *  same condition and spawn point as the in-city trailhead gate). */
+  private checkWestExit() {
+    if (this.spawnGuard) return;
+    if (!this.registry.get('sunriseGymDefeated')) return;
+    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.5 * TILE) return;
+    const row = Math.floor(this.py / TILE);
+    if (this.px < 1.2 * TILE && row >= 33 && row <= 36 && !this.cutsceneActive) {
+      this.cutsceneActive = true;
+      this.registry.set('scholarsRoadReturnX', 12 * 32 + 16);
+      this.registry.set('scholarsRoadReturnY', 56 * 32 + 16);
+      this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('ScholarsRoadScene'));
     }
   }
 

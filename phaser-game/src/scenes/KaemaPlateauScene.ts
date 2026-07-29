@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
@@ -175,10 +175,10 @@ export class KaemaPlateauScene extends Phaser.Scene {
 
     this.add.text(11 * TILE, 51.4 * TILE, tr('↓ Chongjin'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(11 * TILE, 0.7 * TILE, tr('↑ Sinuiju'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(5.5 * TILE, 26.5 * TILE, '장진호\nJangjin Lake', { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(16 * TILE, 30 * TILE, '개마고원\n한국의 지붕', { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(5.5 * TILE, 26.5 * TILE, tr('장진호\nJangjin Lake'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(16 * TILE, 30 * TILE, tr('개마고원\n한국의 지붕'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(17 * TILE, 45.5 * TILE, '고원 감자밭', { fontSize: '8px', color: '#ffe9c0', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(3 * TILE, 10 * TILE, '이깔나무 숲\nLarch Forest', { fontSize: '8px', color: '#ffeeb0', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(3 * TILE, 10 * TILE, tr('이깔나무 숲\nLarch Forest'), { fontSize: '8px', color: '#ffeeb0', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawIcons() {
@@ -206,7 +206,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
       g.fillStyle(0x3a2410); g.fillRect(-6, -22, 12, 5);
       g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 14, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 14, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }

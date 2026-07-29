@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -215,7 +215,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       if (b.hall) { bg.fillStyle(0x2a7a4a, 0.9); bg.fillRect(x - 4, y - 2, w + 8, 4); bg.fillStyle(0x2a5aba, 0.9); bg.fillRect(x - 4, y + 1, w + 8, 3); }
       bg.fillStyle(0x88ccff, 0.7); for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 14);
       bg.fillStyle(0x5a3a1a); bg.fillRect(b.doorCol * TILE + 4, (b.y + b.h - 1) * TILE, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? `🏛️ 어사대 Hall — ${cfg.chiefName}` : b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? `🏛️ 어사대 Hall — ${cfg.chiefName}` : tr(b.label), {
         fontSize: b.hall ? '10px' : '9px', color: b.hall ? '#ffe44e' : '#fff', fontStyle: b.hall ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
@@ -304,7 +304,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, n.color, { hair: n.hair ?? 0x2a2622, frame: n.frame ?? 0 });
       g.setPosition(n.col * TILE + 16, n.row * TILE + 16);
-      if (n.label) this.add.text(n.col * TILE + 16, n.row * TILE - 12, n.label, {
+      if (n.label) this.add.text(n.col * TILE + 16, n.row * TILE - 12, tr(n.label), {
         fontSize: '8px', color: '#cfe6ff', backgroundColor: '#00000088', padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(9);
     }
@@ -445,7 +445,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, tr.color, { hair: 0x2a2622 });
       g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, {
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     }
@@ -579,7 +579,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
         g.fillStyle(0xffcf6a); g.fillRect(x + w / 2 - 5, y + h - 15, 10, 13);
         g.fillStyle(0x3a2410); g.fillRect(x + w / 2 - 1, y + h - 9, 2, 4);
       }
-      this.add.text(x + w / 2, y - 6, lm.label, {
+      this.add.text(x + w / 2, y - 6, tr(lm.label), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
@@ -658,7 +658,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     let near: Bldg | null = null;
     for (const b of BUILDINGS) if (Math.hypot(this.px - (b.doorCol * TILE + TILE / 2), this.py - ((b.y + b.h) * TILE + TILE / 2)) < TILE * 1.3) { near = b; break; }
     if (!near || near.hall) return;
-    this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+    this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     const b = near;
     this.registry.set(cfg.key + 'ReturnX', b.doorCol * TILE + 16);

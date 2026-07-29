@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -165,7 +165,7 @@ export class SudoLabScene extends Phaser.Scene {
     // Lab bench
     g.fillStyle(0x33415a, 1); g.fillRect(0, H * 0.58, W, 14);
 
-    this.add.text(W / 2, 28, "🔬 Professor Song's Lab — Sudo City (수도 시티)", {
+    this.add.text(W / 2, 28, tr("🔬 Professor Song's Lab — Sudo City (수도 시티)"), {
       fontSize: '15px', color: '#cfe3ff', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(5);
 
@@ -177,7 +177,7 @@ export class SudoLabScene extends Phaser.Scene {
     k.fillStyle(0xffcc99); k.fillRect(-14, -54, 28, 30);   // head
     k.fillStyle(0x553311); k.fillRect(-14, -54, 28, 12);   // hair
     k.fillStyle(0x000000); k.fillRect(-8, -42, 5, 5); k.fillRect(3, -42, 5, 5);
-    this.add.text(W * 0.36, H * 0.6 - 76, 'Prof. Song', {
+    this.add.text(W * 0.36, H * 0.6 - 76, speakerName('Prof. Song'), {
       fontSize: '11px', color: '#cfe3ff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(7);
 
@@ -189,7 +189,7 @@ export class SudoLabScene extends Phaser.Scene {
     r.fillStyle(0xffcc99); r.fillRect(-12, -48, 24, 28);
     r.fillStyle(0x221100); r.fillRect(-12, -48, 24, 10);
     r.fillStyle(0x000000); r.fillRect(-7, -38, 4, 4); r.fillRect(3, -38, 4, 4);
-    this.add.text(W * 0.6, H * 0.62 - 70, 'Rival', {
+    this.add.text(W * 0.6, H * 0.62 - 70, speakerName('Rival'), {
       fontSize: '11px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(7);
 

@@ -167,7 +167,7 @@ export class BattleScene extends Phaser.Scene {
     ];
 
     for (const a of actions) {
-      const btn = this.add.text(a.x, a.y, a.label, { fontSize: '20px', color: '#fff' })
+      const btn = this.add.text(a.x, a.y, tr(a.label), { fontSize: '20px', color: '#fff' })
         .setInteractive({ useHandCursor: true })
         .on('pointerover',  () => btn.setColor('#ffff00'))
         .on('pointerout',   () => btn.setColor('#ffffff'))
@@ -177,8 +177,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private createMovePanel() {
-    this.movePanel = this.add.container(0, this.H - 124);
-    const bg = this.add.rectangle(this.W / 2 - 80, 62, this.W * 0.78, 124, 0x111133).setStrokeStyle(1, 0xffffff);
+    this.movePanel = this.add.container(0, this.H - 150);
+    const bg = this.add.rectangle(this.W / 2 - 80, 75, this.W * 0.78, 150, 0x111133).setStrokeStyle(1, 0xffffff);
     this.movePanel.add(bg);
 
     const back = this.add.text(this.W - 40, 10, tr('← BACK'), { fontSize: '14px', color: '#aaa' })
@@ -187,7 +187,7 @@ export class BattleScene extends Phaser.Scene {
     this.movePanel.add(back);
 
     const cols = [20, 210];
-    const rows = [20, 70];
+    const rows = [18, 82];
     this.playerPokemon.moves.forEach((move, i) => {
       const x = cols[i % 2];
       const y = rows[Math.floor(i / 2)];

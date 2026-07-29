@@ -1,0 +1,26 @@
+{
+  "props": [
+    {
+      "id": "house",
+      "role": "building",
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/fbee8199-620a-4737-8e0b-a17603efb770.glb"
+    },
+    {
+      "id": "pokecenter",
+      "role": "building",
+      "tags": ["center"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b70667d6-a2da-4500-9f43-3c8b3770d13f.glb"
+    },
+    {
+      "id": "hanok",
+      "role": "building",
+      "tags": ["traditional"],
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/2c30f29a-f274-4bdb-b3ef-30e70cf61e2c.glb"
+    },
+    {
+      "id": "bus",
+      "role": "vehicle",
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/5cbaedf8-b605-4f72-bde4-70ab3949cffc.glb"
+    }
+  ]
+}

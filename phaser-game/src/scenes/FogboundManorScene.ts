@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
@@ -180,7 +180,7 @@ export class FogboundManorScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, tr.color, { hair: 0x2a2230 });
       g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, { fontSize: '8px', color: '#d8c8ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center' }).setOrigin(0.5).setDepth(9);
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), { fontSize: '8px', color: '#d8c8ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center' }).setOrigin(0.5).setDepth(9);
     }
   }
 
@@ -267,7 +267,7 @@ export class FogboundManorScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0xffd24a, 1); g.fillCircle(0, -2, 6); g.fillStyle(0x1a1622, 1); g.fillCircle(0, -2, 3);   // padlock body
     g.fillRect(-6, 2, 12, 8); g.fillStyle(0xffd24a, 1); g.fillRect(-6, 2, 12, 8); g.fillStyle(0x1a1622, 1); g.fillRect(-1, 4, 2, 4);
-    const label = this.add.text(0, -20, '🔒 보석함 (locked)', { fontSize: '8px', color: '#ffd88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
+    const label = this.add.text(0, -20, tr('🔒 보석함 (locked)'), { fontSize: '8px', color: '#ffd88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const cont = this.add.container(cx, cy, [g, label]).setDepth(10);
     cont.setVisible(!this.vaultOpen);
     this.tweens.add({ targets: cont, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1 });

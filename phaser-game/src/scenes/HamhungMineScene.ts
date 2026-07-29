@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
@@ -155,7 +155,7 @@ export class HamhungMineScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, tr.color, { hair: 0x2a2622 });
       g.setPosition(tr.col * TILE + 16, tr.row * TILE + 16);
-      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, tr.label, { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(9);
+      this.add.text(tr.col * TILE + 16, tr.row * TILE - 12, speakerName(tr.label), { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(9);
     }
   }
 

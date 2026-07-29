@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -202,7 +202,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     p.fillStyle(0xd8b44a); p.fillRect(px - 5, pBase - 70, 10, 10);            // palace spire
     this.add.text(px, pBase + 16, tr('The Palace'), { fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(4);
 
-    this.add.text(15.5 * TILE, 4.4 * TILE, '평성 · PYEONGSEONG', {
+    this.add.text(15.5 * TILE, 4.4 * TILE, tr('평성 · PYEONGSEONG'), {
       fontSize: '14px', color: '#ffe88a', backgroundColor: '#000000aa', padding: { x: 8, y: 3 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -236,7 +236,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     g.fillStyle(0xd8b44a); g.fillRect(-2, -24, 4, 4);        // cap ornament
     g.fillStyle(0x000000); g.fillRect(-5, -17, 2, 2); g.fillRect(3, -17, 2, 2);   // eyes
     
-    this.add.text(cx, cy - 28, '어사대장 Supreme Gwang', {
+    this.add.text(cx, cy - 28, speakerName('어사대장 Supreme Gwang'), {
       fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(10);
   }

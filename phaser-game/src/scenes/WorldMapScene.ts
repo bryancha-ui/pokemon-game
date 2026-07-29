@@ -567,7 +567,7 @@ export class WorldMapScene extends Phaser.Scene {
     g.fillStyle(0x3a3f52); g.fillRect(x - 16, y - 2, 3, 26);
     g.fillStyle(0x2a6ab0); g.fillRoundedRect(x - 26, y - 8, 22, 12, 2);
     this.add.text(x - 15, y - 2, '🚏', { fontSize: '11px' }).setOrigin(0.5);
-    this.add.text(x + 30, y - 14, '🚌 Bus → Kaesong 개성', {
+    this.add.text(x + 30, y - 14, tr('🚌 Bus → Kaesong 개성'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(7);
   }

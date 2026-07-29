@@ -1,0 +1,24 @@
+{
+  "models": [
+    { "key": "vipour", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/780ab653-1ca6-4719-a215-46d336f50207.glb" },
+    { "key": "arctorodon", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/67f55a28-9a54-4a68-9ec3-c524b8468153.glb" },
+    { "key": "babymammoth", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/f5f056ce-a702-4a9f-b92b-4a8275b2c710.glb" },
+    { "key": "balchataek", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d790f413-8a91-4643-9583-6d2ce32c8614.glb" },
+    { "key": "blazekunk", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d1293e52-9988-4bc6-9b23-8cd4be079006.glb" },
+    { "key": "bonejoillion", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/50bf0943-396e-44c7-80dd-b46eab62eff4.glb" },
+    { "key": "bookbug", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6e42a122-3bc8-4795-9c23-6b9dd8e31f53.glb" },
+    { "key": "bookmoth", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/a1440c01-fcf9-4078-9281-b91f33d0df40.glb" },
+    { "key": "cerrapin", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/4ec510a2-4a42-443a-814c-38b8741b0253.glb" },
+    { "key": "foxgeist", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/7421f148-f69f-4fee-8f5c-ff7976736739.glb" },
+    { "key": "hwanwoong", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/019d6b7f-fbb9-4358-aa30-05ccd90eefe8.glb" },
+    { "key": "daejangseung", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/81bf7402-1e72-427a-b909-6a32c16f6db0.glb" },
+    { "key": "nabihalmang", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/497d581d-abdd-4b04-8a62-6969daafbaf0.glb" },
+    { "key": "ivelon", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/238256c0-641f-469b-886b-41d17837db5c.glb" },
+    { "key": "kidstrel", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8c4c33a3-76f4-47ee-9207-b594b6afb9f6.glb" },
+    { "key": "frysm", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/e1cd2b7a-16be-4e97-9c8f-ad29781c46c2.glb" },
+    { "key": "munkain", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b58813a1-d8b9-4715-97e0-f1f128539a38.glb" },
+    { "key": "onnurian", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/c0227087-74eb-4923-ab0a-40310cfc1add.glb" },
+    { "key": "thanatoat", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/605732ca-e0d2-43ca-a471-651adb018759.glb" },
+    { "key": "ampere", "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/ae601974-ba4e-4e36-bf1e-dbe48dd761bb.glb" }
+  ]
+}

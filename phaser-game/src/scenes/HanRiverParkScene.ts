@@ -163,7 +163,7 @@ export class HanRiverParkScene extends Phaser.Scene {
       bg.fillStyle(0x88ccff, 0.7); for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 14);
       const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
       bg.fillStyle(0x5a3a1a); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, tr(b.label), {
         fontSize: '10px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
@@ -311,7 +311,7 @@ export class HanRiverParkScene extends Phaser.Scene {
       if (Math.hypot(dx, dy) < TILE * 1.3) { near = b; break; }
     }
     if (!near) { this.enterPrompt.setVisible(false); return; }
-    this.enterPrompt.setText(`SPACE — ${near.label}`).setVisible(true);
+    this.enterPrompt.setText(`SPACE — ${tr(near.label)}`).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     this.cutsceneActive = true;
     const scene = near.label.includes('Bicycle') ? 'BikeShopScene' : 'ConvenienceStoreScene';

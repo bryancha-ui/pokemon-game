@@ -200,7 +200,7 @@ export class MenuScene extends Phaser.Scene {
       const y   = startY + row * rowH;
       const bg  = this.add.rectangle(x, y, cardW, cardH, 0x0a0a22, 0.6)
         .setStrokeStyle(1, 0x223355);
-      const lbl = this.add.text(x, y, '— empty —', { fontSize: '12px', color: '#334466' })
+      const lbl = this.add.text(x, y, tr('— empty —'), { fontSize: '12px', color: '#334466' })
         .setOrigin(0.5);
       this.contentContainer.add([bg, lbl]);
     }

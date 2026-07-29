@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
@@ -146,7 +146,7 @@ export class HaeanCityScene extends Phaser.Scene {
       for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 14, 14, 16);
       const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
       bg.fillStyle(0x8b4513); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.label, {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, tr(b.label), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
@@ -173,7 +173,7 @@ export class HaeanCityScene extends Phaser.Scene {
       r.fillStyle(0x2255cc); r.fillRect(-7, -8, 14, 11); r.fillRect(-11, -7, 5, 8); r.fillRect(6, -7, 5, 8);
       r.fillStyle(0xffcc99); r.fillRect(-6, -20, 12, 11); r.fillStyle(0x221100); r.fillRect(-6, -20, 12, 5);
       r.fillStyle(0x000000); r.fillRect(-3, -15, 2, 2); r.fillRect(1, -15, 2, 2);
-      this.add.text(this.rivalCol * TILE + 16, this.rivalRow * TILE - 10, 'Rival', {
+      this.add.text(this.rivalCol * TILE + 16, this.rivalRow * TILE - 10, speakerName('Rival'), {
         fontSize: '8px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(9);
     }
@@ -185,7 +185,7 @@ export class HaeanCityScene extends Phaser.Scene {
     d.fillStyle(0xffcc99); d.fillRect(-6, -20, 12, 11);
     d.fillStyle(0xdddddd); d.fillRect(-6, -20, 12, 4); d.fillStyle(0xeeeeee); d.fillRect(-5, -9, 10, 3);
     d.fillStyle(0x000000); d.fillRect(-3, -15, 2, 2); d.fillRect(1, -15, 2, 2);
-    this.add.text(this.dosikCol * TILE + 16, this.dosikRow * TILE - 10, 'Old Dosik', {
+    this.add.text(this.dosikCol * TILE + 16, this.dosikRow * TILE - 10, speakerName('Old Dosik'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
   }
@@ -213,7 +213,7 @@ export class HaeanCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, '🏙️ Haean City (해안 시티)', {
+    this.add.text(this.scale.width / 2, 22, tr('🏙️ Haean City (해안 시티)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
@@ -343,7 +343,7 @@ export class HaeanCityScene extends Phaser.Scene {
       if (Math.hypot(dx, dy) < TILE * 1.3) { near = b; break; }
     }
     if (near) {
-      this.enterPrompt.setText(`SPACE — Enter ${near.label}`).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(near.label)}`).setVisible(true);
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         const b = near;
         if (b.scene === '__SHOP__') { this.registry.set('martReturnScene', this.scene.key); this.registry.set('haeanCityReturnX', b.doorCol * TILE + TILE / 2); this.registry.set('haeanCityReturnY', (b.y + b.h) * TILE + TILE / 2); this.cutsceneActive = true; this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('MartScene')); return; }

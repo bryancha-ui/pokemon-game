@@ -94,8 +94,8 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(7.5 * TILE, 0.6 * TILE, '↑ 평성 (Pyeongseong)', { fontSize: '10px', color: '#ffe9c0', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(7.5 * TILE, (ROWS - 0.6) * TILE, '↓ 원산 (Wonsan)', { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(7.5 * TILE, 0.6 * TILE, tr('↑ 평성 (Pyeongseong)'), { fontSize: '10px', color: '#ffe9c0', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(7.5 * TILE, (ROWS - 0.6) * TILE, tr('↓ 원산 (Wonsan)'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawWardens() {
@@ -109,7 +109,7 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
       g.fillStyle(0x141422); g.fillRect(-6, -21, 12, 5);
       g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
     }
-    this.add.text(7.5 * TILE, 3.1 * TILE, 'royal wardens', { fontSize: '8px', color: '#ffe9c0', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(9);
+    this.add.text(7.5 * TILE, 3.1 * TILE, tr('royal wardens'), { fontSize: '8px', color: '#ffe9c0', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(9);
   }
 
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }

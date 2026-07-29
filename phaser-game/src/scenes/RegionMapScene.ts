@@ -92,7 +92,7 @@ export class RegionMapScene extends Phaser.Scene {
     this.drawNodes(currentNode);
 
     // ── Header ────────────────────────────────────────────────────────────────
-    this.add.text(W / 2, 46, '🗺️  HANBANDO REGION MAP  ·  한반도 지역 지도', {
+    this.add.text(W / 2, 46, tr('🗺️  HANBANDO REGION MAP  ·  한반도 지역 지도'), {
       fontSize: '24px', color: '#ffe44e', fontStyle: 'bold', stroke: '#221133', strokeThickness: 4,
     }).setOrigin(0.5);
 

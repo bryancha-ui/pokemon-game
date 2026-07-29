@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -158,7 +159,7 @@ export class ForestShrineScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     this.add.text(W / 2, H - IT / 2, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
-    this.add.text(W / 2, IT * 0.55, '⛩️ FOREST SHRINE (숲 신전)', {
+    this.add.text(W / 2, IT * 0.55, tr('⛩️ FOREST SHRINE (숲 신전)'), {
       fontSize: '11px', color: '#cfffb0', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
   }
@@ -184,7 +185,7 @@ export class ForestShrineScene extends Phaser.Scene {
       const x = b.col * IT + IT / 2, y = b.row * IT + IT / 2;
       const t = this.add.text(x, y, '🔔', { fontSize: '24px' }).setOrigin(0.5).setDepth(8);
       this.bellObjs.push(t);
-      this.add.text(x, y - 24, b.label, {
+      this.add.text(x, y - 24, tr(b.label), {
         fontSize: '8px', color: '#ffe9a0', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(8);
     }
@@ -210,7 +211,7 @@ export class ForestShrineScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(10);
     g.setPosition(x, y);
     drawNpcBody(g, 0x9a7a4a, { hair: 0x2a2a2a, skin: 0xf0c8a0 });   // saffron-grey monk robe
-    this.add.text(x, y - 26, '스님 Monk', {
+    this.add.text(x, y - 26, speakerName('스님 Monk'), {
       fontSize: '8px', color: '#ffe9a0', backgroundColor: '#00000088', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(11);
   }

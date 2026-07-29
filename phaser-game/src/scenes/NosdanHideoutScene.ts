@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -206,7 +206,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
       g.fillStyle(f.boss ? 0x7a1030 : 0x141420); g.fillRect(-6, -22, 12, 5);
       g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
-      this.add.text(f.col * TILE + 16, f.row * TILE - (f.boss ? 22 : 16), f.label, {
+      this.add.text(f.col * TILE + 16, f.row * TILE - (f.boss ? 22 : 16), speakerName(f.label), {
         fontSize: f.boss ? '10px' : '8px', color: f.boss ? '#ff6a8a' : '#fff', fontStyle: f.boss ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(9);

@@ -495,7 +495,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0014, 0).setOrigin(0.5);
     const corona = this.add.graphics();
     const kids: Phaser.GameObjects.GameObject[] = [dim, corona];
-    const label = this.add.text(cx, cy + 168, '환웅 — Hwanwoong', {
+    const label = this.add.text(cx, cy + 168, tr('환웅 — Hwanwoong'), {
       fontSize: '14px', color: '#ffd6e0', fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
     }).setOrigin(0.5).setAlpha(0);
     let img: Phaser.GameObjects.Image | undefined;

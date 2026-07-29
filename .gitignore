@@ -27,3 +27,8 @@ phaser-game/.vite/
 
 # Local sprite backup (not needed for build/deploy)
 phaser-game/sprite_backup_orig/
+
+# Vendored 3D model binaries — large (~40MB each). The deploy loads them from
+# the Higgsfield CDN via manifest.json URLs; run scripts/fetch-models.mjs to
+# vendor them locally for offline play. Kept out of the repo to stay lean.
+phaser-game/public/assets/models3d/*.glb
