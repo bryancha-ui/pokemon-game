@@ -67,7 +67,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   '노스단 Sovereign-Claimant': '노스단 군주 참칭자',
   'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
   '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
-  'Artist Sora': '화가 소라', 'Dock Worker': '부두 인부',
+  'Artist Sora': '화가 소라', 'Dock Worker': '부두 인부', 'Trader': '상인',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -1102,6 +1102,49 @@ export const KO_STRINGS: Record<string, string> = {
   'Waterfowl gather at the lagoon by the thousand. My flock rules these skies — care to test them?':
     '석호에 물새가 수천 마리 모여. 내 무리가 이 하늘을 지배하지 — 시험해 볼래?',
   '🌅 Sijung Coast (시중호 해안길)': '🌅 시중호 해안길',
+
+  // ── Northern routes / dungeons / interiors ──
+  'What a view from up here! Oh — you want to battle? By the cairn, then. For luck!':
+    '여기서 보는 경치 좀 봐! 어 — 배틀하고 싶다고? 그럼 돌탑 옆에서. 행운을 빌며!',
+  'Camped by the summit all week. The wild Pokémon here are no joke — and neither am I!':
+    '한 주 내내 정상 옆에서 야영했어. 여기 야생 포켓몬은 만만치 않아 — 나도 그렇고!',
+  '⛰ Ahobiryong Pass (아호비령 고개)': '⛰ 아호비령 고개',
+  '🌾 Ryesong Valley (예성강 들녘)': '🌾 예성강 들녘',
+  'Halt! This road belongs to 노스단 now. Turn back to your little plateau — the ajit is off-limits!':
+    '멈춰! 이 길은 이제 노스단 거야. 네 작은 고원으로 돌아가 — 아지트는 출입 금지다!',
+  '🔑 You obtained the 노스단 아지트 열쇠! The gate ahead will now unlock.': '🔑 노스단 아지트 열쇠를 손에 넣었다! 이제 앞쪽 문이 열린다.',
+  '🏢 노스단 아지트 (Team North HQ)': '🏢 노스단 아지트',
+  '⛰ 노스단 아지트 진입로 (HQ Approach)': '⛰ 노스단 아지트 진입로',
+  "Beat us first if you think you're getting in!": '들어갈 생각이면 우리부터 이겨봐!',
+  '어사대장 Amrok will want to know the crossing is safe. Head back to Sinuiju.':
+    '어사대장 압록이 강을 건너도 안전한지 알고 싶어할 거다. 신의주로 돌아가라.',
+  'At the heart of the cave, a great bear-shape sleeps frozen into the ice wall.': '동굴 중심, 거대한 곰의 형상이 얼음벽에 얼어붙어 잠들어 있다.',
+  'As you draw near, a deep CRACK splinters the ice — and two cold eyes snap open.': '다가가자, 깊은 균열 소리와 함께 얼음이 갈라지고 — 차가운 두 눈이 번쩍 뜨인다.',
+  'The Ice-Bound Beartic shatters free of the wall with a roar that shakes frost from the ceiling!':
+    '얼음 툰베어가 천장에서 서리를 떨어뜨리는 포효와 함께 벽을 부수고 튀어나온다!',
+  '얼음 툰베어 (Ice-Bound Beartic)': '얼음 툰베어',
+  'So — you seek the thing that grins in the séance hall? Heh heh... its door is locked, and I keep the only key.\nBest me, if you dare, and the 보석함 key is yours.':
+    '그래 — 강령술 방에서 히죽대는 그것을 찾는 거냐? 헤헤... 그 문은 잠겼고, 유일한 열쇠는 내가 갖고 있지.\n감히 날 이긴다면, 보석함 열쇠는 네 거다.',
+  '🔑 You obtained the 보석함 (vault) KEY! The locked séance-hall door down the corridor can be opened now.':
+    '🔑 보석함 열쇠를 손에 넣었다! 복도 저편의 잠긴 강령술 방 문을 이제 열 수 있다.',
+  '⚠ Fog-Wraith Gengar (안개 팬텀)': '⚠ 안개 팬텀',
+  '🏚 Fogbound Manor (안개저택)': '🏚 안개저택',
+  // Interiors (naengmyeon shop, northern lodging)
+  '사장님: 어서 오세요! Welcome to the finest 함흥냉면 house in the city!': '사장님: 어서 오세요! 이 도시 최고의 함흥냉면 집에 오신 걸 환영합니다!',
+  '사장님: Take your time! The broth stays nice and cold.': '사장님: 천천히 드세요! 육수는 시원하게 유지된답니다.',
+  'You share the big bowl with your team, and everyone eats their fill.': '큰 그릇을 팀과 나눠 먹고, 모두 배불리 먹는다.',
+  'Your Pokémon are refreshed and fully restored!': '포켓몬들이 상쾌해지고 완전히 회복되었다!',
+  '사장님: 맛있게 드셨어요? 또 오세요 — come again, Champion!': '사장님: 맛있게 드셨어요? 또 오세요, 챔피언!',
+  'You and your team share a hot meal by the hearth. Everyone is rested and fully restored!':
+    '너와 팀은 화로 옆에서 따뜻한 식사를 나눈다. 모두 쉬고 완전히 회복되었다!',
+  'You sip a sweet iced tea while your Pokémon nap in the sun. Everyone feels refreshed and fully healed!':
+    '포켓몬들이 햇볕 아래 낮잠 자는 동안 달콤한 아이스티를 마신다. 모두 상쾌해지고 완전히 회복되었다!',
+  "You and your Pokémon steam away the day's aches. Everyone emerges glowing — fully restored!":
+    '너와 포켓몬들은 하루의 피로를 김으로 씻어낸다. 모두 반짝이며 나온다 — 완전히 회복되었다!',
+  'You rest until the foghorns fade to a lullaby. Your team wakes fully restored!':
+    '무적 소리가 자장가처럼 잦아들 때까지 쉰다. 팀이 완전히 회복되어 깨어난다!',
+  'Trader: The bridge to the far bank is broken, but the trade never stops. Careful who you deal with here, Champion.':
+    '상인: 건너편으로 가는 다리는 끊겼지만, 거래는 결코 멈추지 않아. 여기선 누구와 거래할지 조심해, 챔피언.',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
