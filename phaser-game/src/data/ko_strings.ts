@@ -57,6 +57,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Skater': '스케이터', 'Sculptor': '조각가', 'Innkeeper': '여관 주인', 'Vendor': '노점상',
   'Tourist': '관광객', 'Coach': '코치', 'Youth': '청년',
   'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아', 'Quarry Worker': '채석장 인부',
+  'Observer Park': '관찰자 박', 'Observer': '관찰자', 'Guard': '경비병', 'Curator': '큐레이터',
 };
 
 export const KO_STRINGS: Record<string, string> = {
@@ -752,6 +753,21 @@ export const KO_STRINGS: Record<string, string> = {
   'Five partners ride my current. Show me your timing. Begin!':
     '다섯 파트너가 내 전류를 타지. 네 타이밍을 보여봐. 시작!',
   'The storm answered to you. Take the Stormwatcher Badge.': '폭풍이 네게 응답했어. 폭풍지기 배지를 받아.',
+
+  // ── Capitol Tower / Palace NPCs ──
+  'WASD/Arrows  |  SPACE: enter  |  SHIFT: run  |  M: menu': 'WASD/방향키  |  SPACE: 입장  |  SHIFT: 달리기  |  M: 메뉴',
+  'Welcome to the top of Capitol Tower!': '수도 타워 꼭대기에 오신 걸 환영합니다!',
+  'From here you can see the entire city... look at all those lights.': '여기서는 도시 전체가 보여요... 저 불빛들 좀 봐요.',
+  "See that green patch to the north? That's the palace grounds.": '북쪽에 저 초록빛 구역 보여요? 저게 궁궐 부지예요.',
+  'And to the south — Route 1 cutting through the mountains.': '그리고 남쪽으로는 — 산을 가로지르는 1번 도로가 있죠.',
+  'Somewhere out there, the next great trainer is on their journey.': '저 어딘가에서, 다음 위대한 트레이너가 여정을 걷고 있어요.',
+  "Maybe that's you! 🌟": '어쩌면 그게 당신일지도! 🌟',
+  'This is the Ancient Palace, 600 years of history.': '이곳은 고궁, 육백 년의 역사죠.',
+  'The original rulers once walked these halls.': '옛 통치자들이 한때 이 회랑을 거닐었습니다.',
+  'They say their spirits still watch over the city.': '그들의 혼이 여전히 도시를 지켜본다고들 하죠.',
+  'Welcome to the Capitol Palace Museum!': '수도 궁궐 박물관에 오신 걸 환영합니다!',
+  'That artifact was used by the first city founder.': '저 유물은 도시의 첫 창건자가 사용했습니다.',
+  'And that sword? It slayed a shadow beast long ago...': '그리고 저 검이요? 아주 오래전 그림자 짐승을 베었죠...',
 
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
