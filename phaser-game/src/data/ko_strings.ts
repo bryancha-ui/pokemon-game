@@ -1011,6 +1011,38 @@ export const KO_STRINGS: Record<string, string> = {
     '뉴스: 한반도 포켓몬 연구소의 연구원들이 천지 호수 근처의 희귀 포켓몬 이동과 연관된 패턴을 조사하고 있습니다...',
   'Route 2 is now open to the NORTH of the city.': '이제 도시 북쪽으로 2번 도로가 열렸다.',
 
+  // ══ Baekdu Summit finale (Ch.11 — 나비할망 shield, Hwanwoong calmed) ══
+  '▶ You release 나비할망.': '▶ 나비할망을 풀어놓는다.',
+  '나비할망 launches into the center of the storm. Her metallic, dancheong-patterned wings unfurl — wider, and wider — into a vast translucent dome whose patterns exactly match the ancient tablets.':
+    '나비할망이 폭풍의 중심으로 날아든다. 금속성 단청 무늬 날개가 펼쳐진다 — 점점, 더 넓게 — 고대 석판의 무늬와 정확히 일치하는 거대한 반투명 돔으로.',
+  'The dome drinks in the chaotic red-and-purple spikes torn from 풍백, 우사, and 운사 — and converts them into a slow, gentle aurora that washes down across the peak.':
+    '돔이 풍백, 우사, 운사에게서 뜯겨 나온 혼돈의 붉고 보랏빛 가시들을 빨아들인다 — 그리고 그것을 봉우리를 타고 흘러내리는 느리고 부드러운 오로라로 바꾼다.',
+  'Far across the Taebaek range, three cries echo — Wind, Rain, and Clouds, set free. The chains of the matrix shatter; the trio scatter back into the wild peaks.':
+    '태백 산맥 저편에서 세 울음이 메아리친다 — 풀려난 바람, 비, 구름. 매트릭스의 사슬이 부서지고, 세 정령은 야생의 봉우리로 흩어져 돌아간다.',
+  'Hwanwoong, his borrowed agony lifted, slowly stills. His corona fades from violent red to a calm, deep blue.':
+    '빌려온 고통이 걷힌 환웅이 천천히 잦아든다. 그의 코로나가 격렬한 붉은빛에서 차분한 짙은 파랑으로 옅어진다.',
+  'The aura grows more violent each round as the towers strain... until the moment comes.':
+    '탑들이 버티는 동안 오라가 매 턴 더 격렬해진다... 그 순간이 올 때까지.',
+  '▶ RELEASE 나비할망?  (Yes — release her / No — hold on)': '▶ 나비할망을 풀어놓을까?  (예 — 풀어놓기 / 아니오 — 기다리기)',
+  "He is not attacking out of malice. He is in agony — the matrix is wrenching at his waking mind, and the trio's chained energy feeds the overload.":
+    '그는 악의로 공격하는 게 아니다. 고통에 빠진 것이다 — 매트릭스가 깨어나는 그의 정신을 비틀어 대고, 사슬에 묶인 세 정령의 에너지가 과부하를 부추긴다.',
+  'Hwanwoong is yours — its corona gone, the lake mirror-still beneath a clearing sky.':
+    '환웅은 이제 네 것이다 — 코로나가 사라지고, 개어가는 하늘 아래 호수는 거울처럼 고요하다.',
+  'Rival climbs to the summit, Executive Mubaek defeated behind them, and joins you at the central altar.':
+    '라이벌이 간부 무백을 뒤에 물리치고 정상에 올라, 중앙 제단에서 너와 합류한다.',
+  'Rival: ...We actually did it. Together, then. Like always.': '라이벌: ...우리 정말 해냈어. 그럼 함께한 거네. 늘 그렇듯이.',
+  'The bruised red sky clears. Gentle lines of golden light spread outward from the peak, flowing back down across the entire peninsula, settling the disturbed land and restoring its natural balance.':
+    '멍든 붉은 하늘이 개인다. 부드러운 황금빛 선들이 봉우리에서 바깥으로 퍼져 나가, 반도 전체를 타고 도로 흘러내리며, 어지러워진 땅을 가라앉히고 그 자연의 균형을 회복시킨다.',
+  'Prof. Song (comms, quiet with relief): The geothermal readings are stabilizing. The eruption threat is gone. The trio are free. And the whole region is breathing again.':
+    '송 박사 (통신, 안도로 잦아든 목소리): 지열 수치가 안정되고 있어. 분화 위협은 사라졌어. 세 정령은 자유야. 그리고 온 지방이 다시 숨 쉬고 있어.',
+  '나비할망 folds her glowing wings and settles beside you. The first clean stars appear over Baekdu Peak.':
+    '나비할망이 빛나는 날개를 접고 네 곁에 내려앉는다. 백두봉 위로 첫 맑은 별들이 나타난다.',
+  'You and the Rival make the long descent together, off the sacred mountain.':
+    '너와 라이벌은 함께 성스러운 산을 내려가는 긴 하산길에 오른다.',
+  '▶ Chapter 11 complete. Phase 2: Northern League — COMPLETE ✓': '▶ 11장 완료. 2막: 북방 리그 — 완료 ✓',
+  'Post-game begins: The world is yours to explore, and some say the 어사대 still stirs in the unreached corners of the realm.':
+    '포스트게임 시작: 세계는 네가 탐험할 몫이고, 어떤 이들은 어사대가 아직 닿지 않은 세상의 구석에서 꿈틀댄다고 말한다.',
+
   // ── Common overworld prompts ──
   'SPACE to continue': 'SPACE: 계속',
   'SPACE to advance': 'SPACE: 넘기기',
