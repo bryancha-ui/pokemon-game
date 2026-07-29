@@ -14,7 +14,7 @@ import { DexTracker } from '../systems/DexTracker';
 import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvatar';
 import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
-import { tr } from '../systems/i18n';
+import { tr, pokeNameEn} from '../systems/i18n';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
 
@@ -152,7 +152,7 @@ export class RivalBattleScene extends Phaser.Scene {
 
     // Rival HUD — top left
     track(this.add.rectangle(130, 52, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
-    track(this.add.text(14, 24, `${this.rival.name.toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
+    track(this.add.text(14, 24, `${pokeNameEn(this.rival.name).toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
     this.rivalLvText = track(this.add.text(200, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }));
     track(this.add.rectangle(130, 52, this.HP_BAR_W + 8, 12, 0x333355));
     this.rivalHpBar  = track(this.add.rectangle(30, 52, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
@@ -160,7 +160,7 @@ export class RivalBattleScene extends Phaser.Scene {
 
     // Player HUD — bottom right
     track(this.add.rectangle(670, 330, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
-    track(this.add.text(550, 302, `${this.player.name.toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
+    track(this.add.text(550, 302, `${pokeNameEn(this.player.name).toUpperCase()}`, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(730, 302, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(670, 330, this.HP_BAR_W + 8, 12, 0x333355));
     this.playerHpBar  = track(this.add.rectangle(570, 330, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));

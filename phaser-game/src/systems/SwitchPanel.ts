@@ -5,7 +5,7 @@
 import Phaser from 'phaser';
 import { PartySystem } from './PartySystem';
 import { TYPE_COLORS } from '../data/StarterData';
-import { t, tr, typeName } from './i18n';
+import { t, tr, typeName, pokeNameEn} from './i18n';
 
 export function openSwitchPanel(
   scene:        Phaser.Scene,
@@ -97,7 +97,7 @@ export function openSwitchPanel(
     // Name + level
     const nameAlpha = isFainted ? 0.4 : 1;
     overlay.add(
-      scene.add.text(cx - 268, rowY - 9, entry.name.toUpperCase(),
+      scene.add.text(cx - 268, rowY - 9, pokeNameEn(entry.name).toUpperCase(),
         { fontSize: '14px', color: isFainted ? '#664444' : '#ffffff', fontStyle: 'bold' })
         .setAlpha(nameAlpha),
     );

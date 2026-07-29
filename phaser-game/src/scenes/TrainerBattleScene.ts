@@ -12,7 +12,7 @@ import { fetchPokemon } from '../data/PokeAPI';
 import { customForm } from '../data/CustomBattle';
 import { PartySystem } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
-import { tr } from '../systems/i18n';
+import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
@@ -243,12 +243,12 @@ export class TrainerBattleScene extends Phaser.Scene {
       this.tweens.add({
         targets: this.enemySprite, x: 560, y: 130, alpha: 1, duration: 400,
         onComplete: () => {
-          this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}!`, () => {
+          this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
             this.playerSprite.setAlpha(1);
             this.tweens.add({
               targets: this.playerSprite, x: 180, y: 260, duration: 350,
               onComplete: () => {
-                this.typeDialog(`Go! ${this.player.name.toUpperCase()}!`, () => this.playerAction());
+                this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
               },
             });
           });
@@ -352,14 +352,14 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private createHUDs() {
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.enemyNameText = this.add.text(12, 24, this.enemy.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.enemyNameText = this.add.text(12, 24, pokeNameEn(this.enemy.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.enemyLvText  = this.add.text(180, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' });
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
     this.add.rectangle(660, 318, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(552, 292, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(730, 292, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(660, 320, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(570, 320, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -580,7 +580,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private playerAction() {
     this.state = 'playerAction';
-    this.typeDialog(`What will ${this.player.name.toUpperCase()} do?`);
+    this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`);
     this.showActionPanel();
   }
 
@@ -616,7 +616,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   private doPlayerMove(playerMove: Move, onDone: () => void) {
     this.player.useMove(playerMove);
     persistMovePP(this.registry, this.activeSlot, this.player);   // PP persists across battles
-    this.typeDialog(`${this.player.name.toUpperCase()} used ${playerMove.data.name}!`, () => {
+    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} used ${playerMove.data.name}!`, () => {
       if (playerMove.data.power <= 0) { onDone(); return; }
       const { critical, effectiveness } = this.enemy.takeDamage(playerMove, this.player);
       playMoveFX(this, this.playerSprite, this.enemySprite, playerMove.data, effectiveness, () => {});
@@ -625,7 +625,7 @@ export class TrainerBattleScene extends Phaser.Scene {
           effectiveness > 1 ? 'Super effective!' :
           effectiveness < 1 && effectiveness > 0 ? 'Not very effective...' : '';
         const after = () => {
-          if (this.enemy.isKO) { this.typeDialog(`${this.enemy.name.toUpperCase()} fainted!`, () => this.afterEnemyKO()); return; }
+          if (this.enemy.isKO) { this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} fainted!`, () => this.afterEnemyKO()); return; }
           onDone();
         };
         if (msg) this.typeDialog(msg, after); else after();
@@ -663,14 +663,14 @@ export class TrainerBattleScene extends Phaser.Scene {
     const move  = this.pickEnemyMove(moves.length ? moves : this.enemy.moves);
     this.enemy.useMove(move);
 
-    this.typeDialog(`${this.enemy.name.toUpperCase()} used ${move.data.name}!`, () => {
+    this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} used ${move.data.name}!`, () => {
       if (move.data.power > 0) {
         const { effectiveness } = this.player.takeDamage(move, this.enemy);
         playMoveFX(this, this.enemySprite, this.playerSprite, move.data, effectiveness, () => {});
         this.animateHpBar('player', () => {
           PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
           if (this.player.isKO) {
-            this.typeDialog(`${this.player.name.toUpperCase()} fainted!`, () => {
+            this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => {
               this.sendNextOrLose();
             });
           } else {
@@ -696,11 +696,11 @@ export class TrainerBattleScene extends Phaser.Scene {
           this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
           this.fitSprite(this.enemySprite, this.enemySpriteSize());   // re-scale: custom sprites differ in size (bosses loom larger)
           this.animateHpBar('enemy', () => {});
-          this.enemyNameText?.setText(this.enemy.name.toUpperCase());
+          this.enemyNameText?.setText(pokeNameEn(this.enemy.name).toUpperCase());
           this.enemyLvText.setText(`Lv.${this.enemy.level}`);
           this.enemyHpBar.width  = HP_W;
           this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
-          this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}!`,
+          this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`,
             () => this.offerSwitchAfterKO());
         });
       } else {
@@ -720,12 +720,12 @@ export class TrainerBattleScene extends Phaser.Scene {
     // Every other Pokémon that participated also gains EXP.
     const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount);
     const after = () => this.playBenchLines(benchLines, onDone);
-    const msg = `${this.player.name.toUpperCase()} gained ${amount} EXP!`;
+    const msg = `${pokeNameEn(this.player.name).toUpperCase()} gained ${amount} EXP!`;
     if (levelled) {
       this.playerLvText.setText(`Lv.${this.player.level}`);
       this.typeDialog(msg, () => {
         this.animateHpBar('player', () => {
-          this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${this.player.level}!`, () => {
+          this.typeDialog(`✨ ${pokeNameEn(this.player.name).toUpperCase()} grew to Lv. ${this.player.level}!`, () => {
             runLevelUpLearning(this, this.activeSlot, this.player, oldLevel, this.player.level,
               (t, cb) => this.typeDialog(t, cb), after);
           });
@@ -856,7 +856,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.hideAllPanels();
     openSwitchPanel(
       this, this.activeSlot,
-      () => { this.showActionPanel(); this.typeDialog(`What will ${this.player.name.toUpperCase()} do?`); },
+      () => { this.showActionPanel(); this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`); },
       (idx) => this.voluntarySwitch(idx),
     );
   }
@@ -870,7 +870,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     this.state = 'busy';
     this.hideAllPanels();
-    this.typeDialog(`${this.trainerName} sent out ${this.enemy.name.toUpperCase()}.\nWill you switch your Pokémon?`);
+    this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}.\nWill you switch your Pokémon?`);
 
     const panel = this.add.container(this.W * 0.60, this.H - 120).setDepth(12);
     panel.add(this.add.rectangle(80, 60, 316, 120, 0x111133).setStrokeStyle(1, 0x5577aa));
@@ -905,7 +905,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.width = HP_W;
     this.animateHpBar('player', () => {});
@@ -919,7 +919,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.playerSprite.setAlpha(0);
     this.tweens.add({
       targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
-      onComplete: () => this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => this.playerAction()),
+      onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
     });
   }
 
@@ -932,7 +932,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.width = HP_W;
     this.animateHpBar('player', () => {});
@@ -947,7 +947,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
       onComplete: () => {
-        this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => this.enemyTurn());
+        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.enemyTurn());
       },
     });
   }
@@ -998,7 +998,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.refreshMovePanel();
 
     // Update HUD
-    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -1016,7 +1016,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
       onComplete: () => {
-        this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => this.playerAction());
+        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
       },
     });
   }

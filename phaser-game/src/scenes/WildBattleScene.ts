@@ -12,7 +12,7 @@ import { customForm } from '../data/CustomBattle';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
-import { tr } from '../systems/i18n';
+import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
@@ -109,12 +109,12 @@ export class WildBattleScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.wildSprite, x: 560, y: 130, alpha: 1, duration: 400, ease: 'Power2',
       onComplete: () => {
-        this.typeDialog(`A wild ${this.wild.name.toUpperCase()} appeared!`, () => {
+        this.typeDialog(`A wild ${pokeNameEn(this.wild.name).toUpperCase()} appeared!`, () => {
           this.playerSprite.setAlpha(1);
           this.tweens.add({
             targets: this.playerSprite, x: 180, y: 260, duration: 350, ease: 'Power2',
             onComplete: () => {
-              this.typeDialog(`Go! ${this.player.name.toUpperCase()}!`, () => this.playerAction());
+              this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
             },
           });
         });
@@ -202,7 +202,7 @@ export class WildBattleScene extends Phaser.Scene {
   private createHUDs() {
     // Wild HUD — top left
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.add.text(12, 24, this.wild.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.add.text(12, 24, pokeNameEn(this.wild.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.wildLvText = this.add.text(180, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' });
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.wildHpBar  = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -210,7 +210,7 @@ export class WildBattleScene extends Phaser.Scene {
 
     // Player HUD — right
     this.add.rectangle(660, 318, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(552, 292, this.player.name.toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(552, 292, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(730, 292, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(660, 320, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(570, 320, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -387,7 +387,7 @@ export class WildBattleScene extends Phaser.Scene {
   private playerAction() {
     this.state = 'playerAction';
     const balls = (this.registry.get('pokeballs') as number) ?? 0;
-    this.typeDialog(`What will ${this.player.name.toUpperCase()} do?  🔴×${balls}`);
+    this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?  🔴×${balls}`);
     this.showActionPanel();
   }
 
@@ -462,7 +462,7 @@ export class WildBattleScene extends Phaser.Scene {
     };
     drawBall(startX, startY);
 
-    this.typeDialog(`${this.player.name.toUpperCase()} threw a Pokéball!`);
+    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} threw a Pokéball!`);
 
     // Throw tween
     this.tweens.add({
@@ -507,7 +507,7 @@ export class WildBattleScene extends Phaser.Scene {
             this.ballGraphic.clear();
             this.wildSprite.setVisible(true);
             // A failed catch costs your turn — the wild Pokémon now attacks.
-            this.typeDialog(`Oh no! ${this.wild.name.toUpperCase()} broke free!`, () => this.enemyTurn(null));
+            this.typeDialog(`Oh no! ${pokeNameEn(this.wild.name).toUpperCase()} broke free!`, () => this.enemyTurn(null));
           }
         });
         return;
@@ -567,7 +567,7 @@ export class WildBattleScene extends Phaser.Scene {
     };
 
     DexTracker.markCaught(this.registry, this.registry.get('wildId') as string | number);
-    const name = this.wild.name.toUpperCase();
+    const name = pokeNameEn(this.wild.name).toUpperCase();
     const captureExp = Math.round(this.wild.level * 12 * expMultiplierFor(this.registry));   // capture rewards EXP to all battlers too (northern boost applies)
     const finish = () => this.showExpAndLevelUp(captureExp, () => this.returnToRoute());
 
@@ -598,7 +598,7 @@ export class WildBattleScene extends Phaser.Scene {
     layer.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.62));
     layer.add(this.add.rectangle(cx, cy, 500, 200, 0x10142a, 0.99).setStrokeStyle(2, 0x5577aa));
     layer.add(this.add.text(cx, cy - 58, tr('Your party is full!'), { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
-    layer.add(this.add.text(cx, cy - 26, `Swap a Pokémon for ${entry.name.toUpperCase()}, or send it to the PC?`, { fontSize: '13px', color: '#cde' }).setOrigin(0.5));
+    layer.add(this.add.text(cx, cy - 26, `Swap a Pokémon for ${pokeNameEn(entry.name).toUpperCase()}, or send it to the PC?`, { fontSize: '13px', color: '#cde' }).setOrigin(0.5));
 
     const btn = (x: number, label: string, bg: string, onClick: () => void) => {
       const b = this.add.text(x, cy + 42, label, { fontSize: '15px', color: '#fff', backgroundColor: bg, padding: { x: 14, y: 9 } })
@@ -611,7 +611,7 @@ export class WildBattleScene extends Phaser.Scene {
       layer.destroy(true);
       PartySystem.boxAdd(this.registry, entry);
       this.saveAfterCatch();
-      this.typeDialog(`${entry.name.toUpperCase()} was sent to the PC.`, onDone);
+      this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} was sent to the PC.`, onDone);
     });
   }
 
@@ -630,7 +630,7 @@ export class WildBattleScene extends Phaser.Scene {
         if (idx === 0) PartySystem.syncStarterFromLead(this.registry);
         PartySystem.boxAdd(this.registry, out);
         this.saveAfterCatch();
-        this.typeDialog(`${entry.name.toUpperCase()} joined the party!\n${out.name.toUpperCase()} was sent to the PC.`, onDone);
+        this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} joined the party!\n${out.name.toUpperCase()} was sent to the PC.`, onDone);
       },
       true,          // allow cancel
       () => true,    // any of the 6 can be sent out
@@ -655,7 +655,7 @@ export class WildBattleScene extends Phaser.Scene {
   private doPlayerMove(playerMove: Move, onDone: () => void) {
     this.player.useMove(playerMove);
     persistMovePP(this.registry, this.activeSlot, this.player);   // remember PP spent this battle
-    this.typeDialog(`${this.player.name.toUpperCase()} used ${playerMove.data.name}!`, () => {
+    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} used ${playerMove.data.name}!`, () => {
       if (playerMove.data.power <= 0) { onDone(); return; }
       const { critical, effectiveness } = this.wild.takeDamage(playerMove, this.player);
       playMoveFX(this, this.playerSprite, this.wildSprite, playerMove.data, effectiveness, () => {});
@@ -667,7 +667,7 @@ export class WildBattleScene extends Phaser.Scene {
         if (effectiveness === 0)  msg = 'It had no effect!';
         const after = () => {
           if (this.wild.isKO) {
-            this.typeDialog(`${this.wild.name.toUpperCase()} fainted!`, () => {
+            this.typeDialog(`${pokeNameEn(this.wild.name).toUpperCase()} fainted!`, () => {
               this.registry.set('wildOutcome', 'won');
               const gained = Math.round(this.wild.level * 15 * expMultiplierFor(this.registry));
               this.showExpAndLevelUp(gained, () => this.returnToRoute());
@@ -689,14 +689,14 @@ export class WildBattleScene extends Phaser.Scene {
     const move = available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0];
     this.wild.useMove(move);
 
-    this.typeDialog(`Wild ${this.wild.name.toUpperCase()} used ${move.data.name}!`, () => {
+    this.typeDialog(`Wild ${pokeNameEn(this.wild.name).toUpperCase()} used ${move.data.name}!`, () => {
       if (move.data.power > 0) {
         const { effectiveness } = this.player.takeDamage(move, this.wild);
         playMoveFX(this, this.wildSprite, this.playerSprite, move.data, effectiveness, () => {});
         this.animateHpBar('player', () => {
           PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
           if (this.player.isKO) {
-            this.typeDialog(`${this.player.name.toUpperCase()} fainted!`, () => this.sendNextOrLose());
+            this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
           } else {
             onDone();
           }
@@ -749,13 +749,13 @@ export class WildBattleScene extends Phaser.Scene {
     const after = () => this.playBenchLines(benchLines, onDone);
 
     // Show message
-    const expMsg = `${this.player.name.toUpperCase()} gained ${expGained} EXP!`;
+    const expMsg = `${pokeNameEn(this.player.name).toUpperCase()} gained ${expGained} EXP!`;
     if (levelsGained.length > 0) {
       const lv = levelsGained[levelsGained.length - 1];
       this.typeDialog(expMsg, () => {
         this.playerLvText.setText(`Lv.${lv}`);
         this.animateHpBar('player', () => {
-          this.typeDialog(`✨ ${this.player.name.toUpperCase()} grew to Lv. ${lv}!\nMax HP: ${this.player.maxHp}`, () => {
+          this.typeDialog(`✨ ${pokeNameEn(this.player.name).toUpperCase()} grew to Lv. ${lv}!\nMax HP: ${this.player.maxHp}`, () => {
             runLevelUpLearning(this, this.activeSlot, this.player, levelsGained[0] - 1, this.player.level,
               (t, cb) => this.typeDialog(t, cb), after);
           });
@@ -780,7 +780,7 @@ export class WildBattleScene extends Phaser.Scene {
     openSwitchPanel(
       this,
       this.activeSlot,
-      () => { this.showActionPanel(); this.typeDialog(`What will ${this.player.name.toUpperCase()} do?`); },
+      () => { this.showActionPanel(); this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`); },
       (idx) => this.voluntarySwitch(idx),
     );
   }
@@ -794,7 +794,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -810,7 +810,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
       onComplete: () => {
-        this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => {
+        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => {
           // Voluntary switch costs the turn — enemy attacks
           this.enemyTurn(null);
         });
@@ -851,7 +851,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.refreshMovePanel();
 
     // Update HUD
-    this.playerNameText.setText(this.player.name.toUpperCase());
+    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -869,7 +869,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400, ease: 'Power2',
       onComplete: () => {
-        this.typeDialog(`Go, ${this.player.name.toUpperCase()}!`, () => this.playerAction());
+        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
       },
     });
   }

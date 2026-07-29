@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dexEntry } from '../data/Pokedex';
+import { dexEntry, POKEDEX } from '../data/Pokedex';
 import { KO_STRINGS, KO_TYPES, KO_SPEAKERS } from '../data/ko_strings';
 
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
@@ -53,26 +53,62 @@ export function t(en: string, ko?: string): string {
 
 /** Look up an English string in the Korean dictionary. Unmapped strings (and English
  *  mode) return the original unchanged, so callers can wrap freely without risk. */
+// Reverse index: a Pokémon's English display name (lower-cased) → its Korean name.
+// Battle UIs only have the English `data.name` (often upper-cased), so we match
+// case-insensitively and fall back to the original for species without a KO name.
+const EN_TO_KR_POKE: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const e of POKEDEX) {
+    const kr = POKE_KR[e.key];
+    if (kr) map[e.name.toLowerCase()] = kr;
+  }
+  return map;
+})();
+
+/** Translate a Pokémon's English display name (any case) to Korean, else return it. */
+export function pokeNameEn(name: string): string {
+  if (currentLang !== 'ko' || typeof name !== 'string') return name;
+  return EN_TO_KR_POKE[name.toLowerCase()] ?? name;
+}
+
+// Case-insensitive speaker lookup for trainer nameplates / battle intros.
+const SPEAKER_LC: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const k of Object.keys(KO_SPEAKERS)) map[k.toLowerCase()] = KO_SPEAKERS[k];
+  return map;
+})();
+
+/** Translate a trainer/NPC name to Korean (from KO_SPEAKERS), else return it. */
+export function speakerName(name: string): string {
+  if (currentLang !== 'ko' || typeof name !== 'string') return name;
+  return SPEAKER_LC[name.toLowerCase()] ?? name;
+}
+
 // Dynamic battle lines embed a Pokémon's (English) name; translate the template and
-// keep the name in place so every battle reads in Korean.
+// localize the embedded name so every battle reads in Korean.
+const P = (s: string) => pokeNameEn(s);
+const S = (s: string) => speakerName(s);
 const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
-  [/^What will (.+) do\?$/, m => `${m[1]}는 무엇을 할까?`],
-  [/^(.+) fainted!$/,       m => `${m[1]}은 쓰러졌다!`],
-  [/^Go, (.+)!$/,           m => `가랏, ${m[1]}!`],
-  [/^Go (.+)!$/,            m => `가랏, ${m[1]}!`],
-  [/^A wild (.+) appeared!$/, m => `앗! 야생 ${m[1]}이 나타났다!`],
-  [/^You caught (.+)!$/,    m => `${m[1]}을 잡았다!`],
-  [/^(.+) threw a Pokéball!$/, m => `${m[1]}가 몬스터볼을 던졌다!`],
-  [/^(.+) used (.+)!$/,     m => `${m[1]}의 ${KO_STRINGS[m[2]] ?? m[2]}!`],
-  [/^(.+) is already in battle!$/, m => `${m[1]}은 이미 배틀에 나와 있어!`],
-  [/^Go! (.+)!$/,           m => `가랏! ${m[1]}!`],
-  [/^(.+) sent out (.+)!$/, m => `${m[1]}가 ${m[2]}을 내보냈다!`],
+  [/^What will (.+) do\?$/, m => `${P(m[1])}는 무엇을 할까?`],
+  [/^(.+) fainted!$/,       m => `${P(m[1])}은 쓰러졌다!`],
+  [/^Go, (.+)!$/,           m => `가랏, ${P(m[1])}!`],
+  [/^Go (.+)!$/,            m => `가랏, ${P(m[1])}!`],
+  [/^A wild (.+) appeared!$/, m => `앗! 야생 ${P(m[1])}이 나타났다!`],
+  [/^Wild (.+) used (.+)!$/, m => `야생 ${P(m[1])}의 ${KO_STRINGS[m[2]] ?? m[2]}!`],
+  [/^You caught (.+)!$/,    m => `${P(m[1])}을 잡았다!`],
+  [/^(.+) threw a Pokéball!$/, m => `${S(m[1])}가 몬스터볼을 던졌다!`],
+  [/^(.+) used (.+)!$/,     m => `${P(m[1])}의 ${KO_STRINGS[m[2]] ?? m[2]}!`],
+  [/^(.+) is already in battle!$/, m => `${P(m[1])}은 이미 배틀에 나와 있어!`],
+  [/^Go! (.+)!$/,           m => `가랏! ${P(m[1])}!`],
+  [/^(.+) sent out (.+)!$/, m => `${S(m[1])}가 ${P(m[2])}을 내보냈다!`],
+  [/^✨ (.+) grew to Lv\. (\d+)!$/, m => `✨ ${P(m[1])}(은)는 Lv. ${m[2]}로 성장했다!`],
+  [/^(.+) gained (\d+) EXP!$/, m => `${P(m[1])}(은)는 ${m[2]} 경험치를 얻었다!`],
   // Evolution
-  [/^What\? (.+) is evolving!$/,                       m => `어라? ${m[1]}의 모습이...!`],
-  [/^Congratulations! Your ([\s\S]+?)\nevolved into (.+)!$/, m => `축하해! ${m[1]}가\n${m[2]}(으)로 진화했다!`],
-  [/^(.+) stopped evolving!$/,                         m => `${m[1]}의 진화가 멈췄다!`],
+  [/^What\? (.+) is evolving!$/,                       m => `어라? ${P(m[1])}의 모습이...!`],
+  [/^Congratulations! Your ([\s\S]+?)\nevolved into (.+)!$/, m => `축하해! ${P(m[1])}가\n${P(m[2])}(으)로 진화했다!`],
+  [/^(.+) stopped evolving!$/,                         m => `${P(m[1])}의 진화가 멈췄다!`],
   // Trainer battle flow
-  [/^(.+) wants to battle!$/,   m => `${m[1]}가 승부를 걸어왔다!`],
+  [/^(.+) wants to battle!$/,   m => `${S(m[1])}가 승부를 걸어왔다!`],
   [/^You got (.+) for winning!$/, m => `이겨서 ${m[1]}을 얻었다!`],
   // New-game name prompts (embed the chosen names)
   [/^Prof\. Song: This spirited young trainer will be your rival, (.+)\. What is their name\?$/,

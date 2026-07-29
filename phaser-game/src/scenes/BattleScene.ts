@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { tr, pokeNameEn} from '../systems/i18n';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
@@ -136,14 +136,14 @@ export class BattleScene extends Phaser.Scene {
 
     // Enemy HUD (top-left)
     this.add.rectangle(140, 60, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
-    this._enemyNameText = this.add.text(20, 32, `${e.name.toUpperCase()}  Lv.${this.enemyPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this._enemyNameText = this.add.text(20, 32, `${pokeNameEn(e.name).toUpperCase()}  Lv.${this.enemyPokemon.level}`, { fontSize: '14px', color: '#fff' });
     this.add.rectangle(140, 72, 220, 12, 0x444444);
     this.enemyHpBar    = this.add.rectangle(30, 72, 220, 12, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText   = this.add.text(20, 82, `${e.hp}/${e.maxHp}`, { fontSize: '12px', color: '#aaa' });
 
     // Player HUD (bottom-right)
     this.add.rectangle(640, 320, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
-    this._playerNameText = this.add.text(516, 292, `${p.name.toUpperCase()}  Lv.${this.playerPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this._playerNameText = this.add.text(516, 292, `${pokeNameEn(p.name).toUpperCase()}  Lv.${this.playerPokemon.level}`, { fontSize: '14px', color: '#fff' });
     this.add.rectangle(640, 332, 220, 12, 0x444444);
     this.playerHpBar    = this.add.rectangle(530, 332, 220, 12, 0x44cc44).setOrigin(0, 0.5);
     this.playerHpText   = this.add.text(516, 342, `${p.hp}/${p.maxHp}`, { fontSize: '12px', color: '#aaa' });
