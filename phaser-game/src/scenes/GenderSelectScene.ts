@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { AVATAR_URL } from '../data/PlayerAvatar';
 import { rivalTrainerName } from '../data/CharacterSprite';
 import { promptName, showMessage } from '../systems/NameEntry';
+import { t } from '../systems/i18n';
 
 // ── New-game character select ───────────────────────────────────────────────────
 // The very first step of a new game: pick boy or girl. The rival is always the
@@ -26,17 +27,17 @@ export class GenderSelectScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300);
     this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x0a0e1c, 1);
 
-    this.add.text(this.W / 2, 70, 'Who are you?', {
+    this.add.text(this.W / 2, 70, t('Who are you?', '너는 누구니?'), {
       fontSize: '30px', color: '#ffe44e', fontStyle: 'bold', stroke: '#221133', strokeThickness: 5,
     }).setOrigin(0.5);
-    this.add.text(this.W / 2, 112, 'Choose your character. Your rival will be the opposite.', {
+    this.add.text(this.W / 2, 112, t('Choose your character. Your rival will be the opposite.', '캐릭터를 선택하세요. 라이벌은 반대 성별이 됩니다.'), {
       fontSize: '15px', color: '#bcd',
     }).setOrigin(0.5);
 
-    this.buildPanel('boy',  this.W / 2 - 230, 'Boy',  'Rival: a girl');
-    this.buildPanel('girl', this.W / 2 + 230, 'Girl', 'Rival: a boy');
+    this.buildPanel('boy',  this.W / 2 - 230, t('Boy',  '남자아이'), t('Rival: a girl', '라이벌: 여자아이'));
+    this.buildPanel('girl', this.W / 2 + 230, t('Girl', '여자아이'), t('Rival: a boy',  '라이벌: 남자아이'));
 
-    this.add.text(this.W / 2, this.H - 44, '← →  choose      SPACE / click  confirm', {
+    this.add.text(this.W / 2, this.H - 44, t('← →  choose      SPACE / click  confirm', '← →  선택      SPACE / 클릭  확정'), {
       fontSize: '14px', color: '#8ab', backgroundColor: '#00000066', padding: { x: 10, y: 5 },
     }).setOrigin(0.5);
 

@@ -86,6 +86,14 @@ export const KO_STRINGS: Record<string, string> = {
   "Your very own story is about to unfold. A world of dreams and adventures with Pokémon awaits! Let's go!":
     '이제 너만의 이야기가 펼쳐지려 하고 있어. 포켓몬과 함께하는 꿈과 모험의 세계가 기다린다! 자, 가자!',
 
+  // ── Name entry (new game) ──
+  'What is your name?': '이름이 뭐니?',
+  'And what shall I call you, new trainer?': '그래, 새 트레이너여, 널 뭐라고 부를까?',
+  'Your name': '너의 이름',
+  "Your rival's name?": '라이벌의 이름은?',
+  "Rival's name": '라이벌 이름',
+  'OK': '확인',
+
   // ── Starter select ──
   'Prof. Song: Welcome! Three Pokémon from this region are waiting for a trainer.\nChoose the one who calls to you.':
     '송 박사: 어서 오렴! 이 지방의 포켓몬 세 마리가 트레이너를 기다리고 있단다.\n마음이 이끄는 포켓몬을 골라보렴.',

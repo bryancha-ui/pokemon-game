@@ -74,6 +74,11 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   // Trainer battle flow
   [/^(.+) wants to battle!$/,   m => `${m[1]}가 승부를 걸어왔다!`],
   [/^You got (.+) for winning!$/, m => `이겨서 ${m[1]}을 얻었다!`],
+  // New-game name prompts (embed the chosen names)
+  [/^Prof\. Song: This spirited young trainer will be your rival, (.+)\. What is their name\?$/,
+    m => `송 박사: 이 활기찬 젊은 트레이너가 네 라이벌이 될 거야, ${m[1]}. 그 아이의 이름은?`],
+  [/^Prof\. Song: Now you're all set, (.+)! (.+) is waiting to see how far you'll go\. I hope you enjoy your adventure!$/,
+    m => `송 박사: 이제 다 됐구나, ${m[1]}! ${m[2]}가 네가 얼마나 멀리 갈지 지켜보고 있어. 즐거운 모험이 되길 바란다!`],
 ];
 
 export function tr(en: string): string {

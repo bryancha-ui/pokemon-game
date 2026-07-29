@@ -1,3 +1,5 @@
+import { t, tr } from './i18n';
+
 // ── Name entry (player / rival) ──────────────────────────────────────────────
 // A small DOM overlay for typing a name. Using a real <input> means it works with a
 // hardware keyboard on desktop AND pops the native on-screen keyboard on phones (the
@@ -26,13 +28,13 @@ export function promptName(opts: NameOpts, onDone: (name: string) => void): void
     'padding:22px 20px;width:min(88vw,420px);box-shadow:0 10px 44px rgba(0,0,0,0.6);text-align:center;';
 
   const title = document.createElement('div');
-  title.textContent = opts.title;
+  title.textContent = tr(opts.title);
   title.style.cssText = 'color:#ffe44e;font-weight:800;font-size:clamp(18px,5vw,24px);margin-bottom:6px;';
   panel.appendChild(title);
 
   if (opts.subtitle) {
     const sub = document.createElement('div');
-    sub.textContent = opts.subtitle;
+    sub.textContent = tr(opts.subtitle);
     sub.style.cssText = 'color:#bcd;font-size:clamp(12px,3.4vw,15px);margin-bottom:16px;line-height:1.45;';
     panel.appendChild(sub);
   }
@@ -41,7 +43,7 @@ export function promptName(opts: NameOpts, onDone: (name: string) => void): void
   input.type = 'text';
   input.value = opts.defaultValue || '';
   input.maxLength = maxLength;
-  input.placeholder = opts.placeholder;
+  input.placeholder = tr(opts.placeholder);
   input.setAttribute('autocomplete', 'off');
   input.setAttribute('autocorrect', 'off');
   input.setAttribute('autocapitalize', 'words');
@@ -52,12 +54,12 @@ export function promptName(opts: NameOpts, onDone: (name: string) => void): void
   panel.appendChild(input);
 
   const hint = document.createElement('div');
-  hint.textContent = `up to ${maxLength} letters`;
+  hint.textContent = t(`up to ${maxLength} letters`, `${maxLength}자 이내`);
   hint.style.cssText = 'color:#7a8db0;font-size:11px;margin-top:8px;';
   panel.appendChild(hint);
 
   const btn = document.createElement('button');
-  btn.textContent = 'OK';
+  btn.textContent = t('OK', '확인');
   btn.style.cssText =
     'margin-top:14px;width:100%;font-size:clamp(16px,4.4vw,18px);font-weight:800;padding:12px;border-radius:10px;' +
     'border:none;background:#2e784a;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;';
@@ -91,10 +93,10 @@ export function showMessage(text: string, onDone: () => void): void {
     'background:linear-gradient(#182444,#0e1730);border:3px solid #33507e;border-radius:16px;' +
     'padding:24px 22px;width:min(88vw,440px);box-shadow:0 10px 44px rgba(0,0,0,0.6);text-align:center;';
   const msg = document.createElement('div');
-  msg.textContent = text;
+  msg.textContent = tr(text);
   msg.style.cssText = 'color:#eef4ff;font-size:clamp(15px,4vw,19px);line-height:1.55;margin-bottom:18px;';
   const btn = document.createElement('button');
-  btn.textContent = "Let's go!";
+  btn.textContent = t("Let's go!", '시작!');
   btn.style.cssText =
     'width:100%;font-size:clamp(16px,4.4vw,18px);font-weight:800;padding:12px;border-radius:10px;' +
     'border:none;background:#2e784a;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;';
