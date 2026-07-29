@@ -274,7 +274,7 @@ export class TitleScene extends Phaser.Scene {
       ? `${name}  Lv.${level}  ·  ${SaveManager.formatDate(save.timestamp)}`
       : SaveManager.formatDate(save.timestamp);
 
-    this.add.text(this.W / 2, this.H * 0.69, `Save data: ${info}`, {
+    this.add.text(this.W / 2, this.H * 0.69, t(`Save data: ${info}`, `저장 데이터: ${info}`), {
       fontSize: '13px', color: '#9966cc',
     }).setOrigin(0.5).setDepth(6);
   }

@@ -195,7 +195,7 @@ export class RegionMapScene extends Phaser.Scene {
       hint = 'Beat the Pokémon League to earn HM Fly and travel the region instantly.   ·   ESC/M: close';
     }
     this.add.rectangle(W / 2, H - 30, PANEL_W + 40, 40, 0x000000, 0.55);
-    this.add.text(W / 2, H - 30, hint, { fontSize: '13px', color: '#cfe0ff' }).setOrigin(0.5);
+    this.add.text(W / 2, H - 30, tr(hint), { fontSize: '13px', color: '#cfe0ff' }).setOrigin(0.5);
   }
 
   // ── Fly selector ─────────────────────────────────────────────────────────────
