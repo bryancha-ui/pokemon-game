@@ -18,7 +18,7 @@ import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.j
 // Battle sprites automatically use a listed model instead of the relief-
 // extruded art. A missing manifest quietly disables the feature.
 
-type Entry = string | { key: string; url?: string };
+type Entry = string | { key: string; url?: string; rotX?: number; rotY?: number; rotZ?: number };
 
 /** A loaded model plus any animation clips baked into the GLB. */
 export interface LoadedModel {
@@ -26,7 +26,13 @@ export interface LoadedModel {
   animations: THREE.AnimationClip[];
 }
 
-let manifest: Map<string, string | null> | null = null;   // key → url (null = local file)
+/** Registry value: where to load the GLB and an optional orientation fix. */
+interface ModelSpec {
+  url: string | null;                       // null = vendored local file
+  rot?: { x: number; y: number; z: number }; // degrees, baked before normalization
+}
+
+let manifest: Map<string, ModelSpec> | null = null;   // key → spec
 let manifestLoading = false;
 const models = new Map<string, LoadedModel | 'loading' | 'failed'>();
 const loader = new GLTFLoader();
@@ -42,10 +48,15 @@ export function primeManifest(): void {
   fetch('assets/models3d/manifest.json')
     .then(r => (r.ok ? r.json() : null))
     .then((j: { models?: Entry[] } | null) => {
-      const m = new Map<string, string | null>();
+      const m = new Map<string, ModelSpec>();
       for (const e of j?.models ?? []) {
-        if (typeof e === 'string') m.set(normalizeKey(e), null);
-        else if (e && e.key) m.set(normalizeKey(e.key), e.url ?? null);
+        if (typeof e === 'string') m.set(normalizeKey(e), { url: null });
+        else if (e && e.key) {
+          const rot = (e.rotX || e.rotY || e.rotZ)
+            ? { x: e.rotX ?? 0, y: e.rotY ?? 0, z: e.rotZ ?? 0 }
+            : undefined;
+          m.set(normalizeKey(e.key), { url: e.url ?? null, rot });
+        }
       }
       manifest = m;
     })
@@ -64,12 +75,13 @@ export function hasModel(key: string): boolean {
 export function getModel(key: string): LoadedModel | null {
   const k = normalizeKey(key);
   if (!manifest || !manifest.has(k)) return null;
+  const spec = manifest.get(k)!;
   const entry = models.get(k);
   if (entry === 'loading' || entry === 'failed') return null;
   if (entry) return cloneNormalized(entry);
 
   models.set(k, 'loading');
-  const url = manifest.get(k) || `assets/models3d/${k}.glb`;
+  const url = spec.url || `assets/models3d/${k}.glb`;
   loader.load(
     url,
     (gltf) => {
@@ -80,6 +92,16 @@ export function getModel(key: string): LoadedModel | null {
       // scale and pivot (→ mis-sized and sunk into the ground).
       const inner = new THREE.Group();
       inner.add(gltf.scene);
+      // Per-model orientation fix (manifest rotX/Y/Z degrees) — for models the
+      // generator reconstructed lying down or facing the wrong way, applied
+      // BEFORE normalize so the height/centering measure the upright pose.
+      if (spec.rot) {
+        gltf.scene.rotation.set(
+          THREE.MathUtils.degToRad(spec.rot.x),
+          THREE.MathUtils.degToRad(spec.rot.y),
+          THREE.MathUtils.degToRad(spec.rot.z),
+        );
+      }
       normalize(inner);
       const root = new THREE.Group();
       root.add(inner);
