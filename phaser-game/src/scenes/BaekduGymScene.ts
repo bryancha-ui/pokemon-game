@@ -66,7 +66,7 @@ export class BaekduGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x6a2a2a, accent: 0xff8844, label: 'LEADER BYEOKSAN', labelColor: '#ffcf70', hair: 0x2a1810 });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x6a2a2a, accent: 0xff8844, label: 'LEADER BYEOKSAN', labelColor: '#ffcf70', hair: 0x2a1810, trainerKey: 'baekdu-byeoksan' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

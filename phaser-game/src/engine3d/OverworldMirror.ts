@@ -29,7 +29,7 @@ interface Tracked {
   mesh: THREE.Object3D;
   mats: THREE.MeshBasicMaterial[] | null;
   shadow: THREE.Mesh | null;
-  kind: 'graphics' | 'image' | 'text' | 'rect';
+  kind: 'graphics' | 'portrait' | 'image' | 'text' | 'rect';
   hash: number;
   /** px offset from object origin to art bottom (feet). */
   footY: number;
@@ -40,9 +40,29 @@ interface Tracked {
   aspect: number;
   /** for images: texture signature so runtime setTexture swaps rebuild the mesh */
   texSig?: string;
+  /** portrait art pixels → world units (important named characters only). */
+  portraitScale?: number;
 }
 
 const WORLD_COVER = 0.42;      // graphics covering ≥42% of the world = part of the map painting
+
+interface CharacterPortrait3D { key: string; url: string; }
+const portraitImageLoads = new Map<string, Promise<HTMLImageElement>>();
+
+/** Load each important-character portrait once, shared across every map scene. */
+function loadPortraitImage(portrait: CharacterPortrait3D): Promise<HTMLImageElement> {
+  const hit = portraitImageLoads.get(portrait.url);
+  if (hit) return hit;
+  const pending = new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Unable to load character portrait: ${portrait.url}`));
+    image.src = portrait.url;
+  });
+  portraitImageLoads.set(portrait.url, pending);
+  return pending;
+}
 
 export class OverworldMirror {
   readonly scene: Phaser.Scene;
@@ -412,12 +432,38 @@ export class OverworldMirror {
     const shadow = makeBlobShadow(Math.min(0.65, halfW * 0.9));
     holder.add(shadow);
     this.root.add(holder);
-    this.tracked.set(g, {
+    const tracked: Tracked = {
       obj: g, mesh: holder, mats, shadow, kind: 'graphics', hash,
       footY, halfW, baseColor: new THREE.Color(0xffffff), phase: Math.random() * Math.PI * 2,
       aspect: ras.width / Math.max(1, ras.height),
-    });
+    };
+    this.tracked.set(g, tracked);
     this.hideFrom2D(g);
+
+    // Named story characters keep their existing Graphics object for movement,
+    // interaction and the F3 2D fallback, but their 3D representation is rebuilt
+    // from the authored full-body portrait instead of the shared blocky NPC.
+    const portrait = g.getData?.('characterPortrait3D') as CharacterPortrait3D | undefined;
+    if (portrait?.key && portrait.url) {
+      loadPortraitImage(portrait).then(image => {
+        const live = this.tracked.get(g);
+        if (!live || live !== tracked || !g.scene) return;
+        const relief = buildRelief(`character:${portrait.key}`, image);
+        if (!relief) return;
+        const inner = live.mesh.children[0] as THREE.Mesh;
+        inner.geometry = relief.geometry;
+        inner.userData.sharedGeo = true;
+        if (live.mats) {
+          live.mats[0].map = relief.texture;
+          live.mats[0].needsUpdate = true;
+        }
+        live.kind = 'portrait';
+        live.footY = 17; // drawNpcBody/drawGymLeader place their feet here
+        live.halfW = (relief.pxWidth / relief.pxHeight) * 0.72;
+        live.aspect = relief.pxWidth / Math.max(1, relief.pxHeight);
+        live.portraitScale = 1.48 / relief.pxHeight;
+      }).catch(err => console.warn('[engine3d] character portrait fallback:', err));
+    }
   }
 
   private refreshGraphics(t: Tracked): void {
@@ -626,9 +672,13 @@ export class OverworldMirror {
         const sx = Math.abs(o.scaleX ?? 1), sy = Math.abs(o.scaleY ?? 1);
         if (t.kind === 'image') inner.scale.set(sx / PX, sy / PX, ((sx + sy) / 2) / PX);
         if (t.kind === 'graphics') { const s = 1 / (PX * 3); inner.scale.set(sx * s, sy * s, s); }
+        if (t.kind === 'portrait') {
+          const s = t.portraitScale ?? (1 / PX);
+          inner.scale.set(sx * s, sy * s, s);
+        }
         if (o.flipX) inner.scale.x = -Math.abs(inner.scale.x);
         // Idle life: characters/creatures gently breathe.
-        if (t.kind === 'graphics' || t.kind === 'image') {
+        if (t.kind === 'graphics' || t.kind === 'portrait' || t.kind === 'image') {
           const breathe = 1 + Math.sin(this.time * 2.2 + t.phase) * 0.012;
           inner.scale.y *= breathe;
         }

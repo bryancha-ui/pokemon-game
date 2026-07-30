@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
-import { buildPlayerModel, PlayerModel } from './CharacterModel';
+import { buildPlayerModel, buildPortraitCharacterModel, PlayerModel } from './CharacterModel';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
@@ -356,8 +356,12 @@ export class BattleMirror {
     // HOME render both land near the same world height (fixes giant/small
     // battlers when art resolution varies wildly).
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
-    // The enemy stands ~2× farther from the camera — bigger stage height.
-    const scale = ((side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
+    // The enemy stands ~2× farther from the camera — bigger stage height. A
+    // trainer pinned to the enemy anchor is sized to a full battler height
+    // (NOT the small portrait-derived size) so it stands in the same spot AND
+    // scale as the Pokémon it hands the anchor to — otherwise the little
+    // portrait reads as a figure floating high at the far anchor.
+    const scale = (trainerAtEnemy ? 1.75 : (side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
     inner.scale.setScalar(scale);
 
     const holder = new THREE.Group();
@@ -442,8 +446,14 @@ export class BattleMirror {
   // ── Battle trainer walk-in (rival striding toward the player) ──
   private spawnTrainer(im: GO & Phaser.GameObjects.Image, design: 'boy' | 'girl'): void {
     if (this.trainers.some(w => w.obj === im)) return;
-    const model = buildPlayerModel(design);
-    model.group.scale.setScalar(1.7);         // read at trainer height beside the mons
+    const portrait = this.frameCanvas(im);
+    const portraitModel = portrait
+      ? buildPortraitCharacterModel(`${im.texture.key}:${im.frame?.name ?? 0}`, portrait, 1.72)
+      : null;
+    const model = portraitModel ?? buildPlayerModel(design);
+    // The procedural fallback is authored at overworld scale; portrait models
+    // are already normalized to battle-trainer height.
+    if (!portraitModel) model.group.scale.setScalar(1.7);
     model.group.position.copy(TRAINER_START);
     this.root.add(model.group);
     this.trainers.push({ obj: im, model, group: model.group, t: 0, phase: 0, seen: false });

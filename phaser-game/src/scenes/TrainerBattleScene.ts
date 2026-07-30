@@ -18,7 +18,7 @@ import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
-import { AVATAR_URL, rivalAvatarKey } from '../data/PlayerAvatar';
+import { AVATAR_URL, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
 import { DexTracker } from '../systems/DexTracker';
 import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
 import { tmForMove } from '../data/TMs';
@@ -379,14 +379,18 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Trainer portrait — stands where the enemy Pokémon appears, shown during
-    // the intro only. Northern League masters are promoted to the enemy's exact
-    // 3D stage anchor; other portraits remain ordinary 2D intro artwork.
+    // Every named story trainer uses their authored portrait as a 3D character.
+    // The rival walks onto the stage; all other leaders/chiefs/Elite Four stand
+    // at the enemy Pokémon anchor and step aside for the send-out.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0);
-      if (this.trainerKey.startsWith('north-')) this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
-      else this.trainerPortrait.setData('no3d', true);
+      if (this.trainerKey.startsWith('rival')) {
+        const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
+        this.trainerPortrait.setData('battleTrainer', design);
+      } else {
+        this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+      }
       fitPortrait(this.trainerPortrait);
     }
   }

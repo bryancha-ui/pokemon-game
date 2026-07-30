@@ -65,7 +65,7 @@ export class HaeanGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x0d2a4a, accent: 0x66c8f0, label: 'LEADER HARANG', labelColor: '#bff0ff', hair: 0x0a2a3a });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x0d2a4a, accent: 0x66c8f0, label: 'LEADER HARANG', labelColor: '#bff0ff', hair: 0x0a2a3a, trainerKey: 'haean-harang' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

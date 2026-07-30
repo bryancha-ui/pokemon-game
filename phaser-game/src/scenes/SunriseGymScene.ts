@@ -65,7 +65,7 @@ export class SunriseGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x8a6a1a, accent: 0xffe044, label: 'LEADER BEONGE', labelColor: '#fff0a0', hair: 0x3a2a10 });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x8a6a1a, accent: 0xffe044, label: 'LEADER BEONGE', labelColor: '#fff0a0', hair: 0x3a2a10, trainerKey: 'sunrise-beonge' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

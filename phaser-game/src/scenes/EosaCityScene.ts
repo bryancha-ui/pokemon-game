@@ -9,6 +9,7 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { PartySystem } from '../systems/PartySystem';
 import { hasMapae, awardMapae } from '../data/Mapae';
 import { vanishesAfterDefeat } from '../data/Villains';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── Shared base for the northern 어사대 (Inspectorate) circuit cities ─────────────
 // Each city is a small subclass that passes an EosaCity config. The base builds a
@@ -273,6 +274,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     // Chief
     const cg = this.add.graphics().setDepth(8); drawNpcBody(cg, cfg.robe, { hair: 0x2a2622 });
     cg.setPosition(CHIEF.col * TILE + 16, CHIEF.row * TILE + 16);
+    markTrainerPortrait(cg, cfg.chiefKey);
     this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, cfg.chiefName, {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);

@@ -366,16 +366,17 @@ export class LeaguePlazaScene extends Phaser.Scene {
 
   private enterLeague() {
     this.cutsceneActive = true;
-    // Entering the hall starts a fresh gauntlet: re-seal all four Elite Four barriers
-    // and the Champion, so they must be cleared in one unbroken run — and can be
+    // Entering the tower starts a fresh gauntlet: reset all four Elite Four floors
+    // and the Champion, so they must be cleared in one unbroken ascent — and can be
     // re-challenged freely after winning. (championDefeated / hallOfFame stay set:
     // this is a rematch, not an un-winning of the title.)
     for (const k of ['e4-gyeoul', 'e4-hwageum', 'e4-baram', 'e4-saleum', 'champion-hwangeum']) {
       this.registry.remove(`trainerDefeated_${k}`);
     }
+    this.registry.set('hanbandoLeagueFloor', 1);
+    this.registry.remove('leagueReturnX');
+    this.registry.remove('leagueReturnY');
     this.cameras.main.fadeOut(500, 0, 0, 0, () => {
-      this.registry.set('leagueReturnX', 9 * 32 + 16);
-      this.registry.set('leagueReturnY', 31 * 32 + 16);
       this.scene.start('PokemonLeagueScene');
     });
   }

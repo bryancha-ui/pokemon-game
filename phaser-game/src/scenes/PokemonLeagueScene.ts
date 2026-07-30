@@ -6,26 +6,36 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { customForm } from '../data/CustomBattle';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
-// ── Tiles ─────────────────────────────────────────────────────────────────────
-const T = { FLOOR: 0, WALL: 1, DAIS: 2, BARRIER: 3, CARPET: 4, THRONE: 5 } as const;
+// ── Five-storey League tower ──────────────────────────────────────────────────
+const T = { FLOOR: 0, WALL: 1, DAIS: 2, CARPET: 3, THRONE: 4, STAIRS: 5, STAGE: 6 } as const;
 type Tile = typeof T[keyof typeof T];
-const TILE = 32, COLS = 18, ROWS = 34;
+const TILE = 32, COLS = 18, ROWS = 18;
 const COLORS: Record<Tile, number> = {
-  [T.FLOOR]: 0x1c2336, [T.WALL]: 0x10141f, [T.DAIS]: 0x2e3a55, [T.BARRIER]: 0x3a4a7a,
-  [T.CARPET]: 0x5a2030, [T.THRONE]: 0x4a3a10,
+  [T.FLOOR]: 0x1c2336, [T.WALL]: 0x10141f, [T.DAIS]: 0x2e3a55,
+  [T.CARPET]: 0x5a2030, [T.THRONE]: 0x4a3a10, [T.STAIRS]: 0x7586a8, [T.STAGE]: 0x242038,
 };
 const SOLID = new Set<Tile>([T.WALL]);
+const MEMBER_COL = 9, MEMBER_ROW = 6;
+const STAIR_COL = 9, STAIR_ROW = 2;
+
+const ROOMS = [
+  { title: 'Glacial Crane Hall', ko: '빙학의 전당', floor: 0x243746, dais: 0x56768a, accent: 0x9fe0ff },
+  { title: 'Ten-Thousand Fold Forge', ko: '만철의 전당', floor: 0x30343b, dais: 0x66707b, accent: 0xcfd6e0 },
+  { title: 'Hall of the High Wind', ko: '고풍의 전당', floor: 0x263b3c, dais: 0x52756d, accent: 0xa8e6c8 },
+  { title: 'Mudang Vision Hall', ko: '신시의 전당', floor: 0x382d48, dais: 0x6b537d, accent: 0xe0b0ff },
+  { title: 'HWANGEUM LIVE · MAIN STAGE', ko: '황금 메인 스테이지', floor: 0x141426, dais: 0x5a294f, accent: 0xffd54a },
+] as const;
 
 interface Member {
-  key: string; name: string; type: string; col: number; row: number;
-  color: number; barrierRow: number;     // wall above them; opens when they fall
+  key: string; name: string; type: string; color: number;
   intro: string[]; pokemon: { id: number; level: number; custom?: string }[]; expPool: number;
 }
 
 const MEMBERS: Member[] = [
   {
-    key: 'e4-gyeoul', name: 'Gyeoul', type: 'Ice', col: 9, row: 27, color: 0x9fe0ff, barrierRow: 25,
+    key: 'e4-gyeoul', name: 'Gyeoul', type: 'Ice', color: 0x9fe0ff,
     intro: [
       'Gyeoul: I am Gyeoul, first of the Elite Four. My cranes nest on the glacier.',
       'Gyeoul: The cold does not rush. Neither will I. Begin.',
@@ -40,7 +50,7 @@ const MEMBERS: Member[] = [
     expPool: 4600,
   },
   {
-    key: 'e4-hwageum', name: 'Hwageum', type: 'Steel', col: 9, row: 22, color: 0xcfd6e0, barrierRow: 20,
+    key: 'e4-hwageum', name: 'Hwageum', type: 'Steel', color: 0xcfd6e0,
     intro: [
       'Hwageum: Goryeo smiths folded steel ten thousand times. So have I folded my team.',
       'Hwageum: Let us see what your edge is made of.',
@@ -55,7 +65,7 @@ const MEMBERS: Member[] = [
     expPool: 4900,
   },
   {
-    key: 'e4-baram', name: 'Baram', type: 'Flying', col: 9, row: 17, color: 0xa8e6c8, barrierRow: 15,
+    key: 'e4-baram', name: 'Baram', type: 'Flying', color: 0xa8e6c8,
     intro: [
       'Baram: I am Baram. The eagles and cranes of the cliffs answer to the wind.',
       'Baram: Rise to meet me — or be swept aside.',
@@ -70,7 +80,7 @@ const MEMBERS: Member[] = [
     expPool: 5200,
   },
   {
-    key: 'e4-saleum', name: 'Saleum', type: 'Psychic', col: 9, row: 12, color: 0xe0b0ff, barrierRow: 10,
+    key: 'e4-saleum', name: 'Saleum', type: 'Psychic', color: 0xe0b0ff,
     intro: [
       'Saleum: The mudang sees what is, and what is coming. I have seen this battle.',
       'Saleum: Whether the vision holds is up to you. Come.',
@@ -87,7 +97,7 @@ const MEMBERS: Member[] = [
 ];
 
 const CHAMPION: Member = {
-  key: 'champion-hwangeum', name: 'Champion Hwangeum', type: 'Champion', col: 9, row: 5, color: 0xffd54a, barrierRow: -1,
+  key: 'champion-hwangeum', name: 'Champion Hwangeum', type: 'Champion', color: 0xffd54a,
   intro: [
     'Hwangeum: You made it. I watched your entire journey. The Jeju Summit — 나비할망 choosing you as her guardian. The tests, the battles, the growth.',
     'Hwangeum: Eight gyms, one legendary moth, and you still climbed back up here. I became Champion three years ago and called it a fluke for a year. I don\'t take many battles seriously anymore.',
@@ -107,22 +117,22 @@ const CHAMPION: Member = {
 
 export class PokemonLeagueScene extends Phaser.Scene {
   private map!: Tile[][];
-  // The League interior is a ceremonial corridor, not a town — drop any stray
-  // buildings the terrain heuristics extrude from its dark halls.
+  // Each League floor is an authored interior. Keep dark wall art flat so it
+  // never grows into a camera-blocking cliff around the room.
+  public interior3D = true;
   public onlyNamedBuildings = true;
+  public caveFloorHint = true;
+  public clearSight3D = true;
+  private floor = 1;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private px = 9 * TILE + 16;
-  private py = 31 * TILE + 16;
+  private px = MEMBER_COL * TILE + 16;
+  private py = 15 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  // Ceremonial gate animation: an open (master-defeated) barrier shows a closed
-  // gate until the player climbs up to it, then the doors sweep open with light.
-  private doorRevealed = new Set<number>();
-  private doorOverlays = new Map<number, Phaser.GameObjects.Graphics[]>();
   private readonly SPEED = 120;
 
   constructor() { super('PokemonLeagueScene'); }
@@ -144,6 +154,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
 
   private defeated(key: string) { return !!this.registry.get(`trainerDefeated_${key}`); }
   private get champBeaten() { return this.defeated('champion-hwangeum'); }
+  private get currentMember(): Member { return this.floor <= MEMBERS.length ? MEMBERS[this.floor - 1] : CHAMPION; }
 
   create() {
 
@@ -152,26 +163,35 @@ export class PokemonLeagueScene extends Phaser.Scene {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
     this.input.keyboard?.resetKeys();
 
-    // Failed the gauntlet (lost to any Elite Four member or the Champion)? Re-seal all
-    // four Elite Four barriers — the run restarts from the first, and the player is put
-    // back at the hall entrance.
+    // Losing anywhere restarts the climb from Gyeoul's first-floor chamber.
     let failedRun = false;
     if (this.registry.get('leagueRunFailed')) {
       this.registry.remove('leagueRunFailed');
       for (const m of MEMBERS) this.registry.remove(`trainerDefeated_${m.key}`);
+      this.registry.set('hanbandoLeagueFloor', 1);
       this.registry.remove('leagueReturnX'); this.registry.remove('leagueReturnY');
-      this.px = 9 * TILE + 16; this.py = 31 * TILE + 16;   // back to the entrance
       failedRun = true;
     }
 
+    const savedFloor = this.registry.get('hanbandoLeagueFloor') as number | undefined;
+    if (savedFloor === undefined) {
+      const firstUnbeaten = MEMBERS.findIndex(m => !this.defeated(m.key));
+      this.floor = firstUnbeaten >= 0 ? firstUnbeaten + 1 : 5;
+    } else {
+      this.floor = Phaser.Math.Clamp(Math.floor(savedFloor), 1, 5);
+    }
+    this.registry.set('hanbandoLeagueFloor', this.floor);
+
+    this.px = MEMBER_COL * TILE + 16; this.py = 15 * TILE + 16;
     const rx = this.registry.get('leagueReturnX') as number | undefined;
     const ry = this.registry.get('leagueReturnY') as number | undefined;
-    if (rx !== undefined) { this.px = rx; this.py = ry as number; }
+    if (rx !== undefined && ry !== undefined && ry < ROWS * TILE) { this.px = rx; this.py = ry; }
     this.registry.remove('leagueReturnX'); this.registry.remove('leagueReturnY');
 
-    this.map = buildMap();
+    this.map = buildMap(this.floor);
     this.drawMap();
-    this.drawDoors();
+    if (this.floor === 5) this.drawIdolMainStage();
+    else this.drawEliteFloorDecor();
     this.drawMembers();
     this.createPlayer();
     this.setupCamera();
@@ -187,8 +207,8 @@ export class PokemonLeagueScene extends Phaser.Scene {
       this.time.delayedCall(450, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'You were defeated. The four halls seal shut behind you once more.',
-          'The League is a single trial — best all four masters again, in one unbroken run, to reach the Champion.',
+          'You were defeated. The League tower returns to its first floor and the stairways seal once more.',
+          'The League is a single ascent — best all four masters again, in one unbroken run, to reach the Champion.',
         ], () => { this.cutsceneActive = false; });
       });
     } else if (!this.registry.get('leagueSeen')) {
@@ -197,56 +217,146 @@ export class PokemonLeagueScene extends Phaser.Scene {
         this.cutsceneActive = true;
         this.dialog.show([
           'The Hanbando Pokémon League. Four masters guard the road to the Champion, each in their own hall.',
-          'Defeat one to unseal the way to the next. Each hall has a healing machine, so your team is restored to full before every match.',
+          'Each master occupies a separate floor. Defeat one, climb the newly opened stairs, and continue upward.',
+          'The Champion awaits on the fifth-floor main stage. Each floor restores your team before its match.',
         ], () => { this.cutsceneActive = false; });
       });
     }
   }
 
-  private barrierOpen(row: number): boolean {
-    const m = MEMBERS.find(x => x.barrierRow === row);
-    return !!m && this.defeated(m.key);
-  }
-
   // ── Map ─────────────────────────────────────────────────────────────────
   private drawMap() {
+    const room = ROOMS[this.floor - 1];
     const g = this.make.graphics({ x: 0, y: 0 });
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const t = this.map[r][c];
-      const open = t === T.BARRIER && this.barrierOpen(r);
-      const draw = open ? T.CARPET : t;
-      g.fillStyle(COLORS[draw], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
-      if (draw === T.FLOOR) { g.fillStyle(0x252e44, 0.6); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
-      if (draw === T.CARPET) { g.fillStyle(0x7a3040, 0.7); g.fillRect(c*TILE+5, r*TILE, TILE-10, TILE); }
-      if (draw === T.WALL) { g.fillStyle(0x070a12); g.fillRect(c*TILE+3, r*TILE+4, 7, 9); g.fillRect(c*TILE+17, r*TILE+16, 8, 9); }
-      if (draw === T.DAIS) { g.fillStyle(0x46587e, 0.8); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
-      if (t === T.BARRIER && !open) { g.fillStyle(0x88b0ff, 0.5); for (let i=0;i<3;i++) g.fillRect(c*TILE+4+i*9, r*TILE+3, 4, TILE-6); }
-      if (draw === T.THRONE) { g.fillStyle(0xffd76a, 0.7); g.fillRect(c*TILE+6, r*TILE+4, TILE-12, TILE-8); }
+      const base = t === T.FLOOR ? room.floor : t === T.DAIS ? room.dais : COLORS[t];
+      g.fillStyle(base, 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
+      if (t === T.FLOOR) { g.fillStyle(room.accent, 0.08); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
+      if (t === T.CARPET) { g.fillStyle(this.floor === 5 ? 0xff4fb8 : room.accent, 0.28); g.fillRect(c*TILE+5, r*TILE, TILE-10, TILE); }
+      if (t === T.WALL) { g.fillStyle(0x070a12); g.fillRect(c*TILE+3, r*TILE+4, 7, 9); g.fillRect(c*TILE+17, r*TILE+16, 8, 9); }
+      if (t === T.DAIS || t === T.STAGE) { g.fillStyle(room.accent, t === T.STAGE ? 0.22 : 0.14); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
+      if (t === T.THRONE) { g.fillStyle(0xffd76a, 0.72); g.fillRect(c*TILE+6, r*TILE+4, TILE-12, TILE-8); }
+      if (t === T.STAIRS) {
+        g.fillStyle(this.defeated(this.currentMember.key) ? 0xdfe8ff : 0x4a3048, 0.95);
+        for (let i = 0; i < 4; i++) g.fillRect(c*TILE+3, r*TILE+4+i*7, TILE-6, 4);
+      }
+    }
+    if (this.floor === 5) {
+      // Colored light pools and a magenta runway are baked into the floor so
+      // they remain part of the 3D stage instead of becoming flat UI overlays.
+      g.fillStyle(0xff4fb8, 0.12); g.fillTriangle(2*TILE, 2*TILE, 8*TILE, 7*TILE, 5*TILE, 15*TILE);
+      g.fillStyle(0x55ddff, 0.12); g.fillTriangle(16*TILE, 2*TILE, 10*TILE, 7*TILE, 13*TILE, 15*TILE);
+      g.fillStyle(0xffd54a, 0.12); g.fillCircle(MEMBER_COL*TILE+16, MEMBER_ROW*TILE+16, 3.2*TILE);
     }
     const key = '__leagueMap__';
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(9 * TILE, 0.6 * TILE, tr('👑 Champion\'s Hall'), {
-      fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 },
+    this.add.text(MEMBER_COL*TILE+16, 3.1*TILE, `${this.floor}F · ${room.ko}\n${room.title}`, {
+      fontSize: '10px', color: this.floor === 5 ? '#fff2a8' : '#e8efff',
+      backgroundColor: '#000000aa', padding: { x: 5, y: 3 }, align: 'center',
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 32.4 * TILE, tr('↓ Scholars\' Road'), {
+    if (this.floor < 5) {
+      const state = this.defeated(this.currentMember.key) ? `↑ ${this.floor + 1}F` : '🔒 승리 후 계단 개방';
+      this.add.text(STAIR_COL*TILE+16, STAIR_ROW*TILE-3, tr(state), {
+        fontSize: '9px', color: this.defeated(this.currentMember.key) ? '#fff' : '#ff9abb',
+        backgroundColor: '#00000099', padding: { x: 3, y: 2 },
+      }).setOrigin(0.5, 1).setDepth(5);
+    }
+    if (this.floor === 1) this.add.text(MEMBER_COL*TILE+16, (ROWS-0.6)*TILE, tr('↓ League Plaza'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
 
   private drawMembers() {
-    for (const m of [...MEMBERS, CHAMPION]) {
-      if (this.defeated(m.key)) continue;
-      const g = this.add.graphics().setDepth(8);
-      drawNpcBody(g, m.color);
-      g.setPosition(m.col * TILE + 16, m.row * TILE + 16);
-      this.add.text(m.col * TILE + 16, m.row * TILE - 16,
-        m.type === 'Champion' ? '👑 Hwangeum' : `${m.name} — ${m.type}`, {
-        fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
-      }).setOrigin(0.5).setDepth(9);
+    const m = this.currentMember;
+    if (this.defeated(m.key)) return;
+    const g = this.add.graphics().setDepth(8);
+    drawNpcBody(g, m.color);
+    g.setPosition(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE + 16);
+    markTrainerPortrait(g, m.key);
+    this.add.text(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE - 16,
+      m.type === 'Champion' ? '★ CHAMPION HWANGEUM ★' : `${m.name} — ${m.type}`, {
+      fontSize: m.type === 'Champion' ? '10px' : '8px', color: '#ffe88a',
+      backgroundColor: '#000000bb', padding: { x: 4, y: 2 }, align: 'center',
+    }).setOrigin(0.5).setDepth(9);
+  }
+
+  private drawEliteFloorDecor() {
+    if (this.floor === 1) {
+      // Gyeoul: translucent ice-crystal sentinels.
+      for (const x of [4.8, 13.2]) {
+        const ice = this.add.triangle(x*TILE, 7*TILE, 0, 34, 15, 0, 30, 34, 0x9fe0ff, 0.72).setDepth(4);
+        this.add.triangle(x*TILE, 7.3*TILE, 0, 24, 10, 0, 20, 24, 0xffffff, 0.38).setDepth(5);
+        this.tweens.add({ targets: ice, alpha: { from: 0.45, to: 0.85 }, duration: 1100, yoyo: true, repeat: -1 });
+      }
+    } else if (this.floor === 2) {
+      // Hwageum: steel presses with a furnace glow.
+      for (const x of [4.8, 13.2]) {
+        this.add.rectangle(x*TILE, 7*TILE, 34, 54, 0x343a44, 1).setStrokeStyle(4, 0xcfd6e0).setDepth(4);
+        const forge = this.add.circle(x*TILE, 7*TILE+8, 10, 0xff7a30, 0.82).setDepth(5);
+        this.tweens.add({ targets: forge, alpha: { from: 0.35, to: 1 }, scale: { from: 0.85, to: 1.12 }, duration: 620, yoyo: true, repeat: -1 });
+      }
+    } else if (this.floor === 3) {
+      // Baram: wind rings orbiting the open-air dais.
+      for (const x of [4.8, 13.2]) {
+        const ring = this.add.circle(x*TILE, 7*TILE, 22, 0xa8e6c8, 0.08).setStrokeStyle(4, 0xa8e6c8, 0.8).setDepth(4);
+        this.tweens.add({ targets: ring, angle: 360, scale: { from: 0.8, to: 1.25 }, alpha: { from: 0.8, to: 0.15 }, duration: 1300, repeat: -1 });
+      }
+    } else {
+      // Saleum: twin mudang talismans and pulsing vision orbs.
+      for (const x of [4.8, 13.2]) {
+        this.add.rectangle(x*TILE, 7*TILE, 28, 58, 0xf1dfb8, 0.92).setStrokeStyle(3, 0xe0b0ff).setDepth(4);
+        this.add.text(x*TILE, 7*TILE, '神\n視', { fontSize: '14px', color: '#7a285e', align: 'center', fontStyle: 'bold' }).setOrigin(0.5).setDepth(5);
+        const orb = this.add.circle(x*TILE, 5.65*TILE, 9, 0xe0b0ff, 0.65).setDepth(5);
+        this.tweens.add({ targets: orb, alpha: { from: 0.25, to: 0.95 }, scale: { from: 0.75, to: 1.25 }, duration: 900, yoyo: true, repeat: -1 });
+      }
     }
+  }
+
+  /** Fifth floor: a concert-scale idol main stage instead of another throne room. */
+  private drawIdolMainStage() {
+    const cx = MEMBER_COL * TILE + 16;
+    const screen = this.add.graphics().setDepth(3);
+    screen.fillStyle(0x070712, 1); screen.fillRect(4*TILE, 1.25*TILE, 10*TILE, 2.25*TILE);
+    screen.lineStyle(5, 0xffd54a, 0.95); screen.strokeRect(4*TILE, 1.25*TILE, 10*TILE, 2.25*TILE);
+    for (let i = 0; i < 18; i++) {
+      const color = [0xff4fb8, 0x55ddff, 0xffd54a][i % 3];
+      screen.fillStyle(color, 0.55);
+      screen.fillRect((4.2 + (i % 9) * 1.06) * TILE, (1.5 + Math.floor(i / 9) * 1.15) * TILE, 12, 8);
+    }
+    this.add.text(cx, 2.25*TILE, 'HWANGEUM\nLIVE', {
+      fontSize: '24px', color: '#fff6b0', fontStyle: 'bold', align: 'center',
+      stroke: '#b52a78', strokeThickness: 6,
+    }).setOrigin(0.5).setDepth(6);
+
+    // Speaker towers and stage-edge bulbs.
+    for (const x of [4.4, 13.6]) {
+      const speaker = this.add.rectangle(x*TILE, 6*TILE, 38, 90, 0x090912, 1).setStrokeStyle(3, 0x8b8ba8).setDepth(4);
+      for (const dy of [-25, 24]) this.add.circle(x*TILE, 6*TILE+dy, 12, 0x28283d).setStrokeStyle(3, 0xff4fb8).setDepth(5);
+      speaker.setAlpha(0.95);
+    }
+    const bulbs: Phaser.GameObjects.Arc[] = [];
+    for (let i = 0; i < 12; i++) {
+      const bulb = this.add.circle((4.2 + i*0.88)*TILE, 8.2*TILE, 5, [0xff4fb8, 0x55ddff, 0xffd54a][i % 3], 0.85).setDepth(5);
+      bulbs.push(bulb);
+    }
+    this.tweens.add({ targets: bulbs, alpha: { from: 0.3, to: 1 }, duration: 420, yoyo: true, repeat: -1, stagger: 70 });
+
+    // Audience glow sticks line both sides of the runway.
+    for (const row of [10, 12, 14, 16]) for (const col of [4.5, 5.5, 12.5, 13.5]) {
+      const stick = this.add.rectangle(col*TILE, row*TILE, 4, 20, (row + col) % 2 ? 0xff4fb8 : 0x55ddff, 0.9)
+        .setAngle(col < 9 ? -18 : 18).setDepth(4);
+      this.tweens.add({ targets: stick, angle: stick.angle + (col < 9 ? 24 : -24), duration: 520 + row*15, yoyo: true, repeat: -1 });
+    }
+
+    // Moving spotlights cross over the Champion.
+    const leftBeam = this.add.triangle(3*TILE, 4*TILE, 0, 0, 32, 0, 6*TILE, 9*TILE, 0xff4fb8, 0.13).setOrigin(0.5, 0).setDepth(2);
+    const rightBeam = this.add.triangle(15*TILE, 4*TILE, 0, 0, 32, 0, -6*TILE, 9*TILE, 0x55ddff, 0.13).setOrigin(0.5, 0).setDepth(2);
+    this.tweens.add({ targets: leftBeam, angle: { from: -8, to: 12 }, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: rightBeam, angle: { from: 8, to: -12 }, duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────
@@ -270,7 +380,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏛 Hanbando Pokémon League'), {
+    this.add.text(this.scale.width / 2, 22, tr(`🏛 Hanbando Pokémon League — ${this.floor}F · ${ROOMS[this.floor - 1].ko}`), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
@@ -300,87 +410,57 @@ export class PokemonLeagueScene extends Phaser.Scene {
     } else this.walkFrame = 0;
     this.drawChar();
     this.checkMembers();
-    this.checkDoors();
+    this.checkStairs();
     this.checkExit();
   }
 
-  // ── Ceremonial gates ──
-  private drawDoors() {
-    for (const m of MEMBERS) {
-      const br = m.barrierRow;
-      if (br < 0 || !this.barrierOpen(br) || this.doorRevealed.has(br)) continue;
-      const y = br * TILE;
-      const panel = (x0: number): Phaser.GameObjects.Graphics => {
-        const g = this.add.graphics().setDepth(6);
-        g.fillStyle(0x2a3660, 1); g.fillRect(x0, y, 4 * TILE, TILE);
-        g.fillStyle(0x88b0ff, 0.55); for (let i = 0; i < 4; i++) g.fillRect(x0 + 6 + i * TILE, y + 3, 4, TILE - 6);
-        g.lineStyle(2, 0xbcd4ff, 0.85); g.strokeRect(x0, y, 4 * TILE, TILE);
-        return g;
-      };
-      this.doorOverlays.set(br, [panel(5 * TILE), panel(9 * TILE)]);
-    }
-  }
-
-  private checkDoors() {
-    const prow = Math.floor(this.py / TILE);
-    for (const m of MEMBERS) {
-      const br = m.barrierRow;
-      if (br < 0 || this.doorRevealed.has(br) || !this.barrierOpen(br)) continue;
-      if (prow === br + 1) this.openDoor(br);
-    }
-  }
-
-  private openDoor(br: number) {
-    if (this.doorRevealed.has(br)) return;
-    this.doorRevealed.add(br);                       // collision opens immediately
-    const gs = this.doorOverlays.get(br);
-    const flash = this.add.rectangle(9 * TILE, br * TILE + TILE / 2, 8 * TILE, TILE * 1.3, 0xcfe0ff, 0.5).setDepth(7);
-    this.tweens.add({ targets: flash, alpha: 0, scaleY: 1.5, duration: 460, onComplete: () => flash.destroy() });
-    if (gs) {
-      this.tweens.add({ targets: gs[0], x: -4 * TILE, alpha: 0.15, duration: 420, ease: 'Cubic.easeIn' });
-      this.tweens.add({ targets: gs[1], x: 4 * TILE, alpha: 0.15, duration: 420, ease: 'Cubic.easeIn',
-        onComplete: () => { gs.forEach(g => g.destroy()); this.doorOverlays.delete(br); } });
-    }
-  }
   private collides(x: number, y: number): boolean {
     const hw = 6;
     return [[x-hw,y-4],[x+hw,y-4],[x-hw,y+8],[x+hw,y+8]].some(([cx, cy]) => {
       const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return true;
-      const t = this.map[row][col];
-      // A barrier blocks until its master falls AND the player has walked up to
-      // it so the door animates open (see checkDoors/openDoor).
-      if (t === T.BARRIER) return !this.barrierOpen(row) || !this.doorRevealed.has(row);
-      return SOLID.has(t);
+      return SOLID.has(this.map[row][col]);
     });
   }
 
   private checkMembers() {
-    for (const m of [...MEMBERS, CHAMPION]) {
-      if (this.defeated(m.key)) continue;
-      const wx = m.col * TILE + 16, wy = m.row * TILE + 16;
-      if (Math.hypot(this.px - wx, this.py - wy) < TILE * 1.6) {
-        this.cutsceneActive = true;
-        // Each hall restores your team before the match — healing between battles.
-        PartySystem.healAll(this.registry);
-        this.dialog.show(['(The hall\'s healing machine restores your team to full health.)', ...m.intro], () => {
-          this.registry.set('trainerName', m.name);
-          this.registry.set('trainerKey', m.key);
-          this.registry.set('trainerPokemon', JSON.stringify(m.pokemon));
-          this.registry.set('trainerExpPool', m.expPool);
-          this.registry.set('trainerReturnScene', 'PokemonLeagueScene');
-          this.registry.set('leagueReturnX', m.col * TILE + 16);
-          this.registry.set('leagueReturnY', (m.row + 1) * TILE + 16);
-          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
-        });
-        return;
-      }
-    }
+    const m = this.currentMember;
+    if (this.defeated(m.key)) return;
+    const wx = MEMBER_COL * TILE + 16, wy = MEMBER_ROW * TILE + 16;
+    if (Math.hypot(this.px - wx, this.py - wy) >= TILE * 1.6) return;
+    this.cutsceneActive = true;
+    PartySystem.healAll(this.registry);
+    const healLine = this.floor === 5
+      ? '(Backstage support restores your team to full health before the headline match.)'
+      : '(The floor\'s healing machine restores your team to full health.)';
+    this.dialog.show([healLine, ...m.intro], () => {
+      this.registry.set('trainerName', m.name);
+      this.registry.set('trainerKey', m.key);
+      this.registry.set('trainerPokemon', JSON.stringify(m.pokemon));
+      this.registry.set('trainerExpPool', m.expPool);
+      this.registry.set('trainerReturnScene', 'PokemonLeagueScene');
+      this.registry.set('hanbandoLeagueFloor', this.floor);
+      this.registry.set('leagueReturnX', MEMBER_COL * TILE + 16);
+      this.registry.set('leagueReturnY', (MEMBER_ROW + 2) * TILE + 16);
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
+    });
+  }
+
+  private checkStairs() {
+    if (this.floor >= 5 || !this.defeated(this.currentMember.key)) return;
+    const sx = STAIR_COL * TILE + 16, sy = STAIR_ROW * TILE + 16;
+    if (Math.hypot(this.px - sx, this.py - sy) >= TILE * 0.95) return;
+    this.cutsceneActive = true;
+    this.floor++;
+    this.registry.set('hanbandoLeagueFloor', this.floor);
+    this.registry.remove('leagueReturnX');
+    this.registry.remove('leagueReturnY');
+    this.cameras.main.fadeOut(350, 0, 0, 0, () => this.scene.restart());
   }
 
   private checkExit() {
     if (this.cutsceneActive) return;
-    if (this.py > (ROWS - 1) * TILE) {
+    if (this.floor === 1 && this.py > (ROWS - 1) * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('leaguePlazaReturnX', 14 * 32); this.registry.set('leaguePlazaReturnY', 12 * 32 + 16);
@@ -477,20 +557,24 @@ export class PokemonLeagueScene extends Phaser.Scene {
   }
 }
 
-function buildMap(): Tile[][] {
+function buildMap(floor: number): Tile[][] {
   const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.WALL) as Tile[]);
   const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
   };
-  // Central hall corridor
-  fill(2, ROWS, 5, 13, T.FLOOR);
-  fill(0, 2, 7, 11, T.FLOOR);          // top (behind the throne)
-  fill(ROWS - 2, ROWS, 7, 11, T.FLOOR); // entry from Scholars' Road
-  // Daises under each Elite Four member + champion
-  for (const r of [27, 22, 17, 12, 5]) fill(r - 1, r + 2, 7, 11, T.DAIS);
-  fill(3, 6, 6, 12, T.THRONE);          // champion's throne platform
-  // Sealed barriers above each Elite Four member
-  for (const r of [25, 20, 15, 10]) fill(r, r + 1, 5, 13, T.BARRIER);
+  fill(1, ROWS - 1, 3, COLS - 3, T.FLOOR);
+  if (floor < 5) {
+    fill(2, ROWS - 1, 8, 10, T.CARPET);
+    fill(4, 8, 6, 12, T.DAIS);
+    fill(1, 3, 8, 10, T.STAIRS);
+  } else {
+    // Headline stage across the north wall, with a long idol runway stretching
+    // through the audience toward the challenger entrance.
+    fill(2, 9, 4, 14, T.STAGE);
+    fill(4, 8, 7, 11, T.THRONE);
+    fill(8, ROWS - 1, 8, 10, T.CARPET);
+  }
+  if (floor === 1) fill(ROWS - 1, ROWS, 8, 10, T.FLOOR);
   return m;
 }

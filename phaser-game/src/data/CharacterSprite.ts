@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { markTrainerPortrait } from './BattlePortraits';
 
 // ── Overworld trainer pixel sprites ─────────────────────────────────────────────
 // Gender-aware pixel drawings of the player / rival, styled after the character art:
@@ -79,7 +80,10 @@ export function drawNpcBody(
  */
 export function drawGymLeader(
   scene: Phaser.Scene, x: number, y: number,
-  opts: { body: number; accent: number; label: string; labelColor: string; skin?: number; hair?: number },
+  opts: {
+    body: number; accent: number; label: string; labelColor: string;
+    skin?: number; hair?: number; trainerKey?: string;
+  },
 ): Phaser.GameObjects.Graphics {
   const skin = opts.skin ?? 0xffcc99, hair = opts.hair ?? 0x140820;
   const g = scene.add.graphics().setDepth(12);   // above dais + trainers so the leader always reads
@@ -102,6 +106,7 @@ export function drawGymLeader(
     fontSize: '9px', color: opts.labelColor, fontStyle: 'bold',
     backgroundColor: '#00000088', padding: { x: 4, y: 2 },
   }).setOrigin(0.5).setDepth(10);
+  if (opts.trainerKey) markTrainerPortrait(g, opts.trainerKey);
   return g;
 }
 

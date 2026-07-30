@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { toonMat } from './Props';
+import { buildRelief, reliefMaterials } from './Extruder';
+import { makeBlobShadow, toonMat } from './Props';
 
 // ── Procedural protagonist model ─────────────────────────────────────────────
 // A stylized low-poly 3D version of the hero, built from primitives so it
@@ -129,6 +130,52 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
       if (Math.abs(dx) + Math.abs(dz) > 0.001) {
         targetYaw = Math.atan2(dx, dz);       // model front is +z
       }
+      let d = targetYaw - yaw;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      yaw += d * Math.min(1, dt * 12);
+      group.rotation.y = yaw;
+    },
+  };
+}
+
+/**
+ * Build a recognizable trainer model directly from an authored full-body 2D
+ * portrait. The alpha silhouette is carved into an actual extruded mesh; the
+ * original artwork textures the front/back while sampled portrait colours form
+ * the side faces. A subtle stride/breath cycle keeps it alive during battle
+ * entrances without distorting the character design.
+ */
+export function buildPortraitCharacterModel(
+  key: string,
+  source: HTMLImageElement | HTMLCanvasElement,
+  targetHeight = 1.65,
+): PlayerModel | null {
+  const relief = buildRelief(`trainer-character:${key}`, source);
+  if (!relief) return null;
+
+  const group = new THREE.Group();
+  const materials = reliefMaterials(relief.texture);
+  const figure = new THREE.Mesh(relief.geometry, materials);
+  figure.userData.sharedGeo = true;
+  const scale = targetHeight / Math.max(1, relief.pxHeight);
+  figure.scale.setScalar(scale);
+  group.add(figure);
+  group.add(makeBlobShadow(Math.min(0.82, Math.max(0.35, relief.pxWidth * scale * 0.38))));
+
+  let yaw = 0, targetYaw = 0, strideEase = 0;
+  return {
+    group,
+    setWalk(phase: number, moving: boolean, dt: number) {
+      strideEase = THREE.MathUtils.clamp(strideEase + (moving ? dt * 7 : -dt * 5), 0, 1);
+      const step = Math.sin(phase);
+      group.position.y = Math.abs(step) * 0.045 * strideEase;
+      figure.rotation.z = step * 0.035 * strideEase;
+      const breathe = moving ? 1 : 1 + Math.sin(phase * 0.35) * 0.01;
+      figure.scale.set(scale / breathe, scale * breathe, scale);
+    },
+    face(dx: number, dz: number, dt: number) {
+      if (Math.abs(dx) + Math.abs(dz) > 0.001) targetYaw = Math.atan2(dx, dz);
       let d = targetYaw - yaw;
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;

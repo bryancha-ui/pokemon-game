@@ -65,7 +65,7 @@ export class GeumgangGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x8a3a6a, accent: 0xff9ad6, label: 'LEADER NAMSUN', labelColor: '#ffd0ef', hair: 0x6a2a5a });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x8a3a6a, accent: 0xff9ad6, label: 'LEADER NAMSUN', labelColor: '#ffd0ef', hair: 0x6a2a5a, trainerKey: 'geumgang-namsun' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

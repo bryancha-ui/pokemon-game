@@ -6,6 +6,7 @@ import { vanishesAfterDefeat } from '../data/Villains';
 import { DialogBox } from '../ui/DialogBox';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { SaveManager } from '../utils/SaveManager';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 interface GymTrainer {
   key: string; name: string; line: string;
@@ -174,6 +175,7 @@ export class CapitolGymScene extends Phaser.Scene {
     g.fillStyle(0x000000); g.fillRect(-4, -14, 2, 2); g.fillRect(2, -14, 2, 2);
     // Purple aura
     g.lineStyle(2, 0xaa44ff, 0.5); g.strokeCircle(0, 0, 20);
+    markTrainerPortrait(g, 'capitol-jin');
 
     this.add.text(x, y - 30, tr('LEADER JIN'), {
       fontSize: '9px', color: '#cc88ff', fontStyle: 'bold',

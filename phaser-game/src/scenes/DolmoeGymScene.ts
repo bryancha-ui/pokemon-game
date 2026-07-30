@@ -69,7 +69,7 @@ export class DolmoeGymScene extends Phaser.Scene {
     this.createPlayer();
     // Sandol is away guarding the dolmen ruins until that side-event is resolved.
     if (this.registry.get('dolmoeRuinsDone') || this.registry.get('dolmoeGymDefeated'))
-      drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x6a5030, accent: 0xc8a860, label: 'LEADER SANDOL', labelColor: '#e8ddc8', hair: 0x888888 });
+      drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x6a5030, accent: 0xc8a860, label: 'LEADER SANDOL', labelColor: '#e8ddc8', hair: 0x888888, trainerKey: 'dolmoe-sandol' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

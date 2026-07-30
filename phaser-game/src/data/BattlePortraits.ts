@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AVATAR_URL, rivalAvatarKey } from './PlayerAvatar';
 // ── Trainer battle portraits ────────────────────────────────────────────────────
 // Full-body NPC art shown ONLY during a trainer battle's intro (then it steps aside
 // as the Pokémon are sent out). Keyed by the battle's `trainerKey`.
@@ -67,6 +68,29 @@ export const PORTRAITS: Record<string, Portrait> = {
 
 export function portraitFor(trainerKey: string): Portrait | undefined {
   return PORTRAITS[trainerKey];
+}
+
+/**
+ * Attach an existing full-body portrait to an overworld character. The 2D
+ * Graphics object remains authoritative for position/visibility/gameplay, while
+ * OverworldMirror replaces its generic relief with this character-specific 3D
+ * sculpt when 3D mode is active.
+ */
+export function markTrainerPortrait(
+  obj: Phaser.GameObjects.GameObject,
+  trainerKey: string,
+): void {
+  const portrait = portraitFor(trainerKey);
+  if (portrait) obj.setData('characterPortrait3D', portrait);
+}
+
+/** The rival uses the opposite-gender trainer artwork selected at game start. */
+export function markRivalPortrait(
+  obj: Phaser.GameObjects.GameObject,
+  registry: { get(key: string): unknown },
+): void {
+  const key = rivalAvatarKey(registry);
+  obj.setData('characterPortrait3D', { key, url: AVATAR_URL[key] } satisfies Portrait);
 }
 
 /**

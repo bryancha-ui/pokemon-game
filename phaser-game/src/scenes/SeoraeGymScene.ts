@@ -66,7 +66,7 @@ export class SeoraeGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x3a6a8a, accent: 0xaee6ff, label: 'LEADER YEONA', labelColor: '#cdeeff', skin: 0xf0e6ea, hair: 0xbfe6ff });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x3a6a8a, accent: 0xaee6ff, label: 'LEADER YEONA', labelColor: '#cdeeff', skin: 0xf0e6ea, hair: 0xbfe6ff, trainerKey: 'seorae-yeona' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);

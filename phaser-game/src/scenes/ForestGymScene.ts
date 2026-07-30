@@ -68,7 +68,7 @@ export class ForestGymScene extends Phaser.Scene {
     this.drawGym();
     this.drawTrainers();
     this.createPlayer();
-    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x2a5a2a, accent: 0x88cc55, label: 'LEADER NOKSAEK', labelColor: '#b6f0a0', skin: 0xa88a55, hair: 0x3a5a2a });
+    drawGymLeader(this, (this.W * IT) / 2, IT * 1.9, { body: 0x2a5a2a, accent: 0x88cc55, label: 'LEADER NOKSAEK', labelColor: '#b6f0a0', skin: 0xa88a55, hair: 0x3a5a2a, trainerKey: 'forest-noksaek' });
     this.setupInput();
     this.cameras.main.setBounds(0, 0, this.W * IT, this.H * IT);
     this.cameras.main.startFollow(this.playerG, true, 0.1, 0.1);
