@@ -121,30 +121,44 @@ export function makeRocks(max: number, color = 0x8d8578): InstancedProp {
   return makeInstanced([{ geo: g, mat: toonMat(color), y: 0.22 }], max);
 }
 
-/** Tall-grass tufts: two crossed alpha planes with painted blades. */
-export function makeGrassTufts(max: number, tone = 0x2f8f27): InstancedProp {
+/** Tall-grass tufts, Pokémon-style: a dense rounded bush of bright blades on
+ *  three crossed alpha planes, with a darker base and lighter sun-lit tips. */
+export function makeGrassTufts(max: number, tone = 0x49b23a): InstancedProp {
   const c = document.createElement('canvas');
-  c.width = 48; c.height = 40;
+  c.width = 64; c.height = 56;
   const ctx = c.getContext('2d')!;
-  const col = new THREE.Color(tone);
-  for (let i = 0; i < 9; i++) {
-    const x = 4 + i * 5 + (i % 2) * 2;
-    const shade = 0.75 + (i % 3) * 0.16;
-    ctx.strokeStyle = `rgb(${(col.r * 255 * shade) | 0},${(col.g * 255 * shade) | 0},${(col.b * 255 * shade) | 0})`;
-    ctx.lineWidth = 3.4;
-    ctx.beginPath();
-    ctx.moveTo(x, 40);
-    ctx.quadraticCurveTo(x + (i % 2 ? 5 : -4), 22, x + (i % 3 - 1) * 6, 3 + (i % 4) * 3);
-    ctx.stroke();
+  const base = new THREE.Color(tone);
+  const dark = base.clone().multiplyScalar(0.62);
+  const tip  = base.clone().lerp(new THREE.Color(0xffffff), 0.35);
+  const rgb = (col: THREE.Color) => `rgb(${(col.r * 255) | 0},${(col.g * 255) | 0},${(col.b * 255) | 0})`;
+  // Base mound so the clump reads as a solid tuft, not floating blades.
+  ctx.fillStyle = rgb(dark);
+  ctx.beginPath(); ctx.ellipse(32, 52, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+  // Dense blades fanning up into a rounded bush; back rows darker, front brighter.
+  const blade = (x: number, topY: number, sway: number, w: number, shade: THREE.Color) => {
+    ctx.strokeStyle = rgb(shade); ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x, 54);
+    ctx.quadraticCurveTo(x + sway * 0.5, (54 + topY) / 2, x + sway, topY); ctx.stroke();
+  };
+  for (let i = 0; i < 22; i++) {
+    const t = i / 21;                          // 0..1 across the clump
+    const x = 8 + t * 48 + (i % 2) * 2;
+    const front = i % 3 === 0;                 // front blades brighter + taller
+    const topY = 6 + Math.abs(t - 0.5) * 26 + (front ? -4 : 4);   // rounded top
+    const sway = (i % 2 ? 1 : -1) * (5 + (i % 4) * 3);
+    blade(x, topY, sway, front ? 4.2 : 3.4, front ? tip.clone().lerp(base, 0.4) : (i % 2 ? base : dark.clone().lerp(base, 0.5)));
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide });
-  const p1 = new THREE.PlaneGeometry(0.9, 0.75);
-  const p2 = p1.clone(); p2.rotateY(Math.PI / 2);
+  tex.magFilter = THREE.LinearFilter;
+  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, alphaTest: 0.28, side: THREE.DoubleSide });
+  const p1 = new THREE.PlaneGeometry(1.15, 1.0);
+  const p2 = p1.clone(); p2.rotateY(Math.PI / 3);
+  const p3 = p1.clone(); p3.rotateY(-Math.PI / 3);
   return makeInstanced([
-    { geo: p1, mat, y: 0.36 },
-    { geo: p2, mat, y: 0.36 },
+    { geo: p1, mat, y: 0.48 },
+    { geo: p2, mat, y: 0.48 },
+    { geo: p3, mat, y: 0.48 },
   ], max);
 }
 
