@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
 import { buildPlayerModel, PlayerModel } from './CharacterModel';
-import { buildRelief, reliefMaterials } from './Extruder';
+import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { makeBlobShadow } from './Props';
 import { buildTerrain, PX, TerrainResult } from './TerrainBuilder';
@@ -67,6 +67,10 @@ export class OverworldMirror {
   private isInterior = false;
   /** set when a map layer arrives after the terrain was built (late-drawn maps) */
   private needsTerrainRebuild = false;
+  // Phaser emits addedtoscene before fluent setup (drawing, scale, tags) is
+  // complete. Defer new world objects one frame so live quest spawns such as
+  // Smeargle are adopted into 3D instead of leaking through as 2D objects.
+  private pendingObjects = new Set<GO>();
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
   // Full 3D protagonist (replaces the player's flat relief with an animated model).
   private hero: PlayerModel | null = null;
@@ -78,7 +82,7 @@ export class OverworldMirror {
     this.stage = stage;
     this.rig = rig;
     this.root = stage.resetWorld();
-    this.onAdded = (obj) => { if (this.built) this.adopt(obj as GO); };
+    this.onAdded = (obj) => { if (this.built) this.pendingObjects.add(obj as GO); };
     scene.events.on('addedtoscene', this.onAdded);
   }
 
@@ -87,6 +91,7 @@ export class OverworldMirror {
     this.tracked.clear();
     this.mapGraphics.clear();
     this.mapImages.clear();
+    this.pendingObjects.clear();
   }
 
   /** The player object: the camera-follow target, or the scene's `playerG` field
@@ -204,6 +209,7 @@ export class OverworldMirror {
       caveFloorHint?: boolean;
       noVehicles?: boolean;
       freeBuildings?: boolean;
+      propPlots?: import('./TerrainBuilder').PropPlot[];
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
@@ -211,6 +217,7 @@ export class OverworldMirror {
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
       sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
+      sc.propPlots ?? [],
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
@@ -427,9 +434,11 @@ export class OverworldMirror {
 
   private adoptImage(im: GO & Phaser.GameObjects.Image): void {
     const src = this.frameCanvas(im);
-    if (!src) return;
     const key = `img:${im.texture.key}:${im.frame?.name ?? 0}`;
-    const relief = buildRelief(key, src);
+    const relief = (src && buildRelief(key, src)) ?? buildFlatCard(
+      `flat:${key}`,
+      im.texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement,
+    );
     if (!relief) return;
     const mats = reliefMaterials(relief.texture);
     const mesh = new THREE.Mesh(relief.geometry, mats);
@@ -456,8 +465,11 @@ export class OverworldMirror {
   /** Rebuild an image's relief when the game swaps its texture at runtime. */
   private refreshImage(t: Tracked, im: GO & Phaser.GameObjects.Image): void {
     const src = this.frameCanvas(im);
-    if (!src) return;
-    const relief = buildRelief(`img:${im.texture.key}:${im.frame?.name ?? 0}`, src);
+    const key = `img:${im.texture.key}:${im.frame?.name ?? 0}`;
+    const relief = (src && buildRelief(key, src)) ?? buildFlatCard(
+      `flat:${key}`,
+      im.texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement,
+    );
     if (!relief) return;
     const inner = t.mesh.children[0] as THREE.Mesh;
     inner.geometry = relief.geometry;
@@ -531,6 +543,13 @@ export class OverworldMirror {
   // ── Frame sync ──
   update(dt: number): void {
     if (!this.built) { this.tryBuild(); return; }
+    if (this.pendingObjects.size) {
+      const ready = [...this.pendingObjects];
+      this.pendingObjects.clear();
+      for (const obj of ready) {
+        if (obj.scene) this.adopt(obj);
+      }
+    }
     this.time += dt;
     if (this.needsTerrainRebuild) {
       this.needsTerrainRebuild = false;

@@ -51,6 +51,17 @@ export class SeoraeTownScene extends Phaser.Scene {
   private map!: Tile[][];
   public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['frostbell', 'pokecenter', 'alpinelodge', 'snowmeltbaths', 'mart', 'skateshop'][i] }));
   public onlyNamedBuildings = true;
+  // The town's lanterns, pine groves and ice sculptures rendered as real 3D
+  // props (coordinates mirror the 2D drawPine / lantern / snow-sculpture spots).
+  public propPlots = [
+    ...([[3, 4], [5, 5], [8, 6], [18, 4], [20, 5], [27, 4], [30, 6], [41, 5], [43, 7], [46, 6],
+      [4, 28], [6, 31], [10, 32], [42, 33], [44, 36], [46, 38], [25, 37], [28, 39]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'pine' as const })),
+    ...([[20, 20], [28, 20], [20, 31], [28, 31], [39, 18]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'lantern' as const })),
+    ...([[17, 17], [25, 16], [28, 31], [39, 32], [44, 24]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'icestatue' as const })),
+  ];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

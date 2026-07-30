@@ -190,6 +190,61 @@ export function mixColor(a: number, b: number, t: number): number {
   return ca.lerp(cb, t).getHex();
 }
 
+// ── Placed decorative props (single 3D objects pinned to a tile) ─────────────
+
+/** Snow-dusted alpine pine: a trunk under three stacked needle tiers, each
+ *  capped with a little snow cone — a true 3D version of the town's 2D pines. */
+export function makePineTree(): THREE.Group {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.5, 6), toonMat(0x5a4030));
+  trunk.position.y = 0.25;
+  g.add(trunk);
+  const needles = 0x2e6b46;
+  for (const [r, h, y] of [[0.55, 0.7, 0.7], [0.42, 0.6, 1.0], [0.28, 0.5, 1.3]] as [number, number, number][]) {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), toonMat(needles));
+    cone.position.y = y;
+    g.add(cone);
+    const snow = new THREE.Mesh(new THREE.ConeGeometry(r * 0.86, h * 0.34, 7), toonMat(0xffffff));
+    snow.position.y = y + h * 0.33;
+    g.add(snow);
+  }
+  return g;
+}
+
+/** Korean stone lantern (석등): a stacked stone post topped by a warm glowing
+ *  light box under a hip roof — the light uses an unlit bright material so it
+ *  reads as lit without a per-lantern point light (mobile-friendly). */
+export function makeStoneLantern(): THREE.Group {
+  const g = new THREE.Group();
+  const stone = 0x9a978f, dark = 0x7a776f;
+  const add = (mesh: THREE.Mesh, y: number) => { mesh.position.y = y; g.add(mesh); };
+  add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.16, 6), toonMat(dark)), 0.08);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.5, 6), toonMat(stone)), 0.42);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.08, 6), toonMat(dark)), 0.71);
+  // Glowing light chamber.
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 0.24), new THREE.MeshBasicMaterial({ color: 0xffd680 })), 0.9);
+  add(new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.22, 6), toonMat(stone)), 1.14);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), toonMat(dark)), 1.29);
+  return g;
+}
+
+/** Translucent ice sculpture on a pedestal: stacked ice-blue snow-figure
+ *  spheres crowned by a faceted crystal — the 3D take on the town's snow
+ *  sculptures / Ice Bell landmarks. */
+export function makeIceStatue(): THREE.Group {
+  const g = new THREE.Group();
+  const ice = toonMat(0xbfeaff, { transparent: true, opacity: 0.72 });
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 0.3, 8), toonMat(0x9fbfd6));
+  ped.position.y = 0.15;
+  g.add(ped);
+  const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), ice); b1.position.y = 0.72; g.add(b1);
+  const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.36, 10, 8), ice); b2.position.y = 1.36; g.add(b2);
+  const crown = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), ice);
+  crown.position.y = 1.9; crown.rotation.y = 0.5;
+  g.add(crown);
+  return g;
+}
+
 // ── Water surface ───────────────────────────────────────────────────────────
 /** Paint one bright-cyan water tile with scattered pixel sparkle dashes —
  *  the crisp low-poly look (flat vivid water + little light glints). */

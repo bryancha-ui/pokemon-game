@@ -1,8 +1,15 @@
 import * as THREE from 'three';
 import {
-  InstancedProp, WallBuilder, makeFlowers, makeGrassTufts, makePines,
-  makeRocks, makeTrees, makeWater, toonRamp,
+  InstancedProp, WallBuilder, makeFlowers, makeGrassTufts, makeIceStatue,
+  makePineTree, makePines, makeRocks, makeStoneLantern, makeTrees, makeWater, toonRamp,
 } from './Props';
+
+/** A decorative procedural prop the scene pins to an exact tile. */
+export interface PropPlot {
+  x: number; y: number;
+  kind: 'pine' | 'lantern' | 'icestatue';
+  scale?: number; rot?: number;
+}
 import { getProp, hasProps, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
 
@@ -248,6 +255,9 @@ export function buildTerrain(
   // on every detected building that has no named model, instead of the
   // procedural facade — for towns we haven't authored custom models for.
   freeBuildings = false,
+  // Decorative procedural props (pines, stone lanterns, ice statues) the scene
+  // pins to exact tiles — built from primitives, so no assets/credits needed.
+  propPlots: PropPlot[] = [],
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -811,6 +821,18 @@ export function buildTerrain(
     w.mesh.position.set(wr.x + wr.w / 2, 0.06, wr.z + wr.d / 2);
     group.add(w.mesh);
     waters.push(w);
+  }
+
+  // Scene-pinned decorative props (pines, stone lanterns, ice statues), placed
+  // at the centre of their tile.
+  for (const p of propPlots) {
+    const obj = p.kind === 'pine' ? makePineTree()
+      : p.kind === 'lantern' ? makeStoneLantern()
+        : makeIceStatue();
+    obj.position.set(p.x + 0.5, 0, p.y + 0.5);
+    if (p.scale) obj.scale.setScalar(p.scale);
+    if (p.rot) obj.rotation.y = p.rot;
+    group.add(obj);
   }
 
   return {
