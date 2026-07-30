@@ -10,6 +10,7 @@ const SMEARGLE_ART =
 type StudioNPC = NPC & {
   isSmeargle?: boolean;
   creatureImage?: Phaser.GameObjects.Image;
+  nameLabel?: Phaser.GameObjects.Text;
 };
 
 /**
@@ -80,33 +81,39 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
     // Smeargle appears by the garden window once the quest is active and not yet found
     const questActive = !!this.registry.get('smeargleQuest');
     const found       = !!this.registry.get('smeargleFound');
-    if (questActive && !found) {
-      const p = this.tile(12, 9);
-      const x = p.x + 16, y = p.y + 16;
-      let sme: StudioNPC;
-      if (this.textures.exists(SMEARGLE_TEXTURE)) {
-        // The real species artwork becomes an upright 3D creature relief in
-        // OverworldMirror; the invisible marker keeps the existing quest
-        // proximity/interaction system unchanged.
-        const marker = this.add.graphics().setPosition(x, y);
-        const creatureImage = this.add.image(x, y, SMEARGLE_TEXTURE).setDepth(15);
-        const src = this.textures.get(SMEARGLE_TEXTURE).getSourceImage();
-        const dim = Math.max((src.width as number) || 1, (src.height as number) || 1);
-        creatureImage.setScale(52 / dim);
-        sme = {
-          x, y, graphic: marker, bodyColor: 0xe8d8b8, hairColor: 0x8a5a2a,
-          isFemale: false, facing: 1, isSmeargle: true, creatureImage,
-        };
-      } else {
-        // Network-safe fallback: the quest remains playable if remote art fails.
-        sme = this.createNPCGraphic(12, 9, 0xe8d8b8, 0x8a5a2a, false, 1) as StudioNPC;
-        sme.isSmeargle = true;
-      }
-      this.add.text(x, p.y - 6, tr('Smeargle?'), {
-        fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
-      }).setOrigin(0.5, 1).setDepth(16);
-      this.npcs.push(sme);
+    if (questActive && !found) this.spawnSmeargle();
+  }
+
+  /** Add Smeargle to the live room without restarting (and dropping) the 3D scene. */
+  private spawnSmeargle() {
+    if (this.registry.get('smeargleFound')) return;
+    if (this.npcs.some(n => (n as StudioNPC).isSmeargle && n.x > -1000)) return;
+
+    const p = this.tile(12, 9);
+    const x = p.x + 16, y = p.y + 16;
+    let sme: StudioNPC;
+    if (this.textures.exists(SMEARGLE_TEXTURE)) {
+      // The real species artwork becomes an upright 3D creature relief in
+      // OverworldMirror; the invisible marker keeps the existing quest
+      // proximity/interaction system unchanged.
+      const marker = this.add.graphics().setPosition(x, y);
+      const creatureImage = this.add.image(x, y, SMEARGLE_TEXTURE).setDepth(15);
+      const src = this.textures.get(SMEARGLE_TEXTURE).getSourceImage();
+      const dim = Math.max((src.width as number) || 1, (src.height as number) || 1);
+      creatureImage.setScale(52 / dim);
+      sme = {
+        x, y, graphic: marker, bodyColor: 0xe8d8b8, hairColor: 0x8a5a2a,
+        isFemale: false, facing: 1, isSmeargle: true, creatureImage,
+      };
+    } else {
+      // Network-safe fallback: the quest remains playable if remote art fails.
+      sme = this.createNPCGraphic(12, 9, 0xe8d8b8, 0x8a5a2a, false, 1) as StudioNPC;
+      sme.isSmeargle = true;
     }
+    sme.nameLabel = this.add.text(x, p.y - 6, tr('Smeargle?'), {
+      fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5, 1).setDepth(16);
+    this.npcs.push(sme);
   }
 
   protected placePlayer() { this.createPlayerGraphic(7, 10); }
@@ -128,6 +135,7 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
       ], () => {
         // Remove the Smeargle sprite so it doesn't linger
         studioNpc.creatureImage?.destroy();
+        studioNpc.nameLabel?.destroy();
         npc.graphic.destroy();
         npc.x = -9999; npc.y = -9999;
       });
@@ -165,8 +173,8 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
         'Artist Sora: I last heard it chittering out by the garden window. Please, find it!',
         '(The Smeargle has appeared by the garden window — go talk to it!)',
       ], () => {
-        // Reload the scene so the Smeargle sprite appears
-        this.scene.restart();
+        // Keep the same 3D room/mirror alive and add Smeargle to it directly.
+        this.spawnSmeargle();
       });
     }
   }
