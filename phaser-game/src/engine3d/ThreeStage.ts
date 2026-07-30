@@ -16,8 +16,8 @@ interface EnvColors {
 }
 
 const ENVS: Record<EnvProfile, EnvColors> = {
-  day:      { skyTop: 0x4f9be8, skyBottom: 0xcfe8ff, fog: 0xbcd8f2, fogNear: 26, fogFar: 60,
-              hemiSky: 0xcfe4ff, hemiGround: 0x8a9a6a, hemiIntensity: 1.15, sun: 0xfff2d8, sunIntensity: 1.6, showSky: true },
+  day:      { skyTop: 0x439ceb, skyBottom: 0xd6ecff, fog: 0xc6e0f6, fogNear: 34, fogFar: 88,
+              hemiSky: 0xd2e8ff, hemiGround: 0x93a674, hemiIntensity: 1.18, sun: 0xfff4dc, sunIntensity: 1.7, showSky: true },
   snow:     { skyTop: 0x7fa8d8, skyBottom: 0xeef4fb, fog: 0xe8eef6, fogNear: 20, fogFar: 52,
               hemiSky: 0xe8f0ff, hemiGround: 0xcfd8e2, hemiIntensity: 1.2, sun: 0xf2f6ff, sunIntensity: 1.3, showSky: true },
   cave:     { skyTop: 0x0c0c14, skyBottom: 0x26222e, fog: 0x141220, fogNear: 8, fogFar: 30,

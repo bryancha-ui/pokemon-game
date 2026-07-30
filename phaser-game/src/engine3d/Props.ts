@@ -191,36 +191,55 @@ export function mixColor(a: number, b: number, t: number): number {
 }
 
 // ── Water surface ───────────────────────────────────────────────────────────
-/** Animated translucent water sheet placed over painted water regions. */
-export function makeWater(width: number, depth: number): { mesh: THREE.Mesh; update(t: number): void } {
+/** Paint one bright-cyan water tile with scattered pixel sparkle dashes —
+ *  the crisp low-poly look (flat vivid water + little light glints). */
+function paintWaterTile(sparkleSeed: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = 128; c.height = 128;
+  c.width = c.height = 128;
   const ctx = c.getContext('2d')!;
-  ctx.fillStyle = 'rgba(70,150,235,0.55)';
+  // Flat vivid cyan base with a soft vertical brighten toward the top-left.
+  const grd = ctx.createLinearGradient(0, 0, 128, 128);
+  grd.addColorStop(0, '#38c6f4');
+  grd.addColorStop(1, '#1ba3e6');
+  ctx.fillStyle = grd;
   ctx.fillRect(0, 0, 128, 128);
-  ctx.strokeStyle = 'rgba(235,248,255,0.5)';
-  ctx.lineWidth = 2.5;
-  for (let i = 0; i < 6; i++) {
-    ctx.beginPath();
-    const y = 12 + i * 20;
-    for (let x = 0; x <= 128; x += 8) {
-      const yy = y + Math.sin((x / 128) * Math.PI * 2 + i) * 3;
-      if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
-    }
-    ctx.stroke();
+  // Scattered short sparkle dashes (a couple of chunky pixels, like the art).
+  let s = sparkleSeed;
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+  ctx.fillStyle = 'rgba(224,246,255,0.9)';
+  for (let i = 0; i < 26; i++) {
+    const x = Math.floor(rnd() * 120) + 4;
+    const y = Math.floor(rnd() * 120) + 4;
+    const len = 4 + Math.floor(rnd() * 4);
+    ctx.fillRect(x, y, len, 3);            // main glint
+    if (rnd() > 0.5) ctx.fillRect(x + len + 2, y, 3, 3);  // trailing speck
   }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(Math.max(1, width / 3), Math.max(1, depth / 3));
-  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, opacity: 0.8, depthWrite: false });
+  return c;
+}
+
+/** Animated bright-cyan water sheet placed over painted water regions.
+ *  Two crossfading sparkle layers drift slowly for a gentle shimmer. */
+export function makeWater(width: number, depth: number): { mesh: THREE.Mesh; update(t: number): void } {
+  const mkTex = (seed: number) => {
+    const t = new THREE.CanvasTexture(paintWaterTile(seed));
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.magFilter = THREE.NearestFilter;                    // crisp pixel sparkles
+    t.repeat.set(Math.max(1, width / 3.2), Math.max(1, depth / 3.2));
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const tex = mkTex(0x9e3779b9);
+  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, opacity: 0.94, depthWrite: false });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), mat);
   mesh.rotation.x = -Math.PI / 2;
   mesh.renderOrder = 2;
   return {
     mesh,
     update(t: number) {
-      tex.offset.x = t * 0.018;
-      tex.offset.y = Math.sin(t * 0.4) * 0.02;
+      // Slow drift + a subtle vertical bob so the glints twinkle rather than slide.
+      tex.offset.x = t * 0.012;
+      tex.offset.y = Math.sin(t * 0.5) * 0.03;
+      (mat).opacity = 0.9 + Math.sin(t * 1.3) * 0.05;
     },
   };
 }

@@ -6,6 +6,31 @@ import {
 import { getProp, hasProps, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
 
+/** Procedural warm-soil texture for the diorama slab sides: layered earth
+ *  bands with darker strata lines and scattered pebble speckles (low-poly). */
+function makeSoilTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 96; c.height = 48;
+  const ctx = c.getContext('2d')!;
+  const grd = ctx.createLinearGradient(0, 0, 0, 48);
+  grd.addColorStop(0, '#8a6a46');   // topsoil (just under the grass lip)
+  grd.addColorStop(1, '#6e5238');   // deeper earth
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, 96, 48);
+  // Horizontal strata bands.
+  ctx.fillStyle = 'rgba(60,42,28,0.35)';
+  for (let y = 12; y < 48; y += 14) ctx.fillRect(0, y, 96, 2);
+  // Pebble / grit speckles.
+  let s = 0x1234abcd;
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+  for (let i = 0; i < 70; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? 'rgba(120,92,64,0.6)' : 'rgba(52,38,26,0.5)';
+    ctx.fillRect(Math.floor(rnd() * 96), Math.floor(rnd() * 48), 2, 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 // ── Terrain builder ──────────────────────────────────────────────────────────
 // The composited map painting (rasterized from the scene's own Graphics) is
 // projected onto the 3D ground plane — guaranteeing the exact original layout
@@ -243,7 +268,12 @@ export function buildTerrain(
   group.add(plane);
 
   // Skirt below the map edge so the world reads like a floating diorama slab.
-  const skirtMat = new THREE.MeshToonMaterial({ color: 0x6b5a44, gradientMap: toonRamp() });
+  // A procedural soil texture (warm dirt + strata bands + speckles) gives the
+  // slab sides the crisp low-poly earth look instead of a flat brown box.
+  const skirtTex = makeSoilTexture();
+  skirtTex.wrapS = skirtTex.wrapT = THREE.RepeatWrapping;
+  skirtTex.repeat.set(Math.max(1, cols / 5), 1);
+  const skirtMat = new THREE.MeshToonMaterial({ map: skirtTex, gradientMap: toonRamp() });
   const skirt = new THREE.Mesh(new THREE.BoxGeometry(cols, 1.6, rows), skirtMat);
   skirt.position.set(cols / 2, -0.82, rows / 2);
   group.add(skirt);
