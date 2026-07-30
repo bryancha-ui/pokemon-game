@@ -128,6 +128,7 @@ export class JejuCityScene extends Phaser.Scene {
     { x: 2,  y: 5,  w: 4, h: 4, model: 'sanbangsan' },
     { x: 34, y: 4,  w: 4, h: 4, model: 'cheonjiyeon' },
     { x: 26, y: 15, w: 5, h: 4, model: 'jejumarket' },
+    { x: 2,  y: 10, w: 4, h: 2, model: 'hanok' },        // Harbor Tavern (선술집)
   ];
   public caveFloorHint = true;
   private playerG!: Phaser.GameObjects.Graphics;
