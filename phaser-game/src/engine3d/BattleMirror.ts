@@ -76,6 +76,14 @@ interface TrainerWalker {
   seen: boolean;           // portrait has been visible at least once
 }
 
+interface ScreenTargetRequest {
+  target: GO;
+  x: number;
+  y: number;
+  /** Fraction of the combatant's height to target (0 = feet, 1 = top). */
+  heightRatio?: number;
+}
+
 export class BattleMirror {
   readonly scene: Phaser.Scene;
   private stage: ThreeStage;
@@ -88,12 +96,14 @@ export class BattleMirror {
   // fluent setup runs. Defer classification until the next frame so Graphics
   // have their draw commands and Images have final no3d tags/sizing.
   private pendingObjects = new Set<GO>();
+  private active3D = true;
   private time = 0;
   private built = false;
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
   private fx: MoveFX3D;
   private pendingBursts: { at: THREE.Vector3; color: number; eff: number; t: number }[] = [];
   private onMoveFx: (d: { attacker: GO; target: GO; color: number; category: string; effectiveness: number }) => void;
+  private onScreenTarget: (d: ScreenTargetRequest) => void;
 
   constructor(scene: Phaser.Scene, stage: ThreeStage, rig: CameraRig) {
     this.scene = scene;
@@ -106,7 +116,9 @@ export class BattleMirror {
     rig.setMode('battle');
     this.fx = new MoveFX3D(this.root);
     this.onMoveFx = (d) => this.handleMoveFx(d);
+    this.onScreenTarget = (d) => this.projectCombatantToScreen(d);
     scene.events.on('pk3d-movefx', this.onMoveFx);
+    scene.events.on('pk3d-screen-target', this.onScreenTarget);
     this.onAdded = (obj) => this.pendingObjects.add(obj as GO);
     scene.events.on('addedtoscene', this.onAdded);
     for (const obj of scene.children.list) this.consider(obj as GO);
@@ -116,11 +128,31 @@ export class BattleMirror {
   destroy(): void {
     this.scene.events.off('addedtoscene', this.onAdded);
     this.scene.events.off('pk3d-movefx', this.onMoveFx);
+    this.scene.events.off('pk3d-screen-target', this.onScreenTarget);
     this.combatants.clear();
     for (const w of this.trainers) this.root.remove(w.group);
     this.trainers.length = 0;
     this.hiddenBackdrops.clear();
     this.pendingObjects.clear();
+  }
+
+  /** Return the live Phaser-screen position of a point on a 3D combatant. */
+  private projectCombatantToScreen(d: ScreenTargetRequest): void {
+    if (!this.active3D) return;        // F3 2D mode keeps the sprite fallback
+    const cb = this.combatants.get(d.target);
+    if (!cb) return;                  // 2D mode / unmirrored object keeps fallback
+
+    const p = cb.holder.position.clone();
+    const heightRatio = Math.min(1, Math.max(0, d.heightRatio ?? 0.52));
+    p.y += cb.targetH * heightRatio;  // aim at the torso, not above the head
+
+    const camera = this.stage.camera;
+    camera.updateMatrixWorld();
+    p.project(camera);
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || p.z < -1 || p.z > 1) return;
+
+    d.x = (p.x + 1) * 0.5 * this.scene.scale.width;
+    d.y = (1 - p.y) * 0.5 * this.scene.scale.height;
   }
 
   /** Mirror a 2D move as a 3D effect: special = orb projectile with an arc,
@@ -594,6 +626,7 @@ export class BattleMirror {
   }
 
   restore2D(): void {
+    this.active3D = false;
     const cam = this.scene.cameras.main as Phaser.Cameras.Scene2D.Camera & { id: number };
     const unhide = (o: GO) => { (o as unknown as { cameraFilter: number }).cameraFilter &= ~cam.id; };
     for (const cb of this.combatants.values()) unhide(cb.obj);
@@ -601,6 +634,7 @@ export class BattleMirror {
   }
 
   apply3D(): void {
+    this.active3D = true;
     for (const cb of this.combatants.values()) this.scene.cameras.main.ignore(cb.obj);
     for (const b of this.hiddenBackdrops) this.scene.cameras.main.ignore(b);
   }

@@ -1,6 +1,16 @@
+import Phaser from 'phaser';
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
 import { tr } from '../systems/i18n';
 import { Inventory } from '../systems/Items';
+
+const SMEARGLE_TEXTURE = 'studio-smeargle';
+const SMEARGLE_ART =
+  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/235.png';
+
+type StudioNPC = NPC & {
+  isSmeargle?: boolean;
+  creatureImage?: Phaser.GameObjects.Image;
+};
 
 /**
  * Pine Needle Town — Artist's Studio.
@@ -10,10 +20,19 @@ import { Inventory } from '../systems/Items';
  *   Stage 2: talk to artist again → reward (TM Calm Mind + Highland Map).
  */
 export class PineNeedleStudioScene extends BaseInteriorScene {
+  // This is a playable 3D diorama, not a flat cutscene room. The explicit flag
+  // makes the 3D engine select it from the first setup frame.
+  public interior3D = true;
   protected readonly COLS = 16;
   protected readonly ROWS = 12;
 
   constructor() { super({ key: 'PineNeedleStudioScene' }); }
+
+  preload() {
+    if (!this.textures.exists(SMEARGLE_TEXTURE)) {
+      this.load.image(SMEARGLE_TEXTURE, SMEARGLE_ART);
+    }
+  }
 
   protected drawRoom() {
     const g = this.add.graphics().setDepth(0);
@@ -62,11 +81,30 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
     const questActive = !!this.registry.get('smeargleQuest');
     const found       = !!this.registry.get('smeargleFound');
     if (questActive && !found) {
-      const sme = this.createNPCGraphic(12, 9, 0xe8d8b8, 0x8a5a2a, false, 1);
-      this.add.text(this.tile(12, 9).x + 16, this.tile(12, 9).y - 6, tr('Smeargle?'), {
+      const p = this.tile(12, 9);
+      const x = p.x + 16, y = p.y + 16;
+      let sme: StudioNPC;
+      if (this.textures.exists(SMEARGLE_TEXTURE)) {
+        // The real species artwork becomes an upright 3D creature relief in
+        // OverworldMirror; the invisible marker keeps the existing quest
+        // proximity/interaction system unchanged.
+        const marker = this.add.graphics().setPosition(x, y);
+        const creatureImage = this.add.image(x, y, SMEARGLE_TEXTURE).setDepth(15);
+        const src = this.textures.get(SMEARGLE_TEXTURE).getSourceImage();
+        const dim = Math.max((src.width as number) || 1, (src.height as number) || 1);
+        creatureImage.setScale(52 / dim);
+        sme = {
+          x, y, graphic: marker, bodyColor: 0xe8d8b8, hairColor: 0x8a5a2a,
+          isFemale: false, facing: 1, isSmeargle: true, creatureImage,
+        };
+      } else {
+        // Network-safe fallback: the quest remains playable if remote art fails.
+        sme = this.createNPCGraphic(12, 9, 0xe8d8b8, 0x8a5a2a, false, 1) as StudioNPC;
+        sme.isSmeargle = true;
+      }
+      this.add.text(x, p.y - 6, tr('Smeargle?'), {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5, 1).setDepth(16);
-      (sme as NPC & { isSmeargle?: boolean }).isSmeargle = true;
       this.npcs.push(sme);
     }
   }
@@ -74,7 +112,8 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
   protected placePlayer() { this.createPlayerGraphic(7, 10); }
 
   protected onInteract(npc: NPC) {
-    const isSmeargle = (npc as NPC & { isSmeargle?: boolean }).isSmeargle;
+    const studioNpc = npc as StudioNPC;
+    const isSmeargle = studioNpc.isSmeargle;
     const questActive = !!this.registry.get('smeargleQuest');
     const found       = !!this.registry.get('smeargleFound');
     const done        = !!this.registry.get('smeargleQuestDone');
@@ -88,6 +127,7 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
         'Take it back to Artist Sora!',
       ], () => {
         // Remove the Smeargle sprite so it doesn't linger
+        studioNpc.creatureImage?.destroy();
         npc.graphic.destroy();
         npc.x = -9999; npc.y = -9999;
       });

@@ -449,8 +449,13 @@ export class WildBattleScene extends Phaser.Scene {
     }
     const ballG = this.ballGraphic;
     const startX = 200, startY = 260;
-    const endX   = this.wildSprite.x;
-    const endY   = this.wildSprite.y;
+    // In 3D mode the visible Pokémon no longer occupies the hidden 2D sprite's
+    // coordinates. BattleMirror replaces these fallbacks with the live screen
+    // projection of the 3D model's torso.
+    const target = { target: this.wildSprite, x: this.wildSprite.x, y: this.wildSprite.y, heightRatio: 0.52 };
+    this.events.emit('pk3d-screen-target', target);
+    const endX = target.x;
+    const endY = target.y;
 
     // Draw ball
     const drawBall = (x: number, y: number) => {

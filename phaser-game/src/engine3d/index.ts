@@ -94,6 +94,16 @@ class Engine3D {
       if (opted(sc)) continue;
       if (/Battle/i.test(sc.scene.key)) return { scene: sc, kind: 'battle' };
     }
+    // Authored 3D interiors opt in explicitly. Select them even during the
+    // brief setup frame before their player object exists; OverworldMirror will
+    // finish building as soon as the playable character is placed.
+    for (let i = active.length - 1; i >= 0; i--) {
+      const sc = active[i];
+      if (opted(sc)) continue;
+      if ((sc as unknown as { interior3D?: boolean }).interior3D && sc.cameras?.main) {
+        return { scene: sc, kind: 'overworld' };
+      }
+    }
     for (let i = active.length - 1; i >= 0; i--) {
       const sc = active[i];
       if (opted(sc)) continue;
