@@ -78,7 +78,7 @@ const WONSAN: EosaCity = {
   // A wide East-Sea resort town, with a paved route down to Kalma Beach.
   size: { cols: 40, rows: 28 },
   landmarks: [
-    { col: 37, row: 2,  w: 2, h: 5, color: 0xd63b3b, label: '🗼 Kalma Lighthouse (등대)',       kind: 'lighthouse', solid: true },
+    { col: 34, row: 2,  w: 2, h: 5, color: 0xd63b3b, label: '🗼 Kalma Lighthouse (등대)',       kind: 'lighthouse', solid: true },
     { col: 30, row: 4,  w: 3, h: 4, color: 0x2a7a6a, label: '🐟 Wonsan Seafood Market (수산시장)', kind: 'building',   solid: true },
     { col: 36, row: 12, w: 3, h: 4, color: 0x3a6a9a, label: '🏨 Beach Resort (해수욕장 호텔)',      kind: 'building',   solid: true },
     { col: 37, row: 19, w: 2, h: 3, color: 0xb8a24a, label: '🏔 Mt. Kumgang Viewpoint (금강산 전망)', kind: 'monument' },
@@ -96,6 +96,11 @@ const WONSAN: EosaCity = {
     { col: 35, row: 8, color: 0x5a4a3a, label: 'Gate Guard', lines: ['Gate Guard: The Pyeongseong checkpoint is just ahead. Have your 마패 ready.'] },
   ],
   sideExit: { col: 34, scene: 'WonsanBeachScene', label: 'Kalma Beach', icon: '🏖' },
+  // A dedicated two-tile avenue branches north from the main east-west road to
+  // the Pyeongseong gate, with a sign at the junction so it reads at a glance.
+  accessRoads: [
+    { fromCol: 37, fromRow: 6, toCol: 37, toRow: 9, width: 2, label: '🛡 평성 관문 ↑' },
+  ],
   trainers: [
     { key: 'wonsan-disciple-1', name: 'Disciple Baekho', col: 5, row: 13, color: 0xcc7a3a, label: 'Disciple\n① Pier',
       line: 'Master Haegang sent you? Then you\'ll start with me — down here by the pier. Come on!',

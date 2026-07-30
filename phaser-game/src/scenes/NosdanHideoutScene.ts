@@ -94,10 +94,13 @@ const FLOORS: FloorDef[] = [
 ];
 
 export class NosdanHideoutScene extends Phaser.Scene {
-  // A top-down warp-pad puzzle interior. The 3D mirror only raised its dark wall
-  // tiles into blocks that hid the exit and boxed the player in, so render it as
-  // pure 2D — exactly the authored building interior (like the department store).
-  public disable3D = true;
+  // Keep the authored warp-pad puzzle in 3D, but leave its dark wall painting
+  // flat so it cannot hide the player. OverworldMirror now also rebinds the
+  // protagonist whenever a floor restart replaces playerG.
+  public interior3D = true;
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+  public clearSight3D = true;
 
   private map!: Tile[][];
   private def!: FloorDef;

@@ -366,8 +366,8 @@ function foothills(): Tile[][] {
   const { m, fill } = grid();
   fill(0, ROWS, 10, 14, T.PATH);
   fill(0, ROWS, 0, 3, T.ROCK); fill(0, ROWS, 21, COLS, T.ROCK);
-  fill(0, 3, 4, 8, T.ROCK); fill(0, 3, 16, 20, T.ROCK);   // rocky face flanking the cave mouth
-  fill(0, 4, 9, 15, T.CAVE);                               // the cave mouth (walkable) at the top
+  fill(0, 3, 4, 7, T.ROCK); fill(0, 3, 18, 20, T.ROCK);   // rocky face pulled back from the cave mouth
+  fill(0, 4, 7, 18, T.CAVE);                               // wide walkable cave mouth = clear north exit
   fill(9, 15, 4, 9, T.TALLGRASS); fill(16, 22, 14, 20, T.TALLGRASS);
   fill(6, 21, 18, 19, T.STREAM);                           // a torrent tumbling down the east flank
   for (const [r, c] of [[7, 6], [13, 16], [20, 6], [11, 17]] as [number, number][]) m[r][c] = T.ROCK;

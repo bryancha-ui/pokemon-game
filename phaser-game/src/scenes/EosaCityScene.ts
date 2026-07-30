@@ -32,7 +32,15 @@ export interface EosaCity {
   landmarks?: EosaLandmark[]; // extra decorative structures (docks, lighthouse, monuments…)
   buildingModels?: string[];  // named 3D models to cycle for this city's generic building landmarks (else free CC0 assets) — e.g. Sinuiju reuses the snowy Seorae models
   sideExit?: { col: number; scene: string; label: string; icon?: string; road?: boolean };   // a path down the south edge to another map (beach, mine…)
+  accessRoads?: EosaAccessRoad[]; // authored spurs from the main street to remote landmarks
   prev?: Exit; next?: Exit;   // south / north neighbours on the circuit
+}
+
+export interface EosaAccessRoad {
+  fromCol: number; fromRow: number;
+  toCol: number; toRow: number;
+  width?: number;
+  label?: string;
 }
 
 // Some Chiefs let you earn the 마패 by defeating a specific foe — a captured 노스단
@@ -197,12 +205,14 @@ export abstract class EosaCityScene extends Phaser.Scene {
     this.carveWater();
     this.carveSidePath();
     this.applyLandmarkSolids();
+    this.carveAccessRoads();
     this.drawMap();
     this.drawLandmarks();
     this.drawWhirlpools();
     this.drawTrainers();
     this.drawNpcs();
     this.drawSideSign();
+    this.drawAccessRoadSigns();
     this.spawnThreat();
     this.createPlayer();
     this.cameras.main.setBounds(0, 0, this.cols * TILE, this.rows * TILE);
@@ -521,6 +531,24 @@ export abstract class EosaCityScene extends Phaser.Scene {
         if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) this.map[r][c] = tile;
   }
 
+  /** Carve a clear L-shaped connector from a remote landmark to the city's
+   *  established road grid. Width is measured eastward from the authored col. */
+  private carveAccessRoads() {
+    for (const p of this.cfg.accessRoads ?? []) {
+      const width = Math.max(1, Math.floor(p.width ?? 1));
+      const paint = (col: number, row: number) => {
+        for (let dc = 0; dc < width; dc++) {
+          const c = col + dc;
+          if (row >= 0 && row < this.rows && c >= 0 && c < this.cols) this.map[row][c] = T.ROAD;
+        }
+      };
+      const rStep = p.toRow >= p.fromRow ? 1 : -1;
+      for (let r = p.fromRow; r !== p.toRow + rStep; r += rStep) paint(p.fromCol, r);
+      const cStep = p.toCol >= p.fromCol ? 1 : -1;
+      for (let c = p.fromCol; c !== p.toCol + cStep; c += cStep) paint(c, p.toRow);
+    }
+  }
+
   /** Fill solid landmark footprints into the map so the player can't walk through them. */
   private applyLandmarkSolids() {
     for (const lm of this.cfg.landmarks ?? []) {
@@ -536,6 +564,15 @@ export abstract class EosaCityScene extends Phaser.Scene {
     this.add.text(be.col * TILE + 16, 11 * TILE + 16, (be.icon ?? '🏖') + ' ' + be.label + ' ↓', {
       fontSize: '9px', color: '#fff', backgroundColor: '#0a3a5acc', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(7);
+  }
+
+  private drawAccessRoadSigns() {
+    for (const p of this.cfg.accessRoads ?? []) {
+      if (!p.label) continue;
+      this.add.text((p.toCol + (p.width ?? 1) / 2) * TILE, (p.toRow + 0.72) * TILE, tr(p.label), {
+        fontSize: '10px', color: '#ffe9a8', backgroundColor: '#182238dd', padding: { x: 5, y: 2 },
+      }).setOrigin(0.5).setDepth(7);
+    }
   }
 
   private drawLandmarks() {

@@ -104,20 +104,22 @@ const TAEWANG: Member = {
 };
 
 export class NorthernColiseumScene extends Phaser.Scene {
-  // The league hall's near-black walls/banners otherwise extrude into tall blocks
-  // that hide the player and the barriers ahead. Cap wall/floor heights and erase
-  // any building-classified dark blocks so the gauntlet stays clear to see.
+  // This is an authored interior: retain the painted floor but never raise its
+  // near-black perimeter into camera-blocking terrain.
+  public interior3D = true;
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
+  public clearSight3D = true;
 
   private map!: Tile[][];
+  private floor = 1;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private px = 9 * TILE + 16;
-  private py = 31 * TILE + 16;
+  private px = MEMBER_COL * TILE + 16;
+  private py = 15 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private spawnGuard = false;
@@ -139,6 +141,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
 
   private defeated(key: string) { return !!this.registry.get(`trainerDefeated_${key}`); }
   private get taewangBeaten() { return this.defeated('north-taewang'); }
+  private get currentMember(): Member { return this.floor <= MEMBERS.length ? MEMBERS[this.floor - 1] : TAEWANG; }
 
   create() {
 
@@ -156,16 +159,26 @@ export class NorthernColiseumScene extends Phaser.Scene {
       for (const k of ['north-seorak', 'north-hanseol', 'north-cheolgang', 'north-baekho']) {
         this.registry.remove(`trainerDefeated_${k}`);
       }
+      this.registry.set('northLeagueFloor', 1);
       this.registry.remove('northColiseumReturnX'); this.registry.remove('northColiseumReturnY');
     }
 
-    this.px = 9 * TILE + 16; this.py = 31 * TILE + 16;
+    const savedFloor = this.registry.get('northLeagueFloor') as number | undefined;
+    if (savedFloor === undefined) {
+      const firstUnbeaten = MEMBERS.findIndex(m => !this.defeated(m.key));
+      this.floor = firstUnbeaten >= 0 ? firstUnbeaten + 1 : 5;
+    } else {
+      this.floor = Phaser.Math.Clamp(Math.floor(savedFloor), 1, 5);
+    }
+    this.registry.set('northLeagueFloor', this.floor);
+
+    this.px = MEMBER_COL * TILE + 16; this.py = 15 * TILE + 16;
     const rx = this.registry.get('northColiseumReturnX') as number | undefined;
     const ry = this.registry.get('northColiseumReturnY') as number | undefined;
-    if (rx !== undefined) { this.px = rx; this.py = ry as number; }
+    if (rx !== undefined && ry !== undefined && ry < ROWS * TILE) { this.px = rx; this.py = ry; }
     this.registry.remove('northColiseumReturnX'); this.registry.remove('northColiseumReturnY');
 
-    this.map = buildMap();
+    this.map = buildMap(this.floor);
     this.drawMap();
     this.drawMembers();
     this.createPlayer();
@@ -183,56 +196,74 @@ export class NorthernColiseumScene extends Phaser.Scene {
         this.cutsceneActive = true;
         this.dialog.show([
           'Inside, the palace is severe and almost bare — grey granite the height of a canyon, red state banners hanging in the still, cold air, a single gold star burning above the distant throne.',
-          'Four of the Northern Elite guard the way up. Beat each to unseal the next. Every hall restores your team before the match.',
+          'The Northern League rises through five separate storeys. Defeat each master, take the stairs to the chamber above, and climb until you reach Taewang at the summit.',
+          'Every floor restores your team before the match.',
         ], () => { this.cutsceneActive = false; });
       });
     }
   }
 
-  private barrierOpen(row: number): boolean {
-    const key = GATES[row];
-    return !!key && this.defeated(key);
-  }
-
   // ── Map ─────────────────────────────────────────────────────────────────
   private drawMap() {
+    const room = ROOMS[this.floor - 1];
     const g = this.make.graphics({ x: 0, y: 0 });
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const t = this.map[r][c];
-      const open = t === T.BARRIER && this.barrierOpen(r);
-      const draw = open ? T.CARPET : t;
-      g.fillStyle(COLORS[draw], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
-      if (draw === T.FLOOR) { g.fillStyle(0x2c2e34, 0.5); g.fillRect(c*TILE+1, r*TILE+1, TILE-2, TILE-2); }
-      if (draw === T.CARPET) { g.fillStyle(0x8a1218, 0.85); g.fillRect(c*TILE+6, r*TILE, TILE-12, TILE); }
-      if (draw === T.WALL) { g.fillStyle(0x0b0c10); g.fillRect(c*TILE+2, r*TILE+2, TILE-4, TILE-4); g.fillStyle(0x1c1d24); g.fillRect(c*TILE+5, r*TILE+3, TILE-10, TILE-6); }
-      if (draw === T.BANNER) { g.fillStyle(0x7c1414); g.fillRect(c*TILE+8, r*TILE, TILE-16, TILE); }
-      if (draw === T.DAIS) { g.fillStyle(0x565a63, 0.85); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
-      if (t === T.BARRIER && !open) { g.fillStyle(0xa8adba, 0.55); for (let i=0;i<4;i++) g.fillRect(c*TILE+3+i*8, r*TILE+2, 3, TILE-4); }
-      if (draw === T.THRONE) { g.fillStyle(0xffd76a, 0.7); g.fillRect(c*TILE+6, r*TILE+4, TILE-12, TILE-8); }
+      const base = t === T.FLOOR ? room.floor : t === T.DAIS ? room.dais : COLORS[t];
+      g.fillStyle(base, 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
+      if (t === T.FLOOR) { g.fillStyle(room.accent, 0.08); g.fillRect(c*TILE+2, r*TILE+2, TILE-4, TILE-4); }
+      if (t === T.CARPET) { g.fillStyle(room.accent, 0.18); g.fillRect(c*TILE+7, r*TILE, TILE-14, TILE); }
+      if (t === T.WALL) { g.fillStyle(0x0b0c10); g.fillRect(c*TILE+2, r*TILE+2, TILE-4, TILE-4); g.fillStyle(0x1c1d24); g.fillRect(c*TILE+5, r*TILE+3, TILE-10, TILE-6); }
+      if (t === T.BANNER) { g.fillStyle(room.accent, 0.75); g.fillRect(c*TILE+8, r*TILE, TILE-16, TILE); }
+      if (t === T.DAIS) { g.fillStyle(room.accent, 0.15); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
+      if (t === T.THRONE) { g.fillStyle(0xffd76a, 0.75); g.fillRect(c*TILE+6, r*TILE+4, TILE-12, TILE-8); }
+      if (t === T.STAIRS) {
+        g.fillStyle(this.defeated(this.currentMember.key) ? 0xe4e7ef : 0x5a3034, 0.9);
+        for (let i = 0; i < 4; i++) g.fillRect(c*TILE+3, r*TILE+4+i*7, TILE-6, 4);
+      }
     }
     const key = '__northMap__';
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    for (const r of [10, 16, 21, 26]) for (const c of [5, 12])
-      this.add.text(c * TILE + 16, r * TILE + 16, '★', { fontSize: '12px', color: '#ffe14a' }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 1.4 * TILE, '★', { fontSize: '44px', color: '#ffe14a', stroke: '#7a5a00', strokeThickness: 4 }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 3.0 * TILE, tr('👑 Taewang\'s Throne'), { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 32.4 * TILE, tr('↓ Back to the plaza'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    // Each storey has its own identity and material language.
+    if (this.floor === 1) {
+      for (const x of [5, 13]) this.add.rectangle(x*TILE+16, 7*TILE+16, 28, 22, room.accent, 0.65).setDepth(3);
+    } else if (this.floor === 2) {
+      for (const x of [5, 13]) this.add.triangle(x*TILE+16, 7*TILE+16, 0, 25, 14, 0, 28, 25, room.accent, 0.7).setDepth(3);
+    } else if (this.floor === 3) {
+      for (const x of [5, 13]) this.add.rectangle(x*TILE+16, 7*TILE+16, 26, 34, room.accent, 0.55).setStrokeStyle(3, 0x363a40).setDepth(3);
+    } else if (this.floor === 4) {
+      for (const x of [5, 13]) this.add.text(x*TILE+16, 7*TILE+16, '虎', { fontSize: '25px', color: '#e8d5ff', stroke: '#2a1838', strokeThickness: 4 }).setOrigin(0.5).setDepth(4);
+    } else {
+      this.add.text(MEMBER_COL*TILE+16, 1.5*TILE, '★', { fontSize: '48px', color: '#ffe14a', stroke: '#7a5a00', strokeThickness: 4 }).setOrigin(0.5).setDepth(5);
+    }
+    this.add.text(MEMBER_COL*TILE+16, 3.15*TILE, `${this.floor}F · ${room.ko}\n${room.title}`, {
+      fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 5, y: 3 }, align: 'center',
+    }).setOrigin(0.5).setDepth(5);
+    if (this.floor < 5) {
+      const state = this.defeated(this.currentMember.key) ? `↑ ${this.floor + 1}F` : '🔒 승리 후 계단 개방';
+      this.add.text(STAIR_COL*TILE+16, STAIR_ROW*TILE-3, tr(state), {
+        fontSize: '9px', color: this.defeated(this.currentMember.key) ? '#fff' : '#ff9a9a',
+        backgroundColor: '#00000099', padding: { x: 3, y: 2 },
+      }).setOrigin(0.5, 1).setDepth(5);
+    }
+    if (this.floor === 1) this.add.text(MEMBER_COL*TILE+16, (ROWS-0.6)*TILE, tr('↓ Back to the plaza'), {
+      fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 },
+    }).setOrigin(0.5).setDepth(5);
   }
 
   private drawMembers() {
-    for (const m of [...MEMBERS, TAEWANG]) {
-      if (this.defeated(m.key)) continue;
-      const g = this.add.graphics().setDepth(8);
-      drawNpcBody(g, m.color);
-      g.setPosition(m.col * TILE + 16, m.row * TILE + 16);
-      const label = m.type === 'Champion' ? '👑 Taewang' : `${m.name} — ${m.type}`;
-      this.add.text(m.col * TILE + 16, m.row * TILE - 16, label, {
-        fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
-      }).setOrigin(0.5).setDepth(9);
-    }
+    const m = this.currentMember;
+    if (this.defeated(m.key)) return;
+    const g = this.add.graphics().setDepth(8);
+    drawNpcBody(g, m.color);
+    g.setPosition(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE + 16);
+    const label = m.type === 'Champion' ? '👑 Taewang' : `${m.name} — ${m.type}`;
+    this.add.text(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE - 16, label, {
+      fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
+    }).setOrigin(0.5).setDepth(9);
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────
@@ -256,7 +287,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏯 Northern League — 북방 리그'), {
+    this.add.text(this.scale.width / 2, 22, tr(`🏯 Northern League — ${this.floor}F · ${ROOMS[this.floor - 1].ko}`), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
@@ -286,6 +317,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
     } else this.walkFrame = 0;
     this.drawChar();
     this.checkMembers();
+    this.checkStairs();
     this.checkExit();
   }
   private collides(x: number, y: number): boolean {
@@ -293,37 +325,45 @@ export class NorthernColiseumScene extends Phaser.Scene {
     return [[x-hw,y-4],[x+hw,y-4],[x-hw,y+8],[x+hw,y+8]].some(([cx, cy]) => {
       const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return true;
-      const t = this.map[row][col];
-      if (t === T.BARRIER) return !this.barrierOpen(row);
-      return SOLID.has(t);
+      return SOLID.has(this.map[row][col]);
     });
   }
 
   private checkMembers() {
-    for (const m of [...MEMBERS, TAEWANG]) {
-      if (this.defeated(m.key)) continue;
-      const wx = m.col * TILE + 16, wy = m.row * TILE + 16;
-      if (Math.hypot(this.px - wx, this.py - wy) < TILE * 1.6) {
-        this.cutsceneActive = true;
-        PartySystem.healAll(this.registry);
-        this.dialog.show(['(The hall\'s healing machine restores your team to full health.)', ...m.intro], () => {
-          this.registry.set('trainerName', m.name);
-          this.registry.set('trainerKey', m.key);
-          this.registry.set('trainerPokemon', JSON.stringify(m.pokemon));
-          this.registry.set('trainerExpPool', m.expPool);
-          this.registry.set('trainerReturnScene', 'NorthernColiseumScene');
-          this.registry.set('northColiseumReturnX', m.col * TILE + 16);
-          this.registry.set('northColiseumReturnY', (m.row + 1) * TILE + 16);
-          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
-        });
-        return;
-      }
-    }
+    const m = this.currentMember;
+    if (this.defeated(m.key)) return;
+    const wx = MEMBER_COL * TILE + 16, wy = MEMBER_ROW * TILE + 16;
+    if (Math.hypot(this.px - wx, this.py - wy) >= TILE * 1.6) return;
+    this.cutsceneActive = true;
+    PartySystem.healAll(this.registry);
+    this.dialog.show(['(The floor\'s healing machine restores your team to full health.)', ...m.intro], () => {
+      this.registry.set('trainerName', m.name);
+      this.registry.set('trainerKey', m.key);
+      this.registry.set('trainerPokemon', JSON.stringify(m.pokemon));
+      this.registry.set('trainerExpPool', m.expPool);
+      this.registry.set('trainerReturnScene', 'NorthernColiseumScene');
+      this.registry.set('northLeagueFloor', this.floor);
+      this.registry.set('northColiseumReturnX', MEMBER_COL * TILE + 16);
+      this.registry.set('northColiseumReturnY', (MEMBER_ROW + 2) * TILE + 16);
+      this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
+    });
+  }
+
+  private checkStairs() {
+    if (this.floor >= 5 || !this.defeated(this.currentMember.key)) return;
+    const sx = STAIR_COL * TILE + 16, sy = STAIR_ROW * TILE + 16;
+    if (Math.hypot(this.px - sx, this.py - sy) >= TILE * 0.95) return;
+    this.cutsceneActive = true;
+    this.floor++;
+    this.registry.set('northLeagueFloor', this.floor);
+    this.registry.remove('northColiseumReturnX');
+    this.registry.remove('northColiseumReturnY');
+    this.cameras.main.fadeOut(350, 0, 0, 0, () => this.scene.restart());
   }
 
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
-    if (this.py > (ROWS - 1) * TILE) {
+    if (this.floor === 1 && this.py > (ROWS - 1) * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('northPlazaReturnX', 10 * TILE + 16);
@@ -397,18 +437,21 @@ export class NorthernColiseumScene extends Phaser.Scene {
   }
 }
 
-function buildMap(): Tile[][] {
+function buildMap(floor: number): Tile[][] {
   const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.WALL) as Tile[]);
   const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
   };
-  fill(2, ROWS, 5, 13, T.FLOOR);          // hall corridor (entrance → throne)
-  fill(0, 2, 7, 11, T.FLOOR);             // behind the throne
-  fill(ROWS - 2, ROWS, 7, 11, T.FLOOR);   // entry from the plaza
-  for (const r of [29, 24, 19, 14, 6]) fill(r - 1, r + 2, 7, 11, T.DAIS);
-  fill(4, 7, 6, 12, T.THRONE);
-  for (const r of [10, 16, 21, 26]) { m[r][5] = T.BANNER; m[r][12] = T.BANNER; }
-  for (const r of [27, 22, 17, 12]) fill(r, r + 1, 5, 13, T.BARRIER);
+  // A complete, self-contained chamber on every storey.
+  fill(1, ROWS - 1, 3, COLS - 3, T.FLOOR);
+  fill(2, ROWS - 1, 8, 10, T.CARPET);
+  fill(4, 8, 6, 12, floor === 5 ? T.THRONE : T.DAIS);
+  for (const r of [4, 7, 11]) { m[r][3] = T.BANNER; m[r][COLS - 4] = T.BANNER; }
+  // The stairs are visible from the room but only trigger after its master falls.
+  fill(1, 3, 8, 10, T.STAIRS);
+  // Only the first floor connects back to the exterior plaza; all upper floors
+  // are sealed chambers reached solely by ascending the previous staircase.
+  if (floor === 1) fill(ROWS - 1, ROWS, 8, 10, T.FLOOR);
   return m;
 }

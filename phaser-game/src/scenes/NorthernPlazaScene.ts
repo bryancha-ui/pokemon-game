@@ -354,9 +354,10 @@ export class NorthernPlazaScene extends Phaser.Scene {
       for (const k of ['north-seorak', 'north-hanseol', 'north-cheolgang', 'north-baekho', 'north-taewang']) {
         this.registry.remove(`trainerDefeated_${k}`);
       }
+      this.registry.set('northLeagueFloor', 1);
+      this.registry.remove('northColiseumReturnX');
+      this.registry.remove('northColiseumReturnY');
       this.cameras.main.fadeOut(500, 0, 0, 0, () => {
-        this.registry.set('northColiseumReturnX', 9 * 32 + 16);
-        this.registry.set('northColiseumReturnY', 31 * 32 + 16);
         this.scene.start('NorthernColiseumScene');
       });
       return;
@@ -382,9 +383,10 @@ export class NorthernPlazaScene extends Phaser.Scene {
       for (const k of ['north-seorak', 'north-hanseol', 'north-cheolgang', 'north-baekho', 'north-taewang']) {
         this.registry.remove(`trainerDefeated_${k}`);
       }
+      this.registry.set('northLeagueFloor', 1);
+      this.registry.remove('northColiseumReturnX');
+      this.registry.remove('northColiseumReturnY');
       this.cameras.main.fadeOut(500, 0, 0, 0, () => {
-        this.registry.set('northColiseumReturnX', 9 * 32 + 16);
-        this.registry.set('northColiseumReturnY', 31 * 32 + 16);
         this.scene.start('NorthernColiseumScene');
       });
     });

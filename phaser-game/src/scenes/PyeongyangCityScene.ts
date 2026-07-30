@@ -42,7 +42,7 @@ const CITY_BUILDINGS: CityBuilding[] = [
 
 // City Wardens standing formal watch across the plaza.
 const AGENTS = [
-  { col: 8,  row: 24 }, { col: 23, row: 24 }, { col: 7, row: 14 }, { col: 24, row: 14 }, { col: 15, row: 18 },
+  { col: 8,  row: 28 }, { col: 23, row: 28 }, { col: 7, row: 14 }, { col: 24, row: 14 }, { col: 15, row: 18 },
   { col: 12, row: 28 }, { col: 19, row: 28 },
 ];
 
@@ -194,6 +194,12 @@ export class PyeongyangCityScene extends Phaser.Scene {
 
   /** The great stone obelisk, the bronze statue, and city labels. */
   private drawMonuments() {
+    for (const b of CITY_BUILDINGS) {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y + b.h + 0.35) * TILE, tr(b.label), {
+        fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
+      }).setOrigin(0.5).setDepth(5);
+    }
+
     // Central obelisk — a tall grey-granite monument crowned with a gold finial.
     const sx = 10 * TILE + 16, sBase = 16 * TILE;
     const g = this.add.graphics().setDepth(3);
