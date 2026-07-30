@@ -222,9 +222,11 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.updateEnemySprite();
 
     // Jin stands where his Pokémon will appear, then steps aside on reveal.
+    // Tagged no3d so the leader portrait stays a flat 2D intro image and is
+    // never adopted onto the 3D battle stage as a stray standing relief.
     const jin = portraitFor('capitol-jin');
     if (jin && this.textures.exists(jin.key)) {
-      this.leaderPortrait = this.add.image(560, 150, jin.key).setDepth(6);
+      this.leaderPortrait = this.add.image(560, 150, jin.key).setDepth(6).setData('no3d', true);
       fitPortrait(this.leaderPortrait);
     }
   }
