@@ -119,6 +119,10 @@ export class PokemonLeagueScene extends Phaser.Scene {
   private py = 31 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
+  // Ceremonial gate animation: an open (master-defeated) barrier shows a closed
+  // gate until the player climbs up to it, then the doors sweep open with light.
+  private doorRevealed = new Set<number>();
+  private doorOverlays = new Map<number, Phaser.GameObjects.Graphics[]>();
   private readonly SPEED = 120;
 
   constructor() { super('PokemonLeagueScene'); }
@@ -167,6 +171,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
 
     this.map = buildMap();
     this.drawMap();
+    this.drawDoors();
     this.drawMembers();
     this.createPlayer();
     this.setupCamera();
@@ -295,7 +300,47 @@ export class PokemonLeagueScene extends Phaser.Scene {
     } else this.walkFrame = 0;
     this.drawChar();
     this.checkMembers();
+    this.checkDoors();
     this.checkExit();
+  }
+
+  // ── Ceremonial gates ──
+  private drawDoors() {
+    for (const m of MEMBERS) {
+      const br = m.barrierRow;
+      if (br < 0 || !this.barrierOpen(br) || this.doorRevealed.has(br)) continue;
+      const y = br * TILE;
+      const panel = (x0: number): Phaser.GameObjects.Graphics => {
+        const g = this.add.graphics().setDepth(6);
+        g.fillStyle(0x2a3660, 1); g.fillRect(x0, y, 4 * TILE, TILE);
+        g.fillStyle(0x88b0ff, 0.55); for (let i = 0; i < 4; i++) g.fillRect(x0 + 6 + i * TILE, y + 3, 4, TILE - 6);
+        g.lineStyle(2, 0xbcd4ff, 0.85); g.strokeRect(x0, y, 4 * TILE, TILE);
+        return g;
+      };
+      this.doorOverlays.set(br, [panel(5 * TILE), panel(9 * TILE)]);
+    }
+  }
+
+  private checkDoors() {
+    const prow = Math.floor(this.py / TILE);
+    for (const m of MEMBERS) {
+      const br = m.barrierRow;
+      if (br < 0 || this.doorRevealed.has(br) || !this.barrierOpen(br)) continue;
+      if (prow === br + 1) this.openDoor(br);
+    }
+  }
+
+  private openDoor(br: number) {
+    if (this.doorRevealed.has(br)) return;
+    this.doorRevealed.add(br);                       // collision opens immediately
+    const gs = this.doorOverlays.get(br);
+    const flash = this.add.rectangle(9 * TILE, br * TILE + TILE / 2, 8 * TILE, TILE * 1.3, 0xcfe0ff, 0.5).setDepth(7);
+    this.tweens.add({ targets: flash, alpha: 0, scaleY: 1.5, duration: 460, onComplete: () => flash.destroy() });
+    if (gs) {
+      this.tweens.add({ targets: gs[0], x: -4 * TILE, alpha: 0.15, duration: 420, ease: 'Cubic.easeIn' });
+      this.tweens.add({ targets: gs[1], x: 4 * TILE, alpha: 0.15, duration: 420, ease: 'Cubic.easeIn',
+        onComplete: () => { gs.forEach(g => g.destroy()); this.doorOverlays.delete(br); } });
+    }
   }
   private collides(x: number, y: number): boolean {
     const hw = 6;
@@ -303,7 +348,9 @@ export class PokemonLeagueScene extends Phaser.Scene {
       const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return true;
       const t = this.map[row][col];
-      if (t === T.BARRIER) return !this.barrierOpen(row);
+      // A barrier blocks until its master falls AND the player has walked up to
+      // it so the door animates open (see checkDoors/openDoor).
+      if (t === T.BARRIER) return !this.barrierOpen(row) || !this.doorRevealed.has(row);
       return SOLID.has(t);
     });
   }
