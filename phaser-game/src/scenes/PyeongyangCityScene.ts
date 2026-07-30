@@ -60,6 +60,15 @@ const PYEONGSEONG_CHIEF = {
 
 export class PyeongyangCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  // The four corner wall blocks become real 3D pavilion buildings (free CC0
+  // models) instead of stark grey wall masses; marking them as plots also stops
+  // the wall extrusion under each.
+  public buildingPlots = [
+    { x: 4,  y: 4,  w: 6, h: 6, model: 'cityfree_a' },
+    { x: 22, y: 4,  w: 6, h: 6, model: 'cityfree_b' },
+    { x: 4,  y: 22, w: 6, h: 6, model: 'cityfree_c' },
+    { x: 22, y: 22, w: 6, h: 6, model: 'cityfree_d' },
+  ];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

@@ -41,6 +41,15 @@ const RIVAL_TEAM = [
 
 export class NorthernPlazaScene extends Phaser.Scene {
   private map!: Tile[][];
+  // Give the forecourt real 3D buildings: the grand hall gets the League model,
+  // the Center/Mart kiosks reuse the Pokémon Center & mart models. Only these
+  // named plots rise (their flat facades are hidden).
+  public buildingPlots = [
+    { x: 3,  y: 0,  w: 14, h: 8, model: 'league' },
+    { x: 3,  y: 14, w: 3,  h: 3, model: 'pokecenter' },
+    { x: 15, y: 14, w: 3,  h: 3, model: 'mart' },
+  ];
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
