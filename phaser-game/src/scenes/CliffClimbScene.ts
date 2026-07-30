@@ -43,6 +43,11 @@ export const CLIFF_ENCOUNTERS: EncounterEntry[] = [
  * exits, and may override hooks for special events (e.g. Commander Ryeo).
  */
 export abstract class CliffClimbScene extends Phaser.Scene {
+  // The cliff climbs are open rock faces — no buildings. Only named-model plots
+  // (there are none) rise in 3D, so every auto-detected building is erased to
+  // clean ground instead of extruding stray facades on the cliffs.
+  public onlyNamedBuildings = true;
+
   protected abstract sceneKey: string;
   protected abstract title: string;
   protected abstract encounters: EncounterEntry[];
