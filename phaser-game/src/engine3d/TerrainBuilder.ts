@@ -584,7 +584,7 @@ export function buildTerrain(
         // Inside rooms and caves a static, angled camera can't see over tall
         // walls, so the player vanishes behind them. Keep interior/cave walls
         // low (a diorama look) so the character is always visible.
-        if (interior || cavey) h = Math.min(h, isEdge ? 1.0 : 0.7);
+        if (interior || classifyCavey) h = Math.min(h, isEdge ? 1.0 : 0.7);
         walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
         c = run;
         continue;

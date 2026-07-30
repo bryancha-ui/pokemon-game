@@ -67,6 +67,9 @@ interface MineTrainer {
 
 export class DolmoeMineScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** A mine: force cave-floor treatment so the dark floor stays walkable ground
+   *  and its walls stay low, instead of tall tiles that hide the player. */
+  public caveFloorHint = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
