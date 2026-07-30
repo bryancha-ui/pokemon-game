@@ -122,6 +122,9 @@ function buildMap(cols: number, rows: number): Tile[][] {
 
 export abstract class EosaCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** No custom models for the 어사대 provincial cities — use the free CC0 city
+   *  buildings on their detected plots (inherited by every Eosa city). */
+  public freeBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
