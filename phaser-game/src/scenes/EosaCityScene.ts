@@ -30,6 +30,7 @@ export interface EosaCity {
   npcs?: EosaNpc[];           // ambient townsfolk who chat when talked to (fills out a town)
   size?: { cols: number; rows: number };   // enlarge the city beyond the 28×20 default
   landmarks?: EosaLandmark[]; // extra decorative structures (docks, lighthouse, monuments…)
+  buildingModels?: string[];  // named 3D models to cycle for this city's generic building landmarks (else free CC0 assets) — e.g. Sinuiju reuses the snowy Seorae models
   sideExit?: { col: number; scene: string; label: string; icon?: string; road?: boolean };   // a path down the south edge to another map (beach, mine…)
   prev?: Exit; next?: Exit;   // south / north neighbours on the circuit
 }
@@ -122,9 +123,38 @@ function buildMap(cols: number, rows: number): Tile[][] {
 
 export abstract class EosaCityScene extends Phaser.Scene {
   private map!: Tile[][];
-  /** No custom models for the 어사대 provincial cities — use the free CC0 city
-   *  buildings on their detected plots (inherited by every Eosa city). */
+  /** The three standard buildings reuse the custom Higgsfield models (Pokémon
+   *  Center + Poké Mart), the 어사대 Hall uses the palace model, and every city
+   *  landmark (fish market, tavern, lighthouse, monument…) rises as a 3D
+   *  building too — lighthouses as towers, the rest as free CC0 city buildings.
+   *  Non-structural landmarks (rail lines, cave hideouts) are left flat. */
+  public get buildingPlots(): { x: number; y: number; w: number; h: number; model?: string }[] {
+    const std = BUILDINGS.map((b, i) => ({
+      x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'palace', 'mart'][i],
+    }));
+    const MODEL: Record<string, string | undefined> = { lighthouse: 'tower' };
+    const SKIP = new Set(['rail', 'hideout']);
+    const pool = this.cfg.buildingModels;
+    let bi = 0;
+    const marks = (this.cfg.landmarks ?? [])
+      .filter(l => l.w > 0 && l.h > 0 && !SKIP.has(l.kind ?? 'building'))
+      .map(l => {
+        const kind = l.kind ?? 'building';
+        // Cities can opt their generic buildings into a named-model pool (e.g.
+        // Sinuiju's snowy Seorae models); otherwise they fall back to free assets.
+        let model = MODEL[kind];
+        if (!model && pool && (kind === 'building' || kind === 'monument' || kind === 'pavilion')) {
+          model = pool[bi++ % pool.length];
+        }
+        return { x: l.col, y: l.row, w: l.w, h: l.h, model };
+      });
+    return [...std, ...marks];
+  }
+  /** Landmark plots without a named model fall back to free CC0 city buildings. */
   public freeBuildings = true;
+  /** Coastal/industrial northern towns have tall rock/dock tiles that otherwise
+   *  bury the player — cap wall height (daylight unchanged) so the view stays clear. */
+  public caveFloorHint = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

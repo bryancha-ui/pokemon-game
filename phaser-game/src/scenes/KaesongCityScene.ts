@@ -74,9 +74,14 @@ function buildMap(): Tile[][] {
 
 export class KaesongCityScene extends Phaser.Scene {
   private map!: Tile[][];
-  /** No custom models authored for the northern city yet — use the free CC0
-   *  city-building GLBs on its detected building plots. */
-  public freeBuildings = true;
+  // Kaesong's real buildings get named 3D models — Poké Mart + Pokémon Center
+  // reuse the custom Higgsfield models, the 어사대 Hall uses the palace model.
+  // onlyNamedBuildings erases every OTHER detected block (the Songak Mountain
+  // backdrop shapes) instead of extruding stray free-asset buildings.
+  public buildingPlots = BUILDINGS.map((b, i) => ({
+    x: b.x, y: b.y, w: b.w, h: b.h, model: ['mart', 'palace', 'pokecenter'][i],
+  }));
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

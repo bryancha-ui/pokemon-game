@@ -215,6 +215,8 @@ const CHONGJIN: EosaCity = {
 const SINUIJU: EosaCity = {
   key: 'SinuijuCityScene', name: 'Sinuiju (신의주)', mapaeKey: 'sinuiju', bgm: 'sinuiju',
   chiefKey: 'eosa-sinuiju', chiefName: '어사대장 Amrok',
+  // The frozen border city reuses the snowy Seorae Town building models.
+  buildingModels: ['frostbell', 'alpinelodge', 'snowmeltbaths', 'skateshop'],
   ground: 0x8aa0b0, accent: 0xbfe0f0, hallRoof: 0x3a6a9a, robe: 0x3a5a8a,
   team: [{ id: 131, level: 73 }, { id: 471, level: 73 }, { id: 230, level: 74 }, { id: 373, level: 74 }, { id: 149, level: 75 }],
   expPool: 4700,

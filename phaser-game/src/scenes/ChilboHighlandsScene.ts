@@ -72,6 +72,9 @@ function buildMap(): Tile[][] {
 interface Trainer { key: string; name: string; col: number; row: number; color: number; label: string; line: string; pokemon: string; expPool: number; }
 
 export class ChilboHighlandsScene extends Phaser.Scene {
+  // Open highlands — no buildings. Erase every auto-detected building shape.
+  public onlyNamedBuildings = true;
+
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

@@ -68,6 +68,10 @@ function buildMap(): Tile[][] {
 interface Trainer { key: string; name: string; col: number; row: number; color: number; label: string; line: string; pokemon: string; expPool: number; }
 
 export class AhobiryongPassScene extends Phaser.Scene {
+  // A mountain pass has no buildings — erase every auto-detected building shape
+  // (only named-model plots, of which there are none, would rise in 3D).
+  public onlyNamedBuildings = true;
+
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

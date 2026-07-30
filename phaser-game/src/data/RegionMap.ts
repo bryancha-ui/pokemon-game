@@ -130,9 +130,9 @@ export const REGION_NODES: RegionNode[] = [
     nx: 0.90, ny: 0.80, kind: 'route', fly: false, region: 'south', returnKey: 'ferry',
     scenes: ['FerryScene'] },
 
-  { id: 'jeju', scene: 'JejuPortScene', name: 'Jeju Port', kr: '제주 포구',
-    nx: 0.94, ny: 0.93, kind: 'city', fly: true, region: 'south', returnKey: 'jejuPort',
-    scenes: ['JejuPortScene', 'JejuPCScene', 'JejuVentScene'] },
+  { id: 'jeju', scene: 'JejuCityScene', name: 'Jeju City', kr: '제주시',
+    nx: 0.94, ny: 0.93, kind: 'city', fly: true, region: 'south', returnKey: 'jejuCity',
+    scenes: ['JejuCityScene', 'JejuPortScene', 'JejuPCScene', 'JejuVentScene'] },
 
   { id: 'route6', scene: 'Route6Scene', name: 'Route 6', kr: '6번 도로',
     nx: 0.62, ny: 0.50, kind: 'route', fly: false, region: 'south', returnKey: 'route6',
