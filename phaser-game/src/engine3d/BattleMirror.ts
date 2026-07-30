@@ -236,6 +236,14 @@ export class BattleMirror {
     // Graphics — hide it so the 3D arena shows. Small graphics (HP accents,
     // the thrown ball, move FX) stay 2D on top.
     if (obj instanceof Phaser.GameObjects.Graphics) {
+      // Custom battle scenes can identify their backdrop explicitly. This is
+      // authoritative and avoids relying on command-buffer measurement for
+      // complex art such as Jin's gradient-filled night skyline.
+      if (obj.getData('pk3dBackdrop')) {
+        this.hiddenBackdrops.add(obj);
+        this.scene.cameras.main.ignore(obj);
+        return;
+      }
       const buf = (obj as unknown as { commandBuffer: unknown[] }).commandBuffer;
       if (buf?.length) {
         const m = measureCommands(buf);

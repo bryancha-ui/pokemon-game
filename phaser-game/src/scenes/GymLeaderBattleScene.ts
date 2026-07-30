@@ -159,7 +159,9 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   // ── Background ────────────────────────────────────────────────────────────
 
   private drawBackground() {
-    const g = this.add.graphics();
+    // Explicitly identify this full-screen 2D artwork so BattleMirror always
+    // removes it from the transparent Phaser layer in 3D mode.
+    const g = this.add.graphics().setData('pk3dBackdrop', true);
     // Night city skyline
     g.fillGradientStyle(0x000022, 0x000022, 0x110033, 0x110033, 1);
     g.fillRect(0, 0, this.W, this.H * 0.65);
