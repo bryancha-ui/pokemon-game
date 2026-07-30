@@ -210,6 +210,7 @@ export class OverworldMirror {
       noVehicles?: boolean;
       freeBuildings?: boolean;
       propPlots?: import('./TerrainBuilder').PropPlot[];
+      clearSight3D?: boolean;
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
@@ -217,7 +218,7 @@ export class OverworldMirror {
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
       sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
-      sc.propPlots ?? [],
+      sc.propPlots ?? [], sc.clearSight3D ?? false,
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
@@ -702,7 +703,10 @@ export class OverworldMirror {
       for (const m of ud.fadeMats) {
         const mm = m as THREE.Material & { opacity: number; transparent: boolean; depthWrite: boolean };
         mm.transparent = fade > 0.01;
-        mm.opacity = 1 - fade * 0.82;
+        // Occluders are decorative geometry, while the map/collision remains
+        // underneath. Make a blocking object almost fully transparent so the
+        // player, doors and interaction markers always remain readable.
+        mm.opacity = 1 - fade * 0.94;
         mm.depthWrite = fade < 0.5;
       }
     });

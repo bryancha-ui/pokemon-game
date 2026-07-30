@@ -11,7 +11,7 @@ export interface PropPlot {
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
 }
-import { getProp, hasProps, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
+import { getProp, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
 
 /** Procedural warm-soil texture for the diorama slab sides: layered earth
@@ -241,16 +241,17 @@ export function buildTerrain(
   // clean ground (its flat 2D art still gets erased). Declutters towns whose
   // generic residential blocks looked like stray brick boxes in 3D.
   onlyNamedBuildings = false,
-  // Vehicles the scene pins to an exact tile (e.g. the express bus at its stop),
-  // placed with a specific model instead of the random road scatter.
+  // Vehicles the scene pins to an exact tile (e.g. the express bus at its stop).
+  // Only authored placements are rendered; inferred roadside vehicles could
+  // overlap a walkable lane without matching the scene's collision map.
   placedVehicles: { x: number; y: number; model: string; rot?: number }[] = [],
   // Mixed scenes (an outdoor route with a cave section) that aren't dark enough
   // to auto-detect as a cave, but whose dark walkable floor must NOT extrude
   // into walls that bury the player, set this. Only the classifier's cave-floor
   // rule is affected — lighting stays daylight.
   caveFloorHint = false,
-  // Suppress the random road-scatter of vehicles (buses) — for scenes like the
-  // coastal Route 4 whose flat road tiles otherwise sprout buses.
+  // Suppress even scene-authored vehicles when a map needs a completely clear
+  // route (kept for scene-level control).
   noVehicles = false,
   // Place free CC0 city-building GLBs (KayKit, tagged 'cityfree' in props.json)
   // on every detected building that has no named model, instead of the
@@ -259,6 +260,11 @@ export function buildTerrain(
   // Decorative procedural props (pines, stone lanterns, ice statues) the scene
   // pins to exact tiles — built from primitives, so no assets/credits needed.
   propPlots: PropPlot[] = [],
+  // Some puzzle rooms need their authored tile colours/collision but cannot
+  // tolerate any automatically raised wall/rock/foliage volumes in the camera
+  // lane. Keep the painted ground and authored objects, but leave auto terrain
+  // completely flat so gameplay markers and the player stay visible.
+  clearSight3D = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -630,7 +636,7 @@ export function buildTerrain(
         // walls, so the player vanishes behind them. Keep interior/cave walls
         // low (a diorama look) so the character is always visible.
         if (interior || classifyCavey) h = Math.min(h, isEdge ? 1.0 : 0.7);
-        walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
+        if (!clearSight3D) walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
         c = run;
         continue;
       }
@@ -642,6 +648,7 @@ export function buildTerrain(
         continue;
       }
       const cx = c + 0.5, cz = r + 0.5;
+      if (clearSight3D) { c++; continue; }
       switch (cell) {
         case 'tree': case 'pine':
           if (interior) break;
@@ -773,7 +780,7 @@ export function buildTerrain(
   const pendingVehicles: { group: THREE.Group; def: import('./PropModels').PropDef; scale: number; rot: number }[] = [];
   if (!interior && !noVehicles && placedVehicles.length) {
     // The scene pins its vehicles (e.g. the Kaesong express bus at its stop) —
-    // place those exact models and skip the random road scatter entirely.
+    // place those exact models at their collision-aware authored locations.
     for (const v of placedVehicles) {
       const def = propById(v.model);
       if (!def) continue;
@@ -781,37 +788,7 @@ export function buildTerrain(
       holder.position.set(v.x + 0.5, 0, v.y + 0.5);
       group.add(holder);
       pendingVehicles.push({ group: holder, def, scale: 1.3, rot: v.rot ?? 0 });
-    }
-  } else if (!interior && !noVehicles && hasProps('vehicle')) {
-    const vehicleDefs = propsFor('vehicle');
-    // A road cell is grey/flat with a long horizontal or vertical run — pick a
-    // few well-spaced spots on wide roads so buses sit sensibly on the asphalt.
-    const spots: { x: number; z: number; horiz: boolean }[] = [];
-    const isRoadish = (c: number, r: number) => {
-      if (c < 0 || r < 0 || c >= cols || r >= rows) return false;
-      if (cells[r * cols + c] !== 'flat') return false;
-      const hsl = rgbToHsl(...cellColors[r * cols + c]);
-      // Real asphalt is a mid-grey; the lower bound is raised so a dark cave
-      // floor (kept walkable via caveFloorHint) is never mistaken for a road —
-      // otherwise buses spawned inside Route 1's cave.
-      return hsl.s < 0.18 && hsl.l > 0.32 && hsl.l < 0.55;
-    };
-    for (let r = 2; r < rows - 2 && spots.length < 6; r += 3) {
-      for (let c = 2; c < cols - 2 && spots.length < 6; c += 3) {
-        if (!isRoadish(c, r)) continue;
-        const horiz = isRoadish(c - 1, r) && isRoadish(c + 1, r) && isRoadish(c + 2, r);
-        const vert = isRoadish(c, r - 1) && isRoadish(c, r + 1) && isRoadish(c, r + 2);
-        if (!horiz && !vert) continue;
-        if (spots.some(s => Math.abs(s.x - c) < 8 && Math.abs(s.z - r) < 8)) continue;
-        spots.push({ x: c, z: r, horiz });
-      }
-    }
-    for (const [i, s] of spots.entries()) {
-      const def = pickProp(vehicleDefs, i * 5 + s.x)!;
-      const holder = new THREE.Group();
-      holder.position.set(s.x + 0.5, 0, s.z + 0.5);
-      group.add(holder);
-      pendingVehicles.push({ group: holder, def, scale: 1.1, rot: s.horiz ? Math.PI / 2 : 0 });
+      blockers.push({ node: holder, r: 1.35, fade: 0 });
     }
   }
 
@@ -835,6 +812,7 @@ export function buildTerrain(
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;
     group.add(obj);
+    blockers.push({ node: obj, r: Math.max(0.7, p.scale ?? 1), fade: 0 });
   }
 
   return {

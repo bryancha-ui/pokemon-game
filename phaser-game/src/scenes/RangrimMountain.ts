@@ -550,6 +550,14 @@ export class RangrimCavernScene extends RangrimBaseScene {
   public onlyNamedBuildings = true;
   constructor() { super(CAVERN); }
 }
-export class RangrimAltarScene extends RangrimBaseScene { constructor() { super(ALTAR); } }
+export class RangrimAltarScene extends RangrimBaseScene {
+  // The altar's dark painted rock is collision/layout information, not a set
+  // of foreground towers. Keep it on the ground plane and suppress every
+  // automatically raised tile so the altar, statue and player stay visible.
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+  public clearSight3D = true;
+  constructor() { super(ALTAR); }
+}
 export class RangrimSnowfieldScene extends RangrimBaseScene { constructor() { super(SNOWFIELD); } }
 export class RangrimSummitScene extends RangrimBaseScene { constructor() { super(SUMMIT); } }

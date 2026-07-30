@@ -16,6 +16,8 @@ type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 13, ROWS = 13;
 const SOLID = new Set<Tile>([T.WALL]);
 const BOSS_KEY = 'nosdan-samjiyon-boss';   // a normal-scale trainer battle (no 우두머리 aura / HP buff)
+const ENTRANCE_COL = 6, ENTRANCE_ROW = 11;
+const GATE_RETURN_X = 10 * TILE + 16, GATE_RETURN_Y = 9 * TILE + 16;
 
 interface Foe { key: string; name: string; label: string; col: number; row: number; line: string; pokemon: string; expPool: number; boss?: boolean; }
 interface Warp { col: number; row: number; toCol: number; toRow: number; }
@@ -92,10 +94,10 @@ const FLOORS: FloorDef[] = [
 ];
 
 export class NosdanHideoutScene extends Phaser.Scene {
-  // Keep the hideout clear of view-blocking tiles: cap wall/floor heights and
-  // erase any building-classified dark blocks that would tower over the player.
-  public caveFloorHint = true;
-  public onlyNamedBuildings = true;
+  // A top-down warp-pad puzzle interior. The 3D mirror only raised its dark wall
+  // tiles into blocks that hid the exit and boxed the player in, so render it as
+  // pure 2D — exactly the authored building interior (like the department store).
+  public disable3D = true;
 
   private map!: Tile[][];
   private def!: FloorDef;
@@ -105,8 +107,8 @@ export class NosdanHideoutScene extends Phaser.Scene {
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private px = 7 * TILE + 16;
-  private py = 11 * TILE + 16;   // bottom-centre entrance — a floor tile on all 4 floors
+  private px = ENTRANCE_COL * TILE + 16;
+  private py = ENTRANCE_ROW * TILE + 16;   // bottom-centre entrance
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private spawnGuard = false;
@@ -128,7 +130,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
     const rx = this.registry.get('nosdanReturnX') as number | undefined;
     const ry = this.registry.get('nosdanReturnY') as number | undefined;
     if (rx !== undefined) { this.px = rx; this.py = ry as number; }
-    else { this.px = 7 * TILE + 16; this.py = 11 * TILE + 16; }
+    else { this.px = ENTRANCE_COL * TILE + 16; this.py = ENTRANCE_ROW * TILE + 16; }
     this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
     this.ensureOnFloor();   // never strand the player inside a wall (each floor differs)
 
@@ -175,6 +177,8 @@ export class NosdanHideoutScene extends Phaser.Scene {
     g[1][def.corridorCol] = T.STAIRS;
     for (const [r1, r2, c1, c2] of def.walls) fill(r1, r2, c1, c2, T.WALL); // lower-room maze walls
     for (const w of def.warps) g[w.row][w.col] = T.WARP;
+    // 1F's centred doorway lines up with the centred door on the exterior tower.
+    if (this.floor === 1) g[ROWS - 1][ENTRANCE_COL] = T.FLOOR;
     return g;
   }
 
@@ -197,6 +201,11 @@ export class NosdanHideoutScene extends Phaser.Scene {
     this.add.text(this.def.corridorCol * TILE + 16, 1 * TILE + 16, this.floor < 4 ? '▲' : '★', {
       fontSize: '12px', color: '#1a1a1a', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(3);
+    if (this.floor === 1) {
+      this.add.text(ENTRANCE_COL * TILE + 16, (ROWS - 0.45) * TILE, '▼', {
+        fontSize: '12px', color: '#ff8aa0', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(3);
+    }
   }
 
   private drawFoes() {
@@ -267,6 +276,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
     this.checkFoes();
     this.checkWarp();
     this.checkStairs();
+    this.checkExit();
   }
   private collides(x: number, y: number): boolean {
     const hw = 6;
@@ -321,6 +331,18 @@ export class NosdanHideoutScene extends Phaser.Scene {
     } else {
       this.victory();
     }
+  }
+
+  private checkExit() {
+    if (this.floor !== 1 || this.cutsceneActive || this.spawnGuard) return;
+    const centred = Math.abs(this.px - (ENTRANCE_COL * TILE + 16)) < TILE * 0.75;
+    if (!centred || this.py < (ROWS - 0.6) * TILE) return;
+    this.cutsceneActive = true;
+    this.registry.remove('hideoutFloor');
+    this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
+    this.registry.set('ajitRoadReturnX', GATE_RETURN_X);
+    this.registry.set('ajitRoadReturnY', GATE_RETURN_Y);
+    this.cameras.main.fadeOut(300, 0, 0, 0, () => this.scene.start('SamjiyonAjitRoadScene'));
   }
 
   private victory() {

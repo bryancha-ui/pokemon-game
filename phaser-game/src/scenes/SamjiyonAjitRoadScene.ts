@@ -37,9 +37,8 @@ function buildMap(): Tile[][] {
   fill(0, ROWS, 18, COLS, T.ROCK);       // east cliff wall
   // the 노스단 아지트 tower at the head of the road
   fill(1, GATE_ROW + 1, 6, 15, T.BUILDING);
-  m[GATE_ROW][GATE_COL] = T.GATE;        // the gate/door
-  m[GATE_ROW][GATE_COL - 1] = T.GATE;
   fill(GATE_ROW, GATE_ROW + 1, 9, 12, T.PATH);   // approach step up to the gate
+  m[GATE_ROW][GATE_COL] = T.GATE;        // centred, walkable HQ door
   // snow drifts & pines flanking the road
   for (const [r, c] of [[10,6],[11,7],[18,13],[19,14],[25,6],[26,7],[12,13],[24,14],[17,5]] as [number,number][]) m[r][c] = T.PINE;
   for (const [r, c] of [[16,7],[20,12],[27,13],[13,5]] as [number,number][]) m[r][c] = T.DRIFT;
@@ -50,6 +49,10 @@ function buildMap(): Tile[][] {
 interface Sentry { key: string; name: string; col: number; row: number; line: string; pokemon: string; expPool: number; }
 
 export class SamjiyonAjitRoadScene extends Phaser.Scene {
+  // Publish the exact painted footprint so the 3D tower replaces the 2D facade
+  // at the same position instead of relying on an approximate colour scan.
+  public buildingPlots = [{ x: 6, y: 1, w: 9, h: 6, model: 'tower' }];
+  public onlyNamedBuildings = true;
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -150,15 +153,15 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     g.fillStyle(0xff5a6a, 0.85);
     for (let f = 0; f < 4; f++) for (let w = 0; w < 3; w++) g.fillRect(bx + 24 + w * 60, by + 12 + f * (bh / 4), 14, 10);
     // gate
-    g.fillStyle(0x5a1024, 1); g.fillRect(GATE_COL * TILE - TILE, GATE_ROW * TILE, TILE * 2, TILE);
-    g.fillStyle(0x8a1a34, 1); g.fillRect(GATE_COL * TILE - TILE + 4, GATE_ROW * TILE + 4, TILE * 2 - 8, TILE - 6);
+    g.fillStyle(0x5a1024, 1); g.fillRect(GATE_COL * TILE, GATE_ROW * TILE, TILE, TILE);
+    g.fillStyle(0x8a1a34, 1); g.fillRect(GATE_COL * TILE + 4, GATE_ROW * TILE + 4, TILE - 8, TILE - 6);
 
     // Crimson 노스단 banners
     const bn = this.add.graphics().setDepth(4);
     for (const cx of [bx + 12, bx + bw - 20]) { bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + 6, 10, bh - 16); bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 5, by + 6 + (bh - 16) / 2, 3); }
 
     this.add.text(10.5 * TILE, 0.6 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '10px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(6);
-    this.add.text(GATE_COL * TILE - 8, GATE_ROW * TILE + 40, tr('SPACE — Enter'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(GATE_COL * TILE + TILE / 2, GATE_ROW * TILE + 40, tr('SPACE — Enter'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 
   private drawSentries() {
@@ -261,8 +264,9 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
 
   private checkGate() {
     if (this.cutsceneActive) return;
-    const near = Math.hypot(this.px - (GATE_COL * TILE), this.py - (GATE_ROW * TILE + 24)) < TILE * 1.8;
-    const touchingGate = (this.py <= (GATE_ROW + 0.8) * TILE) && (this.px >= 8 * TILE && this.px <= 12 * TILE);
+    const gateX = GATE_COL * TILE + TILE / 2;
+    const near = Math.hypot(this.px - gateX, this.py - (GATE_ROW * TILE + TILE / 2)) < TILE * 1.8;
+    const touchingGate = (this.py <= (GATE_ROW + 0.8) * TILE) && (this.px >= 9 * TILE && this.px < 12 * TILE);
     if (!near && !touchingGate) return;
     if (!touchingGate && !Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
 
