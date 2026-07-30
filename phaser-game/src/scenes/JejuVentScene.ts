@@ -77,6 +77,9 @@ function buildMap(): Tile[][] {
 
 export class JejuVentScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** Volcanic vent terrain, not a town — drop any building the heuristics
+   *  hallucinate from the dark basalt/steam shading. */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

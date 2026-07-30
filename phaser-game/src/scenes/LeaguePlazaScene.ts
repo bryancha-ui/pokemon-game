@@ -74,8 +74,10 @@ function buildMap(): Tile[][] {
 
 export class LeaguePlazaScene extends Phaser.Scene {
   private map!: Tile[][];
-  /** The courtyard's only structure is the palace hall (built from wall tiles).
-   *  Drop any stray building the terrain heuristics extrude beside it. */
+  /** The palace hall is the generated League building, centred on the entrance
+   *  gap (DOOR.col 13) so its doorway lines up with where the player walks in.
+   *  onlyNamedBuildings keeps everything else off. */
+  public buildingPlots = [{ x: 3, y: 4, w: 21, h: 7, model: 'league' }];
   public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

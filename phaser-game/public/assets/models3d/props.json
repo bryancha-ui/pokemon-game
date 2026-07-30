@@ -93,6 +93,9 @@
     { "id": "alpinelodge",  "role": "building", "tags": ["home"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/314aeb1a-b394-4475-947a-0b2581c1b0d7.glb" },
     { "id": "snowmeltbaths","role": "building", "tags": ["bath"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/ce421122-3f8f-4d41-9c0d-7c3486aa1586.glb" },
     { "id": "skateshop",    "role": "building", "tags": ["shop"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/a72d07a1-fec3-4807-844a-1846c92b07c0.glb" },
+    { "id": "sanbangsan",  "role": "building", "tags": ["shrine"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/e0f6d538-0441-4c11-a306-894ad4ba78b1.glb" },
+    { "id": "jejumarket",  "role": "building", "tags": ["market"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/2f48342c-2e92-4c19-a747-31f6f2f12d74.glb" },
+    { "id": "cheonjiyeon", "role": "building", "tags": ["pavilion"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d2fec8e7-2615-41ee-9261-d8fd156afabb.glb" },
     {
       "id": "bus",
       "role": "vehicle",
