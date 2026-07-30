@@ -27,8 +27,9 @@ const SOLID = new Set<Tile>([T.WATER, T.BUILDING, T.TREE, T.BENCH]);
 
 interface Spot { label: string; scene?: string; x: number; y: number; w: number; h: number; doorCol: number; doorRow: number; roof: number; model?: string; }
 const BUILDINGS: Spot[] = [
+  // Han River keeps only the bike shop (the convenience store to its right was
+  // removed at the player's request — its scene stays available elsewhere).
   { label: '🚲 Bicycle Shop', x: 5,  y: 12, w: 5, h: 4, doorCol: 7,  doorRow: 16, roof: 0x2a8a5a, model: 'bikeshop' },
-  { label: '🏪 Convenience Store', x: 33, y: 12, w: 5, h: 4, doorCol: 35, doorRow: 16, roof: 0xd85a3a, model: 'convenience' },
 ];
 
 function buildMap(): Tile[][] {
