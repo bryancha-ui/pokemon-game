@@ -7,25 +7,29 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 
 // ── POST-GAME I — The Northern League (interior gauntlet) ────────────────────────
-// Inside the austere North-Korean-style palace: a severe grey-granite hall, red
-// state banners and a single gold star above the throne. Four Northern Elite, then
-// Champion Taewang. The Rival is fought OUTSIDE, in NorthernPlazaScene, before you
-// may enter. Mirrors PokemonLeagueScene's barrier-gauntlet structure.
+// Inside the austere North-Korean-style palace: five separate floors, each with
+// its own chamber. Defeating a Northern Elite member opens the stairway to the
+// next storey; Champion Taewang waits alone in the throne room at the summit.
 
-const T = { FLOOR: 0, WALL: 1, DAIS: 2, BARRIER: 3, CARPET: 4, THRONE: 5, BANNER: 6 } as const;
+const T = { FLOOR: 0, WALL: 1, DAIS: 2, BARRIER: 3, CARPET: 4, THRONE: 5, BANNER: 6, STAIRS: 7 } as const;
 type Tile = typeof T[keyof typeof T];
-const TILE = 32, COLS = 18, ROWS = 34;
+const TILE = 32, COLS = 18, ROWS = 18;
 
 const COLORS: Record<Tile, number> = {
   [T.FLOOR]: 0x35373d, [T.WALL]: 0x14151a, [T.DAIS]: 0x4a4d55, [T.BARRIER]: 0x5f1a1a,
-  [T.CARPET]: 0x6e1216, [T.THRONE]: 0x5f4a10, [T.BANNER]: 0x361212,
+  [T.CARPET]: 0x6e1216, [T.THRONE]: 0x5f4a10, [T.BANNER]: 0x361212, [T.STAIRS]: 0x777b86,
 };
 const SOLID = new Set<Tile>([T.WALL, T.BANNER]);
+const MEMBER_COL = 9, MEMBER_ROW = 6;
+const STAIR_COL = 9, STAIR_ROW = 2;
 
-// Gate barriers → the guardian whose defeat unseals each one.
-const GATES: Record<number, string> = {
-  27: 'north-seorak', 22: 'north-hanseol', 17: 'north-cheolgang', 12: 'north-baekho',
-};
+const ROOMS = [
+  { title: 'Stone Foundation Chamber', ko: '암반의 방', floor: 0x403c38, dais: 0x6d604f, accent: 0xc9a86a },
+  { title: 'Frozen Sky Chamber', ko: '빙설의 방', floor: 0x34444e, dais: 0x638493, accent: 0xbfe8ff },
+  { title: 'Iron Fortress Chamber', ko: '철벽의 방', floor: 0x363a40, dais: 0x69717c, accent: 0xced4de },
+  { title: 'White Tiger Chamber', ko: '백호의 방', floor: 0x40364c, dais: 0x6b537d, accent: 0xd8b0ff },
+  { title: 'Taewang Throne Room', ko: '태왕의 옥좌', floor: 0x343238, dais: 0x756324, accent: 0xffd54a },
+] as const;
 
 interface Member {
   key: string; name: string; type: string; col: number; row: number;

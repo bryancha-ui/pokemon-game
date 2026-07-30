@@ -188,8 +188,10 @@ export class KaemaPlateauScene extends Phaser.Scene {
     // Stone cairn (돌탑) beside the road, a highland traveller's marker
     this.add.text(13 * TILE + 16, 30 * TILE - 14, '돌탑', { fontSize: '8px', color: '#eae0c8', backgroundColor: '#00000066', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
 
-    // Cold frost mist thickening toward the frozen Yalu border (the north end)
-    const mist = this.add.graphics().setDepth(15);
+    // Cold frost mist thickening toward the frozen Yalu border (the north end).
+    // Tagged no3d so the 3D mirror never lifts this white overlay into a stray
+    // floating structure by the entrance — it stays a flat 2D atmosphere only.
+    const mist = this.add.graphics().setDepth(15).setData('no3d', true);
     for (let r = 0; r < 11; r++) {
       const a = 0.34 - r * 0.028;
       mist.fillStyle(0xeaf1f6, Math.max(0, a));

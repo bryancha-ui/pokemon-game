@@ -327,6 +327,10 @@ export class OverworldMirror {
     if (this.tracked.has(obj)) return;
     if ((obj.scrollFactorX === 0 && obj.scrollFactorY === 0)) return;      // UI stays 2D
     if (!('x' in obj) || obj.x === undefined) return;
+    // Scenes can tag a decorative overlay (e.g. atmospheric mist) no3d so the 3D
+    // mirror never lifts it into a stray standing structure — it's simply hidden
+    // in 3D (and still drawn in pure-2D mode).
+    if ((obj as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) { this.hideFrom2D(obj); return; }
 
     if (obj instanceof Phaser.GameObjects.Graphics) {
       if (this.mapGraphics.has(obj) || this.isMapPainting(obj)) {
@@ -544,6 +548,22 @@ export class OverworldMirror {
   // ── Frame sync ──
   update(dt: number): void {
     if (!this.built) { this.tryBuild(); return; }
+    // A Phaser scene restart keeps the Scene instance but replaces its display
+    // objects.  Rebind the 3D protagonist when that happens; otherwise the new
+    // player Graphics is hidden by the mirror while the actual 3D hero remains
+    // attached to the destroyed player from the previous floor.
+    const livePlayer = OverworldMirror.findPlayer(this.scene);
+    if (livePlayer && livePlayer !== this.playerObj) {
+      if (this.hero) {
+        this.hero.group.removeFromParent();
+        disposeDeep(this.hero.group);
+      }
+      this.hero = null;
+      this.heroLast = null;
+      this.heroWalkPhase = 0;
+      this.playerObj = livePlayer;
+      if (!this.tracked.has(livePlayer)) this.adopt(livePlayer);
+    }
     if (this.pendingObjects.size) {
       const ready = [...this.pendingObjects];
       this.pendingObjects.clear();

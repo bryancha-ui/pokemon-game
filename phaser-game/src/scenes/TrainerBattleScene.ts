@@ -379,12 +379,14 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Trainer portrait — stands where the enemy Pokémon appears, shown during the intro only.
-    // Tagged no3d so the trainer portrait stays a flat 2D intro image and is
-    // never adopted onto the 3D battle stage as a stray standing relief.
+    // Trainer portrait — stands where the enemy Pokémon appears, shown during
+    // the intro only. Northern League masters are promoted to the enemy's exact
+    // 3D stage anchor; other portraits remain ordinary 2D intro artwork.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
-      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0).setData('no3d', true);
+      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0);
+      if (this.trainerKey.startsWith('north-')) this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+      else this.trainerPortrait.setData('no3d', true);
       fitPortrait(this.trainerPortrait);
     }
   }

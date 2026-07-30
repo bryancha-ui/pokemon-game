@@ -268,6 +268,78 @@ export function makeIceStatue(): THREE.Group {
   return g;
 }
 
+/** Grey-granite civic obelisk with a stepped base and gold finial. */
+export function makeGrandObelisk(): THREE.Group {
+  const g = new THREE.Group();
+  const granite = toonMat(0x62666f);
+  const dark = toonMat(0x454952);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 0.9), dark);
+  base.position.y = 0.11;
+  g.add(base);
+  const step = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.24, 0.62), granite);
+  step.position.y = 0.34;
+  g.add(step);
+  const shaft = new THREE.Mesh(new THREE.ConeGeometry(0.28, 2.65, 4), granite);
+  shaft.position.y = 1.78;
+  shaft.rotation.y = Math.PI / 4;
+  g.add(shaft);
+  const finial = new THREE.Mesh(new THREE.OctahedronGeometry(0.17), toonMat(0xd8b44a));
+  finial.position.y = 3.22;
+  g.add(finial);
+  return g;
+}
+
+/** Bronze civic figure on a low granite plinth. */
+export function makeBronzeStatue(): THREE.Group {
+  const g = new THREE.Group();
+  const bronze = toonMat(0x98743a);
+  const stone = toonMat(0x4b4f58);
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.42, 0.72), stone);
+  plinth.position.y = 0.21;
+  g.add(plinth);
+  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.65, 0.24), bronze);
+  legs.position.y = 0.78;
+  g.add(legs);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.72, 0.3), bronze);
+  torso.position.y = 1.43;
+  g.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), bronze);
+  head.position.y = 1.96;
+  g.add(head);
+  for (const side of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.72, 6), bronze);
+    arm.position.set(side * 0.38, 1.5 + (side > 0 ? 0.08 : 0), 0);
+    arm.rotation.z = side * (Math.PI / 2.8);
+    g.add(arm);
+  }
+  return g;
+}
+
+/** Walk-through ceremonial arch sized for a two-tile avenue. */
+export function makeTriumphalArch(): THREE.Group {
+  const g = new THREE.Group();
+  const stone = toonMat(0x5b5f68);
+  const trim = toonMat(0x3f434b);
+  for (const x of [-0.78, 0.78]) {
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.62), trim);
+    foot.position.set(x, 0.09, 0);
+    g.add(foot);
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.36, 2.15, 0.48), stone);
+    pillar.position.set(x, 1.17, 0);
+    g.add(pillar);
+  }
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.48, 0.58), stone);
+  beam.position.y = 2.28;
+  g.add(beam);
+  const crown = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.16, 0.7), trim);
+  crown.position.y = 2.6;
+  g.add(crown);
+  const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), toonMat(0xd8b44a));
+  star.position.set(0, 2.3, 0.34);
+  g.add(star);
+  return g;
+}
+
 // ── Water surface ───────────────────────────────────────────────────────────
 /** Paint one bright-cyan water tile with scattered pixel sparkle dashes —
  *  the crisp low-poly look (flat vivid water + little light glints). */

@@ -27,6 +27,19 @@ const SOLID = new Set<Tile>([T.WALL, T.MONU, T.BANNER]);
 
 const GATE = { col: 15, row: 1 };   // road out to the Northern League (two tiles wide 15-16)
 
+interface CityBuilding {
+  label: string;
+  scene: 'PokemonCenterScene' | 'MartScene';
+  x: number; y: number; w: number; h: number;
+  doorCol: number; doorRow: number;
+  model: 'pokecenter' | 'mart';
+}
+
+const CITY_BUILDINGS: CityBuilding[] = [
+  { label: 'Pokémon Center', scene: 'PokemonCenterScene', x: 4, y: 4, w: 6, h: 6, doorCol: 7, doorRow: 9, model: 'pokecenter' },
+  { label: 'Poké Mart', scene: 'MartScene', x: 22, y: 4, w: 6, h: 6, doorCol: 25, doorRow: 9, model: 'mart' },
+];
+
 // City Wardens standing formal watch across the plaza.
 const AGENTS = [
   { col: 8,  row: 24 }, { col: 23, row: 24 }, { col: 7, row: 14 }, { col: 24, row: 14 }, { col: 15, row: 18 },
@@ -60,14 +73,19 @@ const PYEONGSEONG_CHIEF = {
 
 export class PyeongyangCityScene extends Phaser.Scene {
   private map!: Tile[][];
-  // The four corner wall blocks become real 3D pavilion buildings (free CC0
-  // models) instead of stark grey wall masses; marking them as plots also stops
-  // the wall extrusion under each.
+  // Use the authored landmark models and leave all other dark facade tiles flat.
+  // This keeps the capital readable while retaining its skyline.
   public buildingPlots = [
-    { x: 4,  y: 4,  w: 6, h: 6, model: 'cityfree_a' },
-    { x: 22, y: 4,  w: 6, h: 6, model: 'cityfree_b' },
-    { x: 4,  y: 22, w: 6, h: 6, model: 'cityfree_c' },
-    { x: 22, y: 22, w: 6, h: 6, model: 'cityfree_d' },
+    ...CITY_BUILDINGS.map(b => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: b.model })),
+    { x: 8, y: 23, w: 16, h: 4, model: 'palace' },
+  ];
+  public onlyNamedBuildings = true;
+  public clearSight3D = true;
+  public propPlots = [
+    { x: 10, y: 15, kind: 'obelisk' as const, scale: 1.05 },
+    { x: 22, y: 15, kind: 'statue' as const, scale: 1.05 },
+    { x: 15.5, y: 7, kind: 'arch' as const, scale: 1.1 },
+    ...[11, 20].flatMap(row => [12.5, 18.5].map(x => ({ x, y: row, kind: 'lantern' as const, scale: 0.9 }))),
   ];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -325,8 +343,10 @@ export class PyeongyangCityScene extends Phaser.Scene {
     } else this.walkFrame = 0;
     this.drawChar();
     this.updateAgents();       // watchers track the player
+    this.enterPrompt.setVisible(false);
     this.checkChief();
     this.checkGate();
+    this.checkBuildings();
     this.checkExit();
   }
   private collides(x: number, y: number): boolean {
@@ -344,7 +364,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     const cx = PYEONGSEONG_CHIEF.col * TILE + 16;
     const cy = PYEONGSEONG_CHIEF.row * TILE + 16;
     
-    if (Math.hypot(this.px - cx, this.py - cy) > TILE * 2) { this.enterPrompt.setVisible(false); return; }
+    if (Math.hypot(this.px - cx, this.py - cy) > TILE * 2) return;
     
     if (!this.hasAllMapae) {
       this.enterPrompt.setText(tr('SPACE — Talk to Supreme Gwang')).setVisible(true);
@@ -380,7 +400,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
 
   private checkGate() {
     const gx = (GATE.col + 0.5) * TILE, gy = GATE.row * TILE + 16;
-    if (Math.hypot(this.px - gx, this.py - gy) > TILE * 1.8) { this.enterPrompt.setVisible(false); return; }
+    if (Math.hypot(this.px - gx, this.py - gy) > TILE * 1.8) return;
     this.enterPrompt.setText(tr('SPACE — Grand Avenue → Northern League')).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
       this.enterPrompt.setVisible(false);
@@ -392,6 +412,23 @@ export class PyeongyangCityScene extends Phaser.Scene {
         this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('NorthernPlazaScene'));
       });
     }
+  }
+
+  private checkBuildings() {
+    const b = CITY_BUILDINGS.find(v => Math.hypot(
+      this.px - (v.doorCol * TILE + TILE / 2),
+      this.py - (v.doorRow * TILE + TILE / 2),
+    ) < TILE * 1.4);
+    if (!b) return;
+    this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(b.label)}`).setVisible(true);
+    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    this.enterPrompt.setVisible(false);
+    this.cutsceneActive = true;
+    this.registry.set('pyeongyangReturnX', b.doorCol * TILE + TILE / 2);
+    this.registry.set('pyeongyangReturnY', (b.doorRow + 1) * TILE + TILE / 2);
+    if (b.scene === 'PokemonCenterScene') this.registry.set('pcReturnScene', this.scene.key);
+    else this.registry.set('martReturnScene', this.scene.key);
+    this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start(b.scene));
   }
 
   private checkExit() {
@@ -426,15 +463,17 @@ function buildMap(): Tile[][] {
   fill(12, 20, 6, 26, T.PLAZA);
   // Grand avenue expansion at plaza level
   fill(12, 20, 14, 18, T.PAVE);
-  // Monumental building blocks flanking the avenue.
-  fill(4, 10, 4, 10, T.WALL);   fill(4, 10, 22, 28, T.WALL);
-  fill(22, 28, 4, 10, T.WALL); fill(22, 28, 22, 28, T.WALL);
-  
-  // Palace complex in south (Split into left and right wings to create an open courtyard)
-  fill(24, 30, 8, 14, T.WALL);  // Left wing
-  fill(24, 30, 18, 24, T.WALL); // Right wing
-  fill(23, 24, 10, 14, T.WALL); 
-  fill(23, 24, 18, 22, T.WALL);
+  // Civic services flank the avenue; their front doors open onto visible paved
+  // connectors rather than ending in an unmarked wall.
+  for (const b of CITY_BUILDINGS) fill(b.y, b.y + b.h, b.x, b.x + b.w, T.WALL);
+  fill(9, 10, 7, 15, T.PAVE);
+  fill(9, 10, 17, 26, T.PAVE);
+  for (const b of CITY_BUILDINGS) m[b.doorRow][b.doorCol] = T.PAVE;
+
+  // A single coherent palace replaces the overlapping lower tower blocks. Its
+  // courtyard and central door remain open in front of Supreme Gwang.
+  fill(23, 27, 8, 24, T.WALL);
+  m[26][15] = T.PAVE; m[26][16] = T.PAVE;
   
   // Formal gardens along the avenue
   fill(10, 14, 10, 14, T.GARDEN); fill(10, 14, 18, 22, T.GARDEN);

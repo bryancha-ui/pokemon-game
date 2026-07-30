@@ -303,9 +303,13 @@ export class BattleMirror {
     // portrait off the render layer while it plays.
     const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
     if (trainerDesign) { this.spawnTrainer(im, trainerDesign); return; }
+    // Northern League master portraits are upright 3D reliefs at the opponent
+    // Pokémon's exact arena anchor. Their alpha crossfade hands that same spot
+    // cleanly to the Pokémon instead of leaving a sprite in the screen corner.
+    const trainerAtEnemy = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerEnemyAnchor');
     // Battle UI images that aren't combatants (trainer/leader portraits) opt out
     // of the 3D arena so they don't stand on the stage as a stray relief.
-    if ((im as Phaser.GameObjects.Image).getData?.('no3d')) return;
+    if (!trainerAtEnemy && (im as Phaser.GameObjects.Image).getData?.('no3d')) return;
     const dw = im.displayWidth ?? 0, dh = im.displayHeight ?? 0;
     const W = this.scene.scale.width, H = this.scene.scale.height;
 
@@ -339,9 +343,10 @@ export class BattleMirror {
     // Battle layout puts the ENEMY zone in the upper screen area and the
     // player's in the lower-left — classify by both axes so intro portraits
     // (drawn upper-middle at the enemy spot) never land on the player side.
-    const side: 'player' | 'enemy' =
-      ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
-    const slot = [...this.combatants.values()].filter(cb => cb.side === side).length % 2;
+    const side: 'player' | 'enemy' = trainerAtEnemy ? 'enemy'
+      : ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
+    const slot = trainerAtEnemy ? 0
+      : [...this.combatants.values()].filter(cb => cb.side === side).length % 2;
 
     const mats = reliefMaterials(relief.texture);
     const inner = new THREE.Mesh(relief.geometry, mats);
@@ -352,9 +357,7 @@ export class BattleMirror {
     // battlers when art resolution varies wildly).
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
     // The enemy stands ~2× farther from the camera — bigger stage height.
-    const side0: 'player' | 'enemy' =
-      ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
-    const scale = ((side0 === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
+    const scale = ((side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
     inner.scale.setScalar(scale);
 
     const holder = new THREE.Group();
@@ -377,7 +380,7 @@ export class BattleMirror {
       baseSX: null, baseSY: null,
       lastSX: Math.abs(im.scaleX ?? 1), scaleStill: 0,
       phase: Math.random() * Math.PI * 2,
-      glbKey: hasModel(im.texture.key) ? im.texture.key : null,
+      glbKey: !trainerAtEnemy && hasModel(im.texture.key) ? im.texture.key : null,
       glb: null,
       // Generated models read smaller than flat art at equal height (they have
       // real depth), so give them extra presence — SwSh-scale battlers.
