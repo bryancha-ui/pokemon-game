@@ -538,8 +538,18 @@ const SUMMIT: RgConfig = {
   decorate: (s) => { const g = s.add.graphics().setDepth(6); for (let i = 0; i < 4; i++) { g.fillStyle(0x6a6356, 1); g.fillRect(11 * 32 + 10 - i, (11 - i) * 32 + 20, 12 + i * 2, 10); } s.label('돌탑 (summit cairn)', 11, 9, '#ffe9c0'); },
 };
 
-export class RangrimFoothillsScene extends RangrimBaseScene { constructor() { super(FOOTHILLS); } }
-export class RangrimCavernScene extends RangrimBaseScene { constructor() { super(CAVERN); } }
+export class RangrimFoothillsScene extends RangrimBaseScene {
+  // Cap tall rock tiles so they never block the player's view on the foothills.
+  public caveFloorHint = true;
+  constructor() { super(FOOTHILLS); }
+}
+export class RangrimCavernScene extends RangrimBaseScene {
+  // Keep the lower cavern clear of view-blocking tiles: cap wall/floor heights
+  // and erase any building-classified rock blocks that would tower over the player.
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+  constructor() { super(CAVERN); }
+}
 export class RangrimAltarScene extends RangrimBaseScene { constructor() { super(ALTAR); } }
 export class RangrimSnowfieldScene extends RangrimBaseScene { constructor() { super(SNOWFIELD); } }
 export class RangrimSummitScene extends RangrimBaseScene { constructor() { super(SUMMIT); } }
