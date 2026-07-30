@@ -77,6 +77,14 @@
       "tags": ["shop"],
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/3bce9d76-b9ea-4322-9905-c4ef10f3e59c.glb"
     },
+    { "id": "pinehouse",  "role": "building", "tags": ["home"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6abfe345-7c8f-4af7-9572-913afb39d104.glb" },
+    { "id": "dojo",       "role": "building", "tags": ["gym"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/2491a38f-40c5-42ed-b406-ab5baa15242d.glb" },
+    { "id": "gearshop",   "role": "building", "tags": ["shop"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/959b0c49-a551-48ca-843a-3b25ca068c22.glb" },
+    { "id": "lanterngym", "role": "building", "tags": ["gym"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b7013408-49ac-4b27-ab08-f6d7a64451c0.glb" },
+    { "id": "contesthall","role": "building", "tags": ["hall"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d8101675-60a1-469d-acb6-00346fd49aaa.glb" },
+    { "id": "tidalgym",   "role": "building", "tags": ["gym"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/339f473f-5a4e-44f6-a381-847a6e970e2a.glb" },
+    { "id": "templegym",  "role": "building", "tags": ["gym"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/a0f775bf-5f7d-4159-ae43-6c985bc428cb.glb" },
+    { "id": "shrine",     "role": "building", "tags": ["shrine"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/00d4de02-0891-4bb1-8093-1efc59e8f047.glb" },
     {
       "id": "bus",
       "role": "vehicle",

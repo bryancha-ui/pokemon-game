@@ -49,6 +49,10 @@ function buildMap(): Tile[][] {
 
 export class PineNeedleTownScene extends Phaser.Scene {
   private map!: Tile[][];
+  // 3D: Pokémon Center reuses the shared model; the Artist's Studio (the right
+  // house) gets its own generated house GLB. Only these named plots rise.
+  public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'pinehouse'][i] }));
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
