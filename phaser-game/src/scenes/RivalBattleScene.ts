@@ -197,13 +197,15 @@ export class RivalBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 150);
 
     // Trainer portraits — each stands where its Pokémon will appear, shown during the intro only.
+    // Tagged no3d so the trainer portraits stay flat 2D intro images and are
+    // never adopted onto the 3D battle stage as stray standing reliefs.
     const pAvatar = playerAvatarKey(this.registry), rAvatar = rivalAvatarKey(this.registry);
     if (this.textures.exists(pAvatar)) {
-      this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0);
+      this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0).setData('no3d', true);
       fitPortrait(this.playerTrainer);
     }
     if (this.textures.exists(rAvatar)) {
-      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true);
+      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true).setData('no3d', true);
       fitPortrait(this.rivalTrainer);
     }
   }

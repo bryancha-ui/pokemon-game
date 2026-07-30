@@ -121,7 +121,18 @@ class Engine3D {
     const pick = this.pickScene();
 
     if (!pick) {
-      // No 3D-able scene (title, menus…): hide the 3D canvas, full 2D.
+      // The mirrored scene may only be PAUSED (evolution overlay, menu, move
+      // learning launched over a battle) — it left the active list but still
+      // renders. Keep the 3D view up and frozen underneath the overlay;
+      // destroying it here is what snapped gym battles back to 2D mid-fight.
+      const held = this.mirrorScene;
+      if (this.mirror && this.stage && held && (held.scene.isPaused() || held.scene.isVisible())) {
+        this.stage.setVisible(true);
+        this.mirror.update(Math.min(dt, 0.1));   // idle animations keep breathing
+        this.stage.render();
+        return;
+      }
+      // Truly no 3D-able scene (title, menus…): hide the 3D canvas, full 2D.
       if (this.mirror) { this.mirror.destroy(); this.mirror = null; this.mirrorScene = null; }
       this.stage?.setVisible(false);
       return;
