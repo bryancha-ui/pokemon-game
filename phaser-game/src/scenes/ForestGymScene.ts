@@ -16,6 +16,9 @@ interface GymTrainer {
 const IT = 36;
 
 export class ForestGymScene extends Phaser.Scene {
+  // Force interior 3D so the living-temple gym's green floor doesn't grow trees
+  // that hide the leader/player; keep the room's own low walls only.
+  public interior3D = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;

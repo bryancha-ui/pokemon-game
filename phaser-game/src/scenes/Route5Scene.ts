@@ -67,6 +67,9 @@ function buildMap(): Tile[][] {
 
 export class Route5Scene extends Phaser.Scene {
   private map!: Tile[][];
+  /** The Ancient Forest is a route, not a town — drop buildings the terrain
+   *  heuristics hallucinate from dense foliage shading. */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

@@ -49,6 +49,8 @@ const BUILDINGS: Building[] = [
 
 export class SeoraeTownScene extends Phaser.Scene {
   private map!: Tile[][];
+  public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['frostbell', 'pokecenter', 'alpinelodge', 'snowmeltbaths', 'mart', 'skateshop'][i] }));
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

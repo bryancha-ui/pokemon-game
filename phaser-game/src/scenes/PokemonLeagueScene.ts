@@ -107,6 +107,9 @@ const CHAMPION: Member = {
 
 export class PokemonLeagueScene extends Phaser.Scene {
   private map!: Tile[][];
+  // The League interior is a ceremonial corridor, not a town — drop any stray
+  // buildings the terrain heuristics extrude from its dark halls.
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
