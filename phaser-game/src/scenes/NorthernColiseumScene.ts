@@ -100,6 +100,12 @@ const TAEWANG: Member = {
 };
 
 export class NorthernColiseumScene extends Phaser.Scene {
+  // The league hall's near-black walls/banners otherwise extrude into tall blocks
+  // that hide the player and the barriers ahead. Cap wall/floor heights and erase
+  // any building-classified dark blocks so the gauntlet stays clear to see.
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
