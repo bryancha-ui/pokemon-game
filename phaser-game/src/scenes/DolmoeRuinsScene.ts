@@ -34,6 +34,7 @@ export class DolmoeRuinsScene extends Phaser.Scene {
       .map(([r, c]) => ({ x: c, y: r, w: 1, h: 1, model: 'dolmen' })),
   ];
   public onlyNamedBuildings = true;
+  public noVehicles = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
