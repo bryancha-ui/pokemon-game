@@ -25,7 +25,11 @@ const ARGC: Record<number, number> = {
   [OP.STROKE_TRIANGLE]: 6, [OP.LINE_FX_TO]: 4, [OP.MOVE_FX_TO]: 4,
   [OP.SAVE]: 0, [OP.RESTORE]: 0, [OP.TRANSLATE]: 2, [OP.SCALE]: 2, [OP.ROTATE]: 1,
   [OP.SET_TEXTURE]: 2, [OP.CLEAR_TEXTURE]: 0,
-  [OP.GRADIENT_FILL_STYLE]: 5, [OP.GRADIENT_LINE_STYLE]: 6,
+  // fillGradientStyle pushes 8 values (4 corner alphas + 4 corner colors) —
+  // NOT 5. A wrong count desyncs the whole command stream, so measureCommands
+  // bails early and a gradient-filled fullscreen backdrop is never detected/
+  // hidden (it then covers the 3D battle stage). lineGradientStyle pushes 6.
+  [OP.GRADIENT_FILL_STYLE]: 8, [OP.GRADIENT_LINE_STYLE]: 6,
 };
 
 export interface RasterResult {
