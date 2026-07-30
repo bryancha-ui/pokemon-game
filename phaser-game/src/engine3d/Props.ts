@@ -228,6 +228,29 @@ export function makeStoneLantern(): THREE.Group {
   return g;
 }
 
+/** A straight run of railway track (gravel bed + wooden sleepers + two steel
+ *  rails) `len` world-units long, laid along the X axis and centred on origin.
+ *  Low profile so it never blocks the player. */
+export function makeRailTrack(len: number): THREE.Group {
+  const g = new THREE.Group();
+  const bed = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.92), toonMat(0x6b6560));
+  bed.position.y = 0.04;
+  g.add(bed);
+  const nTies = Math.max(2, Math.round(len / 0.5));
+  for (let i = 0; i < nTies; i++) {
+    const x = -len / 2 + (i + 0.5) * (len / nTies);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.82), toonMat(0x5a4433));
+    tie.position.set(x, 0.1, 0);
+    g.add(tie);
+  }
+  for (const z of [-0.28, 0.28]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.06), toonMat(0x9098a0));
+    rail.position.set(0, 0.16, z);
+    g.add(rail);
+  }
+  return g;
+}
+
 /** Translucent ice sculpture on a pedestal: stacked ice-blue snow-figure
  *  spheres crowned by a faceted crystal — the 3D take on the town's snow
  *  sculptures / Ice Bell landmarks. */

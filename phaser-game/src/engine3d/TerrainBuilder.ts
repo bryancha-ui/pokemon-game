@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeFlowers, makeGrassTufts, makeIceStatue,
-  makePineTree, makePines, makeRocks, makeStoneLantern, makeTrees, makeWater, toonRamp,
+  makePineTree, makePines, makeRailTrack, makeRocks, makeStoneLantern, makeTrees, makeWater, toonRamp,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue';
+  kind: 'pine' | 'lantern' | 'icestatue' | 'rail';
   scale?: number; rot?: number;
+  len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
 }
 import { getProp, hasProps, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
@@ -828,7 +829,8 @@ export function buildTerrain(
   for (const p of propPlots) {
     const obj = p.kind === 'pine' ? makePineTree()
       : p.kind === 'lantern' ? makeStoneLantern()
-        : makeIceStatue();
+        : p.kind === 'rail' ? makeRailTrack(p.len ?? 4)
+          : makeIceStatue();
     obj.position.set(p.x + 0.5, 0, p.y + 0.5);
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;

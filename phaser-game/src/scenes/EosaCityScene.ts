@@ -150,6 +150,13 @@ export abstract class EosaCityScene extends Phaser.Scene {
       });
     return [...std, ...marks];
   }
+  /** Rail landmarks (e.g. Sinuiju's line to the 미지의 대륙) become real 3D track —
+   *  gravel bed, sleepers and steel rails — laid along the landmark's span. */
+  public get propPlots(): { x: number; y: number; kind: 'rail'; len: number }[] {
+    return (this.cfg.landmarks ?? [])
+      .filter(l => l.kind === 'rail' && l.w > 0)
+      .map(l => ({ x: l.col + l.w / 2 - 0.5, y: l.row, kind: 'rail' as const, len: l.w }));
+  }
   /** Landmark plots without a named model fall back to free CC0 city buildings. */
   public freeBuildings = true;
   /** Coastal/industrial northern towns have tall rock/dock tiles that otherwise
