@@ -68,6 +68,10 @@ export class BattleMirror {
   private root: THREE.Group;
   private combatants = new Map<GO, Combatant>();
   private hiddenBackdrops = new Set<GO>();
+  // Phaser adds factory-created objects to the display list before the caller's
+  // fluent setup runs. Defer classification until the next frame so Graphics
+  // have their draw commands and Images have final no3d tags/sizing.
+  private pendingObjects = new Set<GO>();
   private time = 0;
   private built = false;
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
@@ -87,7 +91,7 @@ export class BattleMirror {
     this.fx = new MoveFX3D(this.root);
     this.onMoveFx = (d) => this.handleMoveFx(d);
     scene.events.on('pk3d-movefx', this.onMoveFx);
-    this.onAdded = (obj) => this.consider(obj as GO);
+    this.onAdded = (obj) => this.pendingObjects.add(obj as GO);
     scene.events.on('addedtoscene', this.onAdded);
     for (const obj of scene.children.list) this.consider(obj as GO);
     this.built = true;
@@ -98,6 +102,7 @@ export class BattleMirror {
     this.scene.events.off('pk3d-movefx', this.onMoveFx);
     this.combatants.clear();
     this.hiddenBackdrops.clear();
+    this.pendingObjects.clear();
   }
 
   /** Mirror a 2D move as a 3D effect: special = orb projectile with an arc,
@@ -370,6 +375,17 @@ export class BattleMirror {
   // ── Frame sync ──
   update(dt: number): void {
     if (!this.built) return;
+    // Objects emitted through addedtoscene are only constructors at that point.
+    // Jin's async scene exposed this race: its new Graphics had an empty command
+    // buffer here, then the fullscreen 2D backdrop was drawn after we had already
+    // rejected it. Classify the completed objects one frame later instead.
+    if (this.pendingObjects.size) {
+      const ready = [...this.pendingObjects];
+      this.pendingObjects.clear();
+      for (const obj of ready) {
+        if (obj.scene) this.consider(obj);
+      }
+    }
     this.time += dt;
     this.fx.update(dt);
     for (let i = this.pendingBursts.length - 1; i >= 0; i--) {
