@@ -59,6 +59,11 @@ interface PassTrainer {
 }
 
 export class SeoraePassScene extends Phaser.Scene {
+  // A snowy mountain pass has no buildings — only named-model plots (there are
+  // none here) rise in 3D, so every auto-detected building is erased to clean
+  // ground instead of extruding stray facades on the slopes.
+  public onlyNamedBuildings = true;
+
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
