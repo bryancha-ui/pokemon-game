@@ -25,6 +25,12 @@ interface Guardian {
 interface Bell { col: number; row: number; label: string; }
 
 export class ForestShrineScene extends Phaser.Scene {
+  // A shrine ROOM: force interior 3D so its dark floor doesn't sprout a forest,
+  // and place the generated shrine model on the altar niche (top centre). Only
+  // that named plot rises — the room's own walls stay low.
+  public interior3D = true;
+  public onlyNamedBuildings = true;
+  public buildingPlots = [{ x: 5, y: 1, w: 6, h: 3, model: 'shrine' }];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;

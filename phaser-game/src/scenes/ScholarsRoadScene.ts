@@ -102,6 +102,9 @@ function buildMap(): Tile[][] {
 
 export class ScholarsRoadScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** A mountain road, not a town: drop any building the terrain heuristics
+   *  hallucinate from cliff/forest shading. */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

@@ -157,7 +157,11 @@ export class OverworldMirror {
     // Interior = a static-camera room (no scroll bounds). Size alone is NOT a
     // signal: small towns (e.g. 32×24-tile villages) are outdoors and need sky,
     // buildings and daylight — only true rooms skip those.
-    this.isInterior = !hadBounds && (this.worldW <= 1500 && this.worldH <= 1000);
+    // A scene can force interior treatment (indoor lighting, no outdoor props
+    // like trees/grass) even if it keeps camera bounds — e.g. a small shrine
+    // room whose dark floor would otherwise sprout a forest.
+    const forceInterior = !!(this.scene as unknown as { interior3D?: boolean }).interior3D;
+    this.isInterior = forceInterior || (!hadBounds && (this.worldW <= 1500 && this.worldH <= 1000));
     const t = this.buildTerrainPass();
     const isInterior = this.isInterior;
     this.stage.setEnvironment(isInterior && t.env !== 'cave' ? 'interior' : t.env);
