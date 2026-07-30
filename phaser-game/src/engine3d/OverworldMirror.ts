@@ -203,13 +203,14 @@ export class OverworldMirror {
       vehiclePlots?: { x: number; y: number; model: string; rot?: number }[];
       caveFloorHint?: boolean;
       noVehicles?: boolean;
+      freeBuildings?: boolean;
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
-      sc.caveFloorHint ?? false, sc.noVehicles ?? false,
+      sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
@@ -362,8 +363,8 @@ export class OverworldMirror {
   }
 
   private hasBuildingPlots(): boolean {
-    const p = (this.scene as unknown as { buildingPlots?: unknown[] }).buildingPlots;
-    return Array.isArray(p) && p.length > 0;
+    const sc = this.scene as unknown as { buildingPlots?: unknown[]; freeBuildings?: boolean };
+    return (Array.isArray(sc.buildingPlots) && sc.buildingPlots.length > 0) || !!sc.freeBuildings;
   }
 
   private hideFrom2D(obj: GO): void {

@@ -74,6 +74,9 @@ function buildMap(): Tile[][] {
 
 export class KaesongCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** No custom models authored for the northern city yet — use the free CC0
+   *  city-building GLBs on its detected building plots. */
+  public freeBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

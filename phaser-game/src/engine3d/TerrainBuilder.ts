@@ -219,6 +219,10 @@ export function buildTerrain(
   // Suppress the random road-scatter of vehicles (buses) — for scenes like the
   // coastal Route 4 whose flat road tiles otherwise sprout buses.
   noVehicles = false,
+  // Place free CC0 city-building GLBs (KayKit, tagged 'cityfree' in props.json)
+  // on every detected building that has no named model, instead of the
+  // procedural facade — for towns we haven't authored custom models for.
+  freeBuildings = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -686,6 +690,7 @@ export function buildTerrain(
   // scene.buildingPlots). Every other footprint falls back to the procedural
   // facade+roof extruded straight from that scene's own painted art, so each
   // city keeps looking like itself.
+  const cityfreeDefs = freeBuildings ? propsFor('building').filter(d => d.tags?.includes('cityfree')) : [];
   for (const b of buildings) {
     const def = b.model ? propById(b.model) : null;
     if (def) {
@@ -702,6 +707,19 @@ export function buildTerrain(
     // Scene wants only its named landmarks in 3D — the footprint's flat art was
     // already erased above, so skipping it leaves clean ground, not a brick box.
     if (onlyNamedBuildings) continue;
+    // Towns without authored models can opt into free CC0 city buildings: pick
+    // one deterministically per footprint (so it's varied but stable).
+    if (freeBuildings) {
+      const fdef = pickProp(cityfreeDefs, b.x * 31 + b.z * 17);
+      if (fdef) {
+        const holder = new THREE.Group();
+        holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+        group.add(holder);
+        pendingProps.push({ group: holder, def: fdef, b, h: plotHeight(b.w, b.d), wait: 0 });
+        blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+        continue;
+      }
+    }
     const bg = new THREE.Group();
     bg.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
     group.add(bg);
