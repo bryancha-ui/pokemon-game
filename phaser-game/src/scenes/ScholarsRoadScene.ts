@@ -17,7 +17,9 @@ const T = { ROCK: 0, PATH: 1, GRASS: 2, WATER: 3, STATUE: 4, GATE: 5, PAVILION: 
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 24, ROWS = 58;
 const COLORS: Record<Tile, number> = {
-  [T.ROCK]: 0x4a4640, [T.PATH]: 0xc8bda4, [T.GRASS]: 0x4a6a38, [T.WATER]: 0x3a78c8,
+  // GRASS is a vivid green (higher saturation) so the 3D pass reads it as tall
+  // grass and grows animated tufts, instead of a flat green patch.
+  [T.ROCK]: 0x4a4640, [T.PATH]: 0xc8bda4, [T.GRASS]: 0x3a7a2a, [T.WATER]: 0x3a78c8,
   [T.STATUE]: 0x8a8276, [T.GATE]: 0x2a2620, [T.PAVILION]: 0xb89a6a, [T.SCANGATE]: 0x2a3a4a,
 };
 const SOLID = new Set<Tile>([T.ROCK, T.WATER, T.STATUE, T.GATE]);
