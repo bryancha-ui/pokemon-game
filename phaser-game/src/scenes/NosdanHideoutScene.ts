@@ -92,6 +92,11 @@ const FLOORS: FloorDef[] = [
 ];
 
 export class NosdanHideoutScene extends Phaser.Scene {
+  // Keep the hideout clear of view-blocking tiles: cap wall/floor heights and
+  // erase any building-classified dark blocks that would tower over the player.
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+
   private map!: Tile[][];
   private def!: FloorDef;
   private floor = 1;
