@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
+import { buildPlayerModel, PlayerModel } from './CharacterModel';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
@@ -61,12 +62,27 @@ const ANCHORS = {
   enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(2.25, 0, -2.6)],
 };
 
+// A battle trainer (e.g. the rival) walks in from the back of the arena toward
+// the player during the intro, then retires as its Pokémon is sent out.
+const TRAINER_START = new THREE.Vector3(3.4, 0, -4.7);
+const TRAINER_END   = new THREE.Vector3(1.1, 0, -1.0);
+
+interface TrainerWalker {
+  obj: GO;                 // the 2D intro portrait whose alpha drives the walk
+  model: PlayerModel;
+  group: THREE.Group;
+  t: number;               // walk-in progress 0..1
+  phase: number;           // leg-swing phase
+  seen: boolean;           // portrait has been visible at least once
+}
+
 export class BattleMirror {
   readonly scene: Phaser.Scene;
   private stage: ThreeStage;
   private rig: CameraRig;
   private root: THREE.Group;
   private combatants = new Map<GO, Combatant>();
+  private trainers: TrainerWalker[] = [];
   private hiddenBackdrops = new Set<GO>();
   // Phaser adds factory-created objects to the display list before the caller's
   // fluent setup runs. Defer classification until the next frame so Graphics
@@ -101,6 +117,8 @@ export class BattleMirror {
     this.scene.events.off('addedtoscene', this.onAdded);
     this.scene.events.off('pk3d-movefx', this.onMoveFx);
     this.combatants.clear();
+    for (const w of this.trainers) this.root.remove(w.group);
+    this.trainers.length = 0;
     this.hiddenBackdrops.clear();
     this.pendingObjects.clear();
   }
@@ -239,6 +257,12 @@ export class BattleMirror {
     }
     if (!(obj instanceof Phaser.GameObjects.Image) && !(obj instanceof Phaser.GameObjects.Sprite)) return;
     const im = obj as GO & Phaser.GameObjects.Image;
+    // A scene can promote a battle trainer to a walking 3D character (the rival
+    // striding in toward the player) by tagging its intro portrait with
+    // `battleTrainer: 'boy' | 'girl'`. Spawn the 3D walker and keep the flat 2D
+    // portrait off the render layer while it plays.
+    const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
+    if (trainerDesign) { this.spawnTrainer(im, trainerDesign); return; }
     // Battle UI images that aren't combatants (trainer/leader portraits) opt out
     // of the 3D arena so they don't stand on the stage as a stray relief.
     if ((im as Phaser.GameObjects.Image).getData?.('no3d')) return;
@@ -372,6 +396,44 @@ export class BattleMirror {
     } catch { return null; }
   }
 
+  // ── Battle trainer walk-in (rival striding toward the player) ──
+  private spawnTrainer(im: GO & Phaser.GameObjects.Image, design: 'boy' | 'girl'): void {
+    if (this.trainers.some(w => w.obj === im)) return;
+    const model = buildPlayerModel(design);
+    model.group.scale.setScalar(1.7);         // read at trainer height beside the mons
+    model.group.position.copy(TRAINER_START);
+    this.root.add(model.group);
+    this.trainers.push({ obj: im, model, group: model.group, t: 0, phase: 0, seen: false });
+    // The flat 2D portrait stays off the render layer while the 3D walker plays;
+    // its alpha tween still drives the walk-in / retirement.
+    this.scene.cameras.main.ignore(im);
+  }
+
+  private updateTrainers(dt: number): void {
+    for (let i = this.trainers.length - 1; i >= 0; i--) {
+      const w = this.trainers[i];
+      const o = w.obj;
+      const alpha = o.alpha ?? 1;
+      const visible = !!(o as GO).scene && o.visible !== false && alpha > 0.05;
+      if (visible) w.seen = true;
+      // Once it has appeared, the portrait fading out (Pokémon send-out) or the
+      // scene tearing it down retires the walker.
+      if (w.seen && (!(o as GO).scene || alpha < 0.06)) {
+        this.root.remove(w.group);
+        this.trainers.splice(i, 1);
+        continue;
+      }
+      if (visible) w.t = Math.min(1, w.t + dt / 1.5);
+      const e = 1 - Math.pow(1 - w.t, 3);       // easeOutCubic
+      w.group.position.x = THREE.MathUtils.lerp(TRAINER_START.x, TRAINER_END.x, e);
+      w.group.position.z = THREE.MathUtils.lerp(TRAINER_START.z, TRAINER_END.z, e);
+      const moving = visible && w.t < 1;
+      if (moving) w.phase += dt * 9;
+      w.model.setWalk(w.phase, moving, dt);     // sets group.position.y (bob)
+      w.model.face(TRAINER_END.x - TRAINER_START.x, TRAINER_END.z - TRAINER_START.z, dt);
+    }
+  }
+
   // ── Frame sync ──
   update(dt: number): void {
     if (!this.built) return;
@@ -388,6 +450,7 @@ export class BattleMirror {
     }
     this.time += dt;
     this.fx.update(dt);
+    this.updateTrainers(dt);
     for (let i = this.pendingBursts.length - 1; i >= 0; i--) {
       const p = this.pendingBursts[i];
       p.t -= dt;

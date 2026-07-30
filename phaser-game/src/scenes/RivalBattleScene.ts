@@ -11,7 +11,7 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
-import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvatar';
+import { AVATAR_URL, playerAvatarKey, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
 import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
@@ -205,7 +205,13 @@ export class RivalBattleScene extends Phaser.Scene {
       fitPortrait(this.playerTrainer);
     }
     if (this.textures.exists(rAvatar)) {
-      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true).setData('no3d', true);
+      // The rival becomes a walking 3D character on the battle stage (it strides
+      // in toward the player during the intro). The rival is always the opposite
+      // gender of the player. Tagged no3d as well so if 3D is unavailable the
+      // flat portrait still never lands on the arena as a stray relief.
+      const rivalDesign: 'boy' | 'girl' = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
+      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
+        .setData('no3d', true).setData('battleTrainer', rivalDesign);
       fitPortrait(this.rivalTrainer);
     }
   }
