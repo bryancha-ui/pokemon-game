@@ -27,9 +27,8 @@ const SOLID = new Set<Tile>([T.WATER, T.BUILDING, T.TREE, T.BENCH]);
 
 interface Spot { label: string; scene?: string; x: number; y: number; w: number; h: number; doorCol: number; doorRow: number; roof: number; model?: string; }
 const BUILDINGS: Spot[] = [
-  // Han River keeps only the bike shop (the convenience store to its right was
-  // removed at the player's request — its scene stays available elsewhere).
   { label: '🚲 Bicycle Shop', x: 5,  y: 12, w: 5, h: 4, doorCol: 7,  doorRow: 16, roof: 0x2a8a5a, model: 'bikeshop' },
+  { label: '🏪 Convenience Store', x: 33, y: 12, w: 5, h: 4, doorCol: 35, doorRow: 16, roof: 0xd85a3a, model: 'convenience' },
 ];
 
 function buildMap(): Tile[][] {
@@ -154,20 +153,25 @@ export class HanRiverParkScene extends Phaser.Scene {
       if (t === T.BRIDGE) { g.fillStyle(0x9aa0aa); g.fillRect(x, y, TILE, TILE); g.fillStyle(0x6a7078); g.fillRect(x, y, 3, TILE); g.fillRect(x+TILE-3, y, 3, TILE); g.fillStyle(0xd85050, 0.5); g.fillRect(x+TILE/2-1, y, 2, TILE); }
       if (t === T.BENCH) { g.fillStyle(0x6a4522); g.fillRect(x+4, y+12, TILE-8, 8); g.fillStyle(0x8a5f30); g.fillRect(x+4, y+8, TILE-8, 4); }
     }
+    // Bake the building shapes INTO the map texture so the 3D mirror reads them
+    // as ground art it erases under each GLB — drawn as a separate graphics
+    // object they were adopted as their own flat relief, showing a duplicate
+    // "2D" building beside the real 3D model.
+    for (const b of BUILDINGS) {
+      const x = b.x * TILE, y = b.y * TILE, w = b.w * TILE, h = b.h * TILE;
+      g.fillStyle(0xefe4d0); g.fillRect(x, y, w, h); g.lineStyle(2, 0x3a2a1a); g.strokeRect(x, y, w, h);
+      g.fillStyle(b.roof); g.fillTriangle(x - 5, y + 2, x + w / 2, y - TILE + 2, x + w + 5, y + 2);
+      g.fillStyle(0x88ccff, 0.7); for (let wx = 8; wx < w - 8; wx += 22) g.fillRect(x + wx, y + 16, 14, 14);
+      const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
+      g.fillStyle(0x5a3a1a); g.fillRect(dx + 4, dy, TILE - 8, TILE);
+    }
     const key = '__hanRiverMap__';
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    // Buildings
-    const bg = this.add.graphics().setDepth(2);
+    // Building name labels (kept as separate world-space text over the baked art).
     for (const b of BUILDINGS) {
-      const x = b.x * TILE, y = b.y * TILE, w = b.w * TILE, h = b.h * TILE;
-      bg.fillStyle(0xefe4d0); bg.fillRect(x, y, w, h); bg.lineStyle(2, 0x3a2a1a); bg.strokeRect(x, y, w, h);
-      bg.fillStyle(b.roof); bg.fillTriangle(x - 5, y + 2, x + w / 2, y - TILE + 2, x + w + 5, y + 2);
-      bg.fillStyle(0x88ccff, 0.7); for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 14);
-      const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
-      bg.fillStyle(0x5a3a1a); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
       this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, tr(b.label), {
         fontSize: '10px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
