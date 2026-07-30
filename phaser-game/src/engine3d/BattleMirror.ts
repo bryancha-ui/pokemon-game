@@ -232,6 +232,9 @@ export class BattleMirror {
     }
     if (!(obj instanceof Phaser.GameObjects.Image) && !(obj instanceof Phaser.GameObjects.Sprite)) return;
     const im = obj as GO & Phaser.GameObjects.Image;
+    // Battle UI images that aren't combatants (trainer/leader portraits) opt out
+    // of the 3D arena so they don't stand on the stage as a stray relief.
+    if ((im as Phaser.GameObjects.Image).getData?.('no3d')) return;
     const dw = im.displayWidth ?? 0, dh = im.displayHeight ?? 0;
     const W = this.scene.scale.width, H = this.scene.scale.height;
 

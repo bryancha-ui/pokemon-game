@@ -382,7 +382,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     // Trainer portrait — stands where the enemy Pokémon appears, shown during the intro only.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
-      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0);
+      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0).setData('no3d', true);
       fitPortrait(this.trainerPortrait);
     }
   }
