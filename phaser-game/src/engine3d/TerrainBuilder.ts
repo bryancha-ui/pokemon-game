@@ -321,7 +321,7 @@ export function buildTerrain(
   // landmark buildings like gyms never depend on color heuristics.
   if (!interior) {
     for (const p of knownPlots) {
-      if (p.w < 2 || p.h < 2 || p.x < 0 || p.y < 0 || p.x + p.w > cols || p.y + p.h > rows) continue;
+      if (p.w < 1 || p.h < 1 || p.x < 0 || p.y < 0 || p.x + p.w > cols || p.y + p.h > rows) continue;
       let mr = 0, mg = 0, mb = 0, n = 0;
       for (let zz = p.y; zz < p.y + p.h; zz++) {
         for (let xx = p.x; xx < p.x + p.w; xx++) {

@@ -86,6 +86,8 @@
     { "id": "templegym",  "role": "building", "tags": ["gym"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/a0f775bf-5f7d-4159-ae43-6c985bc428cb.glb" },
     { "id": "shrine",     "role": "building", "tags": ["shrine"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/00d4de02-0891-4bb1-8093-1efc59e8f047.glb" },
     { "id": "league",       "role": "building", "tags": ["landmark"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/4da05027-b548-486b-9e71-5c38b3db451b.glb" },
+    { "id": "nabihalmang",  "role": "building", "tags": ["statue"], "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8d5f5775-88d2-468e-9131-cecab680f5b3.glb" },
+    { "id": "dolmen",       "role": "building", "tags": ["ruin"],   "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/29edff55-333b-4b60-97bf-410f0f922125.glb" },
     { "id": "sunrisegym",   "role": "building", "tags": ["gym"],   "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/58538d74-05dd-4ecb-a170-267ec297bdae.glb" },
     { "id": "frostbell",    "role": "building", "tags": ["shrine"],"url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6fba0fb7-8a40-47ff-9f9e-aef17577229c.glb" },
     { "id": "alpinelodge",  "role": "building", "tags": ["home"],  "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/314aeb1a-b394-4475-947a-0b2581c1b0d7.glb" },

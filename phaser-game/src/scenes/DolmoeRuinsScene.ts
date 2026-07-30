@@ -26,6 +26,14 @@ interface Grunt {
 }
 
 export class DolmoeRuinsScene extends Phaser.Scene {
+  // The great sealed dig-site dolmen plus every scattered standing dolmen get
+  // the generated 고인돌 model on their exact tile.
+  public buildingPlots = [
+    { x: 6, y: 8, w: 3, h: 3, model: 'dolmen' },
+    ...([[3,4],[3,20],[6,16],[8,22],[12,4],[14,18],[16,10],[5,10],[15,23],[11,17],[17,6],[4,14]] as [number,number][])
+      .map(([r, c]) => ({ x: c, y: r, w: 1, h: 1, model: 'dolmen' })),
+  ];
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;

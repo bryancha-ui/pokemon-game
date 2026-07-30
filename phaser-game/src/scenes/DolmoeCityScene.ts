@@ -32,6 +32,15 @@ const RUINS = { col: 2, row: 18 };   // cave-mouth in the west cliff → 고인�
 
 export class DolmoeCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  // Quarry gym, Pokémon Center and mart reuse the shared models; the moth-
+  // grandmother (나비할망) statue gets its own generated model on the plaza.
+  public buildingPlots = [
+    { x: 3,  y: 4,  w: 6, h: 5, model: 'gym' },
+    { x: 14, y: 4,  w: 6, h: 5, model: 'pokecenter' },
+    { x: 23, y: 4,  w: 6, h: 5, model: 'mart' },
+    { x: 7,  y: 12, w: 2, h: 2, model: 'nabihalmang' },
+  ];
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

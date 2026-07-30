@@ -42,6 +42,9 @@ function buildMap(): Tile[][] {
 
 export class JejuVentsPortScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** The crater gateway is volcanic terrain, not a town — drop any building the
+   *  heuristics hallucinate from the dark basalt shading. */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

@@ -56,6 +56,9 @@ function buildMap(): Tile[][] {
 
 export class FerryScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** A boat deck at sea, not a town — drop any building the terrain heuristics
+   *  hallucinate from the deck/cabin shading. */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
