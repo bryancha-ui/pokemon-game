@@ -55,8 +55,10 @@ interface Combatant {
 }
 
 const ANCHORS = {
-  player: [new THREE.Vector3(-1.85, 0, 1.15), new THREE.Vector3(-3.2, 0, 1.9)],
-  enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(3.4, 0, -3.2)],
+  // Slot 1 stays beside slot 0: intro portraits hand the spot to the Pokémon,
+  // so both must occupy the same stage position.
+  player: [new THREE.Vector3(-1.85, 0, 1.15), new THREE.Vector3(-2.1, 0, 1.3)],
+  enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(2.25, 0, -2.6)],
 };
 
 export class BattleMirror {
@@ -245,6 +247,8 @@ export class BattleMirror {
       return;
     }
     if (dw < 70 || dh < 70) return;                     // icons stay 2D
+    // Explicit opt-out: scenes can tag any object to stay in the 2D layer.
+    if ((im as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) return;
 
     const src = this.frameCanvas(im);
     // Creatures WITHOUT a generated 3D model render as a near-flat relief — a 2D
@@ -263,7 +267,11 @@ export class BattleMirror {
     );
     if (!relief) return;
 
-    const side: 'player' | 'enemy' = (im.x ?? 0) < W / 2 ? 'player' : 'enemy';
+    // Battle layout puts the ENEMY zone in the upper screen area and the
+    // player's in the lower-left — classify by both axes so intro portraits
+    // (drawn upper-middle at the enemy spot) never land on the player side.
+    const side: 'player' | 'enemy' =
+      ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
     const slot = [...this.combatants.values()].filter(cb => cb.side === side).length % 2;
 
     const mats = reliefMaterials(relief.texture);
@@ -275,7 +283,8 @@ export class BattleMirror {
     // battlers when art resolution varies wildly).
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
     // The enemy stands ~2× farther from the camera — bigger stage height.
-    const side0: 'player' | 'enemy' = (im.x ?? 0) < W / 2 ? 'player' : 'enemy';
+    const side0: 'player' | 'enemy' =
+      ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
     const scale = ((side0 === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
     inner.scale.setScalar(scale);
 

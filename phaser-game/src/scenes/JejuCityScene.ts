@@ -118,6 +118,18 @@ function buildMap(): Tile[][] {
 
 export class JejuCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  // Major landmarks get their own generated GLBs (PC & mart reuse the shared
+  // models); every other building keeps its original design via the procedural
+  // facade extrusion (no onlyNamedBuildings). caveFloorHint keeps the dark
+  // black-sand/basalt tiles walkable so they don't wall the player in.
+  public buildingPlots = [
+    { x: 10, y: 7,  w: 4, h: 4, model: 'pokecenter' },
+    { x: 26, y: 8,  w: 3, h: 3, model: 'mart' },
+    { x: 2,  y: 5,  w: 4, h: 4, model: 'sanbangsan' },
+    { x: 34, y: 4,  w: 4, h: 4, model: 'cheonjiyeon' },
+    { x: 26, y: 15, w: 5, h: 4, model: 'jejumarket' },
+  ];
+  public caveFloorHint = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
