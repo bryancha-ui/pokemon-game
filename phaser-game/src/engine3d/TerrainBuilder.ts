@@ -216,6 +216,9 @@ export function buildTerrain(
   // into walls that bury the player, set this. Only the classifier's cave-floor
   // rule is affected — lighting stays daylight.
   caveFloorHint = false,
+  // Suppress the random road-scatter of vehicles (buses) — for scenes like the
+  // coastal Route 4 whose flat road tiles otherwise sprout buses.
+  noVehicles = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -577,7 +580,11 @@ export function buildTerrain(
         const [rr, gg, bb] = cellColors[r * cols + ((c + run - 1) >> 1)];
         const color = (Math.round(rr) << 16) | (Math.round(gg) << 8) | Math.round(bb);
         const isEdge = r === 0 || r === rows - 1 || c === 0 || run === cols;
-        const h = kind === 'wall-high' ? (isEdge ? 2.6 : 2.0) : 1.25;
+        let h = kind === 'wall-high' ? (isEdge ? 2.6 : 2.0) : 1.25;
+        // Inside rooms and caves a static, angled camera can't see over tall
+        // walls, so the player vanishes behind them. Keep interior/cave walls
+        // low (a diorama look) so the character is always visible.
+        if (interior || cavey) h = Math.min(h, isEdge ? 1.0 : 0.7);
         walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
         c = run;
         continue;
@@ -705,7 +712,7 @@ export function buildTerrain(
   // ── Vehicles parked along the roads (generated models only) ────────────────
   let lastT = -1;                       // for real-time deltas in update()
   const pendingVehicles: { group: THREE.Group; def: import('./PropModels').PropDef; scale: number; rot: number }[] = [];
-  if (!interior && placedVehicles.length) {
+  if (!interior && !noVehicles && placedVehicles.length) {
     // The scene pins its vehicles (e.g. the Kaesong express bus at its stop) —
     // place those exact models and skip the random road scatter entirely.
     for (const v of placedVehicles) {
@@ -716,7 +723,7 @@ export function buildTerrain(
       group.add(holder);
       pendingVehicles.push({ group: holder, def, scale: 1.3, rot: v.rot ?? 0 });
     }
-  } else if (!interior && hasProps('vehicle')) {
+  } else if (!interior && !noVehicles && hasProps('vehicle')) {
     const vehicleDefs = propsFor('vehicle');
     // A road cell is grey/flat with a long horizontal or vertical run — pick a
     // few well-spaced spots on wide roads so buses sit sensibly on the asphalt.

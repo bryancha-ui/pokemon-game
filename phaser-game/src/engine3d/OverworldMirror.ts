@@ -198,13 +198,14 @@ export class OverworldMirror {
       onlyNamedBuildings?: boolean;
       vehiclePlots?: { x: number; y: number; model: string; rot?: number }[];
       caveFloorHint?: boolean;
+      noVehicles?: boolean;
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
-      sc.caveFloorHint ?? false,
+      sc.caveFloorHint ?? false, sc.noVehicles ?? false,
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
@@ -324,6 +325,11 @@ export class OverworldMirror {
         this.hideFrom2D(obj);
         return;
       }
+      // Towns that place their buildings as 3D GLBs (buildingPlots) still draw
+      // the flat 2D building shapes as a low-depth graphics layer. Don't mirror
+      // that as its own relief — it would stand as a duplicate flat building
+      // beside each real model; hide it and let the GLB represent the building.
+      if (this.hasBuildingPlots() && ((obj.depth ?? 0) <= 3)) { this.hideFrom2D(obj); return; }
       this.adoptGraphics(obj as GO & Phaser.GameObjects.Graphics);
       return;
     }
@@ -349,6 +355,11 @@ export class OverworldMirror {
       return;
     }
     // Other types (particles, containers, shapes) stay 2D — harmless overlays.
+  }
+
+  private hasBuildingPlots(): boolean {
+    const p = (this.scene as unknown as { buildingPlots?: unknown[] }).buildingPlots;
+    return Array.isArray(p) && p.length > 0;
   }
 
   private hideFrom2D(obj: GO): void {

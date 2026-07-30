@@ -99,6 +99,9 @@ function buildMap(): Tile[][] {
 
 export class BaekduPassScene extends Phaser.Scene {
   private map!: Tile[][];
+  /** A mountain pass, not a town: suppress any building the terrain heuristics
+   *  hallucinate from cliff/rock shading (no named plots → nothing rises). */
+  public onlyNamedBuildings = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

@@ -60,6 +60,8 @@ function buildMap(): Tile[][] {
 
 export class Route4Scene extends Phaser.Scene {
   private map!: Tile[][];
+  /** Coastal road: no random bus scatter (its flat road tiles were sprouting buses). */
+  public noVehicles = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
