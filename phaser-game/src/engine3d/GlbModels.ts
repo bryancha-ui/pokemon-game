@@ -18,7 +18,7 @@ import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.j
 // Battle sprites automatically use a listed model instead of the relief-
 // extruded art. A missing manifest quietly disables the feature.
 
-type Entry = string | { key: string; url?: string; rotX?: number; rotY?: number; rotZ?: number };
+type Entry = string | { key: string; url?: string; rotX?: number; rotY?: number; rotZ?: number; scale?: number };
 
 /** A loaded model plus any animation clips baked into the GLB. */
 export interface LoadedModel {
@@ -26,10 +26,11 @@ export interface LoadedModel {
   animations: THREE.AnimationClip[];
 }
 
-/** Registry value: where to load the GLB and an optional orientation fix. */
+/** Registry value: where to load the GLB and optional orientation/size fixes. */
 interface ModelSpec {
   url: string | null;                       // null = vendored local file
   rot?: { x: number; y: number; z: number }; // degrees, baked before normalization
+  scale?: number;                           // normalized height (1 = default); <1 shrinks the model
 }
 
 let manifest: Map<string, ModelSpec> | null = null;   // key → spec
@@ -55,7 +56,7 @@ export function primeManifest(): void {
           const rot = (e.rotX || e.rotY || e.rotZ)
             ? { x: e.rotX ?? 0, y: e.rotY ?? 0, z: e.rotZ ?? 0 }
             : undefined;
-          m.set(normalizeKey(e.key), { url: e.url ?? null, rot });
+          m.set(normalizeKey(e.key), { url: e.url ?? null, rot, scale: e.scale });
         }
       }
       manifest = m;
@@ -102,7 +103,10 @@ export function getModel(key: string): LoadedModel | null {
           THREE.MathUtils.degToRad(spec.rot.z),
         );
       }
-      normalize(inner);
+      // Per-model size override (manifest `scale`, 1 = normal height). The
+      // animator later scales the root to targetH assuming height 1, so baking
+      // a <1 factor into the normalized height shrinks the model proportionally.
+      normalize(inner, spec.scale ?? 1);
       const root = new THREE.Group();
       root.add(inner);
       models.set(k, { group: root, animations: gltf.animations ?? [] });
@@ -113,12 +117,13 @@ export function getModel(key: string): LoadedModel | null {
   return null;
 }
 
-/** Scale so the model is exactly 1 unit tall with its feet on y=0, centered. */
-function normalize(root: THREE.Group): void {
+/** Scale so the model is `sizeScale` units tall (default 1) with feet on y=0,
+ *  centered. A sizeScale < 1 renders the creature proportionally smaller. */
+function normalize(root: THREE.Group, sizeScale = 1): void {
   const box = new THREE.Box3().setFromObject(root);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const s = 1 / Math.max(0.0001, size.y);
+  const s = sizeScale / Math.max(0.0001, size.y);
   root.scale.setScalar(s);
   const box2 = new THREE.Box3().setFromObject(root);
   const center = new THREE.Vector3();

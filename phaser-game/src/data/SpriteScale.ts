@@ -17,6 +17,9 @@ export const SPRITE_SCALE: Record<string, number> = {
   poongbaek:    1.35,
   woosa:        1.35,
   woonsa:       1.35,
+  // ── Tuned-down designs ──
+  disguijar:    0.4,   // reads oversized at the standard fit — shrink to 40%
+  vipour:       0.6,   // shrink the starter to 60%
   // ── Big final-stage designs ──
   snoqueen:     1.0,   // 60% smaller than the standard fit
   thanatoat:    1.3,
