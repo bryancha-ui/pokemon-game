@@ -164,13 +164,14 @@ export class NorthernPlazaScene extends Phaser.Scene {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(6);
 
-    const nx = NURSE.col * TILE + 16, ny = NURSE.row * TILE + 16;
-    const kb = this.add.graphics().setDepth(4);
-    kb.fillStyle(0xe8e8ee); kb.fillRect(nx - 22, ny - 30, 44, 22);
-    kb.fillStyle(0xcc2233); kb.fillTriangle(nx - 26, ny - 30, nx, ny - 44, nx + 26, ny - 30);
-    kb.fillStyle(0xffffff); kb.fillRect(nx - 3, ny - 40, 6, 2); kb.fillRect(nx - 1, ny - 42, 2, 6);
-    label(NURSE.col, NURSE.row, -34, '✚ Center');
-    this.drawAttendant(nx, ny, 0xff7799);
+    // 2D kiosk removed for Center (3D model present in buildingPlots)
+    // const nx = NURSE.col * TILE + 16, ny = NURSE.row * TILE + 16;
+    // const kb = this.add.graphics().setDepth(4);
+    // kb.fillStyle(0xe8e8ee); kb.fillRect(nx - 22, ny - 30, 44, 22);
+    // kb.fillStyle(0xcc2233); kb.fillTriangle(nx - 26, ny - 30, nx, ny - 44, nx + 26, ny - 30);
+    // kb.fillStyle(0xffffff); kb.fillRect(nx - 3, ny - 40, 6, 2); kb.fillRect(nx - 1, ny - 42, 2, 6);
+    // label(NURSE.col, NURSE.row, -34, '✚ Center');
+    // this.drawAttendant(nx, ny, 0xff7799);
 
     const mx = MART.col * TILE + 16, my = MART.row * TILE + 16;
     const mb = this.add.graphics().setDepth(4);
