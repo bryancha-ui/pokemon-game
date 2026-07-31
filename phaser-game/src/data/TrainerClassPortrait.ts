@@ -70,12 +70,34 @@ function ensureTrainerClassTexture(scene: Phaser.Scene, cls: string): string {
   return key;
 }
 
+// Each class reuses one free Pokémon-style trainer sprite, vendored from
+// Pokémon Showdown into public/assets/trainers/ (served same-origin, so no CORS
+// issue when the 3D relief reads its pixels). Classes that share a look reuse
+// the same file (diver → swimmer, farmer → ruin maniac).
+const CLASS_SPRITE: Record<string, string> = {
+  bugcatcher: 'bugcatcher',
+  ace:        'acetrainer',
+  fisher:     'fisherman',
+  swimmer:    'swimmer',
+  diver:      'swimmer',
+  hiker:      'hiker',
+  sailor:     'sailor',
+  worker:     'worker',
+  ranger:     'pokemonranger',
+  farmer:     'ruinmaniac',
+  scientist:  'scientist',
+  grunt:      'galacticgrunt',
+  generic:    'youngster',
+};
+
 /**
  * A reusable battle portrait for a trainer that has no authored image, keyed by
- * class. Returns a {key,url} shaped like the authored portraits; the texture is
- * already generated so the caller's `textures.exists(key)` skips any load.
+ * class. Prefers a vendored Pokémon trainer sprite (one per class); falls back
+ * to a procedural figure (already generated) if the class has no sprite.
  */
 export function trainerClassPortrait(scene: Phaser.Scene, trainerName: string): { key: string; url: string } {
   const cls = classifyTrainerClass(trainerName);
+  const sprite = CLASS_SPRITE[cls];
+  if (sprite) return { key: `trncls-${sprite}`, url: `assets/trainers/${sprite}.png` };
   return { key: ensureTrainerClassTexture(scene, cls), url: '' };
 }
