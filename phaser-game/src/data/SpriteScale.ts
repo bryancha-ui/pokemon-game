@@ -18,7 +18,7 @@ export const SPRITE_SCALE: Record<string, number> = {
   woosa:        1.35,
   woonsa:       1.35,
   // ── Tuned-down designs ──
-  disguijar:    0.65,  // tuned between oversized (1.0) and too-small (0.4)
+  disguijar:    1.95,  // 3× the earlier 0.65 (read too small in battle)
   vipour:       0.6,   // shrink the starter to 60%
   // ── Big final-stage designs ──
   snoqueen:     1.0,   // 60% smaller than the standard fit

@@ -179,8 +179,9 @@ export class ChilboHighlandsScene extends Phaser.Scene {
     const wf = this.add.graphics().setDepth(6);
     wf.fillStyle(0xffffff, 0.5); wf.fillEllipse(3.5 * TILE, 26 * TILE, 26, 10);
 
-    // Cold sea-fog thickening toward Chongjin (the north end)
-    const fog = this.add.graphics().setDepth(15);
+    // Cold sea-fog thickening toward Chongjin (the north end). Tagged no3d so the
+    // 3D mirror never lifts this white overlay into a floating structure.
+    const fog = this.add.graphics().setDepth(15).setData('no3d', true);
     fog.fillStyle(0xdfe6ee, 0.32);
     for (let r = 0; r < 12; r++) {
       const a = 0.34 - r * 0.026;

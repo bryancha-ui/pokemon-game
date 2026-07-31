@@ -539,10 +539,12 @@ const SUMMIT: RgConfig = {
 };
 
 export class RangrimFoothillsScene extends RangrimBaseScene {
-  // Cap tall rock tiles so they never block the player's view on the foothills,
-  // and erase any auto-detected building shape (there are none by the entrance).
+  // Keep the foothills fully clear of view-blocking tiles — including the rock
+  // walls flanking the path up to the cave mouth: flatten every raised tile and
+  // erase any auto-detected building shape.
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
+  public clearSight3D = true;
   constructor() { super(FOOTHILLS); }
 }
 export class RangrimCavernScene extends RangrimBaseScene {
