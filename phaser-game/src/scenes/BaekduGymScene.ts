@@ -16,6 +16,11 @@ interface GymTrainer {
 const IT = 36;
 
 export class BaekduGymScene extends Phaser.Scene {
+  // Summit Dojo interior: keep its wall/pillar tiles flat on the ground so they
+  // never rise into blocks that hide the player or the leader ahead.
+  public clearSight3D = true;
+  public onlyNamedBuildings = true;
+
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
