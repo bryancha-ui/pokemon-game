@@ -364,6 +364,7 @@ export class CapitolCityScene extends Phaser.Scene {
     const stopY  = this.py - TILE * 1.6;    // halts just in front of the champion
 
     const prof = this.add.graphics().setDepth(21);
+    markTrainerPortrait(prof, 'prof-song');
     const tag  = this.add.text(this.px, startY - 30, tr('Professor Song'), {
       fontSize: '10px', color: '#bfe4ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(22);

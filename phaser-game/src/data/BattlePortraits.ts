@@ -82,7 +82,10 @@ export function markTrainerPortrait(
   trainerKey: string,
 ): void {
   const portrait = portraitFor(trainerKey);
-  if (portrait) obj.setData('characterPortrait3D', portrait);
+  if (portrait) {
+    obj.setData('characterPortrait3D', portrait);
+    obj.setData('characterModel3DKey', portrait.key);
+  }
 }
 
 /** The rival uses the opposite-gender trainer artwork selected at game start. */
@@ -92,6 +95,7 @@ export function markRivalPortrait(
 ): void {
   const key = rivalAvatarKey(registry);
   obj.setData('characterPortrait3D', { key, url: AVATAR_URL[key] } satisfies Portrait);
+  obj.setData('characterModel3DKey', key);
 }
 
 /**

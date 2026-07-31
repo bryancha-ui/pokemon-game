@@ -213,7 +213,7 @@ export class RivalBattleScene extends Phaser.Scene {
       // flat portrait still never lands on the arena as a stray relief.
       const rivalDesign: 'boy' | 'girl' = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
       this.rivalTrainer = this.add.image(RIVAL_STAGE_X, RIVAL_STAGE_Y, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
-        .setData('no3d', true).setData('battleTrainer', rivalDesign);
+        .setData('no3d', true).setData('battleTrainer', rivalDesign).setData('characterModel3DKey', rAvatar);
       fitPortrait(this.rivalTrainer);
     }
   }

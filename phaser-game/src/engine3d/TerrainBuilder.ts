@@ -211,6 +211,9 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
   if (h >= 60 && h <= 170) {                                          // green family
     if (l < 0.26) return snowy ? 'pine' : 'tree';
     if (s > 0.42 && l < 0.46) return 'grass';
+    // Snowy passes paint their tall-grass clearings a pale frosted green (low
+    // saturation, light) — treat that as grass so it grows snow-dusted tufts.
+    if (snowy && s > 0.12 && l >= 0.5 && l < 0.75) return 'grass';
     return 'flat';
   }
   if (h >= 25 && h <= 55 && s > 0.55 && l > 0.52 && l < 0.78) return 'flower'; // warm blossom tones (wood floors are duller)

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { buildRelief, reliefMaterials } from './Extruder';
-import { makeBlobShadow, toonMat } from './Props';
+import { toonMat } from './Props';
 
 // ── Procedural protagonist model ─────────────────────────────────────────────
 // A stylized low-poly 3D version of the hero, built from primitives so it
@@ -139,40 +138,237 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   };
 }
 
-/**
- * Build a recognizable trainer model directly from an authored full-body 2D
- * portrait. The alpha silhouette is carved into an actual extruded mesh; the
- * original artwork textures the front/back while sampled portrait colours form
- * the side faces. A subtle stride/breath cycle keeps it alive during battle
- * entrances without distorting the character design.
- */
-export function buildPortraitCharacterModel(
-  key: string,
-  source: HTMLImageElement | HTMLCanvasElement,
-  targetHeight = 1.65,
-): PlayerModel | null {
-  const relief = buildRelief(`trainer-character:${key}`, source);
-  if (!relief) return null;
+type BodyShape = 'slim' | 'average' | 'broad' | 'heroic';
+type OutfitStyle = 'trainer' | 'uniform' | 'coat' | 'robe' | 'hanbok' | 'armor' | 'winter' | 'martial';
+type HairStyle = 'short' | 'spiky' | 'bob' | 'long' | 'bun' | 'braid' | 'topknot' | 'wild';
+type HeldProp = 'staff' | 'sword' | 'lantern';
 
+interface CharacterProfile {
+  skin?: number;
+  hair: number;
+  outfit: number;
+  secondary: number;
+  accent: number;
+  trousers?: number;
+  shoes?: number;
+  body?: BodyShape;
+  outfitStyle?: OutfitStyle;
+  hairStyle?: HairStyle;
+  hat?: 'beret' | 'wide' | 'crown' | 'hood' | 'helmet' | 'mask';
+  cape?: number;
+  fur?: number;
+  glasses?: boolean;
+  scarf?: number;
+  prop?: HeldProp;
+  height?: number;
+}
+
+const DEFAULT_PROFILE: CharacterProfile = {
+  hair: 0x1b1715, outfit: 0x343741, secondary: 0xf5f5f2, accent: 0xb92335,
+  trousers: 0x282b32, shoes: 0x17181c, body: 'average', outfitStyle: 'trainer', hairStyle: 'short',
+};
+
+/** Visual profiles keyed by the authored portrait texture.  They deliberately
+ * describe silhouettes and signature colours rather than copying portrait
+ * pixels: every result is a genuine, rotatable low-poly humanoid. */
+const CHARACTER_PROFILES: Record<string, CharacterProfile> = {
+  npc_gyeoul:    { hair: 0xe8edf2, outfit: 0xeef7fa, secondary: 0xa8dceb, accent: 0x73b8d4, outfitStyle: 'hanbok', hairStyle: 'long', body: 'slim' },
+  npc_hwageum:   { hair: 0x31352d, outfit: 0x536b54, secondary: 0x313b35, accent: 0xb89a53, outfitStyle: 'armor', hairStyle: 'topknot', prop: 'sword' },
+  npc_baram:     { hair: 0xd9e0e7, outfit: 0x33485c, secondary: 0x899bab, accent: 0x6b91b3, outfitStyle: 'coat', hairStyle: 'spiky', cape: 0x8fa2ae, body: 'slim' },
+  npc_saleum:    { hair: 0x201813, outfit: 0xb42332, secondary: 0x2d846e, accent: 0xe8b844, outfitStyle: 'hanbok', hairStyle: 'bun', hat: 'crown' },
+  npc_hwangeum:  { hair: 0x17130f, outfit: 0x14181e, secondary: 0xeee9db, accent: 0xc69c48, outfitStyle: 'uniform', hairStyle: 'short' },
+  npc_jin:       { hair: 0x17161a, outfit: 0x202129, secondary: 0x373844, accent: 0x7d578f, outfitStyle: 'coat', hairStyle: 'bob', hat: 'beret', body: 'slim' },
+  npc_byeoksan:  { hair: 0x24201d, outfit: 0xf3f0e8, secondary: 0xe2ded5, accent: 0x17171a, outfitStyle: 'martial', hairStyle: 'short', body: 'broad' },
+  npc_namsun:    { hair: 0x55352b, outfit: 0x4c4891, secondary: 0x783b50, accent: 0xd19c55, outfitStyle: 'uniform', hairStyle: 'short', body: 'broad' },
+  npc_harang:    { hair: 0x202127, outfit: 0x24425f, secondary: 0x93b9d7, accent: 0xd3e5ef, outfitStyle: 'uniform', hairStyle: 'short', glasses: true },
+  npc_noksaek:   { hair: 0xb7b8ae, outfit: 0x315f42, secondary: 0x244833, accent: 0x8eaa62, outfitStyle: 'robe', hairStyle: 'long', hat: 'hood', prop: 'staff' },
+  npc_beonge:    { hair: 0x6a4631, outfit: 0xe9b92e, secondary: 0x272b32, accent: 0xf2df70, outfitStyle: 'coat', hairStyle: 'spiky' },
+  npc_sandol:    { hair: 0x4f392b, outfit: 0x9a8a62, secondary: 0xc3af76, accent: 0x66523b, outfitStyle: 'trainer', hairStyle: 'short', body: 'slim' },
+  npc_yeona:     { hair: 0xe3e5ea, outfit: 0xf1f2f4, secondary: 0x26364d, accent: 0x8cc9e4, outfitStyle: 'winter', hairStyle: 'bun', scarf: 0x26364d, fur: 0xe9f6fa },
+  npc_ryeo:      { hair: 0x93969c, outfit: 0x161a20, secondary: 0x343b46, accent: 0x9e2731, outfitStyle: 'uniform', hairStyle: 'short' },
+  npc_suri:      { hair: 0xc5c7ca, outfit: 0x50545b, secondary: 0x282c33, accent: 0x8b2028, outfitStyle: 'coat', hairStyle: 'long' },
+  npc_eosajang:  { skin: 0x9a603f, hair: 0x4a2d21, outfit: 0x9e2830, secondary: 0x25282d, accent: 0xd7a348, outfitStyle: 'coat', hairStyle: 'short', fur: 0xe2d5bd, prop: 'sword', body: 'broad' },
+  npc_salmu:     { hair: 0xd9d7dc, outfit: 0x705692, secondary: 0x1d2028, accent: 0xb72f48, outfitStyle: 'coat', hairStyle: 'long', glasses: true, scarf: 0xa32236, body: 'slim' },
+  npc_jito:      { hair: 0x34312d, outfit: 0x20242a, secondary: 0x292d33, accent: 0xb42731, outfitStyle: 'robe', hairStyle: 'short', prop: 'lantern', body: 'broad' },
+  npc_gapcheol:  { hair: 0x70744a, outfit: 0xa52a31, secondary: 0x252a2c, accent: 0xd4ad54, outfitStyle: 'armor', hairStyle: 'long', hat: 'helmet', fur: 0xe1d2b8, prop: 'sword' },
+  npc_dosadae:   { hair: 0xe4bec8, outfit: 0x22242b, secondary: 0x6b4651, accent: 0xb8384a, outfitStyle: 'hanbok', hairStyle: 'long', hat: 'wide', prop: 'staff', body: 'slim' },
+  npc_jinnok:    { hair: 0x4c8a59, outfit: 0x254f39, secondary: 0x171d1b, accent: 0xa83438, outfitStyle: 'robe', hairStyle: 'wild', hat: 'mask', prop: 'staff' },
+  npc_chaeyeon:  { hair: 0x191719, outfit: 0x171a20, secondary: 0xa32939, accent: 0xd05a62, outfitStyle: 'coat', hairStyle: 'bob', body: 'slim' },
+  npc_mubaek:    { hair: 0xa7a9ac, outfit: 0x171a20, secondary: 0x30343b, accent: 0x8e2530, outfitStyle: 'coat', hairStyle: 'short', body: 'broad' },
+  npc_seollan:   { hair: 0xe5e7e8, outfit: 0x171b24, secondary: 0x343b47, accent: 0xaac5d2, outfitStyle: 'winter', hairStyle: 'long', fur: 0xe0e5e5 },
+  npc_seorak:    { hair: 0xb6b7b6, outfit: 0x6d4b35, secondary: 0x3c3028, accent: 0xb28a52, outfitStyle: 'armor', hairStyle: 'wild', fur: 0xb9aa8e, body: 'heroic', height: 1.08 },
+  npc_hanseol:   { hair: 0xebedf0, outfit: 0xe8f2f5, secondary: 0xa5d5e5, accent: 0x6eaec6, outfitStyle: 'winter', hairStyle: 'braid', fur: 0xf5fbfc, body: 'slim' },
+  npc_cheolgang: { hair: 0x292829, outfit: 0x252b32, secondary: 0x4a5058, accent: 0x8e2831, outfitStyle: 'armor', hairStyle: 'short', cape: 0x6e2028, body: 'broad' },
+  npc_baekho:    { hair: 0xe5e4e5, outfit: 0x59437b, secondary: 0x343040, accent: 0xc4a75a, outfitStyle: 'armor', hairStyle: 'wild', cape: 0xe8e4d8, fur: 0xf1eee5, body: 'heroic' },
+  npc_taewang:   { hair: 0xbcbfc1, outfit: 0x4d5053, secondary: 0x313438, accent: 0xb59352, outfitStyle: 'armor', hairStyle: 'wild', fur: 0xb8b2a8, cape: 0x5f2529, body: 'broad' },
+  npc_sovereign: { hair: 0xb5b6b5, outfit: 0x17191d, secondary: 0x4a3030, accent: 0xd0a84f, outfitStyle: 'robe', hairStyle: 'short', hat: 'crown', cape: 0x2b2328 },
+  npc_song:      { hair: 0x858789, outfit: 0x72777d, secondary: 0x24282d, accent: 0x9e2830, outfitStyle: 'coat', hairStyle: 'spiky', glasses: true },
+};
+
+function cylinder(rt: number, rb: number, h: number, color: number, segments = 8): THREE.Mesh {
+  return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, segments), toonMat(color));
+}
+
+/** Build a protagonist-style true 3D model for a named trainer or story NPC. */
+export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' = 'boy'): PlayerModel {
+  if (key === 'trainer_boy' || key === 'trainer_girl') {
+    return buildPlayerModel(key === 'trainer_girl' ? 'girl' : 'boy');
+  }
+  const fallback = fallbackDesign === 'girl'
+    ? { ...DEFAULT_PROFILE, hairStyle: 'bun' as HairStyle, accent: BACKPACK }
+    : DEFAULT_PROFILE;
+  const p = { ...fallback, ...(CHARACTER_PROFILES[key] ?? {}) };
   const group = new THREE.Group();
-  const materials = reliefMaterials(relief.texture);
-  const figure = new THREE.Mesh(relief.geometry, materials);
-  figure.userData.sharedGeo = true;
-  const scale = targetHeight / Math.max(1, relief.pxHeight);
-  figure.scale.setScalar(scale);
-  group.add(figure);
-  group.add(makeBlobShadow(Math.min(0.82, Math.max(0.35, relief.pxWidth * scale * 0.38))));
+  const width = p.body === 'heroic' ? 1.38 : p.body === 'broad' ? 1.2 : p.body === 'slim' ? 0.9 : 1;
+  const skin = p.skin ?? SKIN;
+  const trousers = p.trousers ?? (p.outfitStyle === 'martial' ? 0xeee9df : 0x262a30);
+  const shoes = p.shoes ?? 0x191a1e;
+  const legL = new THREE.Group(), legR = new THREE.Group();
 
-  let yaw = 0, targetYaw = 0, strideEase = 0;
+  for (const [leg, off] of [[legL, -0.075], [legR, 0.075]] as [THREE.Group, number][]) {
+    const shin = box(0.11 * width, 0.35, 0.13 * width, trousers);
+    shin.position.y = -0.175;
+    const boot = box(0.13 * width, p.outfitStyle === 'armor' ? 0.12 : 0.075, 0.18, shoes);
+    boot.position.set(0, -0.34, 0.025);
+    leg.add(shin, boot);
+    leg.position.set(off * width, 0.41, 0);
+    group.add(leg);
+  }
+
+  const torso = new THREE.Group();
+  const torsoW = 0.35 * width;
+  const torsoMesh = box(torsoW, 0.35, p.outfitStyle === 'armor' ? 0.24 : 0.2, p.outfit);
+  torsoMesh.position.y = 0.59;
+  torso.add(torsoMesh);
+  if (p.outfitStyle === 'coat' || p.outfitStyle === 'winter') {
+    const tails = cylinder(0.16 * width, 0.23 * width, 0.3, p.outfit);
+    tails.position.y = 0.38;
+    torso.add(tails);
+  } else if (p.outfitStyle === 'robe' || p.outfitStyle === 'hanbok') {
+    const robe = cylinder(0.17 * width, 0.29 * width, 0.39, p.outfit);
+    robe.position.y = 0.37;
+    torso.add(robe);
+    const sash = box(0.37 * width, 0.055, 0.215, p.accent);
+    sash.position.y = 0.54;
+    torso.add(sash);
+  } else if (p.outfitStyle === 'martial') {
+    const belt = box(0.38 * width, 0.06, 0.22, p.accent);
+    belt.position.y = 0.47;
+    torso.add(belt);
+  } else {
+    const trim = box(0.36 * width, 0.055, 0.21, p.secondary);
+    trim.position.y = 0.735;
+    torso.add(trim);
+  }
+  if (p.outfitStyle === 'armor') {
+    const chest = box(0.3 * width, 0.22, 0.255, p.secondary);
+    chest.position.set(0, 0.62, 0.02);
+    torso.add(chest);
+    for (const x of [-0.23 * width, 0.23 * width]) {
+      const pad = new THREE.Mesh(new THREE.SphereGeometry(0.105 * width, 8, 5), toonMat(p.secondary));
+      pad.scale.y = 0.65; pad.position.set(x, 0.72, 0); torso.add(pad);
+    }
+  }
+  if (p.cape !== undefined) {
+    const cape = cylinder(0.15 * width, 0.28 * width, 0.55, p.cape, 10);
+    cape.scale.z = 0.28; cape.position.set(0, 0.49, -0.14); torso.add(cape);
+  }
+  if (p.fur !== undefined) {
+    const fur = new THREE.Mesh(new THREE.TorusGeometry(0.2 * width, 0.045, 5, 10), toonMat(p.fur));
+    fur.rotation.x = Math.PI / 2; fur.position.y = 0.76; torso.add(fur);
+  }
+  if (p.scarf !== undefined) {
+    const scarf = box(0.3 * width, 0.07, 0.23, p.scarf); scarf.position.y = 0.77; torso.add(scarf);
+    const tail = box(0.07, 0.3, 0.035, p.scarf); tail.position.set(0.12, 0.55, -0.12); torso.add(tail);
+  }
+  group.add(torso);
+
+  const armL = new THREE.Group(), armR = new THREE.Group();
+  for (const [arm, off] of [[armL, -0.215 * width], [armR, 0.215 * width]] as [THREE.Group, number][]) {
+    const sleeve = box(0.1 * width, 0.25, 0.12 * width, p.outfit);
+    sleeve.position.y = -0.105;
+    const hand = box(0.085 * width, 0.075, 0.095, skin);
+    hand.position.y = -0.255;
+    arm.add(sleeve, hand);
+    arm.position.set(off, 0.72, 0);
+    group.add(arm);
+  }
+
+  const head = new THREE.Group();
+  const face = box(0.26 * width, 0.24, 0.24, skin); face.position.y = 0.9; head.add(face);
+  const addHairBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
+    const hair = box(w * width, h, d, p.hair); hair.position.set(x * width, y, z); head.add(hair);
+  };
+  addHairBox(0.28, 0.1, 0.26, 0, 1.0, 0);
+  if (p.hairStyle === 'long' || p.hairStyle === 'bob' || p.hairStyle === 'braid' || p.hairStyle === 'wild') {
+    addHairBox(0.29, p.hairStyle === 'long' ? 0.3 : 0.2, 0.08, 0, p.hairStyle === 'long' ? 0.86 : 0.9, -0.1);
+  }
+  if (p.hairStyle === 'spiky' || p.hairStyle === 'wild') {
+    for (const [x, y, r] of [[-0.09, 1.05, -0.25], [0, 1.08, 0], [0.09, 1.04, 0.25]] as [number, number, number][]) {
+      const spike = cylinder(0, 0.055 * width, 0.19, p.hair, 5); spike.position.set(x * width, y, 0); spike.rotation.z = r; head.add(spike);
+    }
+  }
+  if (p.hairStyle === 'bun' || p.hairStyle === 'topknot') {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(p.hairStyle === 'topknot' ? 0.065 : 0.09, 8, 6), toonMat(p.hair));
+    bun.position.set(0, 1.075, p.hairStyle === 'topknot' ? 0 : -0.05); head.add(bun);
+  }
+  if (p.hairStyle === 'braid') {
+    for (let i = 0; i < 4; i++) {
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 5), toonMat(p.hair));
+      bead.position.set(0.13 * width, 0.87 - i * 0.08, -0.08); head.add(bead);
+    }
+  }
+  for (const ex of [-0.06, 0.06]) {
+    const eye = box(0.032, 0.046, 0.012, 0x22232a); eye.position.set(ex * width, 0.89, 0.125); head.add(eye);
+  }
+  if (p.glasses) {
+    for (const ex of [-0.06, 0.06]) {
+      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.009, 4, 8), toonMat(0x20242a));
+      lens.position.set(ex * width, 0.9, 0.137); head.add(lens);
+    }
+    const bridge = box(0.04, 0.012, 0.012, 0x20242a); bridge.position.set(0, 0.9, 0.137); head.add(bridge);
+  }
+  if (p.hat === 'beret') {
+    const hat = cylinder(0.16 * width, 0.16 * width, 0.05, 0x17171b, 10); hat.position.set(-0.02, 1.075, 0); hat.rotation.z = -0.12; head.add(hat);
+  } else if (p.hat === 'wide') {
+    const brim = cylinder(0.24 * width, 0.24 * width, 0.025, 0x202127, 12); brim.position.y = 1.07; head.add(brim);
+    const crown = cylinder(0.11 * width, 0.15 * width, 0.17, 0x202127, 10); crown.position.y = 1.15; head.add(crown);
+  } else if (p.hat === 'crown') {
+    const crown = cylinder(0.07 * width, 0.12 * width, 0.17, p.accent, 6); crown.position.y = 1.14; head.add(crown);
+  } else if (p.hat === 'hood' || p.hat === 'helmet') {
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.18 * width, 8, 6), toonMat(p.hat === 'hood' ? p.outfit : p.secondary));
+    hood.scale.z = 0.8; hood.position.y = 0.96; head.add(hood); face.position.z = 0.08;
+  } else if (p.hat === 'mask') {
+    const mask = box(0.2 * width, 0.18, 0.03, 0xb89a68); mask.position.set(0, 0.91, 0.145); head.add(mask);
+    for (const ex of [-0.055, 0.055]) { const slit = box(0.035, 0.02, 0.012, 0x18201a); slit.position.set(ex, 0.92, 0.165); head.add(slit); }
+  }
+  group.add(head);
+
+  if (p.prop) {
+    const propRoot = new THREE.Group(); propRoot.position.set(0.32 * width, 0.42, 0.02);
+    if (p.prop === 'staff' || p.prop === 'lantern') {
+      const pole = cylinder(0.018, 0.018, 0.85, p.prop === 'staff' ? 0x5c412c : 0x222429, 6); pole.position.y = 0.18; propRoot.add(pole);
+      if (p.prop === 'lantern') { const lamp = box(0.13, 0.17, 0.13, 0xd3a13d); lamp.position.y = -0.18; propRoot.add(lamp); }
+      else { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.07, 7, 5), toonMat(p.accent)); cap.position.y = 0.62; propRoot.add(cap); }
+    } else {
+      const blade = box(0.035, 0.68, 0.02, 0xd7dce0); blade.position.y = 0.15; propRoot.add(blade);
+      const guard = box(0.17, 0.035, 0.05, p.accent); guard.position.y = -0.18; propRoot.add(guard);
+    }
+    group.add(propRoot);
+  }
+
+  group.scale.setScalar(p.height ?? 1);
+  let yaw = 0, targetYaw = 0, restEase = 0;
   return {
     group,
     setWalk(phase: number, moving: boolean, dt: number) {
-      strideEase = THREE.MathUtils.clamp(strideEase + (moving ? dt * 7 : -dt * 5), 0, 1);
-      const step = Math.sin(phase);
-      group.position.y = Math.abs(step) * 0.045 * strideEase;
-      figure.rotation.z = step * 0.035 * strideEase;
-      const breathe = moving ? 1 : 1 + Math.sin(phase * 0.35) * 0.01;
-      figure.scale.set(scale / breathe, scale * breathe, scale);
+      restEase = THREE.MathUtils.clamp(restEase + (moving ? dt * 8 : -dt * 6), 0, 1);
+      const swing = Math.sin(phase) * 0.68 * restEase;
+      legL.rotation.x = swing; legR.rotation.x = -swing;
+      armL.rotation.x = -swing * 0.72; armR.rotation.x = swing * 0.72;
+      group.position.y = Math.abs(Math.sin(phase)) * 0.035 * restEase;
+      const breathe = moving ? 0 : Math.sin(phase * 0.35) * 0.007;
+      torso.scale.y = 1 + breathe; head.position.y = breathe * 0.5;
     },
     face(dx: number, dz: number, dt: number) {
       if (Math.abs(dx) + Math.abs(dz) > 0.001) targetYaw = Math.atan2(dx, dz);

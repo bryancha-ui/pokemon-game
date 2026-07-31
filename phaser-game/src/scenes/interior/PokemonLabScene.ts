@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { tr } from '../../systems/i18n';
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
+import { markTrainerPortrait } from '../../data/BattlePortraits';
 
 // ── Prof. Song's Pokémon Lab (walkable interior) ─────────────────────────────
 // You enter from Waterfall City and walk up to Professor Song, drawn as a 2-D
@@ -73,6 +74,7 @@ export class PokemonLabScene extends BaseInteriorScene {
   protected setupNPCs(): void {
     // Professor Song — white lab coat, greying hair — standing before the table.
     this.song = this.createNPCGraphic(7, 5, 0xffffff, 0x9a9088, false, 0);
+    markTrainerPortrait(this.song.graphic, 'prof-song');
     const p = this.tile(7, 5);
     this.add.text(p.x + 16, p.y - 18, tr('🔬 Prof. Song'), {
       fontSize: '9px', color: '#bfe4ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },

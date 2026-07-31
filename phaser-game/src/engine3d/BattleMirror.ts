@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
 import { buildThemedBattleArena, resolveBattleArenaTheme } from './BattleArenaThemes';
 import { buildGeographicBattleArena, resolveOutdoorBattleTheme } from './BattleGeography';
-import { buildPlayerModel, buildPortraitCharacterModel, PlayerModel } from './CharacterModel';
+import { buildCharacterModel, PlayerModel } from './CharacterModel';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
@@ -76,6 +76,7 @@ interface TrainerWalker {
   t: number;               // walk-in progress 0..1
   phase: number;           // leg-swing phase
   seen: boolean;           // portrait has been visible at least once
+  walkIn: boolean;         // rival enters; other major trainers hold the anchor
 }
 
 interface ScreenTargetRequest {
@@ -250,11 +251,12 @@ export class BattleMirror {
     // `battleTrainer: 'boy' | 'girl'`. Spawn the 3D walker and keep the flat 2D
     // portrait off the render layer while it plays.
     const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
-    if (trainerDesign) { this.spawnTrainer(im, trainerDesign); return; }
-    // Northern League master portraits are upright 3D reliefs at the opponent
-    // Pokémon's exact arena anchor. Their alpha crossfade hands that same spot
-    // cleanly to the Pokémon instead of leaving a sprite in the screen corner.
     const trainerAtEnemy = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerEnemyAnchor');
+    const modelKey = (im as Phaser.GameObjects.Image).getData?.('characterModel3DKey') as string | undefined;
+    if (trainerDesign || trainerAtEnemy) {
+      this.spawnTrainer(im, trainerDesign ?? (modelKey?.includes('girl') ? 'girl' : 'boy'), modelKey ?? im.texture.key, !!trainerDesign);
+      return;
+    }
     // Battle UI images that aren't combatants (trainer/leader portraits) opt out
     // of the 3D arena so they don't stand on the stage as a stray relief.
     if (!trainerAtEnemy && (im as Phaser.GameObjects.Image).getData?.('no3d')) return;
@@ -396,19 +398,21 @@ export class BattleMirror {
   }
 
   // ── Battle trainer walk-in (rival striding toward the player) ──
-  private spawnTrainer(im: GO & Phaser.GameObjects.Image, design: 'boy' | 'girl'): void {
+  private spawnTrainer(
+    im: GO & Phaser.GameObjects.Image,
+    design: 'boy' | 'girl',
+    modelKey: string,
+    walkIn: boolean,
+  ): void {
     if (this.trainers.some(w => w.obj === im)) return;
-    const portrait = this.frameCanvas(im);
-    const portraitModel = portrait
-      ? buildPortraitCharacterModel(`${im.texture.key}:${im.frame?.name ?? 0}`, portrait, 1.72)
-      : null;
-    const model = portraitModel ?? buildPlayerModel(design);
-    // The procedural fallback is authored at overworld scale; portrait models
-    // are already normalized to battle-trainer height.
-    if (!portraitModel) model.group.scale.setScalar(1.7);
-    model.group.position.copy(TRAINER_START);
-    this.root.add(model.group);
-    this.trainers.push({ obj: im, model, group: model.group, t: 0, phase: 0, seen: false });
+    const model = buildCharacterModel(modelKey, design);
+    model.group.scale.multiplyScalar(1.6);
+    const holder = new THREE.Group();
+    holder.add(model.group, makeBlobShadow(0.5));
+    holder.position.copy(walkIn ? TRAINER_START : TRAINER_END);
+    holder.visible = false;
+    this.root.add(holder);
+    this.trainers.push({ obj: im, model, group: holder, t: walkIn ? 0 : 1, phase: 0, seen: false, walkIn });
     // The flat 2D portrait stays off the render layer while the 3D walker plays;
     // its alpha tween still drives the walk-in / retirement.
     this.scene.cameras.main.ignore(im);
@@ -420,6 +424,7 @@ export class BattleMirror {
       const o = w.obj;
       const alpha = o.alpha ?? 1;
       const visible = !!(o as GO).scene && o.visible !== false && alpha > 0.05;
+      w.group.visible = visible;
       if (visible) w.seen = true;
       // Once it has appeared, the portrait fading out (Pokémon send-out) or the
       // scene tearing it down retires the walker.
@@ -428,14 +433,18 @@ export class BattleMirror {
         this.trainers.splice(i, 1);
         continue;
       }
-      if (visible) w.t = Math.min(1, w.t + dt / 1.5);
+      if (visible && w.walkIn) w.t = Math.min(1, w.t + dt / 1.5);
       const e = 1 - Math.pow(1 - w.t, 3);       // easeOutCubic
       w.group.position.x = THREE.MathUtils.lerp(TRAINER_START.x, TRAINER_END.x, e);
       w.group.position.z = THREE.MathUtils.lerp(TRAINER_START.z, TRAINER_END.z, e);
-      const moving = visible && w.t < 1;
+      const moving = visible && w.walkIn && w.t < 1;
       if (moving) w.phase += dt * 9;
+      else w.phase += dt * 2.1;
       w.model.setWalk(w.phase, moving, dt);     // sets group.position.y (bob)
-      w.model.face(TRAINER_END.x - TRAINER_START.x, TRAINER_END.z - TRAINER_START.z, dt);
+      const facing = moving
+        ? TRAINER_END.clone().sub(TRAINER_START)
+        : ANCHORS.player[0].clone().sub(TRAINER_END);
+      w.model.face(facing.x, facing.z, dt);
     }
   }
 
@@ -595,12 +604,14 @@ export class BattleMirror {
     const cam = this.scene.cameras.main as Phaser.Cameras.Scene2D.Camera & { id: number };
     const unhide = (o: GO) => { (o as unknown as { cameraFilter: number }).cameraFilter &= ~cam.id; };
     for (const cb of this.combatants.values()) unhide(cb.obj);
+    for (const w of this.trainers) unhide(w.obj);
     for (const b of this.hiddenBackdrops) unhide(b);
   }
 
   apply3D(): void {
     this.active3D = true;
     for (const cb of this.combatants.values()) this.scene.cameras.main.ignore(cb.obj);
+    for (const w of this.trainers) this.scene.cameras.main.ignore(w.obj);
     for (const b of this.hiddenBackdrops) this.scene.cameras.main.ignore(b);
   }
 }

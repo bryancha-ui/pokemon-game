@@ -4,8 +4,9 @@
 // player has earned HM Fly by beating the Pokémon League.
 //
 // Positions (nx, ny) are normalised 0..1 and get projected into the map panel by
-// RegionMapScene. They follow the story route order rather than exact geography so
-// the connecting line reads like a clean travel map.
+// RegionMapScene. Northern cities follow their real relative geography: Sinuiju
+// in the far north-west, the west-coast line down through Pyeongseong/Nampo/
+// Kaesong, and the east-coast line through Chongjin/Hamhung/Wonsan.
 
 export interface RegionNode {
   id:      string;
@@ -37,38 +38,38 @@ export interface RegionNode {
 export const REGION_NODES: RegionNode[] = [
   // ── Northern region (across the border) ──────────────────────────────────
   { id: 'summit', scene: 'BaekduSummitScene', name: 'Cheonji · Baekdu', kr: '천지 · 백두산',
-    nx: 0.42, ny: 0.045, kind: 'city', fly: true, region: 'north', returnKey: 'baekduSummit',
+    nx: 0.50, ny: 0.035, kind: 'city', fly: true, region: 'north', returnKey: 'baekduSummit',
     scenes: ['BaekduSummitScene'] },
 
   { id: 'northleague', scene: 'NorthernPlazaScene', name: 'Northern League', kr: '북방 리그',
-    nx: 0.185, ny: 0.155, kind: 'city', fly: true, region: 'north', returnKey: 'northPlaza',
+    nx: 0.13, ny: 0.105, kind: 'city', fly: true, region: 'north', returnKey: 'northPlaza',
     scenes: ['NorthernPlazaScene', 'NorthernColiseumScene'] },
 
   { id: 'pyeongyang', scene: 'PyeongyangCityScene', name: 'Pyeongseong', kr: '평성',
-    nx: 0.285, ny: 0.145, kind: 'city', fly: true, region: 'north', returnKey: 'pyeongyang',
+    nx: 0.35, ny: 0.135, kind: 'city', fly: true, region: 'north', returnKey: 'pyeongyang',
     scenes: ['PyeongyangCityScene'] },
 
   // ── Northern 어사대 마패 circuit cities ──
   { id: 'sinuiju', scene: 'SinuijuCityScene', name: 'Sinuiju', kr: '신의주',
-    nx: 0.11, ny: 0.10, kind: 'city', fly: true, region: 'north', returnKey: 'SinuijuCityScene',
+    nx: 0.20, ny: 0.045, kind: 'city', fly: true, region: 'north', returnKey: 'SinuijuCityScene',
     scenes: ['SinuijuCityScene'] },
   { id: 'nampo', scene: 'NampoCityScene', name: 'Nampo', kr: '남포',
-    nx: 0.20, ny: 0.21, kind: 'city', fly: true, region: 'north', returnKey: 'NampoCityScene',
+    nx: 0.27, ny: 0.18, kind: 'city', fly: true, region: 'north', returnKey: 'NampoCityScene',
     scenes: ['NampoCityScene'] },
   { id: 'kaesong', scene: 'KaesongCityScene', name: 'Kaesong', kr: '개성',
-    nx: 0.35, ny: 0.24, kind: 'city', fly: true, region: 'north', returnKey: 'KaesongCityScene',
+    nx: 0.15, ny: 0.235, kind: 'city', fly: true, region: 'north', returnKey: 'KaesongCityScene',
     scenes: ['KaesongCityScene'] },
   { id: 'wonsan', scene: 'WonsanCityScene', name: 'Wonsan', kr: '원산',
-    nx: 0.47, ny: 0.19, kind: 'city', fly: true, region: 'north', returnKey: 'WonsanCityScene',
+    nx: 0.58, ny: 0.145, kind: 'city', fly: true, region: 'north', returnKey: 'WonsanCityScene',
     scenes: ['WonsanCityScene'] },
   { id: 'hamhung', scene: 'HamhungCityScene', name: 'Hamhung', kr: '함흥',
-    nx: 0.52, ny: 0.11, kind: 'city', fly: true, region: 'north', returnKey: 'HamhungCityScene',
+    nx: 0.62, ny: 0.095, kind: 'city', fly: true, region: 'north', returnKey: 'HamhungCityScene',
     scenes: ['HamhungCityScene'] },
   { id: 'samjiyon', scene: 'SamjiyonCityScene', name: 'Samjiyon', kr: '삼지연',
-    nx: 0.55, ny: 0.06, kind: 'city', fly: true, region: 'north', returnKey: 'SamjiyonCityScene',
+    nx: 0.45, ny: 0.065, kind: 'city', fly: true, region: 'north', returnKey: 'SamjiyonCityScene',
     scenes: ['SamjiyonCityScene'] },
   { id: 'chongjin', scene: 'ChongjinCityScene', name: 'Chongjin', kr: '청진',
-    nx: 0.66, ny: 0.055, kind: 'city', fly: true, region: 'north', returnKey: 'ChongjinCityScene',
+    nx: 0.72, ny: 0.055, kind: 'city', fly: true, region: 'north', returnKey: 'ChongjinCityScene',
     scenes: ['ChongjinCityScene'] },
 
   // ── Hanbando (the south) ─────────────────────────────────────────────────

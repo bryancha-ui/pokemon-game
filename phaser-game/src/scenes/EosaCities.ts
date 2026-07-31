@@ -135,25 +135,30 @@ const HAMHUNG: EosaCity = {
     cleared: ['어사대장 Cheolju: ...The mine is quiet and the furnaces are lit again. A thousand families eat because of tonight.',
               'You did not flinch from the heat. Good. Neither will I. Begin.'],
   },
-  // A grand steel city, expanded — famous for its 함흥냉면 and its great works.
-  size: { cols: 36, rows: 24 },
+  // A grand steel city with a separate south-eastern bathhouse quarter. The
+  // larger footprint keeps the tall bathhouse model out of the Pokémon
+  // Center's camera sight-line instead of stacking both buildings visually.
+  size: { cols: 44, rows: 30 },
   landmarks: [
-    { col: 26, row: 4,  w: 4, h: 4, color: 0x8a3a2a, label: '🍜 함흥냉면 (Hamhung Naengmyeon)', kind: 'building', solid: true, enter: 'HamhungNaengmyeonScene' },
-    { col: 31, row: 3,  w: 4, h: 5, color: 0x6a6f7a, label: '🏭 No. 3 Steelworks (제철소)',    kind: 'building', solid: true },
-    { col: 27, row: 13, w: 4, h: 4, color: 0x556066, label: '⚙ Iron Foundry (주물공장)',        kind: 'building', solid: true },
-    { col: 33, row: 12, w: 2, h: 5, color: 0x8a8a95, label: '🗿 Steelworkers\' Monument (노동비)', kind: 'monument' },
-    { col: 6,  row: 20, w: 3, h: 3, color: 0x3a6a4a, label: '🌉 Songchon Bridge (성천강)',        kind: 'pavilion' },
-    { col: 20, row: 21, w: 3, h: 2, color: 0x7a7a5a, label: '🏔 Mt. Dongheungsan (동흥산)',        kind: 'monument' },
-    { col: 6,  row: 13, w: 4, h: 3, color: 0x6a7a8a, label: '♨ 함흥 목욕탕 (Bathhouse)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'hamhung-bathhouse' },
+    { col: 29, row: 4,  w: 4, h: 4, color: 0x8a3a2a, label: '🍜 함흥냉면 (Hamhung Naengmyeon)', kind: 'building', solid: true, enter: 'HamhungNaengmyeonScene' },
+    { col: 38, row: 3,  w: 4, h: 5, color: 0x6a6f7a, label: '🏭 No. 3 Steelworks (제철소)',    kind: 'building', solid: true },
+    { col: 35, row: 14, w: 4, h: 4, color: 0x556066, label: '⚙ Iron Foundry (주물공장)',        kind: 'building', solid: true },
+    { col: 41, row: 13, w: 2, h: 5, color: 0x8a8a95, label: '🗿 Steelworkers\' Monument (노동비)', kind: 'monument' },
+    { col: 6,  row: 25, w: 3, h: 3, color: 0x3a6a4a, label: '🌉 Songchon Bridge (성천강)',        kind: 'pavilion' },
+    { col: 20, row: 26, w: 3, h: 2, color: 0x7a7a5a, label: '🏔 Mt. Dongheungsan (동흥산)',        kind: 'monument' },
+    { col: 31, row: 20, w: 5, h: 4, color: 0x6a7a8a, label: '♨ 함흥 목욕탕 (Bathhouse)', kind: 'building', solid: true, enter: 'NorthernBuildingScene', enterId: 'hamhung-bathhouse' },
+  ],
+  accessRoads: [
+    { fromCol: 29, fromRow: 9, toCol: 33, toRow: 24, width: 2, label: '♨ 목욕탕 ↓' },
   ],
   npcs: [
-    { col: 12, row: 13, color: 0x556066, label: 'Steelworker', lines: ['Steelworker: The No. 3 furnace runs day and night again — thanks to you clearing that Steelix from the mine.', 'Come by the works, I\'ll show you steel being born.'] },
-    { col: 20, row: 14, color: 0x8a3a2a, label: 'Noodle Lover', lines: ['Noodle Lover: You HAVE to try the 함흥냉면 — chewy sweet-potato noodles, fiery cold broth. Best in the north!'] },
-    { col: 24, row: 20, color: 0x3a6a4a, label: 'Bridge Elder', lines: ['Bridge Elder: The Songchon river has fed this plain for centuries. The steel came later — the water was always here.'] },
-    { col: 11, row: 18, color: 0x6a7a8a, label: 'Bathhouse Regular', lines: ['Bathhouse Regular: Aaah, a good soak after a shift at the works. Try it — take your Pokémon in too!'] },
-    { col: 8,  row: 21, color: 0x7a6a5a, label: 'Miner', lines: ['Miner: The pit road south leads to the ore mine. Watch yourself down there — the deep galleries are no joke.'] },
+    { col: 18, row: 13, color: 0x556066, label: 'Steelworker', lines: ['Steelworker: The No. 3 furnace runs day and night again — thanks to you clearing that Steelix from the mine.', 'Come by the works, I\'ll show you steel being born.'] },
+    { col: 27, row: 12, color: 0x8a3a2a, label: 'Noodle Lover', lines: ['Noodle Lover: You HAVE to try the 함흥냉면 — chewy sweet-potato noodles, fiery cold broth. Best in the north!'] },
+    { col: 12, row: 25, color: 0x3a6a4a, label: 'Bridge Elder', lines: ['Bridge Elder: The Songchon river has fed this plain for centuries. The steel came later — the water was always here.'] },
+    { col: 29, row: 24, color: 0x6a7a8a, label: 'Bathhouse Regular', lines: ['Bathhouse Regular: Aaah, a good soak after a shift at the works. Try it — take your Pokémon in too!'] },
+    { col: 38, row: 25, color: 0x7a6a5a, label: 'Miner', lines: ['Miner: The pit road south leads to the ore mine. Watch yourself down there — the deep galleries are no joke.'] },
   ],
-  sideExit: { col: 30, scene: 'HamhungMineScene', label: 'Ore Mine', icon: '⛏', road: true },
+  sideExit: { col: 39, scene: 'HamhungMineScene', label: 'Ore Mine', icon: '⛏', road: true },
   prev: { scene: 'SijungCoastScene', returnKey: 'sijung', x: 9 * 32 + 16, y: 4 * 32 + 16 },
   next: { scene: 'ChilboHighlandsScene', returnKey: 'chilbo', x: 10 * 32 + 16, y: 47 * 32 + 16 },
 };

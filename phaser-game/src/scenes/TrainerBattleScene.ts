@@ -388,6 +388,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
+      this.trainerPortrait.setData('characterModel3DKey', portrait.key);
       if (this.trainerKey.startsWith('rival')) {
         const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
         this.trainerPortrait.setData('battleTrainer', design);

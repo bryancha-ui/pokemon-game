@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
-import { buildPlayerModel, PlayerModel } from './CharacterModel';
+import { buildCharacterModel, buildPlayerModel, PlayerModel } from './CharacterModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { makeBlobShadow } from './Props';
@@ -29,7 +29,7 @@ interface Tracked {
   mesh: THREE.Object3D;
   mats: THREE.MeshBasicMaterial[] | null;
   shadow: THREE.Mesh | null;
-  kind: 'graphics' | 'portrait' | 'image' | 'text' | 'rect';
+  kind: 'graphics' | 'character' | 'image' | 'text' | 'rect';
   hash: number;
   /** px offset from object origin to art bottom (feet). */
   footY: number;
@@ -40,28 +40,18 @@ interface Tracked {
   aspect: number;
   /** for images: texture signature so runtime setTexture swaps rebuild the mesh */
   texSig?: string;
-  /** portrait art pixels → world units (important named characters only). */
-  portraitScale?: number;
+  /** True low-poly model for an important named character. */
+  character?: PlayerModel;
+  characterLast?: { x: number; z: number };
+  characterPhase?: number;
 }
 
 const WORLD_COVER = 0.42;      // graphics covering ≥42% of the world = part of the map painting
 
-interface CharacterPortrait3D { key: string; url: string; }
-const portraitImageLoads = new Map<string, Promise<HTMLImageElement>>();
-
-/** Load each important-character portrait once, shared across every map scene. */
-function loadPortraitImage(portrait: CharacterPortrait3D): Promise<HTMLImageElement> {
-  const hit = portraitImageLoads.get(portrait.url);
-  if (hit) return hit;
-  const pending = new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Unable to load character portrait: ${portrait.url}`));
-    image.src = portrait.url;
-  });
-  portraitImageLoads.set(portrait.url, pending);
-  return pending;
+/** Natural traversal maps must never grow heuristic city blocks. Their rocks,
+ * cliffs and dense foliage can have the same pixel variance as a painted roof. */
+function isWildFieldScene(sceneKey: string): boolean {
+  return /(?:Route\d*|Road|Pass|Beach|Coast|Valley|Plateau|Highlands|Foothills|Cavern|Cave|Snowfield|Summit|Cliff|Reaches|Ocean|Mine|Gardens|Waterfall)Scene$/.test(sceneKey);
 }
 
 export class OverworldMirror {
@@ -236,7 +226,7 @@ export class OverworldMirror {
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
-      sc.onlyNamedBuildings ?? false, sc.vehiclePlots ?? [],
+      sc.onlyNamedBuildings ?? isWildFieldScene(this.scene.scene.key), sc.vehiclePlots ?? [],
       sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
       sc.propPlots ?? [], sc.clearSight3D ?? false,
     );
@@ -440,29 +430,17 @@ export class OverworldMirror {
     this.tracked.set(g, tracked);
     this.hideFrom2D(g);
 
-    // Named story characters keep their existing Graphics object for movement,
-    // interaction and the F3 2D fallback, but their 3D representation is rebuilt
-    // from the authored full-body portrait instead of the shared blocky NPC.
-    const portrait = g.getData?.('characterPortrait3D') as CharacterPortrait3D | undefined;
-    if (portrait?.key && portrait.url) {
-      loadPortraitImage(portrait).then(image => {
-        const live = this.tracked.get(g);
-        if (!live || live !== tracked || !g.scene) return;
-        const relief = buildRelief(`character:${portrait.key}`, image);
-        if (!relief) return;
-        const inner = live.mesh.children[0] as THREE.Mesh;
-        inner.geometry = relief.geometry;
-        inner.userData.sharedGeo = true;
-        if (live.mats) {
-          live.mats[0].map = relief.texture;
-          live.mats[0].needsUpdate = true;
-        }
-        live.kind = 'portrait';
-        live.footY = 17; // drawNpcBody/drawGymLeader place their feet here
-        live.halfW = (relief.pxWidth / relief.pxHeight) * 0.72;
-        live.aspect = relief.pxWidth / Math.max(1, relief.pxHeight);
-        live.portraitScale = 1.48 / relief.pxHeight;
-      }).catch(err => console.warn('[engine3d] character portrait fallback:', err));
+    // Named story characters retain their Graphics as the gameplay/F3 source,
+    // but 3D mode replaces the relief with a real protagonist-style humanoid.
+    const modelKey = g.getData?.('characterModel3DKey') as string | undefined;
+    if (modelKey) {
+      const fallback = modelKey.includes('girl') ? 'girl' : 'boy';
+      tracked.character = buildCharacterModel(modelKey, fallback);
+      tracked.characterPhase = Math.random() * Math.PI * 2;
+      tracked.kind = 'character';
+      tracked.footY = 17; // drawNpcBody/drawGymLeader place their feet here
+      mesh.visible = false;
+      holder.add(tracked.character.group);
     }
   }
 
@@ -672,13 +650,9 @@ export class OverworldMirror {
         const sx = Math.abs(o.scaleX ?? 1), sy = Math.abs(o.scaleY ?? 1);
         if (t.kind === 'image') inner.scale.set(sx / PX, sy / PX, ((sx + sy) / 2) / PX);
         if (t.kind === 'graphics') { const s = 1 / (PX * 3); inner.scale.set(sx * s, sy * s, s); }
-        if (t.kind === 'portrait') {
-          const s = t.portraitScale ?? (1 / PX);
-          inner.scale.set(sx * s, sy * s, s);
-        }
         if (o.flipX) inner.scale.x = -Math.abs(inner.scale.x);
         // Idle life: characters/creatures gently breathe.
-        if (t.kind === 'graphics' || t.kind === 'portrait' || t.kind === 'image') {
+        if (t.kind === 'graphics' || t.kind === 'image') {
           const breathe = 1 + Math.sin(this.time * 2.2 + t.phase) * 0.012;
           inner.scale.y *= breathe;
         }
@@ -692,6 +666,17 @@ export class OverworldMirror {
           if (tint.isTinted && tint.tintTopLeft !== undefined) m.color.set(tint.tintTopLeft);
           else m.color.set(t.kind === 'rect' ? t.baseColor.getHex() : 0xffffff);
         }
+      }
+      if (t.kind === 'character' && t.character) {
+        const last = t.characterLast ?? { x, z };
+        const dx = x - last.x, dz = z - last.z;
+        t.characterLast = { x, z };
+        const speed = Math.hypot(dx, dz) / Math.max(dt, 0.001);
+        const moving = speed > 0.35;
+        t.characterPhase = (t.characterPhase ?? 0) + (moving ? Math.min(15, 6 + speed * 1.5) : 2.1) * dt;
+        t.character.setWalk(t.characterPhase, moving, dt);
+        t.character.face(dx, dz, dt);
+        t.character.group.scale.x = Math.abs(t.character.group.scale.x) * (o.flipX ? -1 : 1);
       }
       if (t.kind === 'graphics') this.refreshGraphics(t);
       if (t.kind === 'image') {

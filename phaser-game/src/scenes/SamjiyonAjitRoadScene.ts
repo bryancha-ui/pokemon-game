@@ -14,14 +14,15 @@ import { SaveManager } from '../utils/SaveManager';
 
 const T = { SNOW: 0, PATH: 1, PINE: 2, ROCK: 3, DRIFT: 4, GATE: 5, BUILDING: 6 } as const;
 type Tile = typeof T[keyof typeof T];
-const TILE = 32, COLS = 20, ROWS = 30;
+const TILE = 32, COLS = 28, ROWS = 34;
 const COLORS: Record<Tile, number> = {
   [T.SNOW]: 0xdfe8ef, [T.PATH]: 0xb9ad86, [T.PINE]: 0x2a4a38, [T.ROCK]: 0x6f6658,
   [T.DRIFT]: 0xf2f7fb, [T.GATE]: 0x5a1024, [T.BUILDING]: 0x22222e,
 };
 const SOLID = new Set<Tile>([T.PINE, T.ROCK, T.DRIFT, T.BUILDING]);
 
-const GATE_COL = 10, GATE_ROW = 7;   // the HQ door, at the head of the road
+const GATE_COL = 14, GATE_ROW = 12;  // the HQ door, at the head of the road
+const ROAD_LEFT = 13, ROAD_RIGHT = 16;
 
 function buildMap(): Tile[][] {
   const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.SNOW) as Tile[]);
@@ -29,29 +30,34 @@ function buildMap(): Tile[][] {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
   };
-  fill(7, ROWS, 9, 12, T.PATH);          // the climbing road
+  fill(GATE_ROW, ROWS, ROAD_LEFT, ROAD_RIGHT, T.PATH);   // the climbing road
   // switchbacks so the climb winds a little
-  fill(14, 16, 4, 12, T.PATH);
-  fill(21, 23, 9, 17, T.PATH);
+  fill(17, 19, 7, ROAD_RIGHT, T.PATH);
+  fill(25, 27, ROAD_LEFT, 23, T.PATH);
   fill(0, ROWS, 0, 2, T.ROCK);           // west cliff wall
-  fill(0, ROWS, 18, COLS, T.ROCK);       // east cliff wall
-  // the 노스단 아지트 tower at the head of the road
-  fill(1, GATE_ROW + 1, 6, 15, T.BUILDING);
-  fill(GATE_ROW, GATE_ROW + 1, 9, 12, T.PATH);   // approach step up to the gate
+  fill(0, ROWS, 26, COLS, T.ROCK);        // east cliff wall
+  // A full fortress compound: central keep, two palace-sized wings and the
+  // front curtain wall all share one collision silhouette.
+  fill(0, GATE_ROW + 1, 2, 26, T.BUILDING);
+  fill(GATE_ROW, GATE_ROW + 1, ROAD_LEFT, ROAD_RIGHT, T.PATH); // gate apron
   m[GATE_ROW][GATE_COL] = T.GATE;        // centred, walkable HQ door
   // snow drifts & pines flanking the road
-  for (const [r, c] of [[10,6],[11,7],[18,13],[19,14],[25,6],[26,7],[12,13],[24,14],[17,5]] as [number,number][]) m[r][c] = T.PINE;
-  for (const [r, c] of [[16,7],[20,12],[27,13],[13,5]] as [number,number][]) m[r][c] = T.DRIFT;
-  for (const [r, c] of [[9,13],[23,6],[28,6]] as [number,number][]) m[r][c] = T.ROCK;
+  for (const [r, c] of [[14,8],[14,20],[21,18],[22,19],[29,8],[30,9],[28,18],[20,7]] as [number,number][]) m[r][c] = T.PINE;
+  for (const [r, c] of [[19,9],[24,16],[31,17],[16,7]] as [number,number][]) m[r][c] = T.DRIFT;
+  for (const [r, c] of [[16,22],[27,8],[32,8]] as [number,number][]) m[r][c] = T.ROCK;
   return m;
 }
 
 interface Sentry { key: string; name: string; col: number; row: number; line: string; pokemon: string; expPool: number; }
 
 export class SamjiyonAjitRoadScene extends Phaser.Scene {
-  // Publish the exact painted footprint so the 3D tower replaces the 2D facade
-  // at the same position instead of relying on an approximate colour scan.
-  public buildingPlots = [{ x: 6, y: 1, w: 9, h: 6, model: 'tower' }];
+  // Three separate authored GLBs form a real compound instead of stretching a
+  // single tower: a high central keep flanked by two palace-sized command wings.
+  public buildingPlots = [
+    { x: 9,  y: 0, w: 10, h: 12, model: 'tower' },
+    { x: 2,  y: 4, w: 7,  h: 8,  model: 'palace' },
+    { x: 19, y: 4, w: 7,  h: 8,  model: 'palace' },
+  ];
   public onlyNamedBuildings = true;
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
@@ -60,8 +66,8 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   private shiftKey!: Phaser.Input.Keyboard.Key;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
-  private px = 10 * TILE + 16;
-  private py = 26 * TILE + 16;   // enter from the south (Samjiyon side)
+  private px = GATE_COL * TILE + 16;
+  private py = 30 * TILE + 16;   // enter from the south (Samjiyon side)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -70,12 +76,12 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
 
   private readonly SENTRIES: Sentry[] = [
     {
-      key: 'nosdan-ajit-road-1', name: '노스단 Sentry', col: 10, row: 20,
+      key: 'nosdan-ajit-road-1', name: '노스단 Sentry', col: 14, row: 24,
       line: "Halt! This road belongs to 노스단 now. Turn back to your little plateau — the ajit is off-limits!",
       pokemon: JSON.stringify([{ id: 553, level: 72 }, { id: 430, level: 72 }]), expPool: 2400,
     },
     {
-      key: 'nosdan-ajit-road-2', name: '노스단 Sentry', col: 10, row: 11,
+      key: 'nosdan-ajit-road-2', name: '노스단 Sentry', col: 14, row: 16,
       line: "You got past the first post? The 간부 said to let no 어사대 dog near the gate. So you'll have to go through me!",
       pokemon: JSON.stringify([{ id: 452, level: 72 }, { id: 625, level: 73 }]), expPool: 2500,
     },
@@ -137,30 +143,56 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10.5 * TILE, 29.4 * TILE, tr('↓ Samjiyon'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text((GATE_COL + 0.5) * TILE, 33.4 * TILE, tr('↓ Samjiyon'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawTower() {
-    // The four-storey 노스단 아지트, drawn over its solid footprint.
+    // Grand fortress compound: two command wings, a six-storey central keep,
+    // corner watchtowers, a curtain wall and a ceremonial gatehouse.
     const g = this.add.graphics().setDepth(3);
-    const bx = 6 * TILE, by = 1 * TILE, bw = 9 * TILE, bh = 6 * TILE;
+    const bx = 2 * TILE, by = 0, bw = 24 * TILE, bh = 12 * TILE;
     g.fillStyle(0x000000, 0.25); g.fillEllipse(bx + bw / 2, by + bh, bw * 0.8, 14);
-    g.fillStyle(0x22222e, 1); g.fillRect(bx, by, bw, bh);
-    g.fillStyle(0x2e2e3c, 1); g.fillRect(bx + 6, by + 4, bw - 12, bh - 8);
-    // storey lines (4 floors) + lit windows
+    // Side command wings.
+    g.fillStyle(0x242430, 1); g.fillRect(bx, by + 4 * TILE, 7 * TILE, 8 * TILE);
+    g.fillRect(bx + 17 * TILE, by + 4 * TILE, 7 * TILE, 8 * TILE);
+    g.fillStyle(0x343445, 1); g.fillRect(bx + 8, by + 4 * TILE + 7, 7 * TILE - 16, 8 * TILE - 14);
+    g.fillRect(bx + 17 * TILE + 8, by + 4 * TILE + 7, 7 * TILE - 16, 8 * TILE - 14);
+    // Raised central keep.
+    g.fillStyle(0x1c1c28, 1); g.fillRect(bx + 7 * TILE, by, 10 * TILE, 12 * TILE);
+    g.fillStyle(0x303040, 1); g.fillRect(bx + 7 * TILE + 9, by + 6, 10 * TILE - 18, 12 * TILE - 12);
+    // Curtain wall joins the whole facade and funnels into the gatehouse.
+    g.fillStyle(0x15151e, 1); g.fillRect(bx, by + 9.5 * TILE, bw, 2.5 * TILE);
+    g.fillStyle(0x292937, 1); g.fillRect((GATE_COL - 2) * TILE, by + 8.5 * TILE, 5 * TILE, 3.5 * TILE);
+    // roof battlements across wings and central keep
+    g.fillStyle(0x111119, 1);
+    for (let x = bx; x < bx + bw; x += TILE) {
+      const central = x >= bx + 7 * TILE && x < bx + 17 * TILE;
+      g.fillRect(x + 3, by + (central ? 0 : 4 * TILE - 8), TILE - 7, 9);
+    }
+    // six central floors, four floors in each wing, all with red-lit windows
     g.fillStyle(0x14141c, 1);
-    for (let i = 1; i < 4; i++) g.fillRect(bx + 6, by + i * (bh / 4), bw - 12, 3);
+    for (let i = 1; i < 6; i++) g.fillRect(bx + 7 * TILE + 8, by + i * (bh / 6), 10 * TILE - 16, 3);
+    for (let i = 1; i < 4; i++) {
+      g.fillRect(bx + 6, by + 4 * TILE + i * (8 * TILE / 4), 7 * TILE - 12, 3);
+      g.fillRect(bx + 17 * TILE + 6, by + 4 * TILE + i * (8 * TILE / 4), 7 * TILE - 12, 3);
+    }
     g.fillStyle(0xff5a6a, 0.85);
-    for (let f = 0; f < 4; f++) for (let w = 0; w < 3; w++) g.fillRect(bx + 24 + w * 60, by + 12 + f * (bh / 4), 14, 10);
+    for (let f = 0; f < 6; f++) for (let w = 0; w < 4; w++) g.fillRect(bx + 7.7 * TILE + w * 70, by + 13 + f * (bh / 6), 15, 10);
+    for (const wx of [bx + 0.8 * TILE, bx + 3 * TILE, bx + 5.2 * TILE, bx + 17.8 * TILE, bx + 20 * TILE, bx + 22.2 * TILE]) {
+      for (let f = 0; f < 3; f++) g.fillRect(wx, by + 4.6 * TILE + f * 53, 14, 10);
+    }
     // gate
     g.fillStyle(0x5a1024, 1); g.fillRect(GATE_COL * TILE, GATE_ROW * TILE, TILE, TILE);
     g.fillStyle(0x8a1a34, 1); g.fillRect(GATE_COL * TILE + 4, GATE_ROW * TILE + 4, TILE - 8, TILE - 6);
 
     // Crimson 노스단 banners
     const bn = this.add.graphics().setDepth(4);
-    for (const cx of [bx + 12, bx + bw - 20]) { bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + 6, 10, bh - 16); bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 5, by + 6 + (bh - 16) / 2, 3); }
+    for (const cx of [bx + 18, bx + bw - 28, (GATE_COL - 2) * TILE + 12, (GATE_COL + 2) * TILE + 4]) {
+      bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + (cx < bx + 2 * TILE || cx > bx + bw - 2 * TILE ? 4.3 * TILE : 8.7 * TILE), 12, 82);
+      bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 6, by + (cx < bx + 2 * TILE || cx > bx + bw - 2 * TILE ? 5.5 * TILE : 10 * TILE), 4);
+    }
 
-    this.add.text(10.5 * TILE, 0.6 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '10px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(14 * TILE, 0.45 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '11px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 5, y: 3 } }).setOrigin(0.5).setDepth(6);
     this.add.text(GATE_COL * TILE + TILE / 2, GATE_ROW * TILE + 40, tr('SPACE — Enter'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 
@@ -266,7 +298,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     if (this.cutsceneActive) return;
     const gateX = GATE_COL * TILE + TILE / 2;
     const near = Math.hypot(this.px - gateX, this.py - (GATE_ROW * TILE + TILE / 2)) < TILE * 1.8;
-    const touchingGate = (this.py <= (GATE_ROW + 0.8) * TILE) && (this.px >= 9 * TILE && this.px < 12 * TILE);
+    const touchingGate = (this.py <= (GATE_ROW + 0.8) * TILE) && (this.px >= ROAD_LEFT * TILE && this.px < ROAD_RIGHT * TILE);
     if (!near && !touchingGate) return;
     if (!touchingGate && !Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
 
@@ -290,7 +322,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    if (this.py > (ROWS - 1) * TILE && this.px > 8 * TILE && this.px < 13 * TILE) {
+    if (this.py > (ROWS - 1) * TILE && this.px > (ROAD_LEFT - 1) * TILE && this.px < (ROAD_RIGHT + 1) * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('SamjiyonCitySceneReturnX', 38 * 32 + 16); this.registry.set('SamjiyonCitySceneReturnY', 25 * 32 + 16);
