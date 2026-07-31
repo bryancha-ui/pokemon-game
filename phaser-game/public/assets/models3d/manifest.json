@@ -15,7 +15,8 @@
     },
     {
       "key": "balchataek",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d790f413-8a91-4643-9583-6d2ce32c8614.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d790f413-8a91-4643-9583-6d2ce32c8614.glb",
+      "rotY": 90
     },
     {
       "key": "blazekunk",
@@ -59,7 +60,8 @@
     },
     {
       "key": "kidstrel",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8c4c33a3-76f4-47ee-9207-b594b6afb9f6.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8c4c33a3-76f4-47ee-9207-b594b6afb9f6.glb",
+      "rotY": 90
     },
     {
       "key": "frysm",
