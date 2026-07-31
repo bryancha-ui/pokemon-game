@@ -524,6 +524,14 @@ export class PokemonLeagueScene extends Phaser.Scene {
       this.tweens.add({ targets: items, alpha: 1, duration: 600, delay: 400 + i * 220 });
     });
 
+    // This overlay is created after the 3D interior mirror is active. Keep each
+    // child screen-fixed so the mirror never adopts and hides the ceremony art.
+    kids.forEach(kid => {
+      const screenObject = kid as Phaser.GameObjects.GameObject & {
+        setScrollFactor?: (x: number, y?: number) => unknown;
+      };
+      screenObject.setScrollFactor?.(0);
+    });
     const root = this.add.container(0, 0, kids).setScrollFactor(0).setDepth(140);
     const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
     root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));

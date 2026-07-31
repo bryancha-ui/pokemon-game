@@ -5,6 +5,7 @@ import { drawTrainerBody, drawNpcBody, playerDesign, rivalTrainerName } from '..
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-GAME I — The Northern League (interior gauntlet) ────────────────────────
 // Inside the austere North-Korean-style palace: five separate floors, each with
@@ -22,6 +23,8 @@ const COLORS: Record<Tile, number> = {
 const SOLID = new Set<Tile>([T.WALL, T.BANNER]);
 const MEMBER_COL = 9, MEMBER_ROW = 6;
 const STAIR_COL = 9, STAIR_ROW = 2;
+const NORTH_CENTER_X = 4 * TILE + 16;
+const NORTH_CENTER_Y = 17 * TILE + 16;
 
 const ROOMS = [
   { title: 'Stone Foundation Chamber', ko: '암반의 방', floor: 0x403c38, dais: 0x6d604f, accent: 0xc9a86a },
@@ -141,12 +144,25 @@ export class NorthernColiseumScene extends Phaser.Scene {
 
   private defeated(key: string) { return !!this.registry.get(`trainerDefeated_${key}`); }
   private get taewangBeaten() { return this.defeated('north-taewang'); }
+  private get northernEndingPending() {
+    // Recovery path for a save/hot reload made after the old ceremony set
+    // northLeagueDone but before it could hand control to the Sudo celebration.
+    const unfinishedCeremony = !!this.registry.get('northHallOfFame')
+      && !!this.registry.get('northReunionPending')
+      && !this.registry.get('sudoPartyPending')
+      && !this.registry.get('sudoPartyDone');
+    return !!this.registry.get('northHallOfFamePending')
+      // Also recover saves already stranded in the empty throne room, including
+      // rematch saves created before rematches raised the pending flag.
+      || this.taewangBeaten
+      || unfinishedCeremony;
+  }
   private get currentMember(): Member { return this.floor <= MEMBERS.length ? MEMBERS[this.floor - 1] : TAEWANG; }
 
   create() {
 
     // Coliseum hall theme — but not when we're about to run the Hall of Fame ceremony.
-    if (!(this.taewangBeaten && !this.registry.get('northLeagueDone'))) playBgm(this, 'leagueinterior');
+    if (!this.northernEndingPending) playBgm(this, 'leagueinterior');
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
     this.input.keyboard?.resetKeys();
     this.spawnGuard = true;
@@ -188,7 +204,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'NorthernColiseumScene');
 
-    if (this.taewangBeaten && !this.registry.get('northLeagueDone')) {
+    if (this.northernEndingPending) {
       this.time.delayedCall(400, () => this.runNorthernEnding());
     } else if (!this.registry.get('northColiseumSeen')) {
       this.registry.set('northColiseumSeen', true);
@@ -260,6 +276,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(8);
     drawNpcBody(g, m.color);
     g.setPosition(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE + 16);
+    markTrainerPortrait(g, m.key);
     const label = m.type === 'Champion' ? '👑 Taewang' : `${m.name} — ${m.type}`;
     this.add.text(MEMBER_COL * TILE + 16, MEMBER_ROW * TILE - 16, label, {
       fontSize: '8px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
@@ -375,9 +392,13 @@ export class NorthernColiseumScene extends Phaser.Scene {
 
   // ── Victory ceremony — the Northern Hall of Fame ───────────────────────────
   private runNorthernEnding() {
+    const rematch = !!this.registry.get('northHallOfFameRematchPending')
+      || (!!this.registry.get('northLeagueDone') && !this.registry.get('northReunionPending'));
+    this.registry.remove('northHallOfFamePending');
+    this.registry.remove('northHallOfFameRematchPending');
     this.registry.set('northLeagueDone', true);
-    this.registry.set('northReunionPending', true);
     this.registry.set('northHallOfFame', true);
+    if (!rematch) this.registry.set('northReunionPending', true);
     playBgm(this, 'halloffame');
     this.cutsceneActive = true;
     PartySystem.healAll(this.registry);
@@ -413,12 +434,21 @@ export class NorthernColiseumScene extends Phaser.Scene {
       this.tweens.add({ targets: items, alpha: 1, duration: 600, delay: 400 + i * 220 });
     });
 
+    // The 3D overworld mirror is already active when this delayed ceremony is
+    // created. Pin every child to screen space before the next mirror update;
+    // setting only the parent container's scroll factor leaves the children
+    // eligible for adoption and makes the Hall of Fame artwork disappear.
+    kids.forEach(kid => {
+      const screenObject = kid as Phaser.GameObjects.GameObject & {
+        setScrollFactor?: (x: number, y?: number) => unknown;
+      };
+      screenObject.setScrollFactor?.(0);
+    });
     const root = this.add.container(0, 0, kids).setScrollFactor(0).setDepth(140);
     const zoom = this.cameras.main?.zoom ?? 1, s = 1 / zoom;
     root.setScale(s); root.setPosition((W / 2) * (1 - s), (H / 2) * (1 - s));
 
-    // After Northern League victory, return to Sudo City for celebration party
-    const lines = [
+    const firstVictoryLines = [
       'Taewang rises from his throne for the first time — slowly, deliberately.',
       'Taewang: ...In thirty years on this throne, I have beaten every Hanbando Champion sent to me. Every one.',
       'Taewang: Until now.',
@@ -426,11 +456,33 @@ export class NorthernColiseumScene extends Phaser.Scene {
       '🏆 Your team is recorded in the Northern Hall of Fame — the first southern names ever set in this stone!',
       'Taewang: A celebration awaits in Sudo City. Go, Champion. The whole region will want to honor your achievement.',
     ];
+    const rematchLines = [
+      'Taewang: You have climbed the Northern League and defeated me once again. Your strength is beyond dispute.',
+      '🏆 Your team is recorded in the Northern Hall of Fame once more!',
+      'Your Pokémon have been fully restored. You will now return to the Northern League Pokémon Center.',
+    ];
+    const lines = rematch ? rematchLines : firstVictoryLines;
     this.dialog.show(lines, () => {
-      this.registry.set('sudoPartyPending', true);
+      if (!rematch) this.registry.set('sudoPartyPending', true);
       this.cameras.main.fadeOut(900, 0, 0, 0, () => {
-        this.registry.set('capitalReturnX', 24 * 32 + 16);
-        this.registry.set('capitalReturnY', 31 * 32 + 16);
+        if (rematch) {
+          this.registry.set('northLeagueFloor', 1);
+          this.registry.remove('northColiseumReturnX');
+          this.registry.remove('northColiseumReturnY');
+          this.registry.set('northPlazaReturnX', NORTH_CENTER_X);
+          this.registry.set('northPlazaReturnY', NORTH_CENTER_Y);
+          // Save the safe post-rematch destination before leaving the throne room.
+          SaveManager.save(this.registry, NORTH_CENTER_X, NORTH_CENTER_Y, 'NorthernPlazaScene');
+          this.scene.start('NorthernPlazaScene');
+          return;
+        }
+        const capitalX = 24 * 32 + 16;
+        const capitalY = 31 * 32 + 16;
+        this.registry.set('capitalReturnX', capitalX);
+        this.registry.set('capitalReturnY', capitalY);
+        // Persist the League completion and destination before changing scenes,
+        // so a reload can never strand the player back at Taewang's throne.
+        SaveManager.save(this.registry, capitalX, capitalY, 'CapitolCityScene');
         this.scene.start('CapitolCityScene');
       });
     });

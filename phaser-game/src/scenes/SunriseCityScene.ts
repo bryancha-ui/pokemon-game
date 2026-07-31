@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -232,6 +233,7 @@ export class SunriseCityScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(8);
     g.setPosition(this.rivalCol * TILE + 16, this.rivalRow * TILE + 16);
     drawTrainerBody(g, 0, 0, rivalDesign(this.registry));
+    markRivalPortrait(g, this.registry);
     this.add.text(this.rivalCol * TILE + 16, this.rivalRow * TILE - 12, rivalTrainerName(this.registry), {
       fontSize: '8px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
+import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -154,6 +155,7 @@ export class GeumgangCityScene extends Phaser.Scene {
     g.fillStyle(0xffccaa); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x33221a); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
+    markTrainerPortrait(g, 'suri-chaeyeon-1');
     this.add.text(this.chaeCol * TILE + 16, this.chaeRow * TILE - 12, tr('Team Suri Admin'), {
       fontSize: '8px', color: '#ff8899', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
@@ -323,6 +325,7 @@ export class GeumgangCityScene extends Phaser.Scene {
     rivalG.setPosition(rx, startY);
     const draw = () => { drawTrainerBody(rivalG, 0 /* face down toward player */, frame, rivalDesign(this.registry)); rivalG.setPosition(rx, rivalG.y); };
     draw();
+    markRivalPortrait(rivalG, this.registry);
 
     // Step animation while walking.
     const stepper = this.time.addEvent({ delay: 160, loop: true, callback: () => { frame ^= 1; draw(); } });

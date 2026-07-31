@@ -9,6 +9,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
+import { markRivalPortrait } from '../data/BattlePortraits';
 
 // ── Tiles ─────────────────────────────────────────────────────────────────────
 // Scholars' Road (선비로) — the region's Victory Road: a winding stone mountain
@@ -171,7 +172,10 @@ export class ScholarsRoadScene extends Phaser.Scene {
     this.drawMap();
     this.drawBadgeGate();
     this.drawTrainers();
-    if (!this.gateOpen) this.drawFigure(12, 4, 0x2255cc, 0xffcc99, 'Rival', '#88ccff');
+    if (!this.gateOpen) {
+      const rival = this.drawFigure(12, 4, 0x2255cc, 0xffcc99, 'Rival', '#88ccff');
+      markRivalPortrait(rival, this.registry);
+    }
     this.createPlayer();
     this.setupCamera();
     this.setupInput();
@@ -245,6 +249,7 @@ export class ScholarsRoadScene extends Phaser.Scene {
     this.add.text(col * TILE + 16, row * TILE - 14, label, {
       fontSize: '8px', color: labelColor, backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setDepth(9);
+    return g;
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────

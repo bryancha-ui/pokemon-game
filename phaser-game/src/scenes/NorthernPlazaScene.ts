@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
@@ -204,6 +205,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
   private drawRivalSprite(g: Phaser.GameObjects.Graphics, x: number, y: number, frame: number) {
     drawTrainerBody(g, 2, frame, rivalDesign(this.registry));   // rival = opposite gender, running in facing left
     g.setPosition(x, y);
+    markRivalPortrait(g, this.registry);
   }
   private setupCamera() {
     this.cameras.main.setBounds(0, 0, COLS * TILE, ROWS * TILE);

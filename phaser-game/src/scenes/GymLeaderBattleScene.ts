@@ -20,6 +20,8 @@ import { tr, pokeNameEn} from '../systems/i18n';
 
 type State = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 const HP_W = 200;
+const ENEMY_STAGE_X = 560;
+const ENEMY_STAGE_Y = 130;
 
 export class GymLeaderBattleScene extends Phaser.Scene {
   private player!: Pokemon;
@@ -227,7 +229,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     // arena anchor, then steps aside on reveal.
     const jin = portraitFor('capitol-jin');
     if (jin && this.textures.exists(jin.key)) {
-      this.leaderPortrait = this.add.image(560, 150, jin.key).setDepth(6)
+      this.leaderPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, jin.key).setDepth(6)
         .setData('battleTrainerEnemyAnchor', true);
       fitPortrait(this.leaderPortrait);
     }
@@ -395,7 +397,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.updateEnemySprite();
     this.enemySprite.setAlpha(1);
     this.tweens.add({
-      targets: this.enemySprite, x: 560, y: 130, duration: 500, ease: 'Power2',
+      targets: this.enemySprite, x: ENEMY_STAGE_X, y: ENEMY_STAGE_Y, duration: 500, ease: 'Power2',
       onComplete: () => {
         this.typeDialog(`Leader Jin sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
           this.playerSprite.setAlpha(1);
@@ -497,7 +499,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.typeDialog(intro, () => {
       this.enemySprite.setAlpha(0);
       this.tweens.add({
-        targets: this.enemySprite, alpha: 1, x: 560, y: 130, duration: 400,
+        targets: this.enemySprite, alpha: 1, x: ENEMY_STAGE_X, y: ENEMY_STAGE_Y, duration: 400,
         onComplete: () => this.playerAction(),
       });
     });

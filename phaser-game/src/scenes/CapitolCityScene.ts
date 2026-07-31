@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
+import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -475,24 +476,31 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Draw the party guests in an arc around the champion. Returns them for cleanup. */
   private drawPartyGuests(): Phaser.GameObjects.GameObject[] {
     const objs: Phaser.GameObjects.GameObject[] = [];
-    const guest = (dx: number, dy: number, name: string, color: number, special?: 'prof' | 'rival') => {
+    const guest = (
+      dx: number, dy: number, name: string, color: number,
+      special?: 'prof' | 'rival', trainerKey?: string,
+    ) => {
       const g = this.add.graphics().setDepth(22);
       const x = this.px + dx, y = this.py + dy;
       if (special === 'prof')       this.drawProfessor(g, x, y, 0);
-      else if (special === 'rival') { drawTrainerBody(g, 0, 0, rivalDesign(this.registry)); g.setPosition(x, y); }
+      else if (special === 'rival') {
+        drawTrainerBody(g, 0, 0, rivalDesign(this.registry)); g.setPosition(x, y);
+        markRivalPortrait(g, this.registry);
+      }
       else                          { drawNpcBody(g, color); g.setPosition(x, y); }
+      if (trainerKey) markTrainerPortrait(g, trainerKey);
       const t = this.add.text(x, y - 26, name, {
         fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(23);
       objs.push(g, t);
     };
-    guest(0,   -76, 'Champion Hwangeum', 0xffd54a);
-    guest(-92, -46, 'Prof. Song', 0, 'prof');
+    guest(0,   -76, 'Champion Hwangeum', 0xffd54a, undefined, 'champion-hwangeum');
+    guest(-92, -46, 'Prof. Song', 0, 'prof', 'prof-song');
     guest(92,  -46, 'Rival', 0, 'rival');
-    guest(-64, -96, 'Leader Namsun', 0xe28aa0);
-    guest(64,  -96, 'Leader Harang', 0x3a7ad9);
-    guest(-136, 4, 'Admin Chaeyeon', 0x3aa88a);
-    guest(136,  4, 'Leader Byeoksan', 0xd98a3a);
+    guest(-64, -96, 'Leader Namsun', 0xe28aa0, undefined, 'geumgang-namsun');
+    guest(64,  -96, 'Leader Harang', 0x3a7ad9, undefined, 'haean-harang');
+    guest(-136, 4, 'Admin Chaeyeon', 0x3aa88a, undefined, 'suri-chaeyeon-1');
+    guest(136,  4, 'Leader Byeoksan', 0xd98a3a, undefined, 'baekdu-byeoksan');
     return objs;
   }
 

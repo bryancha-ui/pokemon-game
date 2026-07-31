@@ -7,6 +7,7 @@ import { PartySystem } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { Inventory } from '../systems/Items';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-GAME II — The Sacred Northern Peak (finale) ─────────────────────────────
 // The climb to Hwanung's descent-point. Three sealed shrines each hold one of the
@@ -165,6 +166,7 @@ export class SacredPeakScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, 0x141018, { hair: 0x552266 });
       g.setPosition(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE + 16);
+      markTrainerPortrait(g, SOVEREIGN.key);
       this.add.text(this.ALTAR.col * TILE + 16, this.ALTAR.row * TILE - 16, tr('Sovereign\nClemont'), {
         fontSize: '8px', color: '#e0a0ff', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
@@ -175,16 +177,20 @@ export class SacredPeakScene extends Phaser.Scene {
    *  both drawn as normalised 2D NPCs so the finale cast is actually present. */
   private drawEscort() {
     if (this.hwanungCaught) return;   // the trial is over; they've withdrawn by the ending
-    const npc = (col: number, row: number, body: number, hair: number, label: string, color: string) => {
+    const npc = (
+      col: number, row: number, body: number, hair: number,
+      label: string, color: string, trainerKey: string,
+    ) => {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, body, { hair });
       g.setPosition(col * TILE + 16, row * TILE + 16);
+      markTrainerPortrait(g, trainerKey);
       this.add.text(col * TILE + 16, row * TILE - 16, label, {
         fontSize: '8px', color, backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);
     };
-    npc(6, 9, 0x2f6a44, 0xcfd6dc, '어사대장 Jinnok', '#bfe8c8');   // green robe, silver hair
-    npc(5, 9, 0xf0f0f0, 0x553311, 'Prof. Song',    '#cfe3ff');   // white lab coat, brown hair — right beside Jinnok
+    npc(6, 9, 0x2f6a44, 0xcfd6dc, '어사대장 Jinnok', '#bfe8c8', 'inspector-jinnok');
+    npc(5, 9, 0xf0f0f0, 0x553311, 'Prof. Song', '#cfe3ff', 'prof-song');
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────

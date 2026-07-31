@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr, t } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
@@ -728,6 +729,7 @@ export class WorldMapScene extends Phaser.Scene {
     const rival = this.add.graphics().setDepth(25);
     rival.setPosition(this.px + 320, this.py);
     this.drawMinhyukSprite(rival);
+    markRivalPortrait(rival, this.registry);
     const nameTag = this.add.text(this.px + 320, this.py - 30, rivalTrainerName(this.registry), {
       fontSize: '10px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(26);

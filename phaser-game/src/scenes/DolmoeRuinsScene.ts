@@ -5,6 +5,7 @@ import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSpr
 import { DialogBox } from '../ui/DialogBox';
 import { Inventory } from '../systems/Items';
 import { PartySystem } from '../systems/PartySystem';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── 고인돌 유적 — the great Dolmen Ruins (a huge site west of Dolmoe City) ──────
 // A sprawling granite field of ancient dolmens. Leader Sandol has come out to stop
@@ -182,6 +183,7 @@ export class DolmoeRuinsScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(10);
     g.setPosition(x, y);
     drawNpcBody(g, 0x6a5030, { hair: 0x888888, skin: 0xe8c9a0 });
+    markTrainerPortrait(g, 'dolmoe-sandol');
     this.add.text(x, y - 26, tr('LEADER SANDOL'), { fontSize: '8px', color: '#e8ddc8', backgroundColor: '#00000088', padding: { x: 2, y: 1 } })
       .setOrigin(0.5).setDepth(11).setName('__sandolLabel__');
   }

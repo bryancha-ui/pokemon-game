@@ -8,6 +8,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { PartySystem } from '../systems/PartySystem';
 import { hasMapae, awardMapae } from '../data/Mapae';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-LEAGUE NORTH — Kaesong (개성), an 어사대 circuit city ──────────────────────
 // Apolitical: real Kaesong geography only — Songak Mountain, the Sungkyunkwan Confucian
@@ -206,6 +207,7 @@ export class KaesongCityScene extends Phaser.Scene {
     g.setPosition(CHIEF.col * TILE + 16, CHIEF.row * TILE + 16);
     drawNpcBody(g, 0x3a4a8a, { hair: 0x2a2622 });      // deep-blue scholar's robe
     g.fillStyle(0xd8c060, 1); g.fillRect(-8, -9, 16, 1); g.fillRect(-1, -8, 2, 9);   // gold trim
+    markTrainerPortrait(g, 'eosa-kaesong');
     this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, speakerName('어사대장 Hyeon'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);

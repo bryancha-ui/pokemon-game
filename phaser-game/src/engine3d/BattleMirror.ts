@@ -1,14 +1,16 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
+import { buildThemedBattleArena, resolveBattleArenaTheme } from './BattleArenaThemes';
+import { buildGeographicBattleArena, resolveOutdoorBattleTheme } from './BattleGeography';
 import { buildPlayerModel, buildPortraitCharacterModel, PlayerModel } from './CharacterModel';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
 import { getModel, hasModel, primeManifest } from './GlbModels';
 import { MoveFX3D } from './MoveFX3D';
-import { makeBlobShadow, makeGrassTufts, makeRocks, makeTrees, toonMat, toonRamp } from './Props';
-import { ThreeStage } from './ThreeStage';
+import { makeBlobShadow } from './Props';
+import { EnvProfile, ThreeStage } from './ThreeStage';
 
 // ── Battle mirror ────────────────────────────────────────────────────────────
 // Turns the existing 2D battle scenes into a cinematic 3D arena without
@@ -62,10 +64,10 @@ const ANCHORS = {
   enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(2.25, 0, -2.6)],
 };
 
-// A battle trainer (e.g. the rival) walks in from the back of the arena toward
-// the player during the intro, then retires as its Pokémon is sent out.
+// A battle trainer (e.g. the rival) walks in from the back of the arena to the
+// exact enemy Pokémon anchor, then retires as its Pokémon is sent out.
 const TRAINER_START = new THREE.Vector3(3.4, 0, -4.7);
-const TRAINER_END   = new THREE.Vector3(1.1, 0, -1.0);
+const TRAINER_END   = ANCHORS.enemy[0].clone();
 
 interface TrainerWalker {
   obj: GO;                 // the 2D intro portrait whose alpha drives the walk
@@ -111,8 +113,7 @@ export class BattleMirror {
     this.rig = rig;
     this.root = stage.resetWorld();
     primeManifest();                 // generated GLB models, if the game ships any
-    this.buildArena();
-    stage.setEnvironment('battle');
+    stage.setEnvironment(this.buildArena());
     rig.setMode('battle');
     this.fx = new MoveFX3D(this.root);
     this.onMoveFx = (d) => this.handleMoveFx(d);
@@ -197,67 +198,14 @@ export class BattleMirror {
   }
 
   // ── Arena ──
-  private buildArena(): void {
-    // Painted arena ground: soft radial grass gradient with two dirt battle spots.
-    const c = document.createElement('canvas');
-    c.width = c.height = 512;
-    const ctx = c.getContext('2d')!;
-    const grad = ctx.createRadialGradient(256, 256, 40, 256, 256, 300);
-    grad.addColorStop(0, '#7fc45e');
-    grad.addColorStop(0.7, '#5ea84b');
-    grad.addColorStop(1, '#4c9440');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 512, 512);
-    // Mown stripes.
-    ctx.globalAlpha = 0.08;
-    for (let i = 0; i < 8; i++) {
-      ctx.fillStyle = i % 2 ? '#ffffff' : '#20401a';
-      ctx.fillRect(0, i * 64, 512, 32);
+  /** Build either a story interior or the geography of the return map. */
+  private buildArena(): EnvProfile {
+    const theme = resolveBattleArenaTheme(this.scene);
+    if (theme) {
+      buildThemedBattleArena(this.root, theme);
+      return 'interior';
     }
-    ctx.globalAlpha = 1;
-    const spot = (x: number, y: number) => {
-      const g2 = ctx.createRadialGradient(x, y, 8, x, y, 66);
-      g2.addColorStop(0, '#c9a86e');
-      g2.addColorStop(0.8, '#b2925c');
-      g2.addColorStop(1, 'rgba(178,146,92,0)');
-      ctx.fillStyle = g2;
-      ctx.beginPath(); ctx.arc(x, y, 66, 0, Math.PI * 2); ctx.fill();
-    };
-    spot(256 - 90, 256 + 105); spot(256 + 95, 256 - 115);
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const ground = new THREE.Mesh(
-      new THREE.CircleGeometry(11, 40),
-      new THREE.MeshToonMaterial({ map: tex, gradientMap: toonRamp() }),
-    );
-    ground.rotation.x = -Math.PI / 2;
-    this.root.add(ground);
-
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(11.15, 11.6, 0.9, 40, 1, true), toonMat(0x6b5a44));
-    rim.position.y = -0.46;
-    this.root.add(rim);
-
-    // Scenery ring: trees, rocks and grass around the arena edge.
-    const trees = makeTrees(26);
-    const rocks = makeRocks(14);
-    const grass = makeGrassTufts(40);
-    const rnd = (a: number, b: number) => a + Math.random() * (b - a);
-    for (let i = 0; i < 22; i++) {
-      const a = (i / 22) * Math.PI * 2 + rnd(-0.1, 0.1);
-      const r = rnd(8.6, 10.6);
-      trees.place(Math.cos(a) * r, Math.sin(a) * r, rnd(0.9, 1.5), rnd(0, Math.PI * 2));
-    }
-    for (let i = 0; i < 12; i++) {
-      const a = rnd(0, Math.PI * 2), r = rnd(7.4, 10.2);
-      rocks.place(Math.cos(a) * r, Math.sin(a) * r, rnd(0.6, 1.2), rnd(0, Math.PI * 2));
-    }
-    for (let i = 0; i < 36; i++) {
-      const a = rnd(0, Math.PI * 2), r = rnd(5.6, 10.4);
-      grass.place(Math.cos(a) * r, Math.sin(a) * r, rnd(0.7, 1.2), rnd(0, Math.PI));
-    }
-    trees.finalize(); rocks.finalize(); grass.finalize();
-    for (const m of [...trees.meshes, ...rocks.meshes, ...grass.meshes]) this.root.add(m);
+    return buildGeographicBattleArena(this.root, resolveOutdoorBattleTheme(this.scene));
   }
 
   // ── Sprite adoption ──
@@ -319,7 +267,11 @@ export class BattleMirror {
       this.scene.cameras.main.ignore(im);
       return;
     }
-    if (dw < 70 || dh < 70) return;                     // icons stay 2D
+    // Named trainer portraits can become narrower than 70px after fitPortrait()
+    // (Baekho's tall artwork is 56px wide). Never mistake an explicitly pinned
+    // trainer for a UI icon or it remains in Phaser's upper-left battle layer
+    // instead of being handed to the enemy Pokémon's 3D arena anchor.
+    if (!trainerAtEnemy && (dw < 70 || dh < 70)) return; // icons stay 2D
     // Explicit opt-out: scenes can tag any object to stay in the 2D layer.
     if ((im as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) return;
 

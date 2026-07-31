@@ -8,6 +8,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── Tiles ─────────────────────────────────────────────────────────────────────
 // A militarized mountain checkpoint: snow paths threaded between iron walls,
@@ -193,7 +194,8 @@ export class BaekduCheckpointScene extends Phaser.Scene {
   }
   private drawCaptain() {
     if (this.registry.get('trainerDefeated_baekdu-seollan')) return;
-    this.drawFigure(12, 8, 0x0e0e16, 0x88ccff, 'Gate Captain\nSeollan', '#aee0ff');
+    const captain = this.drawFigure(12, 8, 0x0e0e16, 0x88ccff, 'Gate Captain\nSeollan', '#aee0ff');
+    markTrainerPortrait(captain, 'baekdu-seollan');
   }
   private drawFigure(col: number, row: number, coat: number, trim: number, label: string, labelColor: string) {
     const g = this.add.graphics().setDepth(8);
@@ -208,6 +210,7 @@ export class BaekduCheckpointScene extends Phaser.Scene {
     this.add.text(col * TILE + 16, row * TILE - 14, label, {
       fontSize: '8px', color: labelColor, backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setDepth(9);
+    return g;
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────

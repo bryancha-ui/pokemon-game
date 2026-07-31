@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -364,6 +365,7 @@ export class BaekduPassScene extends Phaser.Scene {
       const rival = this.add.graphics().setDepth(20);
       drawTrainerBody(rival, 1, 0, rivalDesign(this.registry));
       rival.setPosition(this.px + 30, this.py);
+      markRivalPortrait(rival, this.registry);
       this.add.text(this.px + 30, this.py - 22, rivalTrainerName(this.registry), {
         fontSize: '9px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(21);

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawNpcBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { playBgm } from '../systems/Music';
@@ -570,6 +571,7 @@ export class JejuVentScene extends Phaser.Scene {
     // The rival stands beside you (to the west), also facing Ryeo — a normal 2D sprite.
     const rivalG = this.add.graphics().setPosition(this.px - TILE, this.py);
     drawTrainerBody(rivalG, 1, 0, rivalDesign(this.registry));   // facing up (back), like the player
+    markRivalPortrait(rivalG, this.registry);
     // The rival's name is gender-based: 'Minhyuk' (male) / 'Soohyun' (female).
     const rivalName = rivalTrainerName(this.registry);
     const vLabel = this.add.text(this.px - TILE, this.py - 24, rivalName, {

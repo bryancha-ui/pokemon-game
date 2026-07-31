@@ -17,6 +17,8 @@ import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
+const RIVAL_STAGE_X = 580;
+const RIVAL_STAGE_Y = 130;
 
 export class RivalBattleScene extends Phaser.Scene {
   private player!: Pokemon;
@@ -210,7 +212,7 @@ export class RivalBattleScene extends Phaser.Scene {
       // gender of the player. Tagged no3d as well so if 3D is unavailable the
       // flat portrait still never lands on the arena as a stray relief.
       const rivalDesign: 'boy' | 'girl' = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-      this.rivalTrainer = this.add.image(580, 150, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
+      this.rivalTrainer = this.add.image(RIVAL_STAGE_X, RIVAL_STAGE_Y, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
         .setData('no3d', true).setData('battleTrainer', rivalDesign);
       fitPortrait(this.rivalTrainer);
     }
@@ -322,7 +324,14 @@ export class RivalBattleScene extends Phaser.Scene {
     if (this.rivalTrainer) {
       this.rivalTrainer.setAlpha(1);
       this.rivalTrainer.x = this.W + 100;
-      this.tweens.add({ targets: this.rivalTrainer, x: 580, duration: 620, ease: 'Cubic.out', onComplete: () => this.introDialogue() });
+      this.tweens.add({
+        targets: this.rivalTrainer,
+        x: RIVAL_STAGE_X,
+        y: RIVAL_STAGE_Y,
+        duration: 620,
+        ease: 'Cubic.out',
+        onComplete: () => this.introDialogue(),
+      });
     } else {
       this.introDialogue();
     }
@@ -366,7 +375,7 @@ export class RivalBattleScene extends Phaser.Scene {
     this.rivalSprite.setAlpha(1);
     this.tweens.add({
       targets: this.rivalSprite,
-      x: 580, y: 130,
+      x: RIVAL_STAGE_X, y: RIVAL_STAGE_Y,
       duration: 500, ease: 'Power2',
       onComplete: () => {
         this.typeDialog(`${this.rivalTName} sent out ${this.rival.name}!`, () => {

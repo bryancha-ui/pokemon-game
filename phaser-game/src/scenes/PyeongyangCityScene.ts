@@ -6,6 +6,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { mapaeCount, awardMapae } from '../data/Mapae';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-GAME I — Pyeongseong, the Northern Capital ──────────────────────────────
 // A stern, conservative, GRAND capital: wide ceremonial avenues, colossal grey-granite
@@ -268,6 +269,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     g.fillStyle(0xd8b44a); g.fillRect(-9, -18, 18, 2);       // cap band
     g.fillStyle(0xd8b44a); g.fillRect(-2, -24, 4, 4);        // cap ornament
     g.fillStyle(0x000000); g.fillRect(-5, -17, 2, 2); g.fillRect(3, -17, 2, 2);   // eyes
+    markTrainerPortrait(g, PYEONGSEONG_CHIEF.key);
     
     this.add.text(cx, cy - 28, speakerName('어사대장 Supreme Gwang'), {
       fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },

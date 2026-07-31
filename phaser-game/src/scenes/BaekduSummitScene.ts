@@ -10,6 +10,7 @@ import { PartySystem } from '../systems/PartySystem';
 import { Inventory } from '../systems/Items';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 import { customForm } from '../data/CustomBattle';
 
 // Sprites depicted on-screen during the capture finale (Hwanwoong's advent +
@@ -217,7 +218,8 @@ export class BaekduSummitScene extends Phaser.Scene {
   private drawFoes() {
     for (const f of this.FOES) {
       if (this.registry.get(`trainerDefeated_${f.key}`) && vanishesAfterDefeat(f.key)) continue;
-      this.drawFigure(f.col, f.row, 0x14141c, 0xaab0c0, f.label, '#bcd0ff');
+      const figure = this.drawFigure(f.col, f.row, 0x14141c, 0xaab0c0, f.label, '#bcd0ff');
+      markTrainerPortrait(figure, f.key);
     }
   }
   private drawFigure(col: number, row: number, coat: number, trim: number, label: string, labelColor: string) {
@@ -233,6 +235,7 @@ export class BaekduSummitScene extends Phaser.Scene {
     this.add.text(col * TILE + 16, row * TILE - 14, label, {
       fontSize: '8px', color: labelColor, backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setDepth(9);
+    return g;
   }
 
   // ── Player / camera / input ──────────────────────────────────────────────

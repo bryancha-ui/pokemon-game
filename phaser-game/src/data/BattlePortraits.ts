@@ -42,6 +42,7 @@ export const PORTRAITS: Record<string, Portrait> = {
   'eosa-sinuiju':      P('npc_jinnok.png'),     // Sinuiju — 어사대장 Amrok
   'eosa-samjiyon':     P('npc_jito.png'),       // Samjiyon — 어사대장 Seolwon
   'eosa-pyeongyang':   P('npc_dosadae.png'),    // Pyeongyang — 어사대장 Jeongan
+  'eosa-pyeongseong':  P('npc_dosadae.png'),    // Pyeongseong — Supreme Commander Gwang
   'suri-chaeyeon-1':   P('npc_chaeyeon.png'),
   'suri-chaeyeon-2':   P('npc_chaeyeon.png'),
   'nosdan-mubaek':     P('npc_mubaek.png'),

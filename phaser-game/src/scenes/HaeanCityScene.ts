@@ -7,6 +7,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { PartySystem } from '../systems/PartySystem';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { Inventory } from '../systems/Items';
 
 // ── Tiles ───────────────────────────────────────────────────────────────────
@@ -175,6 +176,7 @@ export class HaeanCityScene extends Phaser.Scene {
       r.fillStyle(0x2255cc); r.fillRect(-7, -8, 14, 11); r.fillRect(-11, -7, 5, 8); r.fillRect(6, -7, 5, 8);
       r.fillStyle(0xffcc99); r.fillRect(-6, -20, 12, 11); r.fillStyle(0x221100); r.fillRect(-6, -20, 12, 5);
       r.fillStyle(0x000000); r.fillRect(-3, -15, 2, 2); r.fillRect(1, -15, 2, 2);
+      markRivalPortrait(r, this.registry);
       this.add.text(this.rivalCol * TILE + 16, this.rivalRow * TILE - 10, speakerName('Rival'), {
         fontSize: '8px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(9);

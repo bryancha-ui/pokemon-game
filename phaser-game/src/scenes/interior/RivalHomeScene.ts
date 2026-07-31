@@ -1,5 +1,6 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
 import { rivalTrainerName } from '../../data/CharacterSprite';
+import { markRivalPortrait } from '../../data/BattlePortraits';
 
 export class RivalHomeScene extends BaseInteriorScene {
   private minhyukTalked = false;
@@ -81,6 +82,7 @@ export class RivalHomeScene extends BaseInteriorScene {
   protected setupNPCs() {
     const rn = rivalTrainerName(this.registry);
     const minhyuk = this.createNPCGraphic(7, 6, 0x1133aa, 0x110033, false, 0);
+    markRivalPortrait(minhyuk.graphic, this.registry);
     this.add.text(
       this.tile(7, 6).x + 16,
       this.tile(7, 6).y - 6,

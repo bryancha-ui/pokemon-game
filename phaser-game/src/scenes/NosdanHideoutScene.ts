@@ -4,6 +4,7 @@ import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── 노스단 아지트 (Team North Headquarters) ─────────────────────────────────────────
 // A grim four-storey tower that 노스단 has thrown up at the front of Samjiyon's mountain
@@ -223,6 +224,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
       g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
       g.fillStyle(f.boss ? 0x7a1030 : 0x141420); g.fillRect(-6, -22, 12, 5);
       g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
+      if (f.boss) markTrainerPortrait(g, f.key);
       this.add.text(f.col * TILE + 16, f.row * TILE - (f.boss ? 22 : 16), speakerName(f.label), {
         fontSize: f.boss ? '10px' : '8px', color: f.boss ? '#ff6a8a' : '#fff', fontStyle: f.boss ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 2, y: 1 },

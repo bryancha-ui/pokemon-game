@@ -6,6 +6,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-GAME II — The Northern Reaches (a huge snow-woods trial) ─────────────────
 // Not a corridor-maze: a vast, silent boreal forest. The only trail winds a long way
@@ -228,6 +229,7 @@ export class NorthernReachesScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, m.color);
       g.setPosition(m.col * TILE + 16, m.row * TILE + 16);
+      markTrainerPortrait(g, m.key);
       this.add.text(m.col * TILE + 16, m.row * TILE - 15, `${m.name}\n${m.type}`, {
         fontSize: '8px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 2, y: 1 }, align: 'center',
       }).setOrigin(0.5).setDepth(9);

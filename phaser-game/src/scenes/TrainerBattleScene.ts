@@ -18,6 +18,7 @@ import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
+import { trainerClassPortrait } from '../data/TrainerClassPortrait';
 import { AVATAR_URL, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
 import { DexTracker } from '../systems/DexTracker';
 import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
@@ -108,6 +109,8 @@ function eliteMovesForTypes(t1?: string, t2?: string): MoveData[] {
 
 type State = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'over';
 const HP_W = 180;
+const ENEMY_STAGE_X = 560;
+const ENEMY_STAGE_Y = 130;
 
 export class TrainerBattleScene extends Phaser.Scene {
   private player!: Pokemon;
@@ -241,7 +244,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const sendOut = () => {
       if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 0, duration: 300 });
       this.tweens.add({
-        targets: this.enemySprite, x: 560, y: 130, alpha: 1, duration: 400,
+        targets: this.enemySprite, x: ENEMY_STAGE_X, y: ENEMY_STAGE_Y, alpha: 1, duration: 400,
         onComplete: () => {
           this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
             this.playerSprite.setAlpha(1);
@@ -384,7 +387,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     // at the enemy Pokémon anchor and step aside for the send-out.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
-      this.trainerPortrait = this.add.image(560, 150, portrait.key).setDepth(6).setAlpha(0);
+      this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
       if (this.trainerKey.startsWith('rival')) {
         const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
         this.trainerPortrait.setData('battleTrainer', design);
@@ -402,7 +405,13 @@ export class TrainerBattleScene extends Phaser.Scene {
       const key = rivalAvatarKey(this.registry);
       return { key, url: AVATAR_URL[key] };
     }
-    return portraitFor(this.trainerKey);
+    const authored = portraitFor(this.trainerKey);
+    if (authored) return authored;
+    // 우두머리 threats are wild Pokémon, not trainers — no human portrait for them.
+    if (this.isBossThreat) return undefined;
+    // No authored portrait: reuse a procedural per-CLASS trainer figure (Bug
+    // Catcher, Ace Trainer, Fisher…) read from the trainer's name.
+    return trainerClassPortrait(this, this.trainerName);
   }
 
   /** A 우두머리 (boss) — the 어사대 mission threats (Rampaging Gyarados, Fog-Wraith
@@ -840,6 +849,17 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     this.typeDialog(`${defeatLine}\nYou got ${formatMoney(prize)} for winning!`, () => {
       this.registry.set('trainerDefeated_' + this.trainerKey, true);
+      // Every Taewang victory must hand control to the Northern Hall of Fame.
+      // The old northLeagueDone guard skipped this on rematches, leaving the
+      // defeated champion room with no NPC and no way back down.
+      if (this.trainerKey === 'north-taewang') {
+        this.registry.set('northHallOfFamePending', true);
+        if (this.registry.get('northLeagueDone')) {
+          this.registry.set('northHallOfFameRematchPending', true);
+        } else {
+          this.registry.remove('northHallOfFameRematchPending');
+        }
+      }
       this.saveProgress();
       this.returnToRoute();
     });

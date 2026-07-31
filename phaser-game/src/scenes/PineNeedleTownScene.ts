@@ -7,6 +7,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { PartySystem } from '../systems/PartySystem';
+import { markRivalPortrait } from '../data/BattlePortraits';
 
 // ── Tiles ───────────────────────────────────────────────────────────────────
 const T = { GRASS: 0, PATH: 1, BUILDING: 2, ROOF: 3, TREE: 4, LANTERN: 5, POND: 6, FENCE: 7 } as const;
@@ -166,6 +167,7 @@ export class PineNeedleTownScene extends Phaser.Scene {
     g.fillStyle(0xffcc99); g.fillRect(-6, -22, 12, 12);
     g.fillStyle(0x221100); g.fillRect(-6, -22, 12, 5);
     g.fillStyle(0x000000); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
+    markRivalPortrait(g, this.registry);
     this.add.text(this.rivalCol * TILE + 16, this.rivalRow * TILE - 8, speakerName('Rival'), {
       fontSize: '8px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);

@@ -2006,6 +2006,12 @@ export const KO_STRINGS: Record<string, string> = {
     '태왕: ...이 옥좌에 앉은 삼십 년간, 내게 보내진 모든 한반도 챔피언을 이겼다. 하나도 빠짐없이.',
   "Taewang (inclining his head — a king's respect): The peninsula bred a real trainer at last. Your team is enshrined in the Northern Hall of Fame, beside the north's own legends.":
     '태왕 (고개를 숙이며 — 왕의 예우): 반도가 마침내 진짜 트레이너를 길러냈군. 너의 팀은 북방 명예의 전당에, 북부 자신의 전설들 곁에 봉안된다.',
+  'Taewang: You have climbed the Northern League and defeated me once again. Your strength is beyond dispute.':
+    '태왕: 다시 북방리그를 올라 나를 꺾었구나. 네 강함에는 이제 누구도 이의를 제기할 수 없다.',
+  '🏆 Your team is recorded in the Northern Hall of Fame once more!':
+    '🏆 네 팀이 다시 한번 북방 명예의 전당에 등록되었다!',
+  'Your Pokémon have been fully restored. You will now return to the Northern League Pokémon Center.':
+    '포켓몬이 모두 회복되었다. 북방리그 포켓몬센터 앞으로 돌아간다.',
 
   // ── Pyeongseong Checkpoint ──
   '🛡 평성 관문 (Pyeongseong Checkpoint)': '🛡 평성 관문',
