@@ -560,7 +560,6 @@ export const KO_STRINGS: Record<string, string> = {
   '↓ Northern Circuit': '↓ 북부 순환로',
   '⬇ back': '⬇ 뒤로',
   '⬇ Exit': '⬇ 나가기',
-  '🚪 exit': '🚪 나가기',
   'SPACE — Elevator': 'SPACE — 엘리베이터',
   'SPACE — Talk': 'SPACE — 대화',
   'SPACE — Info': 'SPACE — 안내',

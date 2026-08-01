@@ -225,6 +225,9 @@ export class WorldMapScene extends Phaser.Scene {
   buildingPlots!: { x: number; y: number; w: number; h: number; model: string }[];
   /** Only the named landmark buildings rise in 3D (no generic filler boxes). */
   onlyNamedBuildings = true;
+  /** The city's namesake waterfall at the head of the river (col 15) as a 3D
+   *  cascading water curtain. */
+  propPlots = [{ x: 15, y: 6, kind: 'waterfall' as const, len: 3 }];
   /** Vehicles pinned to an exact tile for the 3D engine (the Kaesong bus). */
   vehiclePlots!: { x: number; y: number; model: string; rot?: number }[];
   private mapGraphics!: Phaser.GameObjects.Graphics;
@@ -288,14 +291,21 @@ export class WorldMapScene extends Phaser.Scene {
       ? [{ x: this.BUS_COL, y: this.BUS_ROW, model: 'bus', rot: Math.PI / 2 }]
       : [];
 
-    // Safety: if spawn lands inside a solid tile, nudge south to the next road
+    // Safety: never strand the player (e.g. a Fly landing boxed in by the trees
+    // on the west side). Find the nearest OPEN tile that also has a walkable exit,
+    // not just a solid check — a walkable pocket ringed by trees is still a trap.
     const spawnRow = Math.floor(this.py / TILE);
     const spawnCol = Math.floor(this.px / TILE);
-    if (spawnRow < ROWS && spawnCol < COLS && SOLID.has(this.map[spawnRow][spawnCol])) {
-      // Walk down until we find a non-solid row in this column
-      let safeRow = spawnRow;
-      while (safeRow < ROWS && SOLID.has(this.map[safeRow][spawnCol])) safeRow++;
-      this.py = safeRow * TILE + TILE / 2;
+    const isOpen = (r: number, c: number) => r >= 0 && r < ROWS && c >= 0 && c < COLS && !SOLID.has(this.map[r][c]);
+    const hasExit = (r: number, c: number) => isOpen(r + 1, c) || isOpen(r - 1, c) || isOpen(r, c + 1) || isOpen(r, c - 1);
+    if (!isOpen(spawnRow, spawnCol) || !hasExit(spawnRow, spawnCol)) {
+      outer:
+      for (let rad = 1; rad < 14; rad++) {
+        for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) {
+          const r = spawnRow + dr, c = spawnCol + dc;
+          if (isOpen(r, c) && hasExit(r, c)) { this.px = c * TILE + TILE / 2; this.py = r * TILE + TILE / 2; break outer; }
+        }
+      }
     }
 
     this.drawMap();

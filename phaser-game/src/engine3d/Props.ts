@@ -468,6 +468,37 @@ export function makeStall(): THREE.Group {
   return g;
 }
 
+/** A vertical cascading waterfall: a tall water sheet with white flow streaks,
+ *  a foam pool at the base and a rock ledge at the crest. Built from primitives
+ *  (no external asset), so it works offline and reads as falling water. */
+export function makeWaterfall(height = 3, width = 1.4): THREE.Group {
+  const g = new THREE.Group();
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 128;
+  const ctx = c.getContext('2d')!;
+  const grd = ctx.createLinearGradient(0, 0, 0, 128);
+  grd.addColorStop(0, '#cdeeff'); grd.addColorStop(0.16, '#5fc8f0'); grd.addColorStop(1, '#2f9fd8');
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, 64, 128);
+  ctx.strokeStyle = 'rgba(255,255,255,0.78)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  for (let i = 0; i < 10; i++) {
+    const x = 4 + i * 6 + (i % 2) * 2;
+    ctx.beginPath(); ctx.moveTo(x, 0);
+    for (let y = 0; y <= 128; y += 8) ctx.lineTo(x + Math.sin(y * 0.11 + i) * 2, y);
+    ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sheetMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.93, side: THREE.DoubleSide });
+  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(width, height), sheetMat);
+  sheet.position.y = height / 2; g.add(sheet);
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(width * 1.06, height), sheetMat);
+  back.position.set(0, height / 2, -0.07); g.add(back);
+  const foam = new THREE.Mesh(new THREE.CircleGeometry(width * 0.72, 16), new THREE.MeshBasicMaterial({ color: 0xeaffff, transparent: true, opacity: 0.85 }));
+  foam.rotation.x = -Math.PI / 2; foam.position.y = 0.04; g.add(foam);
+  const ledge = new THREE.Mesh(new THREE.BoxGeometry(width * 1.3, 0.3, 0.55), toonMat(0x6a6058));
+  ledge.position.y = height + 0.08; g.add(ledge);
+  return g;
+}
+
 // ── Department-store interior fixtures ─────────────────────────────────────
 // These are deliberately procedural: every floor can share a coherent visual
 // language without depending on external model downloads, and the 2D fallback

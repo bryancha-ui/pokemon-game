@@ -311,9 +311,14 @@ export class DeptStoreScene extends Phaser.Scene {
       drawNpcBody(g, 0xcc6688, { hair: 0x2a2018 });
       this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, speakerName('Receptionist'),
         { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
-      // Directory board
-      this.add.text(2.2 * TILE, 6 * TILE, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'),
-        { fontSize: '8px', color: '#334', backgroundColor: '#e8e0d0dd', padding: { x: 4, y: 3 }, lineSpacing: 2 }).setOrigin(0, 0).setDepth(5);
+      // Keep the directory in screen space. As a world-space billboard it was
+      // converted by the 3D mirror and ended up hidden behind the real directory
+      // fixture / reception furniture.
+      this.add.text(18, 78, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'), {
+        fontSize: '12px', color: '#f6fbff', backgroundColor: '#10213bee',
+        padding: { x: 12, y: 10 }, lineSpacing: 5,
+        stroke: '#000000', strokeThickness: 2,
+      }).setOrigin(0, 0).setScrollFactor(0).setDepth(58);
     }
 
     if (this.floor === 6) {
@@ -449,20 +454,36 @@ export class DeptStoreScene extends Phaser.Scene {
     this.elevatorOpen = true;
     this.elevatorBtns = [];
     const cx = this.scale.width / 2, cy = this.scale.height / 2;
-    const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(80);
-    layer.add(this.add.rectangle(cx, cy, this.scale.width, this.scale.height, 0x000000, 0.55));
-    layer.add(this.add.rectangle(cx, cy, 320, 380, 0x10142a, 0.99).setStrokeStyle(2, 0x88aacc));
-    layer.add(this.add.text(cx, cy - 158, tr('🛗  ELEVATOR'), { fontSize: '16px', color: '#cfe', fontStyle: 'bold' }).setOrigin(0.5));
+    const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(500);
+    // Every child must also be screen-fixed. Container scroll factors are not
+    // inherited by the 3D mirror's object classifier; without these flags the
+    // panel children were lifted into the world and disappeared from the UI.
+    const dim = this.add.rectangle(cx, cy, this.scale.width, this.scale.height, 0x000000, 0.68).setScrollFactor(0);
+    const panel = this.add.rectangle(cx, cy, 430, 430, 0x10142a, 0.995)
+      .setStrokeStyle(3, 0x9ed5ff).setScrollFactor(0);
+    const title = this.add.text(cx, cy - 182, tr('🛗  ELEVATOR'), {
+      fontSize: '21px', color: '#e9f8ff', fontStyle: 'bold',
+    }).setOrigin(0.5).setScrollFactor(0);
+    layer.add([dim, panel, title]);
 
     for (let fl = 6, i = 0; fl >= 1; fl--, i++) {
-      const y = cy - 118 + i * 40;
+      const y = cy - 132 + i * 46;
       const txt = this.add.text(cx, y, tr(FLOORS[fl].name), {
-        fontSize: '13px', color: '#fff', backgroundColor: '#24406a', padding: { x: 12, y: 6 },
-      }).setOrigin(0.5);
+        fontSize: '16px', color: '#fff', backgroundColor: '#24406a',
+        padding: { x: 12, y: 7 }, align: 'center',
+      }).setOrigin(0.5).setFixedSize(320, 36).setScrollFactor(0).setInteractive({ useHandCursor: true });
+      txt.on('pointerdown', () => {
+        if (fl === this.floor || this.floorTransitioning) return;
+        this.closeElevator();
+        this.goToFloor(fl);
+      });
       layer.add(txt);
       this.elevatorBtns.push({ fl, txt });
     }
-    layer.add(this.add.text(cx, cy + 150, tr('↑ ↓ select    SPACE go    X cancel'), { fontSize: '11px', color: '#9ab' }).setOrigin(0.5));
+    const help = this.add.text(cx, cy + 174, tr('↑ ↓ select    SPACE go    X cancel'), {
+      fontSize: '13px', color: '#bcd2e8',
+    }).setOrigin(0.5).setScrollFactor(0);
+    layer.add(help);
     this.elevatorLayer = layer;
 
     // Start on the first floor that isn't the current one.

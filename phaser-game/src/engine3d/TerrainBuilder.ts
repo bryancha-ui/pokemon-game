@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
   type StoreFixtureKind,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall' | StoreFixtureKind;
+  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall' | 'waterfall' | StoreFixtureKind;
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
   w?: number; d?: number; color?: number; // authored interior-fixture footprint/theme
@@ -838,7 +838,8 @@ export function buildTerrain(
                     : p.kind === 'minecart' ? makeMineCart()
                       : p.kind === 'cherry' ? makeCherryTree()
                         : p.kind === 'stall' ? makeStall()
-                          : makeIceStatue();
+                          : p.kind === 'waterfall' ? makeWaterfall(p.len ?? 3)
+                            : makeIceStatue();
     obj.position.set(p.x + (storeFixture ? (p.w ?? 1) / 2 : 0.5), 0, p.y + (storeFixture ? (p.d ?? 1) / 2 : 0.5));
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;
