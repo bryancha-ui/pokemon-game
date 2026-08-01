@@ -6,7 +6,7 @@ import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { CORRPANDA_DATA, CORRPANDA_MOVES } from '../data/CustomPokemon';
 import { PartySystem } from '../systems/PartySystem';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
+import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
 import { ITEMS, Inventory, useItemOnSlot } from '../systems/Items';
@@ -18,6 +18,7 @@ import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { genderedName } from '../data/PokemonGender';
+import { actsBefore } from '../systems/AbilitySystem';
 
 type State = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 const HP_W = 200;
@@ -469,14 +470,14 @@ export class GymLeaderBattleScene extends Phaser.Scene {
 
   private runTurn(move: Move) {
     this.state = 'busy';
-    const playerSpeed = this.player.battleStat('spd');
-    const enemySpeed = this.enemy.battleStat('spd');
-    const playerFirst = playerSpeed > enemySpeed
-      || (playerSpeed === enemySpeed && Math.random() < 0.5);
+    const avail = this.enemy.moves.filter(m => m.pp > 0);
+    const enemyMove = pendingMoveFor(this.enemy)
+      ?? (avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0]);
+    const playerFirst = actsBefore(this.player, move, this.enemy, enemyMove);
     if (playerFirst) {
-      this.doPlayerMove(move, () => this.doEnemyMove(() => this.playerAction()));
+      this.doPlayerMove(move, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {
-      this.doEnemyMove(() => this.doPlayerMove(move, () => this.playerAction()));
+      this.doEnemyMove(() => this.doPlayerMove(move, () => this.playerAction()), enemyMove);
     }
   }
 
@@ -508,9 +509,9 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.doEnemyMove(() => this.playerAction());
   }
 
-  private doEnemyMove(onDone: () => void) {
+  private doEnemyMove(onDone: () => void, selectedMove?: Move) {
     const avail = this.enemy.moves.filter(m => m.pp > 0);
-    const move = pendingMoveFor(this.enemy)
+    const move = selectedMove ?? pendingMoveFor(this.enemy)
       ?? (avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0]);
     executeBattleMove({
       scene: this,
@@ -524,7 +525,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       animateUserHp: done => this.animateHp('enemy', done),
       animateTargetHp: done => this.animateHp('player', done),
       onComplete: () => {
-        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp, this.player.status);
         if (this.player.isKO) {
           this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.playerFainted());
         } else {
@@ -598,6 +599,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     openSwitchPanel(this, this.activeSlot,
       () => { this.showActionPanel(); this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`); },
       (idx) => {
+        persistSwitchOut(this.registry, this.activeSlot, this.player);
         this.activeSlot = idx;
         this.participants.add(idx);
         const entry = PartySystem.get(this.registry)[idx];

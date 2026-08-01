@@ -5,6 +5,7 @@ import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { genderedName } from '../data/PokemonGender';
+import { actsBefore } from '../systems/AbilitySystem';
 
 type BattleState = 'loading' | 'start' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 
@@ -102,14 +103,14 @@ export class BattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    const playerSpeed = this.playerPokemon.battleStat('spd');
-    const enemySpeed = this.enemyPokemon.battleStat('spd');
-    const playerFirst = playerSpeed > enemySpeed
-      || (playerSpeed === enemySpeed && Math.random() < 0.5);
+    const available = this.enemyPokemon.moves.filter(m => m.pp > 0);
+    const enemyMove = pendingMoveFor(this.enemyPokemon)
+      ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.enemyPokemon.moves[0]);
+    const playerFirst = actsBefore(this.playerPokemon, playerMove, this.enemyPokemon, enemyMove);
     if (playerFirst) {
-      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction()));
+      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {
-      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()), enemyMove);
     }
   }
 
@@ -135,9 +136,9 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private doEnemyMove(onDone: () => void) {
+  private doEnemyMove(onDone: () => void, selectedMove?: Move) {
     const available = this.enemyPokemon.moves.filter(m => m.pp > 0);
-    const enemyMove = pendingMoveFor(this.enemyPokemon)
+    const enemyMove = selectedMove ?? pendingMoveFor(this.enemyPokemon)
       ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.enemyPokemon.moves[0]);
     executeBattleMove({
       scene: this,

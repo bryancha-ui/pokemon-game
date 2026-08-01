@@ -5,6 +5,7 @@ import { DISGUIJAR_DATA } from '../data/CustomPokemon';
 import { cachedPokemon } from '../data/PokeAPI';
 import type { PokemonData } from '../battle/Pokemon';
 import { genderForPokemon } from '../data/PokemonGender';
+import { dexEntry, dexKeyFor } from '../data/Pokedex';
 
 export interface PartyBaseStats {
   hp: number;
@@ -95,6 +96,11 @@ function ensureAllBaseStats(entries: PartyEntry[]): boolean {
       entry.gender = genderForPokemon({ name: entry.name, key: entry.spriteKey, id },
         entry.breedingId ?? entry.spriteUrl ?? entry.spriteKey);
       changed = true;
+    }
+    if (!entry.ability) {
+      const ability = dataForEntry(entry)?.ability ?? findForm(entry.spriteKey)?.ability
+        ?? dexEntry(dexKeyFor(entry.spriteKey))?.ability;
+      if (ability) { entry.ability = ability; changed = true; }
     }
   }
   return changed;
@@ -217,9 +223,13 @@ export const PartySystem = {
   },
 
   /** Sync HP of any slot after battle */
-  updateSlotHP(registry: Phaser.Data.DataManager, slot: number, hp: number): void {
+  updateSlotHP(registry: Phaser.Data.DataManager, slot: number, hp: number, status?: string): void {
     const party = this.get(registry);
-    if (party[slot] !== undefined) { party[slot].hp = hp; this.set(registry, party); }
+    if (party[slot] !== undefined) {
+      party[slot].hp = hp;
+      if (status !== undefined) party[slot].status = status;
+      this.set(registry, party);
+    }
   },
 
   /** Sync level + exp + hp + maxHp of a slot. The party entry is the source of truth. */

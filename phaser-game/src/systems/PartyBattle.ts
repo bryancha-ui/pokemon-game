@@ -11,6 +11,7 @@ import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
 import { customForm } from '../data/CustomBattle';
 import { mergeLearnset } from '../data/Learnsets';
 import { TM_MOVE_DATA } from '../data/TMs';
+import { applySwitchOutAbility } from './AbilitySystem';
 
 const TAUGHT_MOVE_DATA: Record<string, MoveData> = {
   ...TM_MOVE_DATA,
@@ -103,7 +104,7 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
   const form = findForm(entry.spriteKey);
   if (form) {
     const moves = foldTaughtMoves(mergeLearnset(form.startingMoves, entry.spriteKey, form.data.type1, form.data.type2, entry.level), entry);
-    const p = new Pokemon(form.data, entry.level, moves);
+    const p = new Pokemon({ ...form.data, ability: entry.ability ?? form.ability, gender: entry.gender, status: entry.status }, entry.level, moves);
     p.hp  = Math.min(entry.hp, p.maxHp);
     p.exp = entry.exp ?? 0;
     restorePP(p, entry);
@@ -113,7 +114,7 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
   // Custom Pokémon (Disguijar — exact tuned data)
   if (entry.spriteKey === 'disguijar') {
     const moves = foldTaughtMoves(mergeLearnset(DISGUIJAR_MOVES, 'disguijar', DISGUIJAR_DATA.type1, DISGUIJAR_DATA.type2, entry.level), entry);
-    const p = new Pokemon(DISGUIJAR_DATA, entry.level, moves);
+    const p = new Pokemon({ ...DISGUIJAR_DATA, ability: entry.ability ?? DISGUIJAR_DATA.ability, gender: entry.gender, status: entry.status }, entry.level, moves);
     p.hp  = Math.min(entry.hp, p.maxHp);
     p.exp = entry.exp ?? 0;
     restorePP(p, entry);
@@ -124,7 +125,7 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
   const cf = customForm(entry.spriteKey);
   if (cf) {
     const moves = foldTaughtMoves(mergeLearnset(cf.moves, entry.spriteKey, cf.data.type1, cf.data.type2, entry.level), entry);
-    const p = new Pokemon(cf.data, entry.level, moves);
+    const p = new Pokemon({ ...cf.data, ability: entry.ability ?? cf.data.ability, gender: entry.gender, status: entry.status }, entry.level, moves);
     p.hp  = Math.min(entry.hp, p.maxHp);
     p.exp = entry.exp ?? 0;
     restorePP(p, entry);
@@ -140,6 +141,9 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
   const data: PokemonData = {
     id:          0,
     name:        entry.name,
+    ability:     entry.ability,
+    gender:      entry.gender,
+    status:      entry.status,
     type1:       (entry.type1 as PokemonType) || 'normal',
     type2:       entry.type2 as PokemonType | undefined,
     baseHp:      stats.hp,
@@ -174,4 +178,20 @@ export function persistMovePP(registry: Phaser.Data.DataManager, slot: number, m
   for (const m of mon.moves) pp[m.data.name.toLowerCase()] = m.pp;
   e.movePP = pp;
   PartySystem.set(registry, party);
+}
+
+/** Persist the outgoing combatant and apply switch-only abilities such as
+ * Natural Cure before another party member replaces it. */
+export function persistSwitchOut(registry: Phaser.Data.DataManager, slot: number, mon: Pokemon): string | undefined {
+  const message = applySwitchOutAbility(mon);
+  const party = PartySystem.get(registry);
+  const entry = party[slot];
+  if (!entry) return message;
+  entry.hp = mon.hp;
+  entry.status = mon.status;
+  const pp: Record<string, number> = { ...(entry.movePP ?? {}) };
+  for (const move of mon.moves) pp[move.data.name.toLowerCase()] = move.pp;
+  entry.movePP = pp;
+  PartySystem.set(registry, party);
+  return message;
 }

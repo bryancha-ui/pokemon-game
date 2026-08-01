@@ -164,6 +164,10 @@ export function findForm(spriteKey: string): StarterDef | undefined {
       ?? EVOLVED_FORMS.find(s => s.spriteKey === spriteKey);
 }
 
+// Battle constructors consume PokemonData directly, so mirror each form's
+// declared ability onto that data object once at module initialization.
+for (const form of [...STARTERS, ...EVOLVED_FORMS]) form.data.ability = form.ability;
+
 /** Evolution chain: which form a Pokémon evolves into, at what level, and any
  *  moves learned on evolving (its "skill tree"). */
 export const EVOLUTIONS: Record<string, { to: string; toName: string; level: number; addMoves?: string[] }> = {

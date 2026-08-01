@@ -14,7 +14,7 @@ import { PartySystem } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
+import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
@@ -26,6 +26,7 @@ import { tmForMove } from '../data/TMs';
 import { SaveManager } from '../utils/SaveManager';
 import { playBallSendOut } from '../systems/BattleBallFX';
 import { genderedName } from '../data/PokemonGender';
+import { actsBefore } from '../systems/AbilitySystem';
 
 // ── Enemy movesets ──────────────────────────────────────────────────────────
 // PokéAPI enemies previously fought with only Tackle + Growl. Give every enemy a
@@ -659,15 +660,14 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    // Turn order is decided by Speed (ties broken randomly).
-    const playerSpeed = this.player.battleStat('spd');
-    const enemySpeed = this.enemy.battleStat('spd');
-    const playerFirst = playerSpeed > enemySpeed
-      || (playerSpeed === enemySpeed && Math.random() < 0.5);
+    const enemyMoves = this.enemy.moves.filter(m => m.pp > 0);
+    const enemyMove = pendingMoveFor(this.enemy)
+      ?? this.pickEnemyMove(enemyMoves.length ? enemyMoves : this.enemy.moves);
+    const playerFirst = actsBefore(this.player, playerMove, this.enemy, enemyMove);
     if (playerFirst) {
-      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction()));
+      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {
-      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()), enemyMove);
     }
   }
 
@@ -720,9 +720,9 @@ export class TrainerBattleScene extends Phaser.Scene {
   private enemyTurn() { this.doEnemyMove(() => this.playerAction()); }
 
   /** Resolve the enemy's move; on a KO, hand off to sendNextOrLose instead of continuing. */
-  private doEnemyMove(onDone: () => void) {
+  private doEnemyMove(onDone: () => void, selectedMove?: Move) {
     const moves = this.enemy.moves.filter(m => m.pp > 0);
-    const move = pendingMoveFor(this.enemy)
+    const move = selectedMove ?? pendingMoveFor(this.enemy)
       ?? this.pickEnemyMove(moves.length ? moves : this.enemy.moves);
     executeBattleMove({
       scene: this,
@@ -736,7 +736,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       animateUserHp: done => this.animateHpBar('enemy', done),
       animateTargetHp: done => this.animateHpBar('player', done),
       onComplete: () => {
-        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp, this.player.status);
         if (this.player.isKO) {
           this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
         } else {
@@ -976,6 +976,7 @@ export class TrainerBattleScene extends Phaser.Scene {
    *  used its turn fainting). Mirrors voluntarySwitch but ends at playerAction(). */
   private freeSwitch(slotIdx: number) {
     this.state = 'busy';
+    persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
     this.participants.add(slotIdx);
     const entry = PartySystem.get(this.registry)[slotIdx];
@@ -1001,6 +1002,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   private voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
+    persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
     this.participants.add(slotIdx);
     const party = PartySystem.get(this.registry);

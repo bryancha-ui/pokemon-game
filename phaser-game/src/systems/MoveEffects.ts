@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { BattleStat, Move, MoveData, MoveStatChange, Pokemon } from '../battle/Pokemon';
 import { playChargeFX, playDrainFX, playMoveFX, playStatusFX } from './BattleFX';
+import {
+  abilityEvasionMultiplier, activateEntryAbilities, blocksPowderMove,
+  blocksSecondaryEffects, extraPpCost, statusBeforeMove,
+} from './AbilitySystem';
 
 type EffectTarget = 'user' | 'target';
 type TwoTurnMode = 'air' | 'underground' | 'charge';
@@ -13,6 +17,8 @@ interface EffectSpec {
   chance?: number;
   twoTurn?: TwoTurnMode;
   clearNegative?: boolean;
+  statusCondition?: string;
+  statusChance?: number;
 }
 
 const sc = (stat: BattleStat, change: number): MoveStatChange => ({ stat, change });
@@ -83,6 +89,26 @@ const EFFECTS: Record<string, EffectSpec> = {
   overheat: { statChanges: [sc('spAtk', -2)], target: 'user' },
   'leaf storm': { statChanges: [sc('spAtk', -2)], target: 'user' },
 
+  // Major status conditions. PokeAPI supplies the same metadata for remotely
+  // loaded moves; these fallbacks cover the game's hand-authored movesets.
+  'thunder wave': { statusCondition: 'par', statusChance: 100 },
+  'stun spore': { statusCondition: 'par', statusChance: 100 },
+  'will o wisp': { statusCondition: 'brn', statusChance: 100 },
+  toxic: { statusCondition: 'psn', statusChance: 90 },
+  'poison powder': { statusCondition: 'psn', statusChance: 75 },
+  'poison gas': { statusCondition: 'psn', statusChance: 90 },
+  spore: { statusCondition: 'slp', statusChance: 100 },
+  'sleep powder': { statusCondition: 'slp', statusChance: 75 },
+  hypnosis: { statusCondition: 'slp', statusChance: 60 },
+  sing: { statusCondition: 'slp', statusChance: 55 },
+  ember: { statusCondition: 'brn', statusChance: 10 },
+  flamethrower: { statusCondition: 'brn', statusChance: 10 },
+  'ice beam': { statusCondition: 'frz', statusChance: 10 },
+  thunderbolt: { statusCondition: 'par', statusChance: 10 },
+  'body slam': { statusCondition: 'par', statusChance: 30 },
+  'sludge bomb': { statusCondition: 'psn', statusChance: 30 },
+  'poison jab': { statusCondition: 'psn', statusChance: 30 },
+
   // Two-turn moves
   fly: { twoTurn: 'air' }, bounce: { twoTurn: 'air' }, dig: { twoTurn: 'underground' },
   dive: { twoTurn: 'underground' }, 'phantom force': { twoTurn: 'charge' },
@@ -104,6 +130,8 @@ function specFor(move: MoveData): EffectSpec {
     chance: move.effectChance ?? fallback.chance ?? 100,
     twoTurn: move.twoTurn ?? fallback.twoTurn,
     clearNegative: fallback.clearNegative,
+    statusCondition: move.statusCondition ?? fallback.statusCondition,
+    statusChance: move.statusChance ?? fallback.statusChance,
   };
 }
 
@@ -155,7 +183,8 @@ function canHit(user: Pokemon, target: Pokemon, move: MoveData): boolean {
     if (targetCharge.mode === 'underground' && !groundHits) return false;
   }
   if (/^(swift|aerial ace|magical leaf)$/.test(moveKey(move.name))) return true;
-  const accuracy = Math.max(1, move.accuracy || 100) * user.accuracyMultiplier() / target.evasionMultiplier();
+  const accuracy = Math.max(1, move.accuracy || 100) * user.accuracyMultiplier()
+    / (target.evasionMultiplier() * abilityEvasionMultiplier(user, target));
   return Math.random() * 100 < Math.min(100, accuracy);
 }
 
@@ -203,7 +232,9 @@ function applyEffects(user: Pokemon, target: Pokemon, move: MoveData, damage: nu
     messages.push(`${affected.name}'s lowered stats returned to normal!`);
     changeDirection = 1;
   }
-  if (spec.statChanges?.length && Math.random() * 100 < (spec.chance ?? 100)) {
+  const secondaryBlocked = changeTarget === 'target'
+    && (blocksSecondaryEffects(target, move) || (move.power > 0 && user.hasAbility('Sheer Force')));
+  if (spec.statChanges?.length && !secondaryBlocked && Math.random() * 100 < (spec.chance ?? 100)) {
     for (const change of spec.statChanges) {
       const applied = affected.modifyStage(change.stat, change.change);
       if (applied === 0) {
@@ -216,6 +247,22 @@ function applyEffects(user: Pokemon, target: Pokemon, move: MoveData, damage: nu
           : applied > 0 ? 'rose' : 'fell';
       messages.push(`${affected.name}'s ${STAT_LABEL[change.stat]} ${degree}!`);
     }
+    // Dancer immediately copies dance-based rank moves in a singles battle.
+    if (changeTarget === 'user' && target.hasAbility('Dancer') && /dance/i.test(move.name)) {
+      for (const change of spec.statChanges) target.modifyStage(change.stat, change.change);
+      messages.push(`${target.name}'s Dancer copied ${move.name}!`);
+    }
+  }
+  if (spec.statusCondition && (move.power === 0 || damage > 0) && !secondaryBlocked
+    && Math.random() * 100 < (spec.statusChance ?? 100)) {
+    if (target.trySetStatus(spec.statusCondition, user)) {
+      const label: Record<string, string> = {
+        par: 'was paralyzed', brn: 'was burned', psn: 'was poisoned',
+        slp: 'fell asleep', frz: 'was frozen',
+      };
+      messages.push(`${target.name} ${label[spec.statusCondition] ?? 'was afflicted'}!`);
+      changeDirection = -1;
+    }
   }
   return {
     healed,
@@ -224,7 +271,7 @@ function applyEffects(user: Pokemon, target: Pokemon, move: MoveData, damage: nu
     messages,
     changeTarget,
     changeDirection,
-    visual: !!(spec.healing || spec.drain || spec.statChanges?.length || spec.clearNegative),
+    visual: !!(spec.healing || spec.drain || spec.statChanges?.length || spec.clearNegative || spec.statusCondition),
   };
 }
 
@@ -279,12 +326,14 @@ function effectAnimation(ctx: BattleMoveContext, fx: AppliedEffects, done: () =>
 
 /** Resolve PP, accuracy, two-turn state, damage, healing/drain and rank effects. */
 export function executeBattleMove(ctx: BattleMoveContext): void {
-  const phase = beginMove(ctx.user, ctx.move);
-  if (phase.consumePP) {
-    ctx.user.useMove(ctx.move);
-    ctx.onPpUsed?.();
-  }
-  ctx.showDialog(`${ctx.userLabel} used ${ctx.move.data.name}!`, () => {
+  const performMove = () => {
+    const phase = beginMove(ctx.user, ctx.move);
+    if (phase.consumePP) {
+      ctx.user.useMove(ctx.move);
+      for (let i = 0; i < extraPpCost(ctx.target); i++) ctx.user.useMove(ctx.move);
+      ctx.onPpUsed?.();
+    }
+    ctx.showDialog(`${ctx.userLabel} used ${ctx.move.data.name}!`, () => {
     if (phase.phase === 'charge') {
       playChargeFX(ctx.scene, ctx.userSprite, ctx.move.data, 'charge', phase.mode!, () => {
         const msg = phase.mode === 'air' ? `${ctx.user.name} flew up high!`
@@ -296,6 +345,11 @@ export function executeBattleMove(ctx: BattleMoveContext): void {
     }
 
     const resolve = () => {
+      if (blocksPowderMove(ctx.target, ctx.move.data)) {
+        ctx.showDialog(`${ctx.target.name}'s Overcoat blocked the powder!`, () =>
+          ctx.onComplete({ damage: 0, critical: false, effectiveness: 0, charged: false, missed: false }));
+        return;
+      }
       if (!canHit(ctx.user, ctx.target, ctx.move.data)) {
         ctx.showDialog(`${ctx.user.name}'s attack missed!`, () =>
           ctx.onComplete({ damage: 0, critical: false, effectiveness: 1, charged: false, missed: true }));
@@ -304,6 +358,9 @@ export function executeBattleMove(ctx: BattleMoveContext): void {
 
       if (ctx.move.data.power > 0) {
         const hit = ctx.target.takeDamage(ctx.move, ctx.user);
+        // Reactive abilities such as Cursed Body can alter the used move's PP
+        // after impact; persist that final value for player-owned Pokémon.
+        ctx.onPpUsed?.();
         if (ctx.target.isKO) cancelCharge(ctx.scene, ctx.target, ctx.targetSprite);
         playMoveFX(ctx.scene, ctx.userSprite, ctx.targetSprite, ctx.move.data, hit.effectiveness, () => ctx.animateTargetHp(() => {
           const fx = applyEffects(ctx.user, ctx.target, ctx.move.data, hit.dmg);
@@ -313,6 +370,7 @@ export function executeBattleMove(ctx: BattleMoveContext): void {
             if (hit.effectiveness > 1) messages.push('Super effective!');
             else if (hit.effectiveness > 0 && hit.effectiveness < 1) messages.push('Not very effective...');
             else if (hit.effectiveness === 0) messages.push('It had no effect!');
+            messages.push(...hit.abilityMessages);
             messages.push(...fx.messages);
             showMessages(ctx, messages, () => ctx.onComplete({
               damage: hit.dmg, critical: hit.critical, effectiveness: hit.effectiveness,
@@ -337,5 +395,22 @@ export function executeBattleMove(ctx: BattleMoveContext): void {
     } else {
       resolve();
     }
-  });
+    });
+  };
+
+  const afterEntry = () => {
+    const status = statusBeforeMove(ctx.user, ctx.target);
+    const next = () => {
+      if (status.blocked) {
+        ctx.onComplete({ damage: 0, critical: false, effectiveness: 1, charged: false, missed: false });
+      } else {
+        performMove();
+      }
+    };
+    if (status.messages.length) showMessages(ctx, status.messages, next);
+    else next();
+  };
+  const entryMessages = activateEntryAbilities(ctx.user, ctx.target);
+  if (entryMessages.length) showMessages(ctx, entryMessages, afterEntry);
+  else afterEntry();
 }

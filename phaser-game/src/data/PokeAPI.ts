@@ -11,7 +11,7 @@ const BASE = 'https://pokeapi.co/api/v2';
 // them to localStorage (instant across reloads), so each species/move is fetched
 // from the network at most once, ever.
 const POKE_CACHE = 'pokeapi_pokemon_v3';   // v3: includes the primary ability
-const MOVE_CACHE = 'pokeapi_move_v2';   // v2 includes healing/drain/stat/two-turn metadata
+const MOVE_CACHE = 'pokeapi_move_v4';   // v4 adds major-status metadata for abilities and move effects
 const SPECIES_CACHE = 'pokeapi_species_v1';
 const ABILITY_CACHE = 'pokeapi_ability_v1';
 
@@ -179,6 +179,7 @@ export async function fetchMove(idOrName: number | string): Promise<MoveData> {
     power:    (json.power as number) ?? 0,
     accuracy: (json.accuracy as number) ?? 100,
     pp:       json.pp as number,
+    priority: Number(json.priority ?? 0),
     healing:  Math.max(0, Number(json.meta?.healing ?? 0)),
     drain:    Math.max(0, Number(json.meta?.drain ?? 0)),
     statChanges: (json.stat_changes as { change: number; stat: { name: string } }[] ?? [])
@@ -190,6 +191,15 @@ export async function fetchMove(idOrName: number | string): Promise<MoveData> {
     effectTarget: /user|users-field/.test(String(json.target?.name ?? ''))
       || String(json.meta?.category?.name ?? '') === 'damage+raise' ? 'user' : 'target',
     effectChance: Number(json.effect_chance ?? json.meta?.stat_chance ?? 100) || 100,
+    statusCondition: ({
+      paralysis: 'par', burn: 'brn', poison: 'psn', 'bad-poison': 'psn',
+      sleep: 'slp', freeze: 'frz',
+    } as Record<string, string>)[String(json.meta?.ailment?.name ?? '')],
+    statusChance: String(json.meta?.ailment?.name ?? 'none') !== 'none'
+      ? (Number(json.meta?.ailment_chance ?? 0) > 0
+        ? Number(json.meta.ailment_chance)
+        : String(json.meta?.category?.name ?? '') === 'ailment' ? 100 : Number(json.effect_chance ?? 0))
+      : undefined,
     twoTurn: ({ fly: 'air', bounce: 'air', dig: 'underground', dive: 'underground',
       'solar-beam': 'charge', 'solar-blade': 'charge', 'sky-attack': 'charge',
       'phantom-force': 'charge', 'shadow-force': 'charge' } as Record<string, MoveData['twoTurn']>)[String(json.name).toLowerCase()],

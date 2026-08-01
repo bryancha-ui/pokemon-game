@@ -14,6 +14,7 @@ export const DISGUIJAR_MOVES: MoveData[] = [
 export const DISGUIJAR_DATA: PokemonData = {
   id:          904,
   name:        'Disguijar',
+  ability:     'Sturdy',
   type1:       'rock',
   type2:       'flying',
   baseHp:      55,
@@ -40,6 +41,7 @@ export const CORRPANDA_MOVES: MoveData[] = [
 export const CORRPANDA_DATA: PokemonData = {
   id:          905,
   name:        'Corrpanda',
+  ability:     'Pressure',
   type1:       'dark',
   type2:       undefined,
   baseHp:      55,

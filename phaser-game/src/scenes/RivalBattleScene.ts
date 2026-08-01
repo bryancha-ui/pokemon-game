@@ -8,7 +8,7 @@ import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
+import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
 import { AVATAR_URL, playerAvatarKey, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
@@ -16,6 +16,7 @@ import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { genderedName } from '../data/PokemonGender';
+import { actsBefore } from '../systems/AbilitySystem';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
 const RIVAL_STAGE_X = 580;
@@ -454,14 +455,14 @@ export class RivalBattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    const playerSpeed = this.player.battleStat('spd');
-    const rivalSpeed = this.rival.battleStat('spd');
-    const playerFirst = playerSpeed > rivalSpeed
-      || (playerSpeed === rivalSpeed && Math.random() < 0.5);
+    const availableMoves = this.rival.moves.filter(m => m.pp > 0);
+    const rivalMove = pendingMoveFor(this.rival) ?? (availableMoves.length > 0
+      ? availableMoves[Math.floor(Math.random() * availableMoves.length)] : this.rival.moves[0]);
+    const playerFirst = actsBefore(this.player, playerMove, this.rival, rivalMove);
     if (playerFirst) {
-      this.doPlayerMove(playerMove, () => this.doRivalMove(() => this.playerAction()));
+      this.doPlayerMove(playerMove, () => this.doRivalMove(() => this.playerAction(), rivalMove));
     } else {
-      this.doRivalMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+      this.doRivalMove(() => this.doPlayerMove(playerMove, () => this.playerAction()), rivalMove);
     }
   }
 
@@ -494,10 +495,10 @@ export class RivalBattleScene extends Phaser.Scene {
     this.doRivalMove(() => this.playerAction());
   }
 
-  private doRivalMove(onDone: () => void) {
+  private doRivalMove(onDone: () => void, selectedMove?: Move) {
     // Rival attacks back — pick random move with PP
     const availableMoves = this.rival.moves.filter(m => m.pp > 0);
-    const rivalMove = pendingMoveFor(this.rival) ?? (availableMoves.length > 0
+    const rivalMove = selectedMove ?? pendingMoveFor(this.rival) ?? (availableMoves.length > 0
       ? availableMoves[Math.floor(Math.random() * availableMoves.length)]
       : this.rival.moves[0]);
 
@@ -513,7 +514,7 @@ export class RivalBattleScene extends Phaser.Scene {
       animateUserHp: done => this.animateHpBar('rival', done),
       animateTargetHp: done => this.animateHpBar('player', done),
       onComplete: () => {
-        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp, this.player.status);
         if (this.player.isKO) {
           this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted...`, () => this.rivalSendNextOrLose());
         } else {
@@ -537,6 +538,7 @@ export class RivalBattleScene extends Phaser.Scene {
 
   private voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
+    persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
     this.participants.add(slotIdx);
     const party = PartySystem.get(this.registry);

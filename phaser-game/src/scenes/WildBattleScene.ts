@@ -14,7 +14,7 @@ import { PartySystem, PartyEntry, baseStatsFromData } from '../systems/PartySyst
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP } from '../systems/PartyBattle';
+import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
 import { ITEMS, Inventory, itemDef, useItemOnSlot } from '../systems/Items';
@@ -22,6 +22,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { drawBattleBall, playBallSendOut } from '../systems/BattleBallFX';
 import { genderedName, genderForPokemon } from '../data/PokemonGender';
 import { caughtLocationName } from '../data/PokemonOrigin';
+import { actsBefore, guaranteedEscape, preventsEscape } from '../systems/AbilitySystem';
 
 type WildState = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'catching' | 'over';
 
@@ -451,7 +452,9 @@ export class WildBattleScene extends Phaser.Scene {
     if (this.state !== 'playerAction') return;
     // Run success check (simplified: 50% + speed advantage)
     const runChance = 0.5 + (this.player.spd - this.wild.spd) / 200;
-    if (Math.random() < runChance) {
+    if (!guaranteedEscape(this.player) && preventsEscape(this.wild)) {
+      this.typeDialog(`${this.wild.name}'s Shadow Tag prevents escape!`, () => this.enemyTurn(null));
+    } else if (guaranteedEscape(this.player) || Math.random() < runChance) {
       this.registry.set('wildOutcome', 'fled');
       this.typeDialog('Got away safely!', () => this.returnToRoute());
     } else {
@@ -675,15 +678,14 @@ export class WildBattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    // Turn order by Speed (ties broken randomly).
-    const playerSpeed = this.player.battleStat('spd');
-    const wildSpeed = this.wild.battleStat('spd');
-    const playerFirst = playerSpeed > wildSpeed
-      || (playerSpeed === wildSpeed && Math.random() < 0.5);
+    const available = this.wild.moves.filter(m => m.pp > 0);
+    const wildMove = pendingMoveFor(this.wild)
+      ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0]);
+    const playerFirst = actsBefore(this.player, playerMove, this.wild, wildMove);
     if (playerFirst) {
-      this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction()));
+      this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction(), wildMove));
     } else {
-      this.doWildMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+      this.doWildMove(() => this.doPlayerMove(playerMove, () => this.playerAction()), wildMove);
     }
   }
 
@@ -717,9 +719,9 @@ export class WildBattleScene extends Phaser.Scene {
   /** The wild Pokémon attacks (also used standalone after item use / a failed run). */
   private enemyTurn(_: null) { void _; this.doWildMove(() => this.playerAction()); }
 
-  private doWildMove(onDone: () => void) {
+  private doWildMove(onDone: () => void, selectedMove?: Move) {
     const available = this.wild.moves.filter(m => m.pp > 0);
-    const move = pendingMoveFor(this.wild)
+    const move = selectedMove ?? pendingMoveFor(this.wild)
       ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0]);
     executeBattleMove({
       scene: this,
@@ -733,7 +735,7 @@ export class WildBattleScene extends Phaser.Scene {
       animateUserHp: done => this.animateHpBar('wild', done),
       animateTargetHp: done => this.animateHpBar('player', done),
       onComplete: () => {
-        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp, this.player.status);
         if (this.player.isKO) {
           this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
         } else {
@@ -823,6 +825,7 @@ export class WildBattleScene extends Phaser.Scene {
 
   private voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
+    persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
     this.participants.add(slotIdx);
     const party = PartySystem.get(this.registry);

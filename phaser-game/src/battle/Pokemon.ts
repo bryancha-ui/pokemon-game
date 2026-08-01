@@ -22,6 +22,9 @@ export interface MoveData {
   effectTarget?: 'user' | 'target';
   effectChance?: number;
   twoTurn?: 'air' | 'underground' | 'charge';
+  priority?: number;
+  statusCondition?: string;
+  statusChance?: number;
 }
 
 export interface Move {
@@ -33,6 +36,8 @@ export interface PokemonData {
   id: number;
   name: string;
   ability?: string;
+  gender?: 'male' | 'female' | 'genderless';
+  status?: string;
   type1: PokemonType;
   type2?: PokemonType;
   baseHp: number;
@@ -57,6 +62,8 @@ export class Pokemon {
   spDef = 0;
   spd = 0;
   exp = 0;
+  status = 'none';
+  private flashFireBoosted = false;
   private stages: Record<BattleStat, number> = {
     atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0, accuracy: 0, evasion: 0,
   };
@@ -67,6 +74,7 @@ export class Pokemon {
     this.data = data;
     this._level = level;
     this.moves = moves.slice(0, 4).map(m => ({ data: m, pp: m.pp }));
+    this.status = data.status ?? 'none';
     this.recalcStats();
     this.hp = this.maxHp;
   }
@@ -112,10 +120,23 @@ export class Pokemon {
 
   get isKO() { return this.hp <= 0; }
   get name()  { return this.data.name; }
+  get ability() { return this.data.ability ?? ''; }
+
+  hasAbility(name: string): boolean {
+    const wanted = name.toLowerCase().replace(/[-_]+/g, ' ').trim();
+    return this.ability.split('/').some(part =>
+      part.toLowerCase().replace(/[-_]+/g, ' ').trim() === wanted);
+  }
 
   getStage(stat: BattleStat): number { return this.stages[stat]; }
 
   modifyStage(stat: BattleStat, amount: number): number {
+    if (amount < 0) {
+      if (stat === 'accuracy' && this.hasAbility('Keen Eye')) return 0;
+      if (stat === 'spd' && this.hasAbility('Sure-Footed')) return 0;
+      if (this.hasAbility('Firm Conviction')) return 0;
+      if (this.hasAbility('Flower Veil') && this.data.type1 === 'grass') return 0;
+    }
     const before = this.stages[stat];
     this.stages[stat] = Math.max(-6, Math.min(6, before + amount));
     return this.stages[stat] - before;
@@ -132,7 +153,34 @@ export class Pokemon {
     const raw = this[stat];
     const stage = this.stages[stat];
     const multiplier = stage >= 0 ? (2 + stage) / 2 : 2 / (2 - stage);
-    return Math.max(1, raw * multiplier);
+    let result = raw * multiplier;
+    if (stat === 'spd' && this.status === 'par' && !this.hasAbility('Quick Feet')) result *= 0.5;
+    if (stat === 'spd' && this.status !== 'none' && this.hasAbility('Quick Feet')) result *= 1.5;
+    if (stat === 'atk' && this.status !== 'none' && this.hasAbility('Guts')) result *= 1.5;
+    else if (stat === 'atk' && this.status === 'brn') result *= 0.5;
+    return Math.max(1, result);
+  }
+
+  /** Apply a persistent battle status while respecting type and ability
+   * immunities. Corrosion belongs to the source, so it may poison Steel and
+   * Poison targets just like the main-series games. */
+  trySetStatus(condition: string, source?: Pokemon): boolean {
+    const next = condition.toLowerCase() === 'tox' ? 'psn' : condition.toLowerCase();
+    if (this.status !== 'none') return false;
+    if (next === 'par' && (this.hasAbility('Limber') || this.data.type1 === 'electric' || this.data.type2 === 'electric')) return false;
+    if (next === 'slp' && this.hasAbility('Insomnia')) return false;
+    if (next === 'brn' && (this.data.type1 === 'fire' || this.data.type2 === 'fire')) return false;
+    if (next === 'frz' && (this.data.type1 === 'ice' || this.data.type2 === 'ice')) return false;
+    if (next === 'psn' && !source?.hasAbility('Corrosion')
+      && ['poison', 'steel'].some(t => this.data.type1 === t || this.data.type2 === t)) return false;
+    this.status = next;
+    return true;
+  }
+
+  cureStatus(): boolean {
+    if (this.status === 'none') return false;
+    this.status = 'none';
+    return true;
   }
 
   accuracyMultiplier(): number {
@@ -145,23 +193,150 @@ export class Pokemon {
     return stage >= 0 ? (3 + stage) / 3 : 3 / (3 - stage);
   }
 
-  takeDamage(move: Move, attacker: Pokemon): { dmg: number; critical: boolean; effectiveness: number } {
-    const effectiveness = getEffectiveness(move.data.type, this.data.type1, this.data.type2);
-    const isCritical = effectiveness > 0 && Math.random() < 0.0625;
+  takeDamage(move: Move, attacker: Pokemon): { dmg: number; critical: boolean; effectiveness: number; abilityMessages: string[] } {
+    const messages: string[] = [];
+    let moveType = move.data.type;
+    let abilityPower = 1;
+    if (attacker.hasAbility('Protean') && moveType !== attacker.data.type1) {
+      attacker.data.type1 = moveType; attacker.data.type2 = undefined;
+      messages.push(`${attacker.name}'s Protean changed it to ${moveType} type!`);
+    }
+    if (attacker.hasAbility('Pixilate') && moveType === 'normal') {
+      moveType = 'fairy'; abilityPower *= 1.2;
+      messages.push(`${attacker.name}'s Pixilate turned the move into Fairy type!`);
+    }
+
+    let effectiveness = getEffectiveness(moveType, this.data.type1, this.data.type2);
+    // Exact type immunities and absorbing abilities resolve before damage.
+    if (moveType === 'ground' && this.hasAbility('Levitate')) {
+      messages.push(`${this.name} is immune through Levitate!`);
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
+    if (moveType === 'water' && this.hasAbility('Water Absorb')) {
+      const before = this.hp; this.heal(Math.max(1, Math.floor(this.maxHp / 4)));
+      messages.push(`${this.name}'s Water Absorb restored ${this.hp - before} HP!`);
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
+    if (moveType === 'electric' && this.hasAbility('Volt Absorb')) {
+      const before = this.hp; this.heal(Math.max(1, Math.floor(this.maxHp / 4)));
+      messages.push(`${this.name}'s Volt Absorb restored ${this.hp - before} HP!`);
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
+    if (moveType === 'electric' && this.hasAbility('Lightning Rod')) {
+      this.modifyStage('spAtk', 1);
+      messages.push(`${this.name}'s Lightning Rod nullified the attack and raised Sp. Atk!`);
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
+    if (moveType === 'fire' && this.hasAbility('Flash Fire')) {
+      this.flashFireBoosted = true;
+      messages.push(`${this.name}'s Flash Fire absorbed the flames!`);
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
+
+    const critRate = attacker.hasAbility('Merciless') && (this.status === 'psn' || this.status === 'tox')
+      ? 1 : attacker.hasAbility('Fate Weaver') ? 0.125 : 0.0625;
+    const blocksCritical = this.hasAbility('Battle Armor') || this.hasAbility('Shell Armor');
+    const isCritical = effectiveness > 0 && !blocksCritical && Math.random() < critRate;
     const critical = isCritical ? 1.5 : 1;
     const atk = move.data.category === 'special' ? attacker.battleStat('spAtk') : attacker.battleStat('atk');
     const def = move.data.category === 'special' ? this.battleStat('spDef') : this.battleStat('def');
-    const stab = move.data.type === attacker.data.type1 || move.data.type === attacker.data.type2 ? 1.5 : 1;
+    const hasStab = moveType === attacker.data.type1 || moveType === attacker.data.type2;
+    const stab = hasStab ? (attacker.hasAbility('Adaptability') ? 2 : 1.5) : 1;
+
+    const lowHp = attacker.hp <= Math.floor(attacker.maxHp / 3);
+    const pinchBoost = (moveType === 'grass' && attacker.hasAbility('Overgrow'))
+      || (moveType === 'fire' && attacker.hasAbility('Blaze'))
+      || (moveType === 'water' && attacker.hasAbility('Torrent'))
+      || (moveType === 'bug' && attacker.hasAbility('Swarm'));
+    if (lowHp && pinchBoost) {
+      abilityPower *= 1.5;
+      messages.push(`${attacker.name}'s ${attacker.ability} powered up the move!`);
+    }
+    if (attacker.hasAbility('Technician') && move.data.power > 0 && move.data.power <= 60) abilityPower *= 1.5;
+    if (attacker.hasAbility('Tough Claws') && isContactMove(move.data)) abilityPower *= 1.3;
+    if (attacker.hasAbility('Iron Fist') && isPunchMove(move.data.name)) abilityPower *= 1.2;
+    if (attacker.hasAbility('Sheer Force') && (move.data.statChanges?.length || (move.data.effectChance ?? 100) < 100)) abilityPower *= 1.3;
+    if (attacker.hasAbility('Heavenly Descent') && (moveType === 'flying' || moveType === 'psychic')) abilityPower *= 1.2;
+    if (attacker.hasAbility('Nosemic Power') && (moveType === 'rock' || moveType === 'psychic')) abilityPower *= 1.2;
+    if (attacker.hasAbility('Guardian Spirit') && (moveType === 'ghost' || moveType === 'fighting')) abilityPower *= 1.2;
+    if (attacker.hasAbility('Ancient Activation')) abilityPower *= 1.2;
+    if (attacker.hasAbility('Rivalry') && attacker.data.gender && this.data.gender
+      && attacker.data.gender !== 'genderless' && this.data.gender !== 'genderless') {
+      abilityPower *= attacker.data.gender === this.data.gender ? 1.25 : 0.75;
+    }
+    if (attacker.flashFireBoosted && moveType === 'fire') abilityPower *= 1.5;
+
+    const weatherSuppressed = attacker.hasAbility('Cloud Nine') || this.hasAbility('Cloud Nine');
+    if (!weatherSuppressed && (attacker.hasAbility('Drizzle') || this.hasAbility('Drizzle'))) {
+      if (moveType === 'water') abilityPower *= 1.5;
+      if (moveType === 'fire') abilityPower *= 0.5;
+    }
+    if (!weatherSuppressed && attacker.hasAbility('Sand Force')
+      && (attacker.hasAbility('Sand Stream') || this.hasAbility('Sand Stream'))
+      && ['rock', 'ground', 'steel'].includes(moveType)) abilityPower *= 1.3;
+
+    let defenseAbility = 1;
+    if (this.hasAbility('Thick Fat') && (moveType === 'fire' || moveType === 'ice')) defenseAbility *= 0.5;
+    if (this.hasAbility('Multiscale') && this.hp === this.maxHp) defenseAbility *= 0.5;
+    if (this.hasAbility('Solid Rock') && effectiveness > 1) defenseAbility *= 0.75;
+    if (this.hasAbility('Resilience') && this.hp <= this.maxHp / 2) defenseAbility *= 0.85;
+    if (!weatherSuppressed && (attacker.hasAbility('Snow Warning') || this.hasAbility('Snow Warning'))
+      && this.data.type1 === 'ice' && move.data.category === 'physical') defenseAbility *= 2 / 3;
+    if (!weatherSuppressed && (attacker.hasAbility('Sand Stream') || this.hasAbility('Sand Stream'))
+      && (this.data.type1 === 'rock' || this.data.type2 === 'rock') && move.data.category === 'special') defenseAbility *= 2 / 3;
 
     // Constant reduced from +2 → +1 so the floor term doesn't dominate
     // at low levels when atk/def stats are small.
-    const dmg = move.data.power === 0 || effectiveness === 0 ? 0 : Math.max(1, Math.floor(
+    let dmg = move.data.power === 0 || effectiveness === 0 ? 0 : Math.max(1, Math.floor(
       ((2 * attacker.level / 5 + 2) * move.data.power * (atk / def) / 50 + 1)
-      * stab * effectiveness * critical
+      * stab * effectiveness * critical * abilityPower * defenseAbility
     ));
 
+    const fullHp = this.hp === this.maxHp;
+    if (fullHp && dmg >= this.hp && this.hasAbility('Sturdy')) {
+      dmg = Math.max(0, this.hp - 1);
+      messages.push(`${this.name} endured the hit with Sturdy!`);
+    }
+
     this.hp = Math.max(0, this.hp - dmg);
-    return { dmg, critical: isCritical, effectiveness };
+    if (dmg > 0 && moveType === 'water' && this.hasAbility('Water Compaction')) {
+      this.modifyStage('def', 2);
+      messages.push(`${this.name}'s Water Compaction sharply raised Defense!`);
+    }
+    if (dmg > 0 && moveType === 'dark' && (this.hasAbility('Justified') || this.hasAbility('Heart of Justice'))) {
+      this.modifyStage('atk', 1);
+      messages.push(`${this.name}'s ${this.ability} raised Attack!`);
+    }
+    if (dmg > 0 && (this.hasAbility('Color Change') || this.hasAbility('Mimicry'))) {
+      this.data.type1 = moveType; this.data.type2 = undefined;
+      messages.push(`${this.name} changed to ${moveType} type!`);
+    }
+    if (dmg > 0 && this.hasAbility('Cursed Body') && Math.random() < 0.3) {
+      move.pp = 0;
+      messages.push(`${this.name}'s Cursed Body disabled ${move.data.name}!`);
+    }
+    if (dmg > 0 && isContactMove(move.data)) {
+      if (this.hasAbility('Static') && Math.random() < 0.3) {
+        if (attacker.trySetStatus('par', this)) messages.push(`${attacker.name} was paralyzed by Static!`);
+      }
+      if (this.hasAbility('Flame Body') && Math.random() < 0.3) {
+        if (attacker.trySetStatus('brn', this)) messages.push(`${attacker.name} was burned by Flame Body!`);
+      }
+      if (this.hasAbility('Poison Point') && Math.random() < 0.3) {
+        if (attacker.trySetStatus('psn', this)) messages.push(`${attacker.name} was poisoned by Poison Point!`);
+      }
+      if (this.hasAbility('Effect Spore') && Math.random() < 0.3) {
+        const sporeStatus = (['par', 'psn', 'slp'] as const)[Math.floor(Math.random() * 3)];
+        if (attacker.trySetStatus(sporeStatus, this)) messages.push(`${attacker.name} was afflicted by Effect Spore!`);
+      }
+      if (this.hasAbility('Cute Charm') && Math.random() < 0.3) {
+        attacker.modifyStage('atk', -1); messages.push(`${attacker.name} was captivated by Cute Charm!`);
+      }
+    }
+    if (dmg > 0 && attacker.hasAbility('Stench') && Math.random() < 0.1) {
+      this.modifyStage('spd', -1); messages.push(`${this.name} flinched from Stench!`);
+    }
+    return { dmg, critical: isCritical, effectiveness, abilityMessages: messages };
   }
 
   useMove(move: Move): boolean {
@@ -173,4 +348,13 @@ export class Pokemon {
   heal(amount: number) {
     this.hp = Math.min(this.maxHp, this.hp + amount);
   }
+}
+
+function isPunchMove(name: string): boolean {
+  return /punch|meteor mash|hammer arm|ice hammer|plasma fists/i.test(name);
+}
+
+function isContactMove(move: MoveData): boolean {
+  if (move.category !== 'physical') return false;
+  return !/rock throw|rock slide|stone edge|earthquake|bulldoze|magnitude|bonemerang|icicle spear|razor leaf/i.test(move.name);
 }

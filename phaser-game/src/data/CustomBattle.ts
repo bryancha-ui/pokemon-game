@@ -191,8 +191,9 @@ const FORMS: Record<string, CustomForm> = {};
 let idc = 950;
 for (const cb of CUSTOM) {
   const t = TIER[cb.stage];
+  const ability = POKEDEX.find(entry => entry.key === cb.key)?.ability;
   const data: PokemonData = {
-    id: idc++, name: cb.name,
+    id: idc++, name: cb.name, ability,
     type1: cb.t1 as PokemonType, type2: cb.t2 as PokemonType | undefined,
     baseHp: t.hp, baseAtk: t.atk, baseDef: t.def, baseSpAtk: t.spa, baseSpDef: t.spd, baseSpd: t.spe,
     spriteUrl: spriteUrlFor(cb.key),
