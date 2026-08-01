@@ -24,6 +24,7 @@ import { DexTracker } from '../systems/DexTracker';
 import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
 import { tmForMove } from '../data/TMs';
 import { SaveManager } from '../utils/SaveManager';
+import { playBallSendOut } from '../systems/BattleBallFX';
 
 // ── Enemy movesets ──────────────────────────────────────────────────────────
 // PokéAPI enemies previously fought with only Tackle + Growl. Give every enemy a
@@ -243,19 +244,14 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.dialogText.setText('');   // clear the "Loading…" text so the portrait hold reads clean
     const sendOut = () => {
       if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 0, duration: 300 });
-      this.tweens.add({
-        targets: this.enemySprite, x: ENEMY_STAGE_X, y: ENEMY_STAGE_Y, alpha: 1, duration: 400,
-        onComplete: () => {
-          this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
-            this.playerSprite.setAlpha(1);
-            this.tweens.add({
-              targets: this.playerSprite, x: 180, y: 260, duration: 350,
-              onComplete: () => {
-                this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
-              },
-            });
+      playBallSendOut(this, this.enemySprite, {
+        side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
+        onComplete: () => this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
+          playBallSendOut(this, this.playerSprite, {
+            side: 'player', targetX: 180, targetY: 260,
+            onComplete: () => this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
           });
-        },
+        }),
       });
     };
     // Hold the trainer's portrait on screen for ~3s before the Pokémon come out. Rival
@@ -734,8 +730,11 @@ export class TrainerBattleScene extends Phaser.Scene {
           this.enemyLvText.setText(`Lv.${this.enemy.level}`);
           this.enemyHpBar.width  = HP_W;
           this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
-          this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`,
-            () => this.offerSwitchAfterKO());
+          playBallSendOut(this, this.enemySprite, {
+            side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
+            onComplete: () => this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`,
+              () => this.offerSwitchAfterKO()),
+          });
         });
       } else {
         this.handleWin();
@@ -961,9 +960,8 @@ export class TrainerBattleScene extends Phaser.Scene {
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
-    this.playerSprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
+    playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
       onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
     });
   }
@@ -988,12 +986,9 @@ export class TrainerBattleScene extends Phaser.Scene {
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
-    this.playerSprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
-      onComplete: () => {
-        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.enemyTurn());
-      },
+    playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
+      onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.enemyTurn()),
     });
   }
 
@@ -1057,12 +1052,9 @@ export class TrainerBattleScene extends Phaser.Scene {
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(key)) / dim);
     }
-    this.playerSprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
-      onComplete: () => {
-        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
-      },
+    playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
+      onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
     });
   }
 

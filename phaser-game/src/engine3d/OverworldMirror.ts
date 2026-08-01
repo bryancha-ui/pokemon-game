@@ -675,7 +675,15 @@ export class OverworldMirror {
         const moving = speed > 0.35;
         t.characterPhase = (t.characterPhase ?? 0) + (moving ? Math.min(15, 6 + speed * 1.5) : 2.1) * dt;
         t.character.setWalk(t.characterPhase, moving, dt);
-        t.character.face(dx, dz, dt);
+        const lookAt = o.getData?.('characterLookAt3D') as { x?: number; y?: number } | undefined;
+        if (!moving && typeof lookAt?.x === 'number' && typeof lookAt.y === 'number'
+          && Number.isFinite(lookAt.x) && Number.isFinite(lookAt.y)) {
+          // Story-scene characters can hold eye contact with a fixed Phaser
+          // world position. Phaser y maps to Three.js z in the overworld.
+          t.character.face((lookAt.x / PX) - x, (lookAt.y / PX) - z, dt);
+        } else {
+          t.character.face(dx, dz, dt);
+        }
         t.character.group.scale.x = Math.abs(t.character.group.scale.x) * (o.flipX ? -1 : 1);
       }
       if (t.kind === 'graphics') this.refreshGraphics(t);

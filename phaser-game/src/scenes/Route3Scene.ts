@@ -347,6 +347,9 @@ export class Route3Scene extends Phaser.Scene {
     drawTrainerBody(g, 1, 0, rivalDesign(this.registry)); // face Ryeo to the north
     g.setPosition(rx, ry);
     markRivalPortrait(g, this.registry);
+    // Keep the real 3D avatar facing Commander Ryeo rather than the mirror's
+    // default south-facing idle direction.
+    g.setData('characterLookAt3D', { x: 12 * TILE + 16, y: 25 * TILE + 16 });
     const label = this.add.text(rx, ry - 28, rivalTrainerName(this.registry), {
       fontSize: '8px', color: '#cfe8ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(20);

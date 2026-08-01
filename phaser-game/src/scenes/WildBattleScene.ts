@@ -19,6 +19,7 @@ import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
 import { ITEMS, Inventory, itemDef, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
+import { drawBattleBall, playBallSendOut } from '../systems/BattleBallFX';
 
 type WildState = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'catching' | 'over';
 
@@ -29,6 +30,7 @@ export class WildBattleScene extends Phaser.Scene {
   private wild!: Pokemon;
   private wildCatchRate = 45;
   private ballRate = 1;
+  private activeBallKey = 'pokeball';
   private state: WildState = 'loading';
 
   // UI
@@ -110,12 +112,9 @@ export class WildBattleScene extends Phaser.Scene {
       targets: this.wildSprite, x: 560, y: 130, alpha: 1, duration: 400, ease: 'Power2',
       onComplete: () => {
         this.typeDialog(`A wild ${pokeNameEn(this.wild.name).toUpperCase()} appeared!`, () => {
-          this.playerSprite.setAlpha(1);
-          this.tweens.add({
-            targets: this.playerSprite, x: 180, y: 260, duration: 350, ease: 'Power2',
-            onComplete: () => {
-              this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
-            },
+          playBallSendOut(this, this.playerSprite, {
+            side: 'player', targetX: 180, targetY: 260,
+            onComplete: () => this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
           });
         });
       },
@@ -440,6 +439,7 @@ export class WildBattleScene extends Phaser.Scene {
     }
     Inventory.remove(this.registry, ballKey, 1);
     this.ballRate = itemDef(ballKey)?.ballRate ?? 1;
+    this.activeBallKey = ballKey;
     this.state = 'catching';
     this.hideAllPanels();
 
@@ -457,17 +457,11 @@ export class WildBattleScene extends Phaser.Scene {
     const endX = target.x;
     const endY = target.y;
 
-    // Draw ball
-    const drawBall = (x: number, y: number) => {
-      ballG.clear();
-      ballG.fillStyle(0xdd2222); ballG.fillCircle(x, y, 10);
-      ballG.fillStyle(0xffffff); ballG.fillRect(x - 10, y, 20, 10);
-      ballG.lineStyle(2, 0x222222); ballG.strokeCircle(x, y, 10);
-      ballG.fillStyle(0xffffff); ballG.fillCircle(x, y, 3);
-    };
+    const drawBall = (x: number, y: number, tilt = 0) =>
+      drawBattleBall(ballG, x, y, this.activeBallKey, 10, 0, tilt);
     drawBall(startX, startY);
 
-    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} threw a Pokéball!`);
+    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} threw a ${itemDef(ballKey)?.name ?? 'Poké Ball'}!`);
 
     // Throw tween
     this.tweens.add({
@@ -479,7 +473,7 @@ export class WildBattleScene extends Phaser.Scene {
         const t = obj.t;
         const bx = startX + (endX - startX) * t;
         const by = startY + (endY - startY) * t - Math.sin(t * Math.PI) * 80;
-        drawBall(bx, by);
+        drawBall(bx, by, t * Math.PI * 6);
       },
       onComplete: () => {
         // Wild Pokémon disappears
@@ -520,14 +514,8 @@ export class WildBattleScene extends Phaser.Scene {
       this.tweens.add({
         targets: { t: 0 }, t: 1, duration: 350,
         onUpdate: (_, obj: { t: number }) => {
-          const angle = Math.sin(obj.t * Math.PI * 2) * 0.25;
-          this.ballGraphic.clear();
-          this.ballGraphic.fillStyle(0xdd2222);
-          this.ballGraphic.fillCircle(bx + Math.sin(angle) * 8, by, 10);
-          this.ballGraphic.fillStyle(0xffffff);
-          this.ballGraphic.fillRect(bx + Math.sin(angle) * 8 - 10, by, 20, 10);
-          this.ballGraphic.lineStyle(2, 0x222222);
-          this.ballGraphic.strokeCircle(bx + Math.sin(angle) * 8, by, 10);
+          const offset = Math.sin(obj.t * Math.PI * 2) * 8;
+          drawBattleBall(this.ballGraphic, bx + offset, by, this.activeBallKey, 10, 0, obj.t * Math.PI * 2);
         },
         onComplete: () => { s++; this.time.delayedCall(200, doShake); },
       });
@@ -811,15 +799,12 @@ export class WildBattleScene extends Phaser.Scene {
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
-    this.playerSprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400,
-      onComplete: () => {
-        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => {
-          // Voluntary switch costs the turn — enemy attacks
-          this.enemyTurn(null);
-        });
-      },
+    playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
+      onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => {
+        // Voluntary switch costs the turn — enemy attacks
+        this.enemyTurn(null);
+      }),
     });
   }
 
@@ -870,12 +855,9 @@ export class WildBattleScene extends Phaser.Scene {
       const dim2 = Math.max((tex2.width as number) || 1, (tex2.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(key)) / dim2);
     }
-    this.playerSprite.setAlpha(0);
-    this.tweens.add({
-      targets: this.playerSprite, alpha: 1, x: 180, y: 260, duration: 400, ease: 'Power2',
-      onComplete: () => {
-        this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction());
-      },
+    playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
+      onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
     });
   }
 
