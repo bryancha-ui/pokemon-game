@@ -224,9 +224,10 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
   public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
-  /** Landmarks use their named GLBs; the residential district's apartment blocks
-   *  still rise as procedural 3D buildings (keep the district's 3D design). */
-  public onlyNamedBuildings = false;
+  /** Only the named landmark GLBs rise in 3D — the procedural residential blocks
+   *  are erased so none of them tower in front of and hide the Pokémon Center /
+   *  Central Market. */
+  public onlyNamedBuildings = true;
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;
