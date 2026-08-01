@@ -31,6 +31,10 @@ function buildMap(): Tile[][] {
 }
 
 export class BikeShopScene extends Phaser.Scene {
+  // A shop interior: indoor treatment suppresses outdoor props, so its green
+  // rug/floor never sprouts tall-grass tufts inside.
+  public interior3D = true;
+
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

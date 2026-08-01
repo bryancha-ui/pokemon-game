@@ -212,7 +212,7 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interio
   if (!interior && h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
   if (h >= 60 && h <= 170) {                                          // green family
     if (l < 0.30) return snowy ? 'pine' : 'tree';                     // darker greens = foliage
-    if (s > 0.34 && l < 0.52) return 'grass';                         // mid greens = tall grass
+    if (s > 0.40 && l < 0.48) return 'grass';                         // saturated mid greens = tall grass (plain bright lawns stay flat)
     // Snowy passes paint their tall-grass clearings a pale frosted green (low
     // saturation, light) — treat that as grass so it grows snow-dusted tufts.
     if (snowy && s > 0.12 && l >= 0.5 && l < 0.75) return 'grass';
