@@ -456,7 +456,7 @@ const CAVERN: RgConfig = {
 };
 const ALTAR: RgConfig = {
   key: 'RangrimAltarScene', returnKey: 'rgAltar', title: '⛰ 낭림 제단의 방 (Altar Hall)', bgm: 'sacredpeak', darkCave: true,
-  southLabel: '↓ 하부 동굴 (Cavern)', northLabel: '↑ 설원 능선 (Snow Ridge)', westLabel: '← 백두봉 (Baekdu Peak)',
+  southLabel: '↓ 하부 동굴 (Cavern)', northLabel: '↑ 설원 능선 (Snow Ridge)',
   encTiles: [T.CAVE], enc: [
     { id: 35, weight: 14, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 120 },
     { id: 437, weight: 10, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 90 },
@@ -471,7 +471,8 @@ const ALTAR: RgConfig = {
   ],
   prev: rgExit('RangrimCavernScene', 'rgCave', NORTH_END),
   next: rgExit('RangrimSnowfieldScene', 'rgSnow', SOUTH_END),
-  west: rgExit('BaekduSummitScene', 'baekduSummit', { x: 18 * 32 + 16, y: 30 * 32 + 16 }),
+  // No direct walk-out to Baekdu Peak — the peak is reached only through the
+  // Ancient Altar ritual below.
   // Interacting with the Ancient Altar (aisle at row 13) opens a hidden stair to Sacred Peak (Hwanwoong).
   secret: {
     scene: 'SacredPeakScene', returnKey: 'sacredPeak', x: 9 * 32 + 16, y: 37 * 32 + 16,
@@ -539,20 +540,17 @@ const SUMMIT: RgConfig = {
 };
 
 export class RangrimFoothillsScene extends RangrimBaseScene {
-  // Keep the foothills fully clear of view-blocking tiles — including the rock
-  // walls flanking the path up to the cave mouth: flatten every raised tile and
-  // erase any auto-detected building shape.
+  // Rocks rise as real 3D — but caveFloorHint caps their height so they read as
+  // low boulders/walls that never bury the player. Building shapes erased.
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
-  public clearSight3D = true;
   constructor() { super(FOOTHILLS); }
 }
 export class RangrimCavernScene extends RangrimBaseScene {
-  // Keep the pitch-dark lower cavern flat: suppress every raised tile so no black
-  // rock wall towers over the player, and erase building-classified blocks.
+  // Cavern rocks rise as 3D, height-capped so no black wall towers over the
+  // player; building-classified blocks erased.
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
-  public clearSight3D = true;
   constructor() { super(CAVERN); }
 }
 export class RangrimAltarScene extends RangrimBaseScene {
@@ -564,5 +562,11 @@ export class RangrimAltarScene extends RangrimBaseScene {
   public clearSight3D = true;
   constructor() { super(ALTAR); }
 }
-export class RangrimSnowfieldScene extends RangrimBaseScene { constructor() { super(SNOWFIELD); } }
+export class RangrimSnowfieldScene extends RangrimBaseScene {
+  // Snow-ridge terrain rises in 3D, height-capped so rocks/drifts never bury the
+  // player's view.
+  public caveFloorHint = true;
+  public onlyNamedBuildings = true;
+  constructor() { super(SNOWFIELD); }
+}
 export class RangrimSummitScene extends RangrimBaseScene { constructor() { super(SUMMIT); } }
