@@ -199,7 +199,7 @@ function applyRoof(mat: THREE.MeshBasicMaterial, tex: THREE.Texture, w: number, 
   mat.needsUpdate = true;
 }
 
-function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interior = false): Cell {
+function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interior = false, grass3D = false): Cell {
   const { h, s, l } = hsl;
   if (l < 0.10) return 'wall-high';                                   // cave walls / voids
   // In a cave/mine the entire floor is dark brown/grey, so the dark low-sat
@@ -215,6 +215,8 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interio
   if (!interior && h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
   if (h >= 60 && h <= 170) {                                          // green family
     if (l < 0.30) return snowy ? 'pine' : 'tree';                     // darker greens = foliage
+    // When grass3D is enabled, treat more greens as grass for 3D representation
+    if (grass3D && s > 0.20 && l < 0.55) return 'grass';              // expanded grass range for 3D
     if (s > 0.34 && l < 0.50) return 'grass';                         // mid greens = tall grass (brighter lawns, l≥0.50, stay flat)
     // Snowy passes paint their tall-grass clearings a pale frosted green (low
     // saturation, light) — treat that as grass so it grows snow-dusted tufts.
@@ -274,6 +276,8 @@ export function buildTerrain(
   // lane. Keep the painted ground and authored objects, but leave auto terrain
   // completely flat so gameplay markers and the player stay visible.
   clearSight3D = false,
+  // Enable 3D grass tufts in grass areas (set by scenes that want more detailed foliage)
+  grass3D = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -365,7 +369,7 @@ export function buildTerrain(
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
       const [rr, gg, bb] = cellColors[i];
-      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey, interior);
+      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey, interior, grass3D);
     }
   }
 

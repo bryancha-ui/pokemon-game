@@ -44,6 +44,9 @@ interface Trainer { key: string; name: string; col: number; row: number; color: 
 
 export class NampoBeachScene extends Phaser.Scene {
   private map!: Tile[][];
+  // Disable random building generation in the wild beach area
+  public onlyNamedBuildings = true;
+  public buildingPlots: { x: number; y: number; w: number; h: number; model?: string }[] = [];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

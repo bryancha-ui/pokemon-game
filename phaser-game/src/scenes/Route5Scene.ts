@@ -48,9 +48,10 @@ function buildMap(): Tile[][] {
   // Giant trees walling both sides
   fill(0, ROWS, 0, 4, T.TREE);
   fill(0, ROWS, 20, COLS, T.TREE);
-  // Gnarled roots & scattered ancient trees
+  // Gnarled roots & scattered ancient trees (removed from grass areas)
   for (const [r, c] of [[8,6],[16,17],[34,6],[46,17],[52,6],[20,17],[40,6]] as [number,number][]) m[r][c] = T.ROOT;
-  for (const [r, c] of [[6,16],[12,6],[28,17],[50,16],[55,6],[10,17]] as [number,number][]) m[r][c] = T.TREE;
+  // Trees removed from grass areas - keeping only border trees and roots
+  // for (const [r, c] of [[6,16],[12,6],[28,17],[50,16],[55,6],[10,17]] as [number,number][]) m[r][c] = T.TREE;
   // The Forest Shrine just behind the choke (rows 20-23)
   fill(20, 23, 9, 15, T.SHRINE);
   m[23][11] = T.PATH; m[23][12] = T.PATH;   // shrine steps
@@ -72,6 +73,8 @@ export class Route5Scene extends Phaser.Scene {
    *  real landmark: the Forest Shrine's exterior on its stone steps. */
   public onlyNamedBuildings = true;
   public buildingPlots = [{ x: 9, y: 20, w: 6, h: 3, model: 'shrine' }];
+  // Enable 3D grass tufts in the tall grass areas
+  public grass3D = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
