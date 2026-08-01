@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
-import { buildCharacterModel, buildPlayerModel, PlayerModel } from './CharacterModel';
+import { buildCharacterModel, buildPlayerModel, CharacterProfile, PlayerModel } from './CharacterModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { makeBlobShadow } from './Props';
@@ -11,10 +11,10 @@ import { disposeDeep, ThreeStage } from './ThreeStage';
 // ── Overworld mirror ─────────────────────────────────────────────────────────
 // Watches a running Phaser scene (which keeps 100% of the game logic) and
 // maintains a 3D twin of it: the big map Graphics become the painted terrain,
-// every character / NPC / creature / prop becomes an upright extruded relief
-// mesh that tracks its 2D counterpart's position, alpha, tint, scale and
-// visibility every frame. World-space text becomes floating billboards. UI
-// (scrollFactor 0) stays in Phaser, drawn on top of the 3D view.
+// every human becomes an animated procedural model, while creatures and props
+// become volumetric meshes that track their 2D counterpart's position, alpha,
+// tint, scale and visibility every frame. World-space text becomes floating
+// billboards. UI (scrollFactor 0) stays in Phaser, drawn on top of the 3D view.
 
 type GO = Phaser.GameObjects.GameObject & {
   x?: number; y?: number; alpha?: number; visible?: boolean;
@@ -435,18 +435,86 @@ export class OverworldMirror {
     this.tracked.set(g, tracked);
     this.hideFrom2D(g);
 
-    // Named story characters retain their Graphics as the gameplay/F3 source,
-    // but 3D mode replaces the relief with a real protagonist-style humanoid.
-    const modelKey = g.getData?.('characterModel3DKey') as string | undefined;
-    if (modelKey) {
-      const fallback = modelKey.includes('girl') ? 'girl' : 'boy';
-      tracked.character = buildCharacterModel(modelKey, fallback);
+    // Every authored human becomes a genuine rotatable humanoid. Shared drawing
+    // helpers tag their exact palette; older hand-drawn NPCs are detected from
+    // their compact body proportions and skin-tone face, then receive a profile
+    // derived from the raster itself. The player is handled by updateHero().
+    let modelKey = g.getData?.('characterModel3DKey') as string | undefined;
+    let profile = modelKey?.startsWith('generated_')
+      ? g.getData?.('characterProfile3D') as Partial<CharacterProfile> | undefined
+      : undefined;
+    if (!modelKey && g !== this.playerObj) {
+      profile = this.inferCharacterProfile(ras.canvas, ras.width, ras.height);
+      if (profile) modelKey = 'generated_boy';
+    }
+    if (modelKey && g !== this.playerObj) {
+      const taggedGender = g.getData?.('characterGender3D') as ('boy' | 'girl' | undefined);
+      const fallback = taggedGender ?? (modelKey.includes('girl') ? 'girl' : 'boy');
+      tracked.character = buildCharacterModel(modelKey, fallback, profile);
       tracked.characterPhase = Math.random() * Math.PI * 2;
       tracked.kind = 'character';
-      tracked.footY = 17; // drawNpcBody/drawGymLeader place their feet here
+      const foot = Number(g.getData?.('characterFootY3D'));
+      if (Number.isFinite(foot)) tracked.footY = foot;
       mesh.visible = false;
       holder.add(tracked.character.group);
     }
+  }
+
+  /** Infer a safe procedural palette for legacy hand-drawn human Graphics. */
+  private inferCharacterProfile(
+    canvas: HTMLCanvasElement,
+    localW: number,
+    localH: number,
+  ): Partial<CharacterProfile> | undefined {
+    const aspect = localW / Math.max(1, localH);
+    if (localW < 12 || localW > 54 || localH < 28 || localH > 72 || aspect < 0.25 || aspect > 1.25) return;
+    let pixels: Uint8ClampedArray;
+    try { pixels = canvas.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, canvas.width, canvas.height).data; }
+    catch { return; }
+
+    const quantized = new Map<number, number>();
+    let opaque = 0, skin = 0;
+    const y0 = Math.floor(canvas.height * 0.34);
+    const y1 = Math.floor(canvas.height * 0.78);
+    for (let y = 0; y < canvas.height; y += 2) {
+      for (let x = 0; x < canvas.width; x += 2) {
+        const i = (y * canvas.width + x) * 4;
+        if (pixels[i + 3] < 80) continue;
+        opaque++;
+        const r = pixels[i], gg = pixels[i + 1], b = pixels[i + 2];
+        const skinLike = r >= 178 && gg >= 105 && gg <= 225 && b >= 65 && b <= 205 && r >= gg && gg >= b * 0.82;
+        if (skinLike) skin++;
+        if (y >= y0 && y <= y1 && !skinLike && r + gg + b > 85 && r + gg + b < 690) {
+          const q = ((r >> 4) << 16) | ((gg >> 4) << 8) | (b >> 4);
+          quantized.set(q, (quantized.get(q) ?? 0) + 1);
+        }
+      }
+    }
+    // Human sprites consistently expose a face/hands; this rejects signs,
+    // stones, flowers and other compact decorative Graphics.
+    if (opaque < 30 || skin / opaque < 0.045) return;
+
+    let best = 0x343741, bestCount = -1;
+    for (const [q, count] of quantized) {
+      if (count > bestCount) {
+        bestCount = count;
+        best = ((((q >> 16) & 0xf) * 17) << 16) | ((((q >> 8) & 0xf) * 17) << 8) | ((q & 0xf) * 17);
+      }
+    }
+    const shift = (color: number, amount: number) => {
+      const c = (bits: number) => Phaser.Math.Clamp(((color >> bits) & 0xff) + amount, 0, 255);
+      return (c(16) << 16) | (c(8) << 8) | c(0);
+    };
+    return {
+      hair: 0x251c18,
+      outfit: best,
+      secondary: shift(best, 45),
+      accent: shift(best, 82),
+      trousers: shift(best, -38),
+      shoes: 0x191a1e,
+      outfitStyle: localH > 48 ? 'coat' : 'trainer',
+      hairStyle: 'short',
+    };
   }
 
   private refreshGraphics(t: Tracked): void {
@@ -785,20 +853,19 @@ export class OverworldMirror {
     });
   }
 
-  /** Swap the protagonist's flat relief for the animated 3D model, and drive
-   *  its walk cycle + facing from the tracked position deltas. While the art
-   *  is wide (bike-riding pose), fall back to the relief so the pose reads. */
+  /** Swap the protagonist's fallback Graphics for the animated 3D model and
+   *  drive its walk/cycling cycle plus facing from position deltas. */
   private updateHero(t: Tracked, dt: number): void {
-    const riding = t.aspect > 1.15;
+    const riding = t.obj.getData?.('characterVehicle3D') === 'bike';
     if (!this.hero) {
       const design = this.scene.registry.get('playerGender') === 'girl' ? 'girl' : 'boy';
       this.hero = buildPlayerModel(design);
       t.mesh.add(this.hero.group);
     }
     const inner = t.mesh.children[0] as THREE.Mesh | undefined;
-    this.hero.group.visible = !riding;
-    if (inner) inner.visible = riding;
-    if (riding) return;
+    this.hero.group.visible = true;
+    this.hero.setRiding?.(riding);
+    if (inner) inner.visible = false;
 
     const p = t.mesh.position;
     const last = this.heroLast ?? { x: p.x, z: p.z };

@@ -41,6 +41,42 @@ export function playerTrainerName(reg: Reg): string {
 
 const SKIN = 0xf0c8a0, HAIR = 0x1a1410, BLAZER = 0x33363e, COLLAR = 0xffffff;
 
+function shade(color: number, amount: number): number {
+  const channel = (shift: number) => Phaser.Math.Clamp(((color >> shift) & 0xff) + amount, 0, 255);
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+}
+
+/**
+ * Tag a gameplay Graphics character with the palette used by its 2D fallback.
+ * OverworldMirror consumes this metadata to build an opaque, animated humanoid
+ * instead of leaving the figure as a thin sprite relief.
+ */
+export function markProceduralCharacter3D(
+  g: Phaser.GameObjects.Graphics,
+  opts: {
+    outfit: number; hair?: number; skin?: number; gender?: 'boy' | 'girl';
+    footY?: number; outfitStyle?: 'trainer' | 'uniform' | 'coat' | 'robe' | 'hanbok' | 'armor' | 'winter' | 'martial';
+    hairStyle?: 'short' | 'spiky' | 'bob' | 'long' | 'bun' | 'braid' | 'topknot' | 'wild';
+  },
+): void {
+  const gender = opts.gender ?? 'boy';
+  if (!g.getData('characterModel3DKey')) g.setData('characterModel3DKey', `generated_${gender}`);
+  g.setData('characterGender3D', gender);
+  g.setData('characterFootY3D', opts.footY ?? 13);
+  g.setData('characterProfile3D', {
+    skin: opts.skin ?? SKIN,
+    hair: opts.hair ?? HAIR,
+    outfit: opts.outfit,
+    secondary: shade(opts.outfit, 42),
+    accent: shade(opts.outfit, 78),
+    trousers: shade(opts.outfit, -34),
+    shoes: 0x191a1e,
+    body: 'average',
+    outfitStyle: opts.outfitStyle ?? 'trainer',
+    hairStyle: opts.hairStyle ?? (gender === 'girl' ? 'long' : 'short'),
+  });
+}
+
 /**
  * A generic NPC pixel body in the same clean style as the player, front-facing.
  * `outfit` colours the robe/coat; pass a portrait's signature colour so overworld
@@ -51,6 +87,7 @@ export function drawNpcBody(
   opts: { hair?: number; skin?: number; frame?: number } = {},
 ) {
   const hair = opts.hair ?? HAIR, skin = opts.skin ?? SKIN, f = opts.frame ?? 0;
+  markProceduralCharacter3D(g, { outfit, hair, skin, footY: 13, outfitStyle: 'coat' });
   const ly = f === 0 ? 9 : 7, ry = f === 0 ? 7 : 9;
   g.clear();
   g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 13, 17, 5);
@@ -107,6 +144,10 @@ export function drawGymLeader(
     backgroundColor: '#00000088', padding: { x: 4, y: 2 },
   }).setOrigin(0.5).setDepth(10);
   if (opts.trainerKey) markTrainerPortrait(g, opts.trainerKey);
+  else markProceduralCharacter3D(g, {
+    outfit: opts.body, hair, skin, footY: 17, outfitStyle: 'robe', hairStyle: 'short',
+  });
+  g.setData('characterFootY3D', 17);
   return g;
 }
 
@@ -119,6 +160,7 @@ export function drawRiderBody(
   g: Phaser.GameObjects.Graphics, facing: number, frame: number, design: 'boy' | 'girl',
 ) {
   drawTrainerBody(g, facing, frame, design);   // clears + draws the trainer first
+  g.setData('characterVehicle3D', 'bike');
   const side = facing === 2 || facing === 3;
   if (side) {
     const d = facing === 2 ? -1 : 1;
@@ -136,6 +178,10 @@ export function drawRiderBody(
 export function drawTrainerBody(
   g: Phaser.GameObjects.Graphics, facing: number, frame: number, design: 'boy' | 'girl',
 ) {
+  if (!g.getData('characterModel3DKey')) g.setData('characterModel3DKey', `trainer_${design}`);
+  g.setData('characterGender3D', design);
+  g.setData('characterFootY3D', 13);
+  g.setData('characterVehicle3D', 'none');
   g.clear();
   const flip = facing === 2;
   const lx = flip ? 3 : -8, rx = flip ? -8 : 3;

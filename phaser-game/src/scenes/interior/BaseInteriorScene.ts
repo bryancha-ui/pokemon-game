@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { tr } from '../../systems/i18n';
 import { DialogBox } from '../../ui/DialogBox';
-import { drawTrainerBody, playerDesign } from '../../data/CharacterSprite';
+import { drawTrainerBody, markProceduralCharacter3D, playerDesign } from '../../data/CharacterSprite';
 import { playBgm } from '../../systems/Music';
 
 const IT = 32; // interior tile size
@@ -189,9 +189,17 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(15);
     const npc: NPC = { x, y, graphic: g, bodyColor, hairColor, isFemale, facing };
     this.drawNPCAt(g, 0, 0, bodyColor, hairColor, isFemale, facing);
-    // Interior NPCs that opt into a real character model avoid the translucent
-    // relief used for generic decorative Graphics while retaining this 2D art
-    // as the pure-2D fallback and interaction source.
+    markProceduralCharacter3D(g, {
+      outfit: bodyColor,
+      hair: hairColor,
+      skin: 0xffcc99,
+      gender: isFemale ? 'girl' : 'boy',
+      footY: 12,
+      outfitStyle: isFemale ? 'uniform' : 'trainer',
+      hairStyle: isFemale ? 'long' : 'short',
+    });
+    // A named profile replaces the generated palette while retaining the same
+    // 2D Graphics object as the gameplay/F3 fallback and interaction source.
     if (model3DKey) g.setData('characterModel3DKey', model3DKey);
     g.setPosition(x, y);
     return npc;

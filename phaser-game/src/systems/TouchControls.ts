@@ -241,6 +241,7 @@ function buildPartyLeadLayer(): void {
     'position:absolute;right:calc(var(--u)*0.5);top:calc(var(--u)*0.48);' +
     'width:clamp(64px,calc(var(--u)*3.2),112px);height:clamp(30px,calc(var(--u)*1.65),52px);' +
     'border-radius:calc(var(--u)*0.38);font-size:clamp(11px,calc(var(--u)*0.65),17px);', KEY.esc);
+  close.dataset.role = 'lead-close';
 
   const grid = document.createElement('div');
   grid.className = '__leadgrid';
@@ -257,36 +258,56 @@ export interface DeckLeadChoice {
   hp: number;
   maxHp: number;
   isLead: boolean;
+  /** Disabled choices remain visible but cannot be tapped (active/fainted targets). */
+  disabled?: boolean;
+  /** Optional battle-specific status such as ACTIVE or FAINTED. */
+  status?: string;
 }
 
-/** Show large physical-size lead buttons on the mobile lower screen. */
-export function deckShowLeadPicker(choices: DeckLeadChoice[], onPick: (index: number) => void): boolean {
+export interface DeckLeadPickerOptions {
+  title?: string;
+  allowClose?: boolean;
+}
+
+/** Show large physical-size party buttons on the mobile lower screen. */
+export function deckShowLeadPicker(
+  choices: DeckLeadChoice[],
+  onPick: (index: number) => void,
+  options: DeckLeadPickerOptions = {},
+): boolean {
   if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return false;
   const alreadyOpen = partyLeadLayer.style.display === 'flex';
   if (!alreadyOpen) layerBeforeLeadPicker = moveLayer.style.display === 'flex' ? 'move' : 'control';
 
+  const title = partyLeadLayer.querySelector('[data-role="lead-title"]') as HTMLElement;
+  const close = partyLeadLayer.querySelector('[data-role="lead-close"]') as HTMLElement;
+  title.textContent = options.title ?? t('CHANGE LEAD POKÉMON', '선두 포켓몬 변경');
+  close.style.display = options.allowClose === false ? 'none' : 'flex';
+
   const grid = partyLeadLayer.querySelector('.__leadgrid') as HTMLElement;
   grid.textContent = '';
   choices.slice(0, 6).forEach((choice, index) => {
+    const disabled = choice.disabled ?? choice.isLead;
     const cell = document.createElement('div');
     cell.style.cssText = btnBase +
       'min-width:0;min-height:0;flex-direction:column;border-radius:calc(var(--u)*0.45);' +
-      `padding:calc(var(--u)*0.24);background:${choice.isLead ? 'rgba(112,91,25,0.96)' : 'rgba(25,43,78,0.96)'};` +
-      `border-color:${choice.isLead ? '#ffe44e' : '#668bc7'};line-height:1.08;text-align:center;`;
+      `padding:calc(var(--u)*0.24);background:${choice.isLead ? 'rgba(112,91,25,0.96)' : disabled ? 'rgba(45,45,58,0.94)' : 'rgba(25,43,78,0.96)'};` +
+      `border-color:${choice.isLead ? '#ffe44e' : disabled ? '#55576b' : '#668bc7'};` +
+      `opacity:${disabled && !choice.isLead ? 0.58 : 1};line-height:1.08;text-align:center;`;
     const name = document.createElement('div');
     name.textContent = `${choice.isLead ? '★ ' : ''}${choice.name}`;
     name.style.cssText =
       'max-width:100%;font-size:clamp(12px,calc(var(--u)*0.78),21px);font-weight:900;' +
       'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     const sub = document.createElement('div');
-    sub.textContent = choice.isLead
+    sub.textContent = choice.status ?? (choice.isLead
       ? t(`LEAD · Lv.${choice.level}`, `현재 선두 · Lv.${choice.level}`)
-      : `Lv.${choice.level} · HP ${choice.hp}/${choice.maxHp}`;
+      : `Lv.${choice.level} · HP ${choice.hp}/${choice.maxHp}`);
     sub.style.cssText =
       `margin-top:calc(var(--u)*0.18);font-size:clamp(9px,calc(var(--u)*0.52),15px);` +
-      `color:${choice.isLead ? '#fff0a8' : '#cbdcff'};`;
+      `color:${choice.isLead ? '#fff0a8' : disabled ? '#a9a9b5' : '#cbdcff'};`;
     cell.append(name, sub);
-    if (!choice.isLead) cell.addEventListener('pointerdown', (e) => {
+    if (!disabled) cell.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       cell.style.background = 'rgba(70,112,180,0.98)';
       onPick(index);

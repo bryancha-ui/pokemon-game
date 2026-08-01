@@ -221,22 +221,24 @@ export class RivalBattleScene extends Phaser.Scene {
     this.fitSprite(this.rivalSprite, 168);   // enlarge the rival's Pokémon so it reads as a real threat
     this.fitSprite(this.playerSprite, 150);
 
-    // Trainer portraits — each stands where its Pokémon will appear, shown during the intro only.
-    // Tagged no3d so the trainer portraits stay flat 2D intro images and are
-    // never adopted onto the 3D battle stage as stray standing reliefs.
+    // Trainer portraits drive full 3D characters during the intro, each at the
+    // same side of the arena as the Pokémon they are about to send out.
     const pAvatar = playerAvatarKey(this.registry), rAvatar = rivalAvatarKey(this.registry);
     if (this.textures.exists(pAvatar)) {
-      this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0).setData('no3d', true);
+      const playerDesign: 'boy' | 'girl' = playerGender(this.registry);
+      this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0)
+        .setData('battleTrainerPlayerAnchor', true)
+        .setData('characterModel3DKey', pAvatar)
+        .setData('characterGender3D', playerDesign);
       fitPortrait(this.playerTrainer);
     }
     if (this.textures.exists(rAvatar)) {
       // The rival becomes a walking 3D character on the battle stage (it strides
       // in toward the player during the intro). The rival is always the opposite
-      // gender of the player. Tagged no3d as well so if 3D is unavailable the
-      // flat portrait still never lands on the arena as a stray relief.
+      // gender of the player. The flat image remains available in 2D mode.
       const rivalDesign: 'boy' | 'girl' = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
       this.rivalTrainer = this.add.image(RIVAL_STAGE_X, RIVAL_STAGE_Y, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
-        .setData('no3d', true).setData('battleTrainer', rivalDesign).setData('characterModel3DKey', rAvatar);
+        .setData('battleTrainer', rivalDesign).setData('characterModel3DKey', rAvatar);
       fitPortrait(this.rivalTrainer);
     }
   }

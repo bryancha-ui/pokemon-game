@@ -6,6 +6,7 @@ import Phaser from 'phaser';
 import { PartySystem } from './PartySystem';
 import { TYPE_COLORS } from '../data/StarterData';
 import { t, tr, typeName, pokeNameEn} from './i18n';
+import { deckHideLeadPicker, deckShowLeadPicker } from './TouchControls';
 
 export function openSwitchPanel(
   scene:        Phaser.Scene,
@@ -27,10 +28,71 @@ export function openSwitchPanel(
   const rowH   = 58;
   const party  = PartySystem.get(scene.sys.game.registry);
 
-  const overlay = scene.add.container(0, 0).setDepth(50);
+  // Keep the picker above battle particles and the global post-FX overlay.
+  const overlay = scene.add.container(0, 0).setDepth(100_100);
+  const selectableSlots: number[] = [];
+  const rowBackgrounds = new Map<number, { row: Phaser.GameObjects.Rectangle; baseColor: number }>();
+  let focusedSlot = -1;
+  let finished = false;
+
+  const keyboard = scene.input.keyboard;
+
+  const cleanup = () => {
+    deckHideLeadPicker();
+    if (!keyboard) return;
+    keyboard.off('keydown-UP', focusPrevious);
+    keyboard.off('keydown-W', focusPrevious);
+    keyboard.off('keydown-DOWN', focusNext);
+    keyboard.off('keydown-S', focusNext);
+    keyboard.off('keydown-SPACE', confirmFocused);
+    keyboard.off('keydown-ENTER', confirmFocused);
+    keyboard.off('keydown-ESC', cancelSelection);
+    keyboard.off('keydown-SHIFT', cancelSelection);
+    scene.events.off('shutdown', cleanup);
+  };
+
+  const closeAndSelect = (slotIdx: number) => {
+    if (finished || !selectableSlots.includes(slotIdx)) return;
+    finished = true;
+    cleanup();
+    overlay.destroy(true);
+    onSelect(slotIdx);
+  };
+
+  const cancelSelection = () => {
+    if (finished || !allowCancel) return;
+    finished = true;
+    cleanup();
+    overlay.destroy(true);
+    onCancel();
+  };
+
+  function paintFocus() {
+    rowBackgrounds.forEach(({ row, baseColor }, slotIdx) => {
+      row.setFillStyle(slotIdx === focusedSlot ? 0x1a4488 : baseColor);
+    });
+  }
+
+  function moveFocus(delta: number) {
+    if (!selectableSlots.length) return;
+    const current = selectableSlots.indexOf(focusedSlot);
+    const start = current < 0 ? 0 : current;
+    focusedSlot = selectableSlots[
+      Phaser.Math.Wrap(start + delta, 0, selectableSlots.length)
+    ];
+    paintFocus();
+  }
+
+  function focusPrevious() { moveFocus(-1); }
+  function focusNext() { moveFocus(1); }
+  function confirmFocused() {
+    if (focusedSlot >= 0) closeAndSelect(focusedSlot);
+  }
 
   // Dim + panel background
-  overlay.add(scene.add.rectangle(cx, cy, W, H, 0x000000, 0.55));
+  // The dimmer deliberately consumes pointer input so a battle button cannot fire
+  // through the modal while the player is choosing a replacement.
+  overlay.add(scene.add.rectangle(cx, cy, W, H, 0x000000, 0.55).setInteractive());
   overlay.add(
     scene.add.rectangle(cx, cy, panelW, 420, 0x0d0d2e, 0.97)
       .setStrokeStyle(2, 0x5577aa),
@@ -51,7 +113,7 @@ export function openSwitchPanel(
       .setInteractive({ useHandCursor: true })
       .on('pointerover',  () => cancelBtn.setColor('#ffffff'))
       .on('pointerout',   () => cancelBtn.setColor('#aaaaaa'))
-      .on('pointerdown',  () => { overlay.destroy(true); onCancel(); });
+      .on('pointerdown',  cancelSelection);
     overlay.add(cancelBtn);
   }
 
@@ -78,8 +140,8 @@ export function openSwitchPanel(
     const canSelect = canSelectFn ? canSelectFn(entry, i) : (!isActive && !isFainted);
 
     // Row bg
-    const rowBg = scene.add.rectangle(cx, rowY, panelW - 40, rowH - 6,
-      isActive ? 0x1a3355 : 0x111133)
+    const baseColor = isActive ? 0x1a3355 : 0x111133;
+    const rowBg = scene.add.rectangle(cx, rowY, panelW - 40, rowH - 6, baseColor)
       .setStrokeStyle(isActive ? 2 : 1, isActive ? 0xffe44e : 0x223355);
     overlay.add(rowBg);
 
@@ -133,12 +195,62 @@ export function openSwitchPanel(
       );
     }
 
-    // Click interaction on selectable rows
+    // Put a dedicated, full-row hit target ABOVE all labels and HP graphics.
+    // This is more reliable than making only the background rectangle interactive,
+    // especially for scaled canvases and touch pointers.
     if (canSelect) {
-      rowBg.setInteractive({ useHandCursor: true })
-        .on('pointerover',  () => rowBg.setFillStyle(0x1a4488))
-        .on('pointerout',   () => rowBg.setFillStyle(0x111133))
-        .on('pointerdown',  () => { overlay.destroy(true); onSelect(i); });
+      selectableSlots.push(i);
+      rowBackgrounds.set(i, { row: rowBg, baseColor });
+      const hitTarget = scene.add.zone(cx, rowY, panelW - 40, rowH - 2)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => {
+          focusedSlot = i;
+          paintFocus();
+        })
+        .on('pointerout', () => paintFocus())
+        .on('pointerdown', () => closeAndSelect(i));
+      overlay.add(hitTarget);
     }
   }
+
+  focusedSlot = selectableSlots[0] ?? -1;
+  paintFocus();
+
+  // Keyboard and the mobile lower-screen A/D-pad now follow the same selection
+  // path as pointer input, so a forced switch cannot become a touch-only dead end.
+  keyboard?.on('keydown-UP', focusPrevious);
+  keyboard?.on('keydown-W', focusPrevious);
+  keyboard?.on('keydown-DOWN', focusNext);
+  keyboard?.on('keydown-S', focusNext);
+  keyboard?.on('keydown-SPACE', confirmFocused);
+  keyboard?.on('keydown-ENTER', confirmFocused);
+  keyboard?.on('keydown-ESC', cancelSelection);
+  keyboard?.on('keydown-SHIFT', cancelSelection);
+  scene.events.once('shutdown', cleanup);
+
+  const deckSlots: number[] = [];
+  const deckChoices = party.slice(0, 6).map((entry, slotIdx) => {
+    const isActive = slotIdx === activeSlot;
+    const isFainted = entry.hp <= 0;
+    const canSelect = canSelectFn ? canSelectFn(entry, slotIdx) : (!isActive && !isFainted);
+    deckSlots.push(slotIdx);
+    return {
+      name: pokeNameEn(entry.name).toUpperCase(),
+      level: entry.level,
+      hp: entry.hp,
+      maxHp: entry.maxHp,
+      isLead: isActive,
+      disabled: !canSelect,
+      status: isActive
+        ? t(`ACTIVE · Lv.${entry.level}`, `출전 중 · Lv.${entry.level}`)
+        : isFainted
+          ? t('FAINTED', '기절')
+          : `Lv.${entry.level} · HP ${entry.hp}/${entry.maxHp}`,
+    };
+  });
+  deckShowLeadPicker(
+    deckChoices,
+    (choiceIdx) => closeAndSelect(deckSlots[choiceIdx]),
+    { title: tr(title), allowClose: allowCancel },
+  );
 }

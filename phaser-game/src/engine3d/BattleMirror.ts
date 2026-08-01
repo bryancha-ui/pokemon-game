@@ -66,10 +66,12 @@ const ANCHORS = {
   enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(2.25, 0, -2.6)],
 };
 
-// A battle trainer (e.g. the rival) walks in from the back of the arena to the
-// exact enemy Pokémon anchor, then retires as its Pokémon is sent out.
-const TRAINER_START = new THREE.Vector3(3.4, 0, -4.7);
-const TRAINER_END   = ANCHORS.enemy[0].clone();
+// Battle trainers share their side's Pokémon anchor, then retire when the
+// portrait alpha fades for the send-out. Rival trainers walk in from behind.
+const TRAINER_START = {
+  player: new THREE.Vector3(-3.35, 0, 3.05),
+  enemy: new THREE.Vector3(3.4, 0, -4.7),
+};
 
 interface TrainerWalker {
   obj: GO;                 // the 2D intro portrait whose alpha drives the walk
@@ -79,6 +81,9 @@ interface TrainerWalker {
   phase: number;           // leg-swing phase
   seen: boolean;           // portrait has been visible at least once
   walkIn: boolean;         // rival enters; other major trainers hold the anchor
+  side: 'player' | 'enemy';
+  start: THREE.Vector3;
+  end: THREE.Vector3;
 }
 
 interface ScreenTargetRequest {
@@ -102,8 +107,6 @@ export class BattleMirror {
   private root: THREE.Group;
   private combatants = new Map<GO, Combatant>();
   private trainers: TrainerWalker[] = [];
-  /** Flat portraits that must remain 2D but share a live 3D arena anchor. */
-  private pinned2DTrainers = new Map<GO & Phaser.GameObjects.Image, { x: number; y: number }>();
   private hiddenBackdrops = new Set<GO>();
   // Phaser adds factory-created objects to the display list before the caller's
   // fluent setup runs. Defer classification until the next frame so Graphics
@@ -160,7 +163,6 @@ export class BattleMirror {
     this.combatants.clear();
     for (const w of this.trainers) this.root.remove(w.group);
     this.trainers.length = 0;
-    this.pinned2DTrainers.clear();
     this.hiddenBackdrops.clear();
     this.pendingObjects.clear();
   }
@@ -286,16 +288,17 @@ export class BattleMirror {
     // portrait off the render layer while it plays.
     const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
     const trainerAtEnemy = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerEnemyAnchor');
+    const trainerAtPlayer = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerPlayerAnchor');
     const modelKey = (im as Phaser.GameObjects.Image).getData?.('characterModel3DKey') as string | undefined;
-    if (trainerDesign || trainerAtEnemy) {
-      this.spawnTrainer(im, trainerDesign ?? (modelKey?.includes('girl') ? 'girl' : 'boy'), modelKey ?? im.texture.key, !!trainerDesign);
-      return;
-    }
-    // Ryeo deliberately remains her authored 2D image. Pin her feet to the
-    // enemy Pokémon's 3D ground anchor so the overlay cannot drift to the
-    // upper-left when the battle camera changes aspect, zoom, or angle.
-    if ((im as Phaser.GameObjects.Image).getData?.('battleTrainer2DEnemyAnchor')) {
-      this.pinned2DTrainers.set(im, { x: im.x ?? 0, y: im.y ?? 0 });
+    if (trainerDesign || trainerAtEnemy || trainerAtPlayer) {
+      const taggedGender = (im as Phaser.GameObjects.Image).getData?.('characterGender3D') as ('boy' | 'girl' | undefined);
+      this.spawnTrainer(
+        im,
+        trainerDesign ?? taggedGender ?? (modelKey?.includes('girl') ? 'girl' : 'boy'),
+        modelKey ?? im.texture.key,
+        !!trainerDesign,
+        trainerAtPlayer ? 'player' : 'enemy',
+      );
       return;
     }
     // Battle UI images that aren't combatants (trainer/leader portraits) opt out
@@ -319,14 +322,14 @@ export class BattleMirror {
     if ((im as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) return;
 
     const src = this.frameCanvas(im);
-    // Creatures WITHOUT a generated 3D model render as a near-flat relief — a 2D
-    // sprite standing upright on the 3D stage at its arena anchor. Creatures
-    // that DO have a model use the relief only until the GLB streams in.
+    // Creatures WITHOUT a generated 3D model keep their authored art on a thin
+    // relief so pixel rows cannot turn into a stretched accordion. Creatures
+    // that DO have a model use a volumetric sculpture only until the GLB loads.
     // If pixels can't be read at all (CORS-tainted source), fall back to a
     // flat textured card so a battler is NEVER invisible.
     const has3D = hasModel(im.texture.key);
     const relief = (src && buildRelief(
-      `img:${im.texture.key}:${im.frame?.name ?? 0}${has3D ? '' : ':flat'}`,
+      `img:${im.texture.key}:${im.frame?.name ?? 0}:${has3D ? 'volume-v2' : 'thin-v2'}`,
       src,
       has3D ? undefined : 1,
     )) ?? buildFlatCard(
@@ -399,7 +402,7 @@ export class BattleMirror {
     const src = this.frameCanvas(im);
     const has3D = hasModel(im.texture.key);
     const relief = (src && buildRelief(
-      `img:${im.texture.key}:${im.frame?.name ?? 0}${has3D ? '' : ':flat'}`,
+      `img:${im.texture.key}:${im.frame?.name ?? 0}:${has3D ? 'volume-v2' : 'thin-v2'}`,
       src,
       has3D ? undefined : 1,
     )) ?? buildFlatCard(
@@ -453,16 +456,22 @@ export class BattleMirror {
     design: 'boy' | 'girl',
     modelKey: string,
     walkIn: boolean,
+    side: 'player' | 'enemy',
   ): void {
     if (this.trainers.some(w => w.obj === im)) return;
     const model = buildCharacterModel(modelKey, design);
     model.group.scale.multiplyScalar(1.6);
     const holder = new THREE.Group();
     holder.add(model.group, makeBlobShadow(0.5));
-    holder.position.copy(walkIn ? TRAINER_START : TRAINER_END);
+    const start = TRAINER_START[side].clone();
+    const end = ANCHORS[side][0].clone();
+    holder.position.copy(walkIn ? start : end);
     holder.visible = false;
     this.root.add(holder);
-    this.trainers.push({ obj: im, model, group: holder, t: walkIn ? 0 : 1, phase: 0, seen: false, walkIn });
+    this.trainers.push({
+      obj: im, model, group: holder, t: walkIn ? 0 : 1,
+      phase: 0, seen: false, walkIn, side, start, end,
+    });
     // The flat 2D portrait stays off the render layer while the 3D walker plays;
     // its alpha tween still drives the walk-in / retirement.
     this.scene.cameras.main.ignore(im);
@@ -485,32 +494,16 @@ export class BattleMirror {
       }
       if (visible && w.walkIn) w.t = Math.min(1, w.t + dt / 1.5);
       const e = 1 - Math.pow(1 - w.t, 3);       // easeOutCubic
-      w.group.position.x = THREE.MathUtils.lerp(TRAINER_START.x, TRAINER_END.x, e);
-      w.group.position.z = THREE.MathUtils.lerp(TRAINER_START.z, TRAINER_END.z, e);
+      w.group.position.x = THREE.MathUtils.lerp(w.start.x, w.end.x, e);
+      w.group.position.z = THREE.MathUtils.lerp(w.start.z, w.end.z, e);
       const moving = visible && w.walkIn && w.t < 1;
       if (moving) w.phase += dt * 9;
       else w.phase += dt * 2.1;
       w.model.setWalk(w.phase, moving, dt);     // sets group.position.y (bob)
       const facing = moving
-        ? TRAINER_END.clone().sub(TRAINER_START)
-        : ANCHORS.player[0].clone().sub(TRAINER_END);
+        ? w.end.clone().sub(w.start)
+        : ANCHORS[w.side === 'player' ? 'enemy' : 'player'][0].clone().sub(w.end);
       w.model.face(facing.x, facing.z, dt);
-    }
-  }
-
-  /** Project a retained 2D trainer onto the exact feet position of the enemy
-   *  arena anchor. The image stays a flat authored NPC while following 3D. */
-  private syncPinned2DTrainers(): void {
-    if (!this.active3D || !this.pinned2DTrainers.size) return;
-    const camera = this.stage.camera;
-    camera.updateMatrixWorld();
-    for (const im of this.pinned2DTrainers.keys()) {
-      if (!im.scene) { this.pinned2DTrainers.delete(im); continue; }
-      const feet = ANCHORS.enemy[0].clone().project(camera);
-      if (!Number.isFinite(feet.x) || !Number.isFinite(feet.y) || feet.z < -1 || feet.z > 1) continue;
-      const x = (feet.x + 1) * 0.5 * this.scene.scale.width;
-      const feetY = (1 - feet.y) * 0.5 * this.scene.scale.height;
-      im.setPosition(x, feetY - (im.displayHeight ?? 0) * 0.5);
     }
   }
 
@@ -634,6 +627,10 @@ export class BattleMirror {
       cb.lastSX = curSX;
       const relX = cb.baseSX ? Math.min(3, Math.max(0.2, curSX / cb.baseSX)) : 1;
       const relY = cb.baseSY ? Math.min(3, Math.max(0.2, Math.abs(o.scaleY ?? 1) / cb.baseSY)) : 1;
+      // Phaser may briefly report different X/Y scales during sprite swaps.
+      // A 3D mesh must keep one uniform scale or the original pixel art is
+      // visibly stretched into a tall/wide accordion shape.
+      const uniformRel = (relX + relY) / 2;
       if (cb.glb) {
         // Track the subtle camera drift/punch-ins so every opposing 3D model
         // continues to face forward throughout the battle, not only on spawn.
@@ -643,12 +640,11 @@ export class BattleMirror {
         if (down && !cb.fainted && cb.base) { cb.fainted = true; cb.anim?.faint(); }
         if (!down && cb.fainted) cb.fainted = false;
         // The animator owns this model's transform (position/rotation/scale).
-        cb.anim?.update(dt, cb.targetH * ((relX + relY) / 2));
+        cb.anim?.update(dt, cb.targetH * uniformRel);
         cb.glb.visible = (o.alpha ?? 1) > 0.05;
       } else {
-        const sx = relX * cb.scalePx;
-        const sy = relY * cb.scalePx * idle;
-        cb.inner.scale.set(cb.side === 'player' ? -sx : sx, sy, cb.scalePx);
+        const scale = uniformRel * cb.scalePx;
+        cb.inner.scale.set(cb.side === 'player' ? -scale : scale, scale * idle, scale);
         cb.inner.rotation.z = -((o.angle ?? 0) * Math.PI / 180);
       }
 
@@ -676,7 +672,6 @@ export class BattleMirror {
     if (cam.shakeEffect?.isRunning) this.rig.addShake(0.4);
 
     this.rig.update(dt, null);
-    this.syncPinned2DTrainers();
   }
 
   restore2D(): void {
@@ -686,7 +681,6 @@ export class BattleMirror {
     for (const cb of this.combatants.values()) unhide(cb.obj);
     for (const w of this.trainers) unhide(w.obj);
     for (const b of this.hiddenBackdrops) unhide(b);
-    for (const [im, original] of this.pinned2DTrainers) im.setPosition(original.x, original.y);
   }
 
   apply3D(): void {

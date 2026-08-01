@@ -134,7 +134,7 @@ export function buildRelief(
     if (!changed) break;
   }
 
-  // ── Greedy horizontal slabs → extruded boxes ──
+  // ── Greedy horizontal runs → one continuous extruded silhouette ──
   // Front/back faces carry the artwork texture (material group 0); side, top
   // and bottom faces are painted with the cell's average color via vertex
   // colors (material group 1) so silhouette edges look cleanly "carved"
@@ -172,25 +172,44 @@ export function buildRelief(
       while (run < gw && occ[gy * gw + run]) run++;
       const x0 = gx * GRID, x1 = Math.min(tw, run * GRID);
       const y0 = gy * GRID, y1 = Math.min(th, (gy + 1) * GRID);
-      const mid = gy * gw + ((gx + run - 1) >> 1);
-      const cr = cellCol[mid * 3], cg = cellCol[mid * 3 + 1], cb2 = cellCol[mid * 3 + 2];
       const edge = 0.82;                            // side faces slightly darker (fake AO)
+      // Emit only the parts of this run that are actually exposed above or
+      // below. Testing just the first cell would cap an entire changing-width
+      // row and leave internal shelves through the model (the "accordion"
+      // look on thick Pokémon reliefs).
+      const horizontalBoundary = (neighborY: number, py: number, top: boolean) => {
+        let start = -1;
+        for (let cx = gx; cx <= run; cx++) {
+          const exposed = cx < run
+            && (neighborY < 0 || neighborY >= gh || !occ[neighborY * gw + cx]);
+          if (exposed && start < 0) {
+            start = cx;
+          } else if (!exposed && start >= 0) {
+            const end = cx;
+            const bx0 = start * GRID, bx1 = Math.min(tw, end * GRID);
+            const colorCell = gy * gw + ((start + end - 1) >> 1);
+            const br = cellCol[colorCell * 3];
+            const bg = cellCol[colorCell * 3 + 1];
+            const bb = cellCol[colorCell * 3 + 2];
+            if (top) {
+              quad(idxSide, bx0, yUp(py), hz, bx1, yUp(py), hz, bx1, yUp(py), -hz, bx0, yUp(py), -hz,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, br, bg, bb);
+            } else {
+              quad(idxSide, bx0, yUp(py), -hz, bx1, yUp(py), -hz, bx1, yUp(py), hz, bx0, yUp(py), hz,
+                0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, br * edge, bg * edge, bb * edge);
+            }
+            start = -1;
+          }
+        }
+      };
       // front (+z)
       quad(idxTex, x0, yUp(y1), hz, x1, yUp(y1), hz, x1, yUp(y0), hz, x0, yUp(y0), hz,
         0, 0, 1, U(x0), V(y1), U(x1), V(y1), U(x1), V(y0), U(x0), V(y0));
       // back (−z) — mirrored so the art reads correctly from behind
       quad(idxTex, x1, yUp(y1), -hz, x0, yUp(y1), -hz, x0, yUp(y0), -hz, x1, yUp(y0), -hz,
         0, 0, -1, U(x1), V(y1), U(x0), V(y1), U(x0), V(y0), U(x1), V(y0));
-      // top (only if cell above is empty)
-      if (gy === 0 || !occ[(gy - 1) * gw + gx]) {
-        quad(idxSide, x0, yUp(y0), hz, x1, yUp(y0), hz, x1, yUp(y0), -hz, x0, yUp(y0), -hz,
-          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, cr, cg, cb2);
-      }
-      // bottom (only if cell below empty)
-      if (gy === gh - 1 || !occ[(gy + 1) * gw + gx]) {
-        quad(idxSide, x0, yUp(y1), -hz, x1, yUp(y1), -hz, x1, yUp(y1), hz, x0, yUp(y1), hz,
-          0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, cr * edge, cg * edge, cb2 * edge);
-      }
+      horizontalBoundary(gy - 1, y0, true);
+      horizontalBoundary(gy + 1, y1, false);
       // left side
       if (gx === 0 || !occ[gy * gw + gx - 1]) {
         const lc = gy * gw + gx;

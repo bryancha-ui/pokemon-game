@@ -405,30 +405,17 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Named story trainers normally use their authored portrait as a 3D
-    // character. Explicit 2D exceptions remain flat at the enemy anchor.
+    // Every trainer portrait drives a real 3D character on the battle stage.
+    // The image remains the authoritative 2D fallback when F3 disables 3D.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
-      const use2DTrainer = portrait.key === 'npc_ryeo' || this.trainerKey.includes('ryeo')
-        || this.trainerKey === 'baekdu-byeoksan';
-      if (use2DTrainer) {
-        // Commander Ryeo and Gym Leader Byeoksan keep their authored 2D battle
-        // portraits instead of being replaced by procedural 3D characters.
-        this.trainerPortrait.setData('no3d', true);
-        if (this.isFirstRyeoBattle || this.trainerKey === 'baekdu-byeoksan') {
-          // BattleMirror projects this flat portrait onto the same live 3D
-          // ground anchor used by the opponent's lead Pokémon.
-          this.trainerPortrait.setData('battleTrainer2DEnemyAnchor', true);
-        }
+      this.trainerPortrait.setData('characterModel3DKey', portrait.key);
+      if (this.trainerKey.startsWith('rival')) {
+        const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
+        this.trainerPortrait.setData('battleTrainer', design);
       } else {
-        this.trainerPortrait.setData('characterModel3DKey', portrait.key);
-        if (this.trainerKey.startsWith('rival')) {
-          const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-          this.trainerPortrait.setData('battleTrainer', design);
-        } else {
-          this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
-        }
+        this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
       }
       fitPortrait(this.trainerPortrait);
     }
@@ -450,10 +437,6 @@ export class TrainerBattleScene extends Phaser.Scene {
     // Catcher, Ace Trainer, Fisher…) read from the trainer's name.
     return trainerClassPortrait(this, this.trainerName);
   }
-
-  /** The first Ryeo encounter keeps her authored 2D image pinned to the live
-   *  enemy Pokémon anchor in the otherwise-3D battle presentation. */
-  private get isFirstRyeoBattle() { return this.trainerKey === 'nosdan-ryeo-1'; }
 
   /** A 우두머리 (boss) — the 어사대 mission threats (Rampaging Gyarados, Fog-Wraith
    *  Gengar, Berserk Steelix…). They loom larger in battle than ordinary Pokémon. */

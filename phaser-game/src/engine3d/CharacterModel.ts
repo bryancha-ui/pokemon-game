@@ -19,6 +19,8 @@ export interface PlayerModel {
   setWalk(phase: number, moving: boolean, dt: number): void;
   /** smoothly turn to face a world-space direction (dx, dz). */
   face(dx: number, dz: number, dt: number): void;
+  /** Optional vehicle pose used by the protagonist's true-3D bicycle. */
+  setRiding?(riding: boolean): void;
 }
 
 function box(w: number, h: number, d: number, color: number): THREE.Mesh {
@@ -63,6 +65,7 @@ function capsule(w: number, h: number, d: number, color: number): THREE.Mesh {
 
 export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   const group = new THREE.Group();
+  const body = new THREE.Group();
   const H = 0.94;                       // total height in world units (≈30px)
   const s = H / 0.94;
 
@@ -76,7 +79,7 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
     shoe.position.set(0, -0.335 * s, 0.02 * s);
     leg.add(l, shoe);
     leg.position.set(off * s, 0.41 * s, 0);
-    group.add(leg);
+    body.add(leg);
   }
 
   // ── torso ──
@@ -99,7 +102,7 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
     pack.position.set(0, 0.58 * s, -0.16 * s);
     torso.add(pack);
   }
-  group.add(torso);
+  body.add(torso);
 
   // ── arms (pivot at shoulder) ──
   const armL = new THREE.Group(), armR = new THREE.Group();
@@ -110,7 +113,7 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
     hand.position.y = -0.25 * s;
     arm.add(sleeve, hand);
     arm.position.set(off * s, 0.72 * s, 0);
-    group.add(arm);
+    body.add(arm);
   }
 
   // ── head ──
@@ -140,25 +143,67 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
     eye.position.set(ex * s, 0.9 * s, 0.128 * s);
     head.add(eye);
   }
-  group.add(head);
+  body.add(head);
+
+  // Proper 3D bicycle for the cycling state. The old renderer switched the
+  // whole hero back to a flat sprite whenever the art became wide; keeping the
+  // vehicle in this model means the protagonist remains 3D in every state.
+  const bike = new THREE.Group();
+  bike.visible = false;
+  const wheelMaterial = toonMat(0x1a1b1e);
+  const rimMaterial = toonMat(0xc9d2da);
+  const bikeMaterial = toonMat(0x256fd0);
+  const wheels: THREE.Mesh[] = [];
+  for (const z of [-0.34, 0.34]) {
+    const tire = new THREE.Mesh(new THREE.TorusGeometry(0.225, 0.028, 7, 18), wheelMaterial);
+    tire.rotation.y = Math.PI / 2;
+    tire.position.set(0, 0.245, z);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.009, 5, 16), rimMaterial);
+    rim.rotation.y = Math.PI / 2;
+    rim.position.copy(tire.position);
+    bike.add(tire, rim);
+    wheels.push(tire, rim);
+  }
+  const tube = (a: THREE.Vector3, b: THREE.Vector3, radius = 0.018, mat = bikeMaterial) => {
+    const delta = b.clone().sub(a);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, delta.length(), 7), mat);
+    mesh.position.copy(a).add(b).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+    bike.add(mesh);
+  };
+  const crank = new THREE.Vector3(0, 0.27, -0.02);
+  const seatPost = new THREE.Vector3(0, 0.53, -0.12);
+  const handle = new THREE.Vector3(0, 0.56, 0.27);
+  tube(new THREE.Vector3(0, 0.245, -0.34), crank);
+  tube(new THREE.Vector3(0, 0.245, 0.34), crank);
+  tube(crank, seatPost);
+  tube(seatPost, handle);
+  tube(handle, new THREE.Vector3(0, 0.245, 0.34), 0.015, rimMaterial);
+  const seat = box(0.16, 0.035, 0.09, 0x202226); seat.position.copy(seatPost); bike.add(seat);
+  const bar = box(0.3, 0.025, 0.025, 0xd9e0e5); bar.position.copy(handle); bike.add(bar);
+  const pedal = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.012, 5, 12), rimMaterial);
+  pedal.rotation.y = Math.PI / 2; pedal.position.copy(crank); bike.add(pedal);
+  group.add(body, bike);
 
   // state
-  let yaw = 0, targetYaw = 0, restEase = 0;
+  let yaw = 0, targetYaw = 0, restEase = 0, riding = false;
 
   return {
     group,
     setWalk(phase: number, moving: boolean, dt: number) {
       restEase = THREE.MathUtils.clamp(restEase + (moving ? dt * 8 : -dt * 6), 0, 1);
-      const swing = Math.sin(phase) * 0.75 * restEase;
-      legL.rotation.x = swing;
-      legR.rotation.x = -swing;
-      armL.rotation.x = -swing * 0.8;
-      armR.rotation.x = swing * 0.8;
-      const bob = Math.abs(Math.sin(phase)) * 0.035 * restEase;
+      const swing = Math.sin(phase) * (riding ? 0.52 : 0.75) * restEase;
+      legL.rotation.x = riding ? 0.72 + swing : swing;
+      legR.rotation.x = riding ? 0.72 - swing : -swing;
+      armL.rotation.x = riding ? -0.72 : -swing * 0.8;
+      armR.rotation.x = riding ? -0.72 : swing * 0.8;
+      const bob = Math.abs(Math.sin(phase)) * (riding ? 0.012 : 0.035) * restEase;
       const breathe = moving ? 0 : Math.sin(phase * 0.35) * 0.008;
-      group.position.y = bob;
+      group.position.y = riding ? 0 : bob;
+      body.position.y = (riding ? 0.28 : 0) + (riding ? bob : 0);
       torso.scale.y = 1 + breathe;
       head.position.y = breathe * 0.5;
+      if (riding && moving) for (const wheel of wheels) wheel.rotation.x -= dt * 9;
     },
     face(dx: number, dz: number, dt: number) {
       if (Math.abs(dx) + Math.abs(dz) > 0.001) {
@@ -170,6 +215,11 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
       yaw += d * Math.min(1, dt * 12);
       group.rotation.y = yaw;
     },
+    setRiding(on: boolean) {
+      riding = on;
+      bike.visible = on;
+      if (!on) body.position.y = 0;
+    },
   };
 }
 
@@ -178,7 +228,7 @@ type OutfitStyle = 'trainer' | 'uniform' | 'coat' | 'robe' | 'hanbok' | 'armor' 
 type HairStyle = 'short' | 'spiky' | 'bob' | 'long' | 'bun' | 'braid' | 'topknot' | 'wild';
 type HeldProp = 'staff' | 'sword' | 'lantern';
 
-interface CharacterProfile {
+export interface CharacterProfile {
   skin?: number;
   hair: number;
   outfit: number;
@@ -251,14 +301,18 @@ function cylinder(rt: number, rb: number, h: number, color: number, segments = 8
 }
 
 /** Build a protagonist-style true 3D model for a named trainer or story NPC. */
-export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' = 'boy'): PlayerModel {
+export function buildCharacterModel(
+  key: string,
+  fallbackDesign: 'boy' | 'girl' = 'boy',
+  profile?: Partial<CharacterProfile>,
+): PlayerModel {
   if (key === 'trainer_boy' || key === 'trainer_girl') {
     return buildPlayerModel(key === 'trainer_girl' ? 'girl' : 'boy');
   }
   const fallback = fallbackDesign === 'girl'
     ? { ...DEFAULT_PROFILE, hairStyle: 'bun' as HairStyle, accent: BACKPACK }
     : DEFAULT_PROFILE;
-  const p = { ...fallback, ...(CHARACTER_PROFILES[key] ?? {}) };
+  const p = { ...fallback, ...(CHARACTER_PROFILES[key] ?? {}), ...(profile ?? {}) };
   const group = new THREE.Group();
   const width = p.body === 'heroic' ? 1.38 : p.body === 'broad' ? 1.2 : p.body === 'slim' ? 0.9 : 1;
   const skin = p.skin ?? SKIN;
