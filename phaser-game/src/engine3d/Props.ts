@@ -415,6 +415,38 @@ export function makeStreetlamp(): THREE.Group {
   return g;
 }
 
+/** Wooden mine cart heaped with ore, on four steel wheels. */
+export function makeMineCart(): THREE.Group {
+  const g = new THREE.Group();
+  const wood = 0x6a4a2a, metal = 0x39332f, ore = 0x5a5262;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.34, 0.42), toonMat(wood));
+  body.position.y = 0.34;
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.06, 0.46), toonMat(metal));
+  rim.position.y = 0.5;
+  const heap = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22, 0), toonMat(ore));
+  heap.scale.set(1.2, 0.6, 0.85); heap.position.y = 0.54;
+  for (const [x, z] of [[-0.22, -0.17], [0.22, -0.17], [-0.22, 0.17], [0.22, 0.17]] as [number, number][]) {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 10), toonMat(metal));
+    w.rotation.x = Math.PI / 2; w.position.set(x, 0.1, z); g.add(w);
+  }
+  g.add(body, rim, heap);
+  return g;
+}
+
+/** Cherry-blossom tree — a trunk under two soft pink canopy puffs. */
+export function makeCherryTree(): THREE.Group {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.62, 6), toonMat(0x6d4c33));
+  trunk.position.y = 0.31;
+  const blossom = 0xffb7d5;
+  const lo = new THREE.Mesh(new THREE.SphereGeometry(0.56, 8, 6), toonMat(blossom));
+  lo.scale.set(1, 0.85, 1); lo.position.y = 0.98;
+  const hi = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), toonMat(mixColor(blossom, 0xffffff, 0.22)));
+  hi.position.y = 1.4;
+  g.add(trunk, lo, hi);
+  return g;
+}
+
 /** Grey-granite civic obelisk with a stepped base and gold finial. */
 export function makeGrandObelisk(): THREE.Group {
   const g = new THREE.Group();

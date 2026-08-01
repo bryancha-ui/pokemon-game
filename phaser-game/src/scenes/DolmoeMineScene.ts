@@ -70,6 +70,9 @@ export class DolmoeMineScene extends Phaser.Scene {
   /** A mine: force cave-floor treatment so the dark floor stays walkable ground
    *  and its walls stay low, instead of tall tiles that hide the player. */
   public caveFloorHint = true;
+  // The ore-cart at the foot of the rail shaft, as a 3D mine cart (ore pillars
+  // already rise as 3D boulders from their rock tiles).
+  public propPlots = [{ x: 10, y: 34, kind: 'minecart' as const }];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

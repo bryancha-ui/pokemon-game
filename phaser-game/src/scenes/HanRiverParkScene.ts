@@ -81,6 +81,11 @@ export class HanRiverParkScene extends Phaser.Scene {
    *  landmarks rise in 3D, so no stray generic box blocks the river view. */
   public buildingPlots = BUILDINGS.map(b => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: b.model! }));
   public onlyNamedBuildings = true;
+  // The park's cherry-blossom trees as 3D pink-canopy trees (coords mirror the
+  // T.TREE tiles).
+  public propPlots = ([[3, 10], [7, 10], [12, 10], [16, 10], [30, 10], [34, 10], [39, 10], [43, 10],
+    [4, 19], [9, 19], [6, 21], [38, 20], [40, 22], [42, 19]] as [number, number][])
+    .map(([x, y]) => ({ x, y, kind: 'cherry' as const }));
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
