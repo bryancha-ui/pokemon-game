@@ -38,7 +38,7 @@ export const SPRITE_SCALE: Record<string, number> = {
   onnujang:     1.35,
   pipetiger:     0.675, // 1.35 × 0.5 — halve Pipe Tiger's battle size
   tyranitar:     1.35,
-  palmcockatoo: 1.35,  // 
+  palmcockatoo: 2.2,   // large crest/body; clears the 3D size-bias floor visibly
 };
 
 /** Display-size multiplier for a battle sprite key (default 1). */

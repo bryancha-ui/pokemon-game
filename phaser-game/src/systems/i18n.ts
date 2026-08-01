@@ -4,6 +4,9 @@ import { KO_STRINGS, KO_TYPES, KO_SPEAKERS } from '../data/ko_strings';
 
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
 export const POKE_KR: Record<string, string> = {
+  // Official Pokémon used by story trainers but not listed in the custom dex.
+  houndoom: '헬가',
+
   bosongnun: '보송눈', snoqueen: '스노퀸', kkaakdang: '까악단',
   onnurian: '학동자', onnujang: '화투루미', thanatoat: '두루광',
   vipour: '염혈목이', scorpent: '춤추사', feldaconda: '비얌마담',
@@ -212,6 +215,8 @@ const EN_TO_KR_POKE: Record<string, string> = (() => {
     const kr = POKE_KR[e.key];
     if (kr) map[e.name.toLowerCase()] = kr;
   }
+  // PokeAPI-backed species do not have entries in the custom regional dex.
+  map.houndoom = POKE_KR.houndoom;
   return map;
 })();
 

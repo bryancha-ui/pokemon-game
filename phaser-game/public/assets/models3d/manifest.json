@@ -164,11 +164,13 @@
     },
     {
       "key": "turtleship",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/75248ab4-252a-4ddd-aacb-5bc47ee1a654.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/75248ab4-252a-4ddd-aacb-5bc47ee1a654.glb",
+      "scale": 0.79
     },
     {
       "key": "kingfisher",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b178296c-5028-438b-9d90-eecf21b6c974.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b178296c-5028-438b-9d90-eecf21b6c974.glb",
+      "scale": 0.79
     },
     {
       "key": "liondance",
