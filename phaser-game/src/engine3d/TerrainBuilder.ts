@@ -196,7 +196,7 @@ function applyRoof(mat: THREE.MeshBasicMaterial, tex: THREE.Texture, w: number, 
   mat.needsUpdate = true;
 }
 
-function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
+function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interior = false): Cell {
   const { h, s, l } = hsl;
   if (l < 0.10) return 'wall-high';                                   // cave walls / voids
   // In a cave/mine the entire floor is dark brown/grey, so the dark low-sat
@@ -207,16 +207,18 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false): Cell {
   // Blue-roofed buildings would read as water, so only calm (low-detail) blue
   // counts as a water surface — window grids and roof tiling are busy.
   // (l ≥ 0.32: dark navy building roofs must not read as water)
-  if (h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
+  // Indoor rooms have no ocean — a shop's blue walls/shelves must never animate
+  // as water, so water is only detected outdoors.
+  if (!interior && h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
   if (h >= 60 && h <= 170) {                                          // green family
-    if (l < 0.26) return snowy ? 'pine' : 'tree';
-    if (s > 0.42 && l < 0.46) return 'grass';
+    if (l < 0.30) return snowy ? 'pine' : 'tree';                     // darker greens = foliage
+    if (s > 0.34 && l < 0.52) return 'grass';                         // mid greens = tall grass
     // Snowy passes paint their tall-grass clearings a pale frosted green (low
     // saturation, light) — treat that as grass so it grows snow-dusted tufts.
     if (snowy && s > 0.12 && l >= 0.5 && l < 0.75) return 'grass';
     return 'flat';
   }
-  if (h >= 25 && h <= 55 && s > 0.55 && l > 0.52 && l < 0.78) return 'flower'; // warm blossom tones (wood floors are duller)
+  if (h >= 20 && h <= 60 && s > 0.45 && l > 0.5 && l < 0.82) return 'flower'; // warm blossom tones (wood floors are duller)
   if (s < 0.22 && l >= 0.10 && l < 0.34) return caveFloor ? 'flat' : 'wall-low';  // dark grey rock walls
   if (s < 0.25 && l >= 0.34 && l < 0.52) return 'rock';               // mid grey — boulders
   if (h >= 15 && h <= 45 && s > 0.18 && s < 0.5 && l < 0.42) return caveFloor ? 'flat' : 'wall-low'; // brown cliffs
@@ -360,7 +362,7 @@ export function buildTerrain(
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
       const [rr, gg, bb] = cellColors[i];
-      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey);
+      cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey, interior);
     }
   }
 
