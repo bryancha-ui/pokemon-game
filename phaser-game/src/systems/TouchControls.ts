@@ -2,14 +2,15 @@ import { t, tr } from './i18n';
 // ── Mobile "dual-screen" shell + on-screen controls ──────────────────────────
 // On touch devices the page is split like a Nintendo DS: the Phaser game canvas
 // lives on the TOP screen, and a solid control DECK fills the BOTTOM screen so the
-// buttons never sit on top of the game. The deck holds a D-pad + A/B + utility
+// buttons never sit on top of the game. The deck holds an analog drag stick,
+// A/B buttons and utility
 // pills, and — during battle — a move-select bar (see deckShowMoves/deckHideMoves).
 //
 // Everything on the deck is sized in a single unit `--u` derived from the deck's
 // ACTUAL box (a ResizeObserver recomputes it on rotate / fold / resize), so the
 // controls always scale to fit and never overflow when the screen changes shape.
 //
-// The game reads the keyboard (arrows/SPACE/SHIFT/M/C/ESC); the D-pad/buttons
+// The game reads the keyboard (arrows/SPACE/SHIFT/M/C/ESC); the stick/buttons
 // synthesise those key events on `window` (the target Phaser listens on), so no
 // per-scene wiring is needed. Battle move buttons instead call a JS callback the
 // battle scene supplies, since the on-canvas move buttons are already tap-driven.
@@ -44,10 +45,11 @@ interface DeckMove { data: { name: string; type: string; pp: number }; pp: numbe
 const btnBase =
   'display:flex;align-items:center;justify-content:center;pointer-events:auto;' +
   'touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font-weight:700;' +
+  '-webkit-touch-callout:none;' +
   'border:2px solid rgba(255,255,255,0.5);background:rgba(30,38,66,0.9);' +
   'box-shadow:0 2px 6px rgba(0,0,0,0.45);-webkit-tap-highlight-color:transparent;box-sizing:border-box;';
 
-/** Button that holds a key down while pressed (D-pad, run). */
+/** Button that holds a key down while pressed (run). */
 function holdButton(label: string, css: string, code: number): HTMLElement {
   const b = document.createElement('div');
   b.style.cssText = btnBase + css;
@@ -73,6 +75,11 @@ function tapButton(label: string, css: string, code: number): HTMLElement {
     dispatchKey('keydown', code);
     setTimeout(() => { dispatchKey('keyup', code); b.style.background = 'rgba(30,38,66,0.9)'; }, 140);
   });
+  // iOS Safari may still interpret two rapid taps as page zoom even when the
+  // pointerdown was consumed. The game already acts on pointerdown, so suppress
+  // the follow-up touch/click gestures explicitly.
+  b.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+  b.addEventListener('dblclick', e => e.preventDefault());
   return b;
 }
 
@@ -82,15 +89,143 @@ let moveLayer: HTMLElement | null = null;
 let partyLeadLayer: HTMLElement | null = null;
 let layerBeforeLeadPicker: 'control' | 'move' = 'control';
 let mobile = false;
+let releaseMovement: (() => void) | null = null;
+
+/**
+ * PES-style drag joystick. Sliding around the disc continuously changes the
+ * held arrow-key combination, including diagonals; releasing recentres the
+ * thumb and clears every movement key.
+ */
+function analogStick(): HTMLElement {
+  const base = document.createElement('div');
+  base.setAttribute('role', 'application');
+  base.setAttribute('aria-label', t('Movement joystick', '이동 조이스틱'));
+  base.style.cssText =
+    'position:absolute;left:calc(var(--u)*0.5);bottom:calc(var(--u)*0.5);' +
+    'width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);border-radius:50%;' +
+    'pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;' +
+    'box-sizing:border-box;border:2px solid rgba(170,200,255,0.42);' +
+    'background:radial-gradient(circle at 50% 50%,rgba(55,72,116,0.62) 0 20%,' +
+    'rgba(28,38,68,0.92) 21% 64%,rgba(12,18,36,0.96) 65% 100%);' +
+    'box-shadow:inset 0 0 0 calc(var(--u)*0.16) rgba(255,255,255,0.05),' +
+    'inset 0 calc(var(--u)*0.22) calc(var(--u)*0.6) rgba(160,190,255,0.12),' +
+    '0 calc(var(--u)*0.18) calc(var(--u)*0.55) rgba(0,0,0,0.5);' +
+    '-webkit-tap-highlight-color:transparent;overflow:hidden;';
+
+  // Subtle direction guides make the control readable without turning it back
+  // into four separate buttons.
+  const guides = document.createElement('div');
+  guides.style.cssText =
+    'position:absolute;inset:10%;border-radius:50%;pointer-events:none;opacity:0.55;' +
+    'background:linear-gradient(90deg,transparent 49.4%,rgba(180,205,255,0.22) 49.5% 50.5%,transparent 50.6%),' +
+    'linear-gradient(0deg,transparent 49.4%,rgba(180,205,255,0.22) 49.5% 50.5%,transparent 50.6%);';
+
+  const label = document.createElement('div');
+  label.textContent = t('DRAG TO MOVE', '밀어서 이동');
+  label.style.cssText =
+    'position:absolute;left:50%;bottom:7%;transform:translateX(-50%);white-space:nowrap;' +
+    'pointer-events:none;color:rgba(202,218,255,0.62);font-size:calc(var(--u)*0.58);' +
+    'font-weight:800;letter-spacing:0.08em;';
+
+  const thumb = document.createElement('div');
+  thumb.style.cssText =
+    'position:absolute;left:50%;top:50%;width:calc(var(--u)*3.35);height:calc(var(--u)*3.35);' +
+    'transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-sizing:border-box;' +
+    'border:2px solid rgba(225,237,255,0.72);' +
+    'background:radial-gradient(circle at 36% 30%,#829ddd,#4562a2 46%,#263967 100%);' +
+    'box-shadow:inset 0 calc(var(--u)*0.14) calc(var(--u)*0.34) rgba(255,255,255,0.28),' +
+    '0 calc(var(--u)*0.28) calc(var(--u)*0.58) rgba(0,0,0,0.55);' +
+    'will-change:transform;';
+  base.append(guides, label, thumb);
+
+  let pointerId: number | null = null;
+  const held = new Set<number>();
+  const movementCodes = [KEY.left, KEY.right, KEY.up, KEY.down];
+
+  const setHeld = (wanted: Set<number>) => {
+    for (const code of movementCodes) {
+      if (wanted.has(code) && !held.has(code)) {
+        held.add(code);
+        dispatchKey('keydown', code);
+      } else if (!wanted.has(code) && held.has(code)) {
+        held.delete(code);
+        dispatchKey('keyup', code);
+      }
+    }
+  };
+
+  const release = () => {
+    pointerId = null;
+    setHeld(new Set());
+    thumb.style.transition = 'transform 100ms ease-out';
+    thumb.style.transform = 'translate(-50%,-50%)';
+    base.style.borderColor = 'rgba(170,200,255,0.42)';
+  };
+  releaseMovement = release;
+
+  const update = (e: PointerEvent) => {
+    const r = base.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    const travel = Math.max(1, Math.min(r.width, r.height) * 0.31);
+    const distance = Math.hypot(dx, dy);
+    const scale = distance > travel ? travel / distance : 1;
+    const tx = dx * scale, ty = dy * scale;
+    thumb.style.transition = 'none';
+    thumb.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px),calc(-50% + ${ty.toFixed(1)}px))`;
+
+    const strength = Math.min(1, distance / travel);
+    const wanted = new Set<number>();
+    if (strength >= 0.18) {
+      const nx = dx / Math.max(1, distance);
+      const ny = dy / Math.max(1, distance);
+      // A 0.38 component threshold creates broad diagonal sectors while still
+      // allowing a player to hold a clean cardinal direction.
+      if (nx <= -0.38) wanted.add(KEY.left);
+      if (nx >=  0.38) wanted.add(KEY.right);
+      if (ny <= -0.38) wanted.add(KEY.up);
+      if (ny >=  0.38) wanted.add(KEY.down);
+    }
+    setHeld(wanted);
+  };
+
+  base.addEventListener('pointerdown', (event) => {
+    const e = event as PointerEvent;
+    e.preventDefault();
+    if (pointerId !== null) return;
+    pointerId = e.pointerId;
+    base.setPointerCapture?.(e.pointerId);
+    base.style.borderColor = 'rgba(205,225,255,0.9)';
+    update(e);
+  });
+  base.addEventListener('pointermove', (event) => {
+    const e = event as PointerEvent;
+    if (e.pointerId !== pointerId) return;
+    e.preventDefault();
+    update(e);
+  });
+  const finish = (event: Event) => {
+    const e = event as PointerEvent;
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+    e.preventDefault();
+    release();
+  };
+  base.addEventListener('pointerup', finish);
+  base.addEventListener('pointercancel', finish);
+  base.addEventListener('lostpointercapture', finish);
+  window.addEventListener('blur', release);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+  return base;
+}
 
 /** Recompute the `--u` sizing unit from the deck's real box so nothing overflows. */
 function updateUnit(): void {
   if (!deckEl) return;
   const r = deckEl.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return;
-  // Keep the smallest landscape-phone controls at roughly a 44px touch target.
+  // Keep the smallest landscape-phone controls at a comfortable thumb size.
   // The old height / 12 calculation reduced D-pad cells to about 30px on a
-  // short 16:9 phone, which made diagonal thumbs and quick A/B taps unreliable.
+  // short 16:9 phone; the analog disc now keeps the whole drag range usable.
   // The complete layout is 17.5u wide and 9.4u tall, so it still cannot overflow.
   const u = Math.max(6, Math.min(72, Math.min(r.width / 17.5, r.height / 9.4)));
   deckEl.style.setProperty('--u', u.toFixed(2) + 'px');
@@ -110,6 +245,14 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
     'margin:0;padding:0;background:#000;display:flex;flex-direction:column;' +
     'height:100vh;height:100dvh;width:100vw;overflow:hidden;' +
     'font-family:system-ui,-apple-system,sans-serif;touch-action:none;overscroll-behavior:none;';
+
+  // Safari-specific safety net: prevent double-tap and pinch gestures from
+  // changing the visual viewport while the player rapidly presses A/B.
+  const stopGesture = (e: Event) => e.preventDefault();
+  document.addEventListener('gesturestart', stopGesture, { passive: false });
+  document.addEventListener('gesturechange', stopGesture, { passive: false });
+  document.addEventListener('gestureend', stopGesture, { passive: false });
+  document.addEventListener('dblclick', stopGesture, { passive: false });
 
   const gamePane = document.createElement('div');
   gamePane.id = 'game';
@@ -176,19 +319,8 @@ function buildControlLayer(): void {
   const layer = document.createElement('div');
   layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
 
-  // D-pad — a 3×3 grid in the bottom-left. At the minimum supported landscape
-  // deck height, each direction remains a full finger-sized (~44px) target.
-  const pad = document.createElement('div');
-  pad.style.cssText =
-    'position:absolute;left:calc(var(--u)*0.5);bottom:calc(var(--u)*0.5);' +
-    'width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);display:grid;' +
-    'grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(var(--u)*0.22);';
-  const cell = 'border-radius:calc(var(--u)*0.55);font-size:calc(var(--u)*1.7);';
-  const up    = holdButton('▲', cell + 'grid-column:2;grid-row:1;', KEY.up);
-  const left  = holdButton('◀', cell + 'grid-column:1;grid-row:2;', KEY.left);
-  const right = holdButton('▶', cell + 'grid-column:3;grid-row:2;', KEY.right);
-  const down  = holdButton('▼', cell + 'grid-column:2;grid-row:3;', KEY.down);
-  pad.append(up, left, right, down);
+  // One continuous drag stick replaces the four independent D-pad buttons.
+  const pad = analogStick();
 
   // A / B — bottom-right cluster.
   const a = tapButton('A',  'position:absolute;right:calc(var(--u)*0.5);bottom:calc(var(--u)*1.1);width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;font-size:calc(var(--u)*1.85);background:rgba(46,120,74,0.92);', KEY.space);
@@ -276,6 +408,7 @@ export function deckShowLeadPicker(
   options: DeckLeadPickerOptions = {},
 ): boolean {
   if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return false;
+  releaseMovement?.();
   const alreadyOpen = partyLeadLayer.style.display === 'flex';
   if (!alreadyOpen) layerBeforeLeadPicker = moveLayer.style.display === 'flex' ? 'move' : 'control';
 
@@ -345,6 +478,7 @@ export function deckHideLeadPicker(): void {
  */
 export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, onBack: () => void): boolean {
   if (!mobile || !moveLayer || !controlLayer) return false;
+  releaseMovement?.();
   const grid = moveLayer.querySelector('.__movegrid') as HTMLElement;
   grid.textContent = '';
   moves.slice(0, 4).forEach((m, i) => {

@@ -310,6 +310,7 @@ export class BattleMirror {
     const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
     const trainerAtEnemy = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerEnemyAnchor');
     const trainerAtPlayer = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerPlayerAnchor');
+    const pokemonSide = (im as Phaser.GameObjects.Image).getData?.('battlePokemonSide') as ('player' | 'enemy' | undefined);
     const modelKey = (im as Phaser.GameObjects.Image).getData?.('characterModel3DKey') as string | undefined;
     if (trainerDesign || trainerAtEnemy || trainerAtPlayer) {
       const taggedGender = (im as Phaser.GameObjects.Image).getData?.('characterGender3D') as ('boy' | 'girl' | undefined);
@@ -335,7 +336,7 @@ export class BattleMirror {
     // (Baekho's tall artwork is 56px wide). Never mistake an explicitly pinned
     // trainer for a UI icon or it remains in Phaser's upper-left battle layer
     // instead of being handed to the enemy Pokémon's 3D arena anchor.
-    if (!trainerAtEnemy && (dw < 70 || dh < 70)) return; // icons stay 2D
+    if (!pokemonSide && !trainerAtEnemy && (dw < 70 || dh < 70)) return; // icons stay 2D
     const src = this.frameCanvas(im);
     // Creatures WITHOUT a generated 3D model keep their authored art on a thin
     // relief so pixel rows cannot turn into a stretched accordion. Creatures
@@ -356,9 +357,9 @@ export class BattleMirror {
     // Battle layout puts the ENEMY zone in the upper screen area and the
     // player's in the lower-left — classify by both axes so intro portraits
     // (drawn upper-middle at the enemy spot) never land on the player side.
-    const side: 'player' | 'enemy' = trainerAtEnemy ? 'enemy'
-      : ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player';
-    const slot = trainerAtEnemy ? 0
+    const side: 'player' | 'enemy' = pokemonSide ?? (trainerAtEnemy ? 'enemy'
+      : ((im.y ?? 0) < H * 0.32 || (im.x ?? 0) > W * 0.6) ? 'enemy' : 'player');
+    const slot = pokemonSide || trainerAtEnemy ? 0
       : [...this.combatants.values()].filter(cb => cb.side === side).length % 2;
 
     const mats = reliefMaterials(relief.texture);

@@ -1,14 +1,41 @@
 /**
- * Level-up learnsets. As a Pokémon levels, it learns a type-appropriate coverage
- * move (to patch its weaknesses) and a stronger second STAB — so teams gain depth
- * instead of being stuck on their two starting attacks. Applies to the player's
- * party only (enemies build movesets separately in TrainerBattleScene).
+ * Shared level-up learnsets for the player's party and ordinary opponents.
+ * Everyone begins with one simple move, then opens new move slots gradually.
+ * Boss trainers may still use their authored end-game sets.
  */
 import { MoveData } from '../battle/Pokemon';
 import { PokemonType } from '../battle/TypeChart';
 
 const M = (name: string, type: string, category: 'physical' | 'special', power: number, accuracy = 100, pp = 10): MoveData =>
   ({ name, type: type as PokemonType, category, power, accuracy, pp });
+
+const S = (name: string, type: string, pp: number): MoveData =>
+  ({ name, type: type as PokemonType, category: 'status', power: 0, accuracy: 100, pp });
+
+const TACKLE: MoveData = M('Tackle', 'normal', 'physical', 40, 100, 35);
+
+// The first same-type move is intentionally weak. At level 5 a starter has only
+// Tackle; this arrives at level 7 and makes the second move feel earned.
+const EARLY_STAB: Record<string, MoveData> = {
+  normal:   M('Quick Attack', 'normal', 'physical', 40, 100, 30),
+  fire:     M('Ember', 'fire', 'special', 40, 100, 25),
+  water:    M('Water Gun', 'water', 'special', 40, 100, 25),
+  grass:    M('Vine Whip', 'grass', 'physical', 40, 100, 25),
+  electric: M('Thunder Shock', 'electric', 'special', 40, 100, 30),
+  ice:      M('Powder Snow', 'ice', 'special', 40, 100, 25),
+  fighting: M('Karate Chop', 'fighting', 'physical', 40, 100, 25),
+  poison:   M('Poison Sting', 'poison', 'physical', 35, 100, 30),
+  ground:   M('Mud Slap', 'ground', 'special', 30, 100, 20),
+  flying:   M('Peck', 'flying', 'physical', 35, 100, 35),
+  psychic:  M('Confusion', 'psychic', 'special', 40, 100, 25),
+  bug:      M('Bug Bite', 'bug', 'physical', 40, 100, 25),
+  rock:     M('Rock Throw', 'rock', 'physical', 40, 95, 20),
+  ghost:    M('Shadow Sneak', 'ghost', 'physical', 40, 100, 30),
+  dragon:   M('Twister', 'dragon', 'special', 40, 100, 20),
+  dark:     M('Pursuit', 'dark', 'physical', 40, 100, 20),
+  steel:    M('Metal Claw', 'steel', 'physical', 40, 100, 25),
+  fairy:    M('Fairy Wind', 'fairy', 'special', 40, 100, 30),
+};
 
 // Coverage move that patches each type's common weaknesses (e.g. Fire/Fairy → Dig,
 // a Ground move that answers the Rock/Steel/Poison threats those types fear).
@@ -82,6 +109,10 @@ export interface LearnEntry { level: number; move: MoveData; }
 
 // Per-Pokémon hand-tuned extras layered on top of the generic kit (by sprite key).
 const OVERRIDES: Record<string, LearnEntry[]> = {
+  // Starter utility moves arrive only after their first low-power STAB.
+  munkain:    [{ level: 9, move: S('Synthesis', 'grass', 5) }],
+  vipour:     [{ level: 9, move: S('Smokescreen', 'normal', 20) }],
+  onnurian:   [{ level: 9, move: S('Mist', 'ice', 30) }],
   feldaconda: [{ level: 38, move: M('Earth Power', 'ground', 'special', 90, 100) }], // extra Ground coverage
   thanatoat:  [{ level: 38, move: M('Ice Beam', 'ice', 'special', 90, 100) }],
   banderado:  [{ level: 38, move: M('Stone Edge', 'rock', 'physical', 95, 80) }],
@@ -104,21 +135,28 @@ const OVERRIDES: Record<string, LearnEntry[]> = {
  *  the early game onward, not just at the level-24+ power spike. */
 export function levelUpMoves(spriteKey: string, t1?: string, t2?: string, level = 1): MoveData[] {
   const learns: LearnEntry[] = [];
-  if (t1 && STAB1[t1])    learns.push({ level:  9, move: STAB1[t1] });     // early same-type upgrade
-  if (t2 && STAB1[t2])    learns.push({ level: 13, move: STAB1[t2] });
-  if (t1 && COVERAGE[t1]) learns.push({ level: 18, move: COVERAGE[t1] });  // coverage for weaknesses
-  if (t2 && COVERAGE[t2]) learns.push({ level: 24, move: COVERAGE[t2] });
-  if (t1 && STAB2[t1])    learns.push({ level: 30, move: STAB2[t1] });     // strong second STAB
-  if (t2 && STAB2[t2])    learns.push({ level: 38, move: STAB2[t2] });
+  if (t1 && EARLY_STAB[t1]) learns.push({ level:  7, move: EARLY_STAB[t1] });
+  if (t1 && STAB1[t1])      learns.push({ level: 11, move: STAB1[t1] });
+  if (t2 && EARLY_STAB[t2]) learns.push({ level: 15, move: EARLY_STAB[t2] });
+  if (t1 && COVERAGE[t1])   learns.push({ level: 21, move: COVERAGE[t1] });
+  if (t2 && STAB1[t2])      learns.push({ level: 25, move: STAB1[t2] });
+  if (t2 && COVERAGE[t2])   learns.push({ level: 28, move: COVERAGE[t2] });
+  if (t1 && STAB2[t1])      learns.push({ level: 31, move: STAB2[t1] });
+  if (t2 && STAB2[t2])      learns.push({ level: 38, move: STAB2[t2] });
   for (const e of OVERRIDES[spriteKey] ?? []) learns.push(e);
-  return learns.filter(e => level >= e.level).map(e => e.move);
+  return learns.sort((a, b) => a.level - b.level).filter(e => level >= e.level).map(e => e.move);
 }
 
-/** Merge base moves with level-up learns; dedupe by name, keep the 4 strongest. */
+/**
+ * Build the moves known at this level. `base` describes the species' full
+ * authored kit, but only its first move is a level-1 seed; the rest no longer
+ * leak into a new level-5 Pokémon all at once.
+ */
 export function mergeLearnset(base: MoveData[], spriteKey: string, t1?: string, t2?: string, level = 1): MoveData[] {
   const learned = levelUpMoves(spriteKey, t1, t2, level);
   const seen = new Set<string>();
-  const all = [...base, ...learned].filter(m => {
+  const seed = base[0] ?? TACKLE;
+  const all = [seed, ...learned].filter(m => {
     const k = m.name.toLowerCase();
     if (seen.has(k)) return false;
     seen.add(k);
@@ -126,4 +164,20 @@ export function mergeLearnset(base: MoveData[], spriteKey: string, t1?: string, 
   });
   if (all.length <= 4) return all;
   return [...all].sort((a, b) => b.power - a.power).slice(0, 4);
+}
+
+const EARLY_GRASS_COVERAGE = M('Rock Throw', 'rock', 'physical', 40, 95, 20);
+
+/**
+ * Ordinary enemy progression. A level-5 Grass opponent gets one low-power Rock
+ * move alongside Tackle so Ghost starters cannot make the opening battle a free
+ * win; other enemies still begin with only one move.
+ */
+export function enemyLearnset(base: MoveData[], spriteKey: string, t1?: string, t2?: string, level = 1): MoveData[] {
+  const moves = mergeLearnset(base.length ? base : [TACKLE], spriteKey, t1, t2, level);
+  const isEarlyGrass = level >= 5 && level < 11 && (t1 === 'grass' || t2 === 'grass');
+  if (isEarlyGrass && !moves.some(m => m.name.toLowerCase() === EARLY_GRASS_COVERAGE.name.toLowerCase())) {
+    moves.push(EARLY_GRASS_COVERAGE);
+  }
+  return moves.slice(0, 4);
 }

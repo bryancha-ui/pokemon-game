@@ -88,12 +88,21 @@ export class CapitolGymScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300);
 
     this.dialog = new DialogBox(this, 1280, 720);
-    this.dialog.show([
-      'You entered the Capitol Gym!',
-      'The air feels cold and heavy with shadow...',
-      'Defeat the three Shadow Trainers to reach Leader Jin.',
-    ], () => { this.cutsceneActive = false; });
-    this.cutsceneActive = true;
+    // The gym scene is recreated after every trainer battle. Play the entrance
+    // card only on the first visit so returning from battle never looks like a
+    // warp back to the beginning of the gym.
+    const firstEntry = !this.registry.get('capitolGymEntered');
+    this.registry.set('capitolGymEntered', true);
+    if (firstEntry) {
+      this.dialog.show([
+        'You entered the Capitol Gym!',
+        'The air feels cold and heavy with shadow...',
+        'Defeat the three Shadow Trainers to reach Leader Jin.',
+      ], () => { this.cutsceneActive = false; });
+      this.cutsceneActive = true;
+    } else {
+      this.cutsceneActive = false;
+    }
   }
 
   private drawGym() {
@@ -309,6 +318,10 @@ export class CapitolGymScene extends Phaser.Scene {
         'Leader Jin: Darkness is not evil — it is the truth behind light.',
         'Leader Jin: Come. Show me what you are made of.',
       ], () => {
+        // Keep the retry point at Jin's platform. This is also a safety net for
+        // any future transition that legitimately recreates the gym scene.
+        this.registry.set('gymPosX', this.px);
+        this.registry.set('gymPosY', this.py);
         this.registry.set('capitalReturnX', this.px);
         this.registry.set('capitalReturnY', this.py);
         this.cameras.main.fadeOut(500, 0, 0, 0, () => {

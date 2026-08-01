@@ -5,6 +5,7 @@ import { buildCharacterModel, buildPlayerModel, CharacterProfile, PlayerModel } 
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { makeBlobShadow } from './Props';
+import { getProp, propFailed, type PropDef } from './PropModels';
 import { buildTerrain, PX, TerrainResult } from './TerrainBuilder';
 import { disposeDeep, ThreeStage } from './ThreeStage';
 
@@ -46,12 +47,29 @@ interface Tracked {
   characterPhase?: number;
 }
 
+interface InteriorModel3D {
+  id: string;
+  url: string;
+  /** Target footprint in terrain-local tiles. */
+  x: number;
+  z: number;
+  width: number;
+  maxDepth?: number;
+  rotation?: number;
+}
+
 const WORLD_COVER = 0.42;      // graphics covering ≥42% of the world = part of the map painting
 
 /** Natural traversal maps must never grow heuristic city blocks. Their rocks,
  * cliffs and dense foliage can have the same pixel variance as a painted roof. */
 function isWildFieldScene(sceneKey: string): boolean {
   return /(?:Route\d*|Road|Pass|Beach|Coast|Valley|Plateau|Highlands|Foothills|Cavern|Cave|Snowfield|Summit|Cliff|Reaches|Ocean|Mine|Gardens|Waterfall)Scene$/.test(sceneKey);
+}
+
+/** City scenes that may use the bundled CC0 building pack for otherwise
+ * unnamed building footprints. Explicit scene flags still take precedence. */
+function isUrbanMapScene(sceneKey: string): boolean {
+  return sceneKey === 'SeoulScene' || /(?:City|Town|Plaza|Park)Scene$/.test(sceneKey);
 }
 
 export class OverworldMirror {
@@ -65,6 +83,7 @@ export class OverworldMirror {
   private groundTex: THREE.CanvasTexture | null = null;
   private mapGraphics = new Set<GO>();
   private mapImages = new Set<GO>();
+  private hiddenFrom2D = new Set<GO>();
   private mapHashes = new Map<GO, number>();
   private mapImgSigs = new Map<GO, number>();
   private static sigCanvas: HTMLCanvasElement | null = null;
@@ -86,6 +105,12 @@ export class OverworldMirror {
   private hero: PlayerModel | null = null;
   private heroWalkPhase = 0;
   private heroLast: { x: number; z: number } | null = null;
+  private pendingInteriorModel: {
+    holder: THREE.Group;
+    def: PropDef;
+    spec: InteriorModel3D;
+    wait: number;
+  } | null = null;
 
   constructor(scene: Phaser.Scene, stage: ThreeStage, rig: CameraRig) {
     this.scene = scene;
@@ -101,7 +126,9 @@ export class OverworldMirror {
     this.tracked.clear();
     this.mapGraphics.clear();
     this.mapImages.clear();
+    this.hiddenFrom2D.clear();
     this.pendingObjects.clear();
+    this.pendingInteriorModel = null;
   }
 
   /** The player object: the camera-follow target, or the scene's `playerG` field
@@ -227,11 +254,14 @@ export class OverworldMirror {
       grassTone3D?: number;
     };
     const known = sc.buildingPlots ?? [];
+    const useFreeCityBuildings = sc.freeBuildings ?? (
+      !this.isInterior && !sc.onlyNamedBuildings && isUrbanMapScene(this.scene.scene.key)
+    );
     const t = buildTerrain(
       this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? isWildFieldScene(this.scene.scene.key), sc.vehiclePlots ?? [],
-      sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
+      sc.caveFloorHint ?? false, sc.noVehicles ?? false, useFreeCityBuildings,
       sc.propPlots ?? [], sc.clearSight3D ?? false, sc.grass3D ?? false,
       sc.grassTileIds3D ?? [], sc.grassDensity3D ?? 1.45, sc.grassTone3D ?? 0x49b23a,
     );
@@ -239,7 +269,62 @@ export class OverworldMirror {
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;
     t.group.position.set(this.worldX / PX, 0, this.worldY / PX);   // world-space origin
     this.root.add(t.group);
+    this.queueInteriorModel(t);
     return t;
+  }
+
+  /** Queue a scene-authored room GLB while Phaser remains authoritative for
+   * movement, collisions, NPCs, healing, shopping and exits. */
+  private queueInteriorModel(terrain: TerrainResult): void {
+    this.pendingInteriorModel = null;
+    const spec = (this.scene as unknown as { interiorModel3D?: InteriorModel3D }).interiorModel3D;
+    if (!spec) return;
+    const holder = new THREE.Group();
+    holder.name = `interior:${spec.id}`;
+    terrain.group.add(holder);
+    this.pendingInteriorModel = {
+      holder,
+      spec,
+      def: { id: spec.id, role: 'scenery', url: spec.url },
+      wait: 0,
+    };
+  }
+
+  private updateInteriorModel(dt: number): void {
+    const pending = this.pendingInteriorModel;
+    if (!pending) return;
+    const model = getProp(pending.def);
+    if (!model) {
+      pending.wait += dt;
+      if (propFailed(pending.def) || pending.wait > 8) {
+        pending.holder.removeFromParent();
+        this.pendingInteriorModel = null;
+      }
+      return;
+    }
+
+    model.rotation.y = pending.spec.rotation ?? 0;
+    model.updateMatrixWorld(true);
+    const initial = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    initial.getSize(size);
+    const fitWidth = pending.spec.width / Math.max(0.001, size.x);
+    const fitDepth = pending.spec.maxDepth === undefined
+      ? Infinity
+      : pending.spec.maxDepth / Math.max(0.001, size.z);
+    model.scale.multiplyScalar(Math.min(fitWidth, fitDepth));
+    model.updateMatrixWorld(true);
+
+    // Centre on the authored room width and align the model's rear edge with
+    // the north wall. This leaves the existing entrance/player aisle clear.
+    const fitted = new THREE.Box3().setFromObject(model);
+    const center = new THREE.Vector3();
+    fitted.getCenter(center);
+    model.position.x += pending.spec.x + pending.spec.width / 2 - center.x;
+    model.position.z += pending.spec.z - fitted.min.z;
+    model.position.y += 0.035 - fitted.min.y; // avoid floor z-fighting
+    pending.holder.add(model);
+    this.pendingInteriorModel = null;
   }
 
   /** Some scenes paint their map a beat late (cutscene fades, delayed draws).
@@ -379,6 +464,12 @@ export class OverworldMirror {
       return;
     }
     if (obj instanceof Phaser.GameObjects.Text) {
+      // The room GLB already contains its signage and fixtures. Keep NPC labels
+      // and UI, but suppress low-depth procedural room labels in 3D mode.
+      if (this.hasInteriorModel3D() && (obj.depth ?? 0) <= 10) {
+        this.hideFrom2D(obj);
+        return;
+      }
       this.adoptText(obj as GO & Phaser.GameObjects.Text);
       return;
     }
@@ -390,11 +481,23 @@ export class OverworldMirror {
   }
 
   private hasBuildingPlots(): boolean {
-    const sc = this.scene as unknown as { buildingPlots?: unknown[]; freeBuildings?: boolean };
-    return (Array.isArray(sc.buildingPlots) && sc.buildingPlots.length > 0) || !!sc.freeBuildings;
+    const sc = this.scene as unknown as {
+      buildingPlots?: unknown[];
+      onlyNamedBuildings?: boolean;
+      freeBuildings?: boolean;
+    };
+    const useFreeCityBuildings = sc.freeBuildings ?? (
+      !this.isInterior && !sc.onlyNamedBuildings && isUrbanMapScene(this.scene.scene.key)
+    );
+    return (Array.isArray(sc.buildingPlots) && sc.buildingPlots.length > 0) || useFreeCityBuildings;
+  }
+
+  private hasInteriorModel3D(): boolean {
+    return !!(this.scene as unknown as { interiorModel3D?: InteriorModel3D }).interiorModel3D;
   }
 
   private hideFrom2D(obj: GO): void {
+    this.hiddenFrom2D.add(obj);
     const cam = this.scene.cameras.main;
     cam.ignore(obj as Phaser.GameObjects.GameObject);
   }
@@ -673,6 +776,7 @@ export class OverworldMirror {
       this.needsTerrainRebuild = false;
       this.rebuildTerrain();
     }
+    this.updateInteriorModel(dt);
     // Map graphics occasionally redraw (doors opening, cut trees): re-composite at most ~2Hz.
     this.mapRedrawCooldown -= dt;
     if (this.mapRedrawCooldown <= 0) {
@@ -880,6 +984,7 @@ export class OverworldMirror {
 
   /** Restore all Phaser-side visibility (leaving 3D mode). */
   restore2D(): void {
+    for (const o of this.hiddenFrom2D) this.show2D(o);
     for (const t of this.tracked.values()) this.show2D(t.obj);
     for (const g of this.mapGraphics) this.show2D(g);
     for (const i of this.mapImages) this.show2D(i);
@@ -887,6 +992,7 @@ export class OverworldMirror {
 
   /** Re-apply 2D hiding (entering 3D mode). */
   apply3D(): void {
+    for (const o of this.hiddenFrom2D) this.hideFrom2D(o);
     for (const t of this.tracked.values()) this.hideFrom2D(t.obj);
     for (const g of this.mapGraphics) this.hideFrom2D(g);
     for (const i of this.mapImages) this.hideFrom2D(i);

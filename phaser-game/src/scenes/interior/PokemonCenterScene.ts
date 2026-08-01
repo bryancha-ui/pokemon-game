@@ -5,6 +5,14 @@ import { playJingle } from '../../systems/Music';
 import { recordLastCenter } from '../../systems/Blackout';
 
 export class PokemonCenterScene extends BaseInteriorScene {
+  public interior3D = true;
+  public clearSight3D = true;
+  public interiorModel3D = {
+    id: 'pokemon-center-interior',
+    url: 'assets/map3d/interiors/pokemon_center_scene.glb',
+    // BaseInteriorScene gets one terrain tile of padding around its 16×13 room.
+    x: 1, z: 1, width: 16, maxDepth: 11,
+  };
   protected bgmKey = 'center';
   constructor() { super({ key: 'PokemonCenterScene' }); }
 
@@ -45,9 +53,11 @@ export class PokemonCenterScene extends BaseInteriorScene {
     }).setOrigin(0.5).setDepth(10);
 
     // ── Reception desk ──
-    this.drawRect(g, 4, 3, 8, 2, 0xcc2244, 0x990022);
+    // Keep the counter one tile deep. The previous two-row collision extended
+    // beyond the GLB counter and felt like an invisible wall in front of Nurse Joy.
+    this.drawRect(g, 4, 3, 8, 1, 0xcc2244, 0x990022);
     this.label('RECEPTION', 7, 3, 10, '#fff');
-    this.addSolid(4, 3, 11, 4);
+    this.addSolid(4, 3, 11, 3);
 
     // ── Healing machines (left + right) ──
     this.drawRect(g, 2, 6, 2, 2, 0x3355cc, 0x1133aa);
@@ -59,11 +69,12 @@ export class PokemonCenterScene extends BaseInteriorScene {
 
     // ── Waiting chairs ──
     this.drawRect(g, 3, 9, 2, 1, 0x4444cc, 0x2222aa);
-    this.drawRect(g, 6, 9, 2, 1, 0x4444cc, 0x2222aa);
+    // Leave columns 7-8 as a continuous aisle from the entrance to reception.
+    this.drawRect(g, 5, 9, 2, 1, 0x4444cc, 0x2222aa);
     this.drawRect(g, 9, 9, 2, 1, 0x4444cc, 0x2222aa);
     this.drawRect(g, 12, 9, 2, 1, 0x4444cc, 0x2222aa);
     this.addSolid(3, 9, 4, 9);
-    this.addSolid(6, 9, 7, 9);
+    this.addSolid(5, 9, 6, 9);
     this.addSolid(9, 9, 10, 9);
     this.addSolid(12, 9, 13, 9);
 
@@ -84,8 +95,14 @@ export class PokemonCenterScene extends BaseInteriorScene {
 
   protected setupNPCs() {
     // Nurse Joy (heals)
-    const nurse = this.createNPCGraphic(7, 2, 0xffffff, 0xff88aa, true, 0, 'center_nurse');
+    const nurse = this.createNPCGraphic(7, 1, 0xffffff, 0xff88aa, true, 0, 'center_nurse');
     (nurse as NPC & { role?: string }).role = 'nurse';
+    // Nurse Joy stands behind the two-tile-deep reception desk. Interact from
+    // its customer side so the player never has to find a path behind it.
+    const nurseCounter = this.tile(7, 4);
+    nurse.interactX = nurseCounter.x + 16;
+    nurse.interactY = nurseCounter.y + 16;
+    nurse.interactRadius = 44;
     this.add.text(this.tile(7, 2).x + 16, this.tile(7, 2).y - 6, tr('Nurse Joy'),
       { fontSize: '10px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
@@ -99,10 +116,29 @@ export class PokemonCenterScene extends BaseInteriorScene {
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(clerk);
 
-    // PC (storage box)
-    const pc = this.createNPCGraphic(13, 6, 0x4466cc, 0x112244, false, 0, 'center_pc_attendant');
-    (pc as NPC & { role?: string }).role = 'pc';
-    this.add.text(this.tile(13, 6).x + 16, this.tile(13, 6).y - 6, tr('💻 PC'),
+    // PC (storage box) — placed immediately to Nurse Joy's right. The old PC
+    // occupied the right healing machine's solid tiles and could not be reached.
+    const pcTile = this.tile(10, 2);
+    const pcX = pcTile.x + 16, pcY = pcTile.y + 16;
+    const pcGraphic = this.add.graphics().setDepth(15).setPosition(pcX, pcY).setData('no3d', true);
+    pcGraphic.fillStyle(0x18284c, 1); pcGraphic.fillRoundedRect(-12, -20, 24, 24, 3);
+    pcGraphic.fillStyle(0x77ccff, 1); pcGraphic.fillRect(-9, -17, 18, 13);
+    pcGraphic.fillStyle(0xbbeeff, 0.75); pcGraphic.fillRect(-6, -14, 8, 3);
+    pcGraphic.fillStyle(0x2b3150, 1); pcGraphic.fillRect(-4, 4, 8, 6);
+    pcGraphic.fillStyle(0x111827, 1); pcGraphic.fillRect(-9, 10, 18, 4);
+    const pc: NPC & { role?: string } = {
+      x: pcX, y: pcY,
+      interactX: this.tile(10, 4).x + 16,
+      interactY: this.tile(10, 4).y + 16,
+      interactRadius: 44,
+      graphic: pcGraphic,
+      bodyColor: 0x4466cc,
+      hairColor: 0x112244,
+      isFemale: false,
+      facing: 0,
+      role: 'pc',
+    };
+    this.add.text(pcX, pcTile.y - 6, tr('💻 PC'),
       { fontSize: '10px', color: '#aaccff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(pc);

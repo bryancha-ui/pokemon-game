@@ -696,6 +696,22 @@ export function buildTerrain(
   const walls = new WallBuilder();
   const waterRects: { x: number; z: number; w: number; d: number }[] = [];
 
+  // Blend a bounded number of locally vendored CC0 nature models into the
+  // instanced procedural foliage. The cap keeps large routes draw-call friendly
+  // while giving forests and rocky areas authored silhouettes and variation.
+  primeProps();
+  const sceneryDefs = propsFor('scenery').filter(d => d.tags?.includes('naturefree'));
+  const natureTreeDefs = sceneryDefs.filter(d => d.tags?.includes('tree') && (!snowy || d.tags?.includes('pine')));
+  const natureRockDefs = sceneryDefs.filter(d => d.tags?.includes('rock'));
+  const pendingScenery: {
+    group: THREE.Group;
+    def: import('./PropModels').PropDef;
+    scale: number;
+    rot: number;
+    wait: number;
+  }[] = [];
+  let communityNatureCount = 0;
+
   const rnd = mulberry(12345);
 
   // Merge horizontal runs of wall cells into single blocks; place props per cell.
@@ -731,7 +747,23 @@ export function buildTerrain(
       switch (cell) {
         case 'tree': case 'pine':
           if (interior) break;
-          trees.place(cx + (rnd() - 0.5) * 0.3, cz + (rnd() - 0.5) * 0.3, 0.85 + rnd() * 0.45, rnd() * Math.PI * 2);
+          {
+            const x = cx + (rnd() - 0.5) * 0.3;
+            const z = cz + (rnd() - 0.5) * 0.3;
+            const rot = rnd() * Math.PI * 2;
+            const natureDef = communityNatureCount < 64 && rnd() > 0.82
+              ? pickProp(natureTreeDefs, c * 31 + r * 17)
+              : null;
+            if (natureDef) {
+              const holder = new THREE.Group();
+              holder.position.set(x, 0, z);
+              group.add(holder);
+              pendingScenery.push({ group: holder, def: natureDef, scale: 1.5 + rnd() * 0.8, rot, wait: 0 });
+              communityNatureCount++;
+            } else {
+              trees.place(x, z, 0.85 + rnd() * 0.45, rot);
+            }
+          }
           break;
         case 'grass':
           if (interior) break;
@@ -764,7 +796,21 @@ export function buildTerrain(
           }
           const rough = cellVar[r * cols + c] > 300;
           if (!interior && rough && rockNeighbors >= 4 && rnd() > 0.72) {
-            rocks.place(cx + (rnd() - 0.5) * 0.4, cz + (rnd() - 0.5) * 0.4, 0.7 + rnd() * 0.6, rnd() * Math.PI * 2);
+            const x = cx + (rnd() - 0.5) * 0.4;
+            const z = cz + (rnd() - 0.5) * 0.4;
+            const rot = rnd() * Math.PI * 2;
+            const natureDef = communityNatureCount < 80 && rnd() > 0.62
+              ? pickProp(natureRockDefs, c * 19 + r * 37)
+              : null;
+            if (natureDef) {
+              const holder = new THREE.Group();
+              holder.position.set(x, 0, z);
+              group.add(holder);
+              pendingScenery.push({ group: holder, def: natureDef, scale: 0.6 + rnd() * 0.55, rot, wait: 0 });
+              communityNatureCount++;
+            } else {
+              rocks.place(x, z, 0.7 + rnd() * 0.6, rot);
+            }
           }
           break;
         }
@@ -793,7 +839,6 @@ export function buildTerrain(
   // If generated building models are available they're placed on the detected
   // plots (deterministically chosen, fitted to the footprint); otherwise the
   // engine extrudes facade+roof volumes from the original painted art.
-  primeProps();
   const blockers: { node: THREE.Object3D; r: number; fade: number }[] = [];
   const pendingProps: { group: THREE.Group; def: import('./PropModels').PropDef; b: typeof buildings[number]; h: number; wait: number; rot?: number }[] = [];
 
@@ -1020,6 +1065,19 @@ export function buildTerrain(
         model.rotation.y = p.rot ?? ((p.b.x * 7 + p.b.z * 13) % 4) * (Math.PI / 2);
         p.group.add(model);
         pendingProps.splice(i, 1);
+      }
+      for (let i = pendingScenery.length - 1; i >= 0; i--) {
+        const p = pendingScenery[i];
+        const model = getProp(p.def);
+        if (!model) {
+          p.wait += dt;
+          if (propFailed(p.def) || p.wait > 2.5) pendingScenery.splice(i, 1);
+          continue;
+        }
+        model.scale.multiplyScalar(p.scale);
+        model.rotation.y = p.rot;
+        p.group.add(model);
+        pendingScenery.splice(i, 1);
       }
       for (let i = pendingVehicles.length - 1; i >= 0; i--) {
         const v = pendingVehicles[i];

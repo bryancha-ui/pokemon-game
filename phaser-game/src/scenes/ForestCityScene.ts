@@ -9,6 +9,7 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { PartySystem, baseStatsFromData, recomputeMaxHp, PartyEntry } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { customForm } from '../data/CustomBattle';
+import { installCeladonCityViewer } from '../systems/SketchfabCityViewer';
 
 // ── Tiles ───────────────────────────────────────────────────────────────────
 const T = { MOSS: 0, PATH: 1, BUILDING: 2, TREE: 3, GLOW: 4, POND: 5, BRIDGE: 6, FLOWER: 7 } as const;
@@ -90,6 +91,7 @@ export class ForestCityScene extends Phaser.Scene {
     this.setupCamera();
     this.setupInput();
     this.createUI();
+    installCeladonCityViewer(this);
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'ForestCityScene');
 

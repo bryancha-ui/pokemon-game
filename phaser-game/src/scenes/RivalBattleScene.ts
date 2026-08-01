@@ -17,6 +17,7 @@ import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { genderedName } from '../data/PokemonGender';
 import { actsBefore } from '../systems/AbilitySystem';
+import { enemyLearnset, mergeLearnset } from '../data/Learnsets';
 
 type BattleState = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'levelUp' | 'over';
 const RIVAL_STAGE_X = 580;
@@ -26,6 +27,7 @@ export class RivalBattleScene extends Phaser.Scene {
   private player!: Pokemon;
   private rival!: Pokemon;
   private state: BattleState = 'intro';
+  private lastRivalMoveName = '';
   /** Gender-based rival trainer name: 'Minhyuk' (male) / 'Soohyun' (female). */
   private get rivalTName() { return rivalTrainerName(this.registry); }
 
@@ -113,13 +115,18 @@ export class RivalBattleScene extends Phaser.Scene {
       this.participants = new Set<number>([this.activeSlot]);
     } else {
       const playerDef = findForm(starterKey) ?? STARTERS[1];
-      this.player = new Pokemon(playerDef.data, starterLevel, playerDef.startingMoves);
+      this.player = new Pokemon(playerDef.data, starterLevel,
+        mergeLearnset(playerDef.startingMoves, playerDef.spriteKey,
+          playerDef.data.type1, playerDef.data.type2, starterLevel));
       this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
     }
 
-    // First rival encounter: rival only knows Tackle to keep it fair
+    // The first rival also follows early progression. Grass gets a weak Rock
+    // option beside Tackle so Hakdongja's Ghost typing is not a free immunity.
     const rivalDef = findForm(rivalKey) ?? STARTERS[2];
-    this.rival = new Pokemon(rivalDef.data, starterLevel, [rivalDef.startingMoves[0]]);
+    this.rival = new Pokemon(rivalDef.data, starterLevel,
+      enemyLearnset(rivalDef.startingMoves, rivalDef.spriteKey,
+        rivalDef.data.type1, rivalDef.data.type2, starterLevel));
     DexTracker.markSeen(this.registry, rivalKey);
   }
 
@@ -216,8 +223,10 @@ export class RivalBattleScene extends Phaser.Scene {
                ?? (this.registry.get('starterKey') as string) ?? 'vipour';
 
     // Start off-screen: rival enters from top-right, player from bottom-left
-    this.rivalSprite  = this.add.image(960, 60,  rKey).setDepth(5).setAlpha(0);
-    this.playerSprite = this.add.image(-80, 320,  pKey).setDepth(5).setFlipX(true).setAlpha(0);
+    this.rivalSprite  = this.add.image(960, 60,  rKey)
+      .setDepth(5).setAlpha(0).setData('battlePokemonSide', 'enemy');
+    this.playerSprite = this.add.image(-80, 320,  pKey)
+      .setDepth(5).setFlipX(true).setAlpha(0).setData('battlePokemonSide', 'player');
     this.fitSprite(this.rivalSprite, 168);   // enlarge the rival's Pokémon so it reads as a real threat
     this.fitSprite(this.playerSprite, 150);
 
@@ -454,7 +463,7 @@ export class RivalBattleScene extends Phaser.Scene {
     this.state = 'busy';
     const availableMoves = this.rival.moves.filter(m => m.pp > 0);
     const rivalMove = pendingMoveFor(this.rival) ?? (availableMoves.length > 0
-      ? availableMoves[Math.floor(Math.random() * availableMoves.length)] : this.rival.moves[0]);
+      ? this.pickRivalMove(availableMoves) : this.rival.moves[0]);
     const playerFirst = actsBefore(this.player, playerMove, this.rival, rivalMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doRivalMove(() => this.playerAction(), rivalMove));
@@ -492,11 +501,27 @@ export class RivalBattleScene extends Phaser.Scene {
     this.doRivalMove(() => this.playerAction());
   }
 
+  /**
+   * Keep the opening Grass rival capable of hurting Hakdongja without letting
+   * Rock Throw dominate the fight. It is selected only 25% of eligible turns
+   * and never twice in succession while another move still has PP.
+   */
+  private pickRivalMove(pool: Move[]): Move {
+    const rockThrow = pool.find(m => m.data.name.toLowerCase() === 'rock throw');
+    const alternatives = pool.filter(m => m !== rockThrow);
+    const canUseRock = !!rockThrow && alternatives.length > 0
+      && this.lastRivalMoveName !== 'rock throw' && Math.random() < 0.25;
+    const choices = canUseRock ? [rockThrow] : (alternatives.length ? alternatives : pool);
+    const selected = choices[Math.floor(Math.random() * choices.length)];
+    this.lastRivalMoveName = selected.data.name.toLowerCase();
+    return selected;
+  }
+
   private doRivalMove(onDone: () => void, selectedMove?: Move) {
-    // Rival attacks back — pick random move with PP
+    // Rival attacks back using the opening-battle frequency tuning above.
     const availableMoves = this.rival.moves.filter(m => m.pp > 0);
     const rivalMove = selectedMove ?? pendingMoveFor(this.rival) ?? (availableMoves.length > 0
-      ? availableMoves[Math.floor(Math.random() * availableMoves.length)]
+      ? this.pickRivalMove(availableMoves)
       : this.rival.moves[0]);
 
     executeBattleMove({

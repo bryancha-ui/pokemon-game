@@ -28,7 +28,9 @@
     },
     {
       "key": "bookbug",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6e42a122-3bc8-4795-9c23-6b9dd8e31f53.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6e42a122-3bc8-4795-9c23-6b9dd8e31f53.glb",
+      "scale": 0.5,
+      "rotY":270
     },
     {
       "key": "bookmoth",
@@ -62,7 +64,7 @@
     {
       "key": "kidstrel",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8c4c33a3-76f4-47ee-9207-b594b6afb9f6.glb",
-      "rotY": 90
+      "rotY": 270
     },
     {
       "key": "frysm",

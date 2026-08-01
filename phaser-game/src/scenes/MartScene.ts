@@ -8,6 +8,13 @@ export class MartScene extends BaseInteriorScene {
   // outdoor props, and its blue wall/shelf trim is never mistaken for water — an
   // indoor room has no ocean, so the "blue waves" behind the counter are gone).
   public interior3D = true;
+  public clearSight3D = true;
+  public interiorModel3D = {
+    id: 'pokemart-interior',
+    url: 'assets/map3d/interiors/pokemart.glb',
+    // Fit inside the 14-tile shop floor and leave the front entrance aisle open.
+    x: 2, z: 2, width: 14, maxDepth: 9,
+  };
   protected bgmKey = 'mart';
   constructor() { super({ key: 'MartScene' }); }
 
@@ -54,6 +61,10 @@ export class MartScene extends BaseInteriorScene {
   protected setupNPCs() {
     const clerk = this.createNPCGraphic(7, 2, 0x33aa66, 0x223322, false, 0);
     (clerk as NPC & { role?: string }).role = 'clerk';
+    const counterFront = this.tile(7, 5);
+    clerk.interactX = counterFront.x + 16;
+    clerk.interactY = counterFront.y + 16;
+    clerk.interactRadius = 44;
     this.add.text(this.tile(7, 2).x + 16, this.tile(7, 2).y - 6, tr('Mart Clerk'),
       { fontSize: '10px', color: '#aaffcc', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);

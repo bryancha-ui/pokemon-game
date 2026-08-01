@@ -8,6 +8,9 @@ const IT = 32; // interior tile size
 
 export interface NPC {
   x: number; y: number;
+  /** Optional point the player approaches when the NPC stands behind a desk. */
+  interactX?: number; interactY?: number;
+  interactRadius?: number;
   graphic: Phaser.GameObjects.Graphics;
   bodyColor: number;
   hairColor: number;
@@ -44,6 +47,10 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
 
   create() {
     this.exiting = false;
+    // Phaser reuses Scene instances. Rebuild collision/NPC state from scratch
+    // on every entry so stale invisible hitboxes cannot survive a prior visit.
+    this.solidRects = [];
+    this.npcs = [];
     this.offsetX = (this.scale.width  - this.COLS * IT) / 2;
     this.offsetY = (this.scale.height - this.ROWS * IT) / 2;
 
@@ -131,11 +138,16 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
 
   private checkProximity() {
     let nearest: NPC | null = null;
-    let nearestDist = 52;
+    let nearestDist = Infinity;
 
     for (const npc of this.npcs) {
-      const d = Math.hypot(this.px - npc.x, this.py - npc.y);
-      if (d < nearestDist) { nearest = npc; nearestDist = d; }
+      const tx = npc.interactX ?? npc.x;
+      const ty = npc.interactY ?? npc.y;
+      const d = Math.hypot(this.px - tx, this.py - ty);
+      if (d < (npc.interactRadius ?? 52) && d < nearestDist) {
+        nearest = npc;
+        nearestDist = d;
+      }
     }
 
     if (nearest) {

@@ -19,6 +19,8 @@ import { runLevelUpLearning } from '../systems/MoveLearning';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { genderedName } from '../data/PokemonGender';
 import { actsBefore } from '../systems/AbilitySystem';
+import { mergeLearnset } from '../data/Learnsets';
+import { blackoutMessage, blackoutToCenter } from '../systems/Blackout';
 
 type State = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 const HP_W = 200;
@@ -107,7 +109,8 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       const key   = (this.registry.get('starterKey')   as string) ?? 'vipour';
       const level = (this.registry.get('starterLevel') as number) ?? 5;
       const def   = findForm(key) ?? STARTERS[1];
-      this.player = new Pokemon(def.data, level, def.startingMoves);
+      this.player = new Pokemon(def.data, level,
+        mergeLearnset(def.startingMoves, def.spriteKey, def.data.type1, def.data.type2, level));
       this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
     }
 
@@ -240,8 +243,10 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   private createSprites() {
     const pKey = PartySystem.get(this.registry)[this.activeSlot]?.spriteKey
                ?? (this.registry.get('starterKey') as string) ?? 'vipour';
-    this.enemySprite  = this.add.image(900, 100, 'corrpanda').setDepth(5).setAlpha(0);
-    this.playerSprite = this.add.image(-80, 340, pKey).setDepth(5).setFlipX(true).setAlpha(0);
+    this.enemySprite  = this.add.image(900, 100, 'corrpanda')
+      .setDepth(5).setAlpha(0).setData('battlePokemonSide', 'enemy');
+    this.playerSprite = this.add.image(-80, 340, pKey)
+      .setDepth(5).setFlipX(true).setAlpha(0).setData('battlePokemonSide', 'player');
     this.fitSprite(this.enemySprite, 150);
     this.fitSprite(this.playerSprite, 160);
     this.updateEnemySprite();
@@ -566,10 +571,10 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     if (nextIdx === -1) {
       this.typeDialog('All your Pokémon fainted!', () => {
         this.typeDialog('Leader Jin: Rest and recover. Your spirit is strong.', () => {
-          PartySystem.healAll(this.registry);
-          this.registry.set('capitalReturnX', 8 * 36 + 18);
-          this.registry.set('capitalReturnY', 12 * 36 + 18);
-          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('CapitolGymScene'));
+          // A Gym loss is a normal whiteout. Returning straight to a freshly
+          // created gym scene replayed its entrance cutscene and looked like a
+          // mid-Corrpanda warp; use the shared Pokémon Center recovery instead.
+          this.typeDialog(blackoutMessage(this.registry), () => blackoutToCenter(this));
         });
       });
       return;

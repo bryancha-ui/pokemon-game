@@ -38,26 +38,26 @@ const BARRIER_COLS = [9, 10, 11, 12, 13, 14];
 
 // Wild encounters — Ice & Rock highland Pokémon (crane / mountain-goat / bear motifs)
 const PASS_ENCOUNTERS: EncounterEntry[] = [
-  { id: 'bosongnun',   weight: 16, minLevel: 17, maxLevel: 20, isCustom: true,  catchRate: 190 }, // Ice/Fairy
-  { id: 'gawlhawk',    weight: 12, minLevel: 17, maxLevel: 20, isCustom: true,  catchRate: 200 }, // Rock/Flying (crane)
-  { id: 'crystbeetle', weight: 10, minLevel: 18, maxLevel: 20, isCustom: true,  catchRate: 180 }, // Bug/Rock
-  { id: 220, weight: 16, minLevel: 17, maxLevel: 20, isCustom: false, catchRate: 225 }, // Swinub
-  { id: 613, weight: 12, minLevel: 17, maxLevel: 20, isCustom: false, catchRate: 120 }, // Cubchoo (bear)
-  { id: 459, weight: 10, minLevel: 17, maxLevel: 20, isCustom: false, catchRate: 120 }, // Snover
-  { id: 74,  weight: 14, minLevel: 17, maxLevel: 20, isCustom: false, catchRate: 255 }, // Geodude
-  { id: 361, weight: 8,  minLevel: 17, maxLevel: 20, isCustom: false, catchRate: 190 }, // Snorunt
-  { id: 'arctorodon', weight: 3, minLevel: 20, maxLevel: 22, isCustom: true, catchRate: 45 }, // Rock/Ice leviathan (rare)
-  { id: 'babymammoth', weight: 12, minLevel: 17, maxLevel: 20, isCustom: true, catchRate: 200 }, // Ice calf
-  { id: 'glacewing',   weight: 12, minLevel: 17, maxLevel: 20, isCustom: true, catchRate: 200 }, // Ice/Bug (snowfields)
+  { id: 'bosongnun',   weight: 16, minLevel: 17, maxLevel: 18, isCustom: true,  catchRate: 190 }, // Ice/Fairy
+  { id: 'gawlhawk',    weight: 12, minLevel: 17, maxLevel: 18, isCustom: true,  catchRate: 200 }, // Rock/Flying (crane)
+  { id: 'crystbeetle', weight: 10, minLevel: 18, maxLevel: 18, isCustom: true,  catchRate: 180 }, // Bug/Rock
+  { id: 220, weight: 16, minLevel: 17, maxLevel: 18, isCustom: false, catchRate: 225 }, // Swinub
+  { id: 613, weight: 12, minLevel: 17, maxLevel: 18, isCustom: false, catchRate: 120 }, // Cubchoo (bear)
+  { id: 459, weight: 10, minLevel: 17, maxLevel: 18, isCustom: false, catchRate: 120 }, // Snover
+  { id: 74,  weight: 14, minLevel: 17, maxLevel: 18, isCustom: false, catchRate: 255 }, // Geodude
+  { id: 361, weight: 8,  minLevel: 17, maxLevel: 18, isCustom: false, catchRate: 190 }, // Snorunt
+  { id: 'arctorodon', weight: 3, minLevel: 20, maxLevel: 19, isCustom: true, catchRate: 45 }, // Rock/Ice leviathan (rare)
+  { id: 'babymammoth', weight: 12, minLevel: 17, maxLevel: 19, isCustom: true, catchRate: 200 }, // Ice calf
+  { id: 'glacewing',   weight: 12, minLevel: 17, maxLevel: 19, isCustom: true, catchRate: 200 }, // Ice/Bug (snowfields)
 ];
 
 // Team Suri — the four Pokémon the two grunts field together (sequential).
 const SURI_KEY = 'suri-grunts';
 const SURI_TEAM = JSON.stringify([
-  { id: 215, level: 21 }, // Sneasel
-  { id: 461, level: 22 }, // Weavile
-  { id: 228, level: 21 }, // Houndour
-  { id: 229, level: 22 }, // Houndoom
+  { id: 215, level: 19 }, // Sneasel
+  { id: 461, level: 20 }, // Weavile
+  { id: 228, level: 20 }, // Houndour
+  { id: 229, level: 21 }, // Houndoom
 ]);
 
 function buildMap(): Tile[][] {

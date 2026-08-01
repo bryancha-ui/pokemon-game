@@ -23,6 +23,7 @@ import { drawBattleBall, playBallSendOut } from '../systems/BattleBallFX';
 import { genderedName, genderForPokemon } from '../data/PokemonGender';
 import { caughtLocationName } from '../data/PokemonOrigin';
 import { actsBefore, guaranteedEscape, preventsEscape } from '../systems/AbilitySystem';
+import { enemyLearnset, mergeLearnset } from '../data/Learnsets';
 
 type WildState = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'catching' | 'over';
 
@@ -138,7 +139,8 @@ export class WildBattleScene extends Phaser.Scene {
 
     // Build wild Pokémon
     if (wildCustom && wildId === 'disguijar') {
-      this.wild = new Pokemon(DISGUIJAR_DATA, wildLevel, DISGUIJAR_MOVES);
+      this.wild = new Pokemon(DISGUIJAR_DATA, wildLevel,
+        enemyLearnset(DISGUIJAR_MOVES, 'disguijar', DISGUIJAR_DATA.type1, DISGUIJAR_DATA.type2, wildLevel));
       if (!this.textures.exists('disguijar')) {
         this.load.image('disguijar', 'assets/disguijar.png');
         await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
@@ -146,7 +148,8 @@ export class WildBattleScene extends Phaser.Scene {
     } else if (wildCustom && customForm(wildId as string)) {
       // Any other custom Pokédex Pokémon
       const cf = customForm(wildId as string)!;
-      this.wild = new Pokemon(cf.data, wildLevel, cf.moves);
+      this.wild = new Pokemon(cf.data, wildLevel,
+        enemyLearnset(cf.moves, wildId as string, cf.data.type1, cf.data.type2, wildLevel));
       if (!this.textures.exists(wildId as string)) {
         this.load.image(wildId as string, cf.data.spriteUrl);
         await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
@@ -163,7 +166,8 @@ export class WildBattleScene extends Phaser.Scene {
         await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
       }
       data.spriteUrl = `//${data.spriteUrl.split('//')[1]}`;
-      this.wild = new Pokemon(data, wildLevel, moves);
+      this.wild = new Pokemon(data, wildLevel,
+        enemyLearnset(moves, `wild-${wildId}`, data.type1, data.type2, wildLevel));
     }
 
     // Build player Pokémon from party slot 0 (party entry is the source of truth)
@@ -178,7 +182,8 @@ export class WildBattleScene extends Phaser.Scene {
       const starterKey   = (this.registry.get('starterKey')  as string) ?? 'vipour';
       const starterLevel = (this.registry.get('starterLevel') as number) ?? 5;
       const def = (findForm(starterKey)) ?? STARTERS[1];
-      this.player = new Pokemon(def.data, starterLevel, def.startingMoves);
+      this.player = new Pokemon(def.data, starterLevel,
+        mergeLearnset(def.startingMoves, def.spriteKey, def.data.type1, def.data.type2, starterLevel));
       this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
     }
   }
@@ -258,8 +263,9 @@ export class WildBattleScene extends Phaser.Scene {
                ?? (this.registry.get('starterKey') as string) ?? 'vipour';
 
     this.wildSprite   = this.add.image(900, 60, this.textures.exists(wKey) ? wKey : 'disguijar')
-      .setDepth(5).setAlpha(0);
-    this.playerSprite = this.add.image(-80, 320, pKey).setDepth(5).setFlipX(true).setAlpha(0);
+      .setDepth(5).setAlpha(0).setData('battlePokemonSide', 'enemy');
+    this.playerSprite = this.add.image(-80, 320, pKey)
+      .setDepth(5).setFlipX(true).setAlpha(0).setData('battlePokemonSide', 'player');
 
     const fitImg = (img: Phaser.GameObjects.Image, size: number) => {
       const tex = this.textures.get(img.texture.key).getSourceImage();

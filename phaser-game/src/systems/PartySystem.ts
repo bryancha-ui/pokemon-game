@@ -91,6 +91,16 @@ function ensureAllBaseStats(entries: PartyEntry[]): boolean {
   let changed = false;
   for (const entry of entries) {
     changed = ensureBaseStats(entry) || changed;
+    // Old saves created starters with their entire authored four-move catalog
+    // at level 5. Migrate only uncurated pre-level-7 local Pokémon; TM choices
+    // already have battleMoves and are deliberately preserved.
+    const earlyForm = findForm(entry.spriteKey);
+    const earlySeed = earlyForm?.startingMoves[0]?.name;
+    if (entry.level < 7 && earlySeed && !entry.battleMoves?.length
+      && (entry.moves.length !== 1 || entry.moves[0]?.toLowerCase() !== earlySeed.toLowerCase())) {
+      entry.moves = [earlySeed];
+      changed = true;
+    }
     if (!entry.gender) {
       const id = Number(entry.spriteKey.match(/(?:wild-|api-|te-)?(\d+)$/)?.[1]) || undefined;
       entry.gender = genderForPokemon({ name: entry.name, key: entry.spriteKey, id },
@@ -143,7 +153,7 @@ export const PartySystem = {
       spriteKey: key,
       spriteUrl: `assets/${key}.jpg`,
       isCustom: true,
-      moves: def?.startingMoves.map(m => m.name) ?? [],
+      moves: def?.startingMoves[0] ? [def.startingMoves[0].name] : [],
       ability: def?.ability,
       caughtAt: "Prof. Song's Lab",
       baseStats: def ? baseStatsFromData(def.data) : { hp: baseHp, atk: 45, def: 45, spAtk: 45, spDef: 45, spd: 45 },

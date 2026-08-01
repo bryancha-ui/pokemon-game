@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 // ── Generated environment prop registry ──────────────────────────────────────
 // Buildings, vehicles and other scenery GLBs (generated from prompts / art) are
@@ -24,6 +26,8 @@ export interface PropDef {
   role: 'building' | 'vehicle' | 'scenery';
   tags?: string[];
   url?: string;
+  /** Optional material library for CC0 OBJ assets. */
+  mtl?: string;
   /** optional authored scale hint (world units of height) */
   height?: number;
 }
@@ -32,6 +36,8 @@ let props: PropDef[] | null = null;
 let loading = false;
 const cache = new Map<string, THREE.Group | 'loading' | 'failed'>();
 const loader = new GLTFLoader();
+const objLoader = new OBJLoader();
+const mtlLoader = new MTLLoader();
 
 export function primeProps(): void {
   if (props || loading) return;
@@ -61,24 +67,36 @@ export function getProp(def: PropDef): THREE.Group | null {
     return c;
   }
   cache.set(def.id, 'loading');
-  loader.load(
-    def.url || `assets/models3d/${def.id}.glb`,
-    (gltf) => {
-      const root = new THREE.Group();
-      root.add(gltf.scene);
-      const box = new THREE.Box3().setFromObject(root);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      root.scale.setScalar(1 / Math.max(0.0001, size.y));
-      const b2 = new THREE.Box3().setFromObject(root);
-      const c = new THREE.Vector3();
-      b2.getCenter(c);
-      root.position.x -= c.x; root.position.z -= c.z; root.position.y -= b2.min.y;
-      cache.set(def.id, root);
-    },
-    undefined,
-    () => { cache.set(def.id, 'failed'); },
-  );
+  const url = def.url || `assets/models3d/${def.id}.glb`;
+  const finish = (model: THREE.Object3D) => {
+    const root = new THREE.Group();
+    root.add(model);
+    const box = new THREE.Box3().setFromObject(root);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    root.scale.setScalar(1 / Math.max(0.0001, size.y));
+    const b2 = new THREE.Box3().setFromObject(root);
+    const c = new THREE.Vector3();
+    b2.getCenter(c);
+    root.position.x -= c.x; root.position.z -= c.z; root.position.y -= b2.min.y;
+    cache.set(def.id, root);
+  };
+  const fail = () => { cache.set(def.id, 'failed'); };
+
+  if (url.toLowerCase().endsWith('.obj')) {
+    if (def.mtl) {
+      mtlLoader.load(def.mtl, (materials) => {
+        materials.preload();
+        const withMaterials = new OBJLoader();
+        withMaterials.setMaterials(materials);
+        withMaterials.load(url, finish, undefined, fail);
+      }, undefined, fail);
+    } else {
+      objLoader.load(url, finish, undefined, fail);
+    }
+  } else {
+    loader.load(url, gltf => finish(gltf.scene), undefined, fail);
+  }
   return null;
 }
 

@@ -27,11 +27,11 @@ import { SaveManager } from '../utils/SaveManager';
 import { playBallSendOut } from '../systems/BattleBallFX';
 import { genderedName } from '../data/PokemonGender';
 import { actsBefore } from '../systems/AbilitySystem';
+import { enemyLearnset, mergeLearnset } from '../data/Learnsets';
 
 // ── Enemy movesets ──────────────────────────────────────────────────────────
-// PokéAPI enemies previously fought with only Tackle + Growl. Give every enemy a
-// strong, type-appropriate kit (two moves per type) so trainers — especially the
-// Elite Four and Champion, whose teams are mostly PokéAPI species — actually hit hard.
+// Strong authored move data is reserved for Elite Four / Champion teams below.
+// Ordinary trainers use the shared level-gated learnset imported above.
 const mv = (name: string, type: string, category: 'physical' | 'special', power: number, accuracy = 100, pp = 10): MoveData =>
   ({ name, type: type as MoveData['type'], category, power, accuracy, pp });
 
@@ -55,18 +55,7 @@ const TYPE_MOVES: Record<string, MoveData[]> = {
   steel:    [mv('Flash Cannon', 'steel', 'special', 85, 100, 10), mv('Iron Head', 'steel', 'physical', 80, 100, 15)],
   fairy:    [mv('Moonblast', 'fairy', 'special', 95, 100, 10), mv('Dazzling Gleam', 'fairy', 'special', 80, 100, 10)],
 };
-const FALLBACK_MOVE: MoveData = mv('Tackle', 'normal', 'physical', 50, 100, 35);
-
-/** A strong, type-appropriate kit (up to 4 moves) for a PokéAPI enemy. */
-function enemyMovesForTypes(t1?: string, t2?: string): MoveData[] {
-  const moves: MoveData[] = [];
-  const add = (m?: MoveData) => { if (m && !moves.some(x => x.name === m.name)) moves.push(m); };
-  const a = (t1 && TYPE_MOVES[t1]) || [FALLBACK_MOVE];
-  const b = t2 ? TYPE_MOVES[t2] : undefined;
-  if (b) { add(a[0]); add(b[0]); add(a[1]); add(b[1]); }
-  else { add(a[0]); add(a[1]); add(TYPE_MOVES.normal[0]); }
-  return moves.length ? moves.slice(0, 4) : [FALLBACK_MOVE];
-}
+const FALLBACK_MOVE: MoveData = mv('Tackle', 'normal', 'physical', 40, 100, 35);
 
 // Off-type "coverage" move for each type — chosen to threaten the things that
 // usually counter that type (e.g. Steel → Earthquake to punish Fire/Electric/Steel
@@ -285,7 +274,8 @@ export class TrainerBattleScene extends Phaser.Scene {
       const key   = (this.registry.get('starterKey')   as string) ?? 'vipour';
       const level = (this.registry.get('starterLevel') as number) ?? 5;
       const def   = findForm(key) ?? STARTERS[1];
-      this.player = new Pokemon(def.data, level, def.startingMoves);
+      this.player = new Pokemon(def.data, level,
+        mergeLearnset(def.startingMoves, def.spriteKey, def.data.type1, def.data.type2, level));
       this.player.exp = (this.registry.get('starterExp') as number) ?? 0;
     }
   }
@@ -304,9 +294,12 @@ export class TrainerBattleScene extends Phaser.Scene {
           this.load.image(texKey, form.data.spriteUrl);
           await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
         }
-        // Enemy custom mons use a strong type kit (E4/Champion also get coverage).
+        // Ordinary trainers follow the same gradual move progression as the
+        // player. Elite teams retain their authored high-level coverage kits.
         this.enemy = new Pokemon(form.data, entry.level,
-          this.isElite ? eliteMovesForTypes(form.data.type1, form.data.type2) : enemyMovesForTypes(form.data.type1, form.data.type2));
+          this.isElite
+            ? eliteMovesForTypes(form.data.type1, form.data.type2)
+            : enemyLearnset(form.moves, texKey, form.data.type1, form.data.type2, entry.level));
         this.registry.set('_teKey', texKey);
         return;
       }
@@ -319,7 +312,10 @@ export class TrainerBattleScene extends Phaser.Scene {
           this.load.image(texKey, sf.data.spriteUrl);
           await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
         }
-        this.enemy = new Pokemon(sf.data, entry.level, sf.startingMoves);
+        this.enemy = new Pokemon(sf.data, entry.level,
+          this.isElite
+            ? eliteMovesForTypes(sf.data.type1, sf.data.type2)
+            : enemyLearnset(sf.startingMoves, texKey, sf.data.type1, sf.data.type2, entry.level));
         this.registry.set('_teKey', texKey);
         return;
       }
@@ -333,7 +329,9 @@ export class TrainerBattleScene extends Phaser.Scene {
       await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
     }
     this.enemy = new Pokemon(data, entry.level,
-      this.isElite ? eliteMovesForTypes(data.type1, data.type2) : enemyMovesForTypes(data.type1, data.type2));
+      this.isElite
+        ? eliteMovesForTypes(data.type1, data.type2)
+        : enemyLearnset([FALLBACK_MOVE], texKey, data.type1, data.type2, entry.level));
     this.enemy.data.spriteUrl = data.spriteUrl;
     // Store tex key for sprite creation
     this.registry.set('_teKey', texKey);
@@ -400,8 +398,10 @@ export class TrainerBattleScene extends Phaser.Scene {
                 ?? (this.registry.get('starterKey') as string) ?? 'vipour';
     const teKey = (this.registry.get('_teKey') as string) ?? 'vipour';
 
-    this.enemySprite  = this.add.image(900, 60, this.textures.exists(teKey) ? teKey : pKey).setDepth(5).setAlpha(0);
-    this.playerSprite = this.add.image(-80, 320, pKey).setDepth(5).setFlipX(true).setAlpha(0);
+    this.enemySprite  = this.add.image(900, 60, this.textures.exists(teKey) ? teKey : pKey)
+      .setDepth(5).setAlpha(0).setData('battlePokemonSide', 'enemy');
+    this.playerSprite = this.add.image(-80, 320, pKey)
+      .setDepth(5).setFlipX(true).setAlpha(0).setData('battlePokemonSide', 'player');
 
     this.fitSprite(this.enemySprite, this.enemySpriteSize());
     this.fitSprite(this.playerSprite, 140);
