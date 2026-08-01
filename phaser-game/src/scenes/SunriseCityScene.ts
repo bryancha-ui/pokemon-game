@@ -76,7 +76,10 @@ function buildMap(): Tile[][] {
 
 export class SunriseCityScene extends Phaser.Scene {
   private map!: Tile[][];
-  public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'sunrisegym', 'mart'][i] }));
+  public buildingPlots = [
+    ...BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'sunrisegym', 'mart'][i] })),
+    { x: 3, y: 1, w: 2, h: 4, model: 'tower' },   // the clifftop lighthouse as a 3D tower
+  ];
   public onlyNamedBuildings = true;
   // The clifftop city has tall rock/edge tiles that otherwise extrude into walls
   // that bury the player. caveFloorHint applies the wall-height cap (and dark-

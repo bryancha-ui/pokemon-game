@@ -1,6 +1,7 @@
 import { BaseInteriorScene, NPC } from './BaseInteriorScene';
 import { PartySystem } from '../../systems/PartySystem';
 import { playJingle } from '../../systems/Music';
+import { speakerName, tr } from '../../systems/i18n';
 
 // ── Generic enterable building for the northern 어사대 cities ──────────────────────
 // One reusable interior driven by a config id (set in registry 'northBuildingId' by
@@ -71,7 +72,7 @@ export class NorthernBuildingScene extends BaseInteriorScene {
     g.lineStyle(1, 0x000000, 0.08);
     for (let r = 3; r < this.ROWS; r++) { const p = this.tile(0, r); g.lineBetween(p.x, p.y, p.x + this.COLS * 32, p.y); }
 
-    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, this.cfg.title, {
+    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, tr(this.cfg.title), {
       fontSize: '12px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
 
@@ -100,7 +101,7 @@ export class NorthernBuildingScene extends BaseInteriorScene {
   protected setupNPCs(): void {
     this.owner = this.createNPCGraphic(8, 4, this.cfg.color, 0x2a2622, this.cfg.female, 0);
     const p = this.tile(8, 4);
-    this.add.text(p.x + 16, p.y - 18, this.cfg.npc, {
+    this.add.text(p.x + 16, p.y - 18, speakerName(this.cfg.npc), {
       fontSize: '9px', color: '#ffd88a', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(16);
     this.npcs.push(this.owner);

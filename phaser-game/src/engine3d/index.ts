@@ -54,6 +54,12 @@ class Engine3D {
     }
   }
 
+  /** Visual systems use this to suppress their 2D fallback particles only
+   *  while this exact scene is actively being mirrored in 3D. */
+  isRendering(scene: Phaser.Scene): boolean {
+    return this.enabled && !!this.mirror && this.mirrorScene === scene;
+  }
+
   toggle(): void {
     this.enabled = !this.enabled;
     localStorage.setItem(STORE_KEY, this.enabled ? '1' : '0');

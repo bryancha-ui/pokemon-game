@@ -155,7 +155,9 @@ export class DolmoeCityScene extends Phaser.Scene {
       g.fillTriangle(x+16, y+7, x+31, y+1, x+27, y+16);
       g.fillStyle(0xffe044); g.fillCircle(x+8, y+8, 2); g.fillCircle(x+24, y+8, 2);  // dancheong dots
     };
-    mothStatue(7, 14); mothStatue(20, 13); mothStatue(28, 15);
+    // 2D moth-statue floor art removed — the 나비할망 statue is the 3D model on its
+    // plot (leaving the flat images here left a stray statue afterimage on the ground).
+    void mothStatue;
     this.add.text(8*TILE, 13.4*TILE, '나비할망 상', { fontSize: '8px', color: '#cfeee8', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(4);
 
     const jar = (col: number, row: number) => {

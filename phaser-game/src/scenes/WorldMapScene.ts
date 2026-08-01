@@ -132,8 +132,9 @@ function buildMap(): Tile[][] {
       }
     }
   }
-  // Keep a clear yard in front of the player's home (door at 11,36) — no trees blocking it.
-  for (let r = 36; r <= 40; r++) for (let c = 9; c <= 14; c++) { if (map[r][c] === TR || map[r][c] === FL) map[r][c] = PK; }
+  // Keep clear yards around BOTH the player's home (door 11,36) and the rival's
+  // home (door 17,36) — no trees/foliage blocking the doorways or their sides.
+  for (let r = 31; r <= 41; r++) for (let c = 8; c <= 21; c++) { if (map[r][c] === TR || map[r][c] === FL) map[r][c] = PK; }
 
   // ── Town square / plaza: rows 31-37, cols 23-29 ────────────────────────────
   for (let r = 31; r < 38; r++) {

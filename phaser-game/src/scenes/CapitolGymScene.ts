@@ -141,7 +141,6 @@ export class CapitolGymScene extends Phaser.Scene {
 
     // Entry door
     g.fillStyle(0x6633aa); g.fillRect(7 * IT, H - IT, 2 * IT, IT);
-    this.add.text(W / 2, H - IT / 2, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
 
     // "GYM" text
     this.add.text(W / 2, IT, tr('CAPITOL GYM'), {

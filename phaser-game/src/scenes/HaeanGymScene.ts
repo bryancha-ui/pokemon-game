@@ -119,7 +119,6 @@ export class HaeanGymScene extends Phaser.Scene {
     g.generateTexture(texKey, W, H); g.destroy();
     this.add.image(0, 0, texKey).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(W / 2, H - IT / 2, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
     this.add.text(W / 2, IT * 1.7, tr('🌊 TIDAL ARENA'), {
       fontSize: '11px', color: '#aee6ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);

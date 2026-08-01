@@ -547,10 +547,11 @@ export class RangrimFoothillsScene extends RangrimBaseScene {
   constructor() { super(FOOTHILLS); }
 }
 export class RangrimCavernScene extends RangrimBaseScene {
-  // Cavern rocks rise as 3D, height-capped so no black wall towers over the
-  // player; building-classified blocks erased.
+  // The pitch-dark lower cavern is cramped, so even height-capped walls block the
+  // view — flatten every raised tile here so no black rock ever hides the player.
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
+  public clearSight3D = true;
   constructor() { super(CAVERN); }
 }
 export class RangrimAltarScene extends RangrimBaseScene {

@@ -104,8 +104,14 @@ export class BattleMirror {
   private built = false;
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
   private fx: MoveFX3D;
-  private pendingBursts: { at: THREE.Vector3; color: number; eff: number; t: number }[] = [];
-  private onMoveFx: (d: { attacker: GO; target: GO; color: number; category: string; effectiveness: number }) => void;
+  private pendingBursts: {
+    at: THREE.Vector3; color: number; eff: number; t: number;
+    moveType: string; moveName: string; power: number;
+  }[] = [];
+  private onMoveFx: (d: {
+    attacker: GO; target: GO; color: number; category: string; effectiveness: number;
+    moveType?: string; moveName?: string; power?: number;
+  }) => void;
   private onScreenTarget: (d: ScreenTargetRequest) => void;
 
   constructor(scene: Phaser.Scene, stage: ThreeStage, rig: CameraRig) {
@@ -182,7 +188,7 @@ export class BattleMirror {
     });
 
     if (category === 'special') {
-      this.fx.fireProjectile(from, to, d.color, d.effectiveness, () => {
+      this.fx.playSpecial(from, to, d.moveType ?? 'normal', d.moveName ?? 'Move', d.color, d.power ?? 60, d.effectiveness, () => {
         if (!atk.anim) {                      // relief battlers: FX drives the beat
           tgt.anim?.hit(1);
           this.rig.focusOn(tgt.holder.position, 0.8);
@@ -190,11 +196,14 @@ export class BattleMirror {
         }
       });
     } else if (category === 'physical') {
-      this.pendingBursts.push({ at: to.clone(), color: d.color, eff: d.effectiveness, t: 0.28 });
+      this.pendingBursts.push({
+        at: to.clone(), color: d.color, eff: d.effectiveness, t: 0.18,
+        moveType: d.moveType ?? 'normal', moveName: d.moveName ?? 'Move', power: d.power ?? 60,
+      });
       if (!atk.anim) this.rig.focusOn(tgt.holder.position, 0.6);
     } else {
-      // Status move: a coloured aura pulse on the user, no projectile.
-      this.fx.burst(atk.holder.position.clone(), d.color, 0.8);
+      // Status move: a layered type aura on the user, no fake projectile.
+      this.fx.statusAura(atk.holder.position.clone(), d.moveType ?? 'normal', d.moveName ?? 'Status', d.color);
     }
   }
 
@@ -476,7 +485,7 @@ export class BattleMirror {
       const p = this.pendingBursts[i];
       p.t -= dt;
       if (p.t <= 0) {
-        this.fx.burst(p.at, p.color, p.eff);
+        this.fx.physicalImpact(p.at, p.moveType, p.moveName, p.color, p.power, p.eff);
         this.rig.addShake(p.eff > 1 ? 0.7 : 0.45);
         this.pendingBursts.splice(i, 1);
       }

@@ -60,7 +60,6 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
     // Door (bottom-centre)
     const dp = this.tile(7, this.ROWS - 1);
     g.fillStyle(0x8b5a2b); g.fillRect(dp.x + 4, dp.y, 64, 32);
-    this.add.text(dp.x + 32, dp.y + 16, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
 
     // Walls
     this.addSolid(0, 0, this.COLS - 1, 0);

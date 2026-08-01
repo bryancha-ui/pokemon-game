@@ -266,7 +266,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       if (b.hall) { bg.fillStyle(0x2a7a4a, 0.9); bg.fillRect(x - 4, y - 2, w + 8, 4); bg.fillStyle(0x2a5aba, 0.9); bg.fillRect(x - 4, y + 1, w + 8, 3); }
       bg.fillStyle(0x88ccff, 0.7); for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 14);
       bg.fillStyle(0x5a3a1a); bg.fillRect(b.doorCol * TILE + 4, (b.y + b.h - 1) * TILE, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? `🏛️ 어사대 Hall — ${cfg.chiefName}` : tr(b.label), {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? `🏛️ ${tr('어사대 Hall')} — ${speakerName(cfg.chiefName)}` : tr(b.label), {
         fontSize: b.hall ? '10px' : '9px', color: b.hall ? '#ffe44e' : '#fff', fontStyle: b.hall ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
@@ -275,13 +275,13 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const cg = this.add.graphics().setDepth(8); drawNpcBody(cg, cfg.robe, { hair: 0x2a2622 });
     cg.setPosition(CHIEF.col * TILE + 16, CHIEF.row * TILE + 16);
     markTrainerPortrait(cg, cfg.chiefKey);
-    this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, cfg.chiefName, {
+    this.add.text(CHIEF.col * TILE + 16, CHIEF.row * TILE - 12, speakerName(cfg.chiefName), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 2, y: 1 },
     }).setOrigin(0.5).setDepth(9);
     // City banner + exit signs
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, cfg.name, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
-    if (cfg.next) this.add.text(14 * TILE, 0.5 * TILE, '⬆ ' + cfg.next.scene.replace('Scene', ''), { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(this.scale.width / 2, 22, tr(cfg.name), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    if (cfg.next) this.add.text(14 * TILE, 0.5 * TILE, '⬆ ' + tr(cfg.next.scene.replace('Scene', '')), { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     if (cfg.prev) this.add.text(14 * TILE, (this.rows - 0.5) * TILE, tr('⬇ back'), { fontSize: '8px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
@@ -356,7 +356,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       const g = this.add.graphics().setDepth(8);
       drawNpcBody(g, n.color, { hair: n.hair ?? 0x2a2622, frame: n.frame ?? 0 });
       g.setPosition(n.col * TILE + 16, n.row * TILE + 16);
-      if (n.label) this.add.text(n.col * TILE + 16, n.row * TILE - 12, tr(n.label), {
+      if (n.label) this.add.text(n.col * TILE + 16, n.row * TILE - 12, speakerName(n.label), {
         fontSize: '8px', color: '#cfe6ff', backgroundColor: '#00000088', padding: { x: 2, y: 1 },
       }).setOrigin(0.5).setDepth(9);
     }
@@ -380,7 +380,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       if (!lm.enter) continue;
       const doorX = (lm.col + lm.w / 2) * TILE, doorY = (lm.row + lm.h) * TILE + TILE / 2;
       if (Math.hypot(this.px - doorX, this.py - doorY) > TILE * 1.3) continue;
-      this.enterPrompt.setText('SPACE — Enter ' + lm.label).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE — Enter')} ${tr(lm.label)}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       this.registry.set(this.cfg.key + 'ReturnX', doorX);
@@ -415,7 +415,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     g.fillStyle(0x000000, 1); g.fillCircle(-5, -2, 1.5); g.fillCircle(5, -2, 1.5);
     g.lineStyle(2, 0x000000, 1); g.beginPath();                                              // angry brows
     g.moveTo(-9, -8); g.lineTo(-2, -5); g.moveTo(9, -8); g.lineTo(2, -5); g.strokePath();
-    const label = this.add.text(0, -30, '⚠ ' + m.threatName, {
+    const label = this.add.text(0, -30, '⚠ ' + tr(m.threatName), {
       fontSize: '9px', color: '#ff7a7a', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5);
     const cont = this.add.container(m.col * TILE + 16, m.row * TILE + 16, [g, label]).setDepth(9);
@@ -431,7 +431,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     if (this.registry.get('trainerDefeated_' + m.threatKey)) return false;
     const near = Math.hypot(this.px - (m.col * TILE + 16), this.py - (m.row * TILE + 16)) < TILE * 1.4;
     if (!near) return false;
-    this.enterPrompt.setText('SPACE — Confront ' + m.threatName).setVisible(true);
+    this.enterPrompt.setText(`${tr('SPACE — Confront')} ${tr(m.threatName)}`).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     this.dialog.show(m.approach, () => {
@@ -563,7 +563,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
 
   private drawSideSign() {
     const be = this.cfg.sideExit; if (!be) return;
-    this.add.text(be.col * TILE + 16, 11 * TILE + 16, (be.icon ?? '🏖') + ' ' + be.label + ' ↓', {
+    this.add.text(be.col * TILE + 16, 11 * TILE + 16, (be.icon ?? '🏖') + ' ' + tr(be.label) + ' ↓', {
       fontSize: '9px', color: '#fff', backgroundColor: '#0a3a5acc', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(7);
   }
@@ -689,7 +689,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const near = Math.hypot(this.px - (CHIEF.col * TILE + 16), this.py - (CHIEF.row * TILE + 16)) < TILE * 1.5;
     if (!near) { if (!this.nearBuilding()) this.enterPrompt.setVisible(false); return; }
     if (hasMapae(this.registry, cfg.mapaeKey)) {
-      this.enterPrompt.setText('SPACE: ' + cfg.chiefName).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE:')} ${speakerName(cfg.chiefName)}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       this.dialog.show([`${cfg.chiefName}: This province has taken your measure. Carry the 마패 with honour.`], () => { this.cutsceneActive = false; });
@@ -698,7 +698,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     // A mission still hangs over the province → the Chief won't grant the exam yet.
     const m = cfg.mission;
     if (m && !this.missionCleared(m)) {
-      this.enterPrompt.setText('SPACE: ' + cfg.chiefName).setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE:')} ${speakerName(cfg.chiefName)}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       if (!this.registry.get(cfg.key + 'MissionTaken')) {
@@ -710,7 +710,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       return;
     }
     const eb = cfg.examBattle;   // a 노스단 officer stands in for the Chief's duel, if set
-    this.enterPrompt.setText(eb ? 'SPACE: ' + cfg.chiefName : 'SPACE: take the exam').setVisible(true);
+    this.enterPrompt.setText(eb ? `${tr('SPACE:')} ${speakerName(cfg.chiefName)}` : tr('SPACE: take the exam')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     const examLead = eb ? eb.intro : [cfg.examLead];

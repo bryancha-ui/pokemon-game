@@ -280,7 +280,7 @@ export class CapitolCityScene extends Phaser.Scene {
           'You have arrived at Capitol City!',
           'This vast capital holds the heart of the nation.',
           'Explore the city, visit the Capitol Tower,\nand challenge the Capitol Gym!',
-          'The Gym Leader Jin awaits at the northern gym.\nPrepare well — her shadow Pokémon are powerful.',
+          'The Gym Leader Jin awaits at the northern gym.\nPrepare well — His shadow Pokémon are powerful.',
         ], () => { this.cutsceneActive = false; });
       });
     } else if (this.registry.get('gymLeaderDefeated') && !this.registry.get('newsShown')) {

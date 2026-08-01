@@ -5,6 +5,7 @@ import { drawTrainerBody, playerDesign, drawNpcBody } from '../data/CharacterSpr
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { Inventory } from '../systems/Items';
+import type { PropPlot } from '../engine3d/TerrainBuilder';
 
 // ── Capitol Department Store — 6 floors + elevator ───────────────────────────
 // 1F reception · 2F medicine & grocery · 3F TM corner · 4F souvenirs ·
@@ -19,6 +20,12 @@ interface FloorDef {
   clerkLabel?: string;
   clerkColor?: number;
   greet?: string;
+}
+
+interface DeptFixture {
+  kind: PropPlot['kind'];
+  col: number; row: number; w?: number; d?: number;
+  color?: number; solid?: boolean;
 }
 
 const FLOORS: Record<number, FloorDef> = {
@@ -42,9 +49,12 @@ const FLOORS: Record<number, FloorDef> = {
 
 export class DeptStoreScene extends Phaser.Scene {
   private playerG!: Phaser.GameObjects.Graphics;
-  /** Keep the multi-floor store (and its elevator UI) in pure 2D — the 3D mirror
-   *  rendered its flat interior as an empty box, hiding everything. */
-  public disable3D = true;
+  /** Authored 3D interior. Floor 6 deliberately switches back to an outdoor
+   *  camera/environment so the rooftop garden keeps its open skyline. */
+  public get interior3D() { return this.floor !== 6; }
+  public clearSight3D = true;
+  public noVehicles = true;
+  public propPlots: PropPlot[] = [];
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private spaceKey!: Phaser.Input.Keyboard.Key;
@@ -65,13 +75,17 @@ export class DeptStoreScene extends Phaser.Scene {
   private elevatorBtns: { fl: number; txt: Phaser.GameObjects.Text }[] = [];
   private elevatorSel = 0;
   private xKey!: Phaser.Input.Keyboard.Key;
+  private elevatorKey!: Phaser.Input.Keyboard.Key;
+  private floorTransitioning = false;
 
   constructor() { super('DeptStoreScene'); }
 
   create() {
-    this.cutsceneActive = false; this.walkFrame = 0;
+    this.cutsceneActive = false; this.walkFrame = 0; this.floorTransitioning = false;
     this.input.keyboard?.resetKeys();
     this.floor = (this.registry.get('deptFloor') as number) ?? 1;
+    this.clerkAt = this.floor === 6 ? { col: 3, row: 6 } : { col: 5, row: 2 };
+    this.propPlots = this.build3DProps();
     playBgm(this, this.floor === 6 ? 'sudo' : 'deptstore');
 
     // Spawn: at the elevator when arriving by lift, else at the entrance door (1F).
@@ -114,6 +128,104 @@ export class DeptStoreScene extends Phaser.Scene {
     this.solids.push({ x1: c1 * TILE, y1: r1 * TILE, x2: (c2 + 1) * TILE, y2: (r2 + 1) * TILE });
   }
 
+  /** Fixtures are the single source of truth for the 2D fallback, collision and
+   *  the 3D store model, so every shelf the player sees is also physically real. */
+  private floorFixtures(): DeptFixture[] {
+    const counter: DeptFixture = { kind: 'store-counter', col: 3, row: 2, w: 5, d: 1, color: 0x9a6b42, solid: true };
+    switch (this.floor) {
+      case 1: return [
+        counter,
+        { kind: 'store-directory', col: 2, row: 5, w: 1, d: 2, color: 0x405f82, solid: true },
+        { kind: 'store-sofa', col: 4, row: 6, w: 3, d: 1, color: 0x9e5266, solid: true },
+        { kind: 'store-sofa', col: 8, row: 7, w: 2, d: 1, color: 0x9e5266, solid: true },
+        { kind: 'store-planter', col: 2, row: 8, color: 0xb47a48, solid: true },
+        { kind: 'store-planter', col: 11, row: 8, color: 0xb47a48, solid: true },
+      ];
+      case 2: return [
+        counter,
+        { kind: 'store-shelf', col: 2, row: 5, w: 3, d: 1, color: 0x68a4be, solid: true },
+        { kind: 'store-shelf', col: 6, row: 5, w: 3, d: 1, color: 0x68a4be, solid: true },
+        { kind: 'store-shelf', col: 2, row: 8, w: 3, d: 1, color: 0x68a4be, solid: true },
+        { kind: 'store-shelf', col: 6, row: 8, w: 3, d: 1, color: 0x68a4be, solid: true },
+        { kind: 'store-display', col: 10, row: 7, w: 2, d: 1, color: 0x6f9f79, solid: true },
+      ];
+      case 3: return [
+        { ...counter, color: 0x765c96 },
+        ...[[2, 5], [5, 5], [8, 5], [2, 8], [5, 8], [8, 8]].map(([col, row]) =>
+          ({ kind: 'store-tmrack', col, row, color: 0x765c96, solid: true }) as DeptFixture),
+        { kind: 'store-shelf', col: 10, row: 7, w: 2, d: 1, color: 0x765c96, solid: true },
+      ];
+      case 4: return [
+        { ...counter, color: 0xb66b87 },
+        ...[[2, 5], [6, 5], [10, 5], [3, 8], [7, 8], [11, 8]].map(([col, row]) =>
+          ({ kind: 'store-display', col, row, w: 2, d: 1, color: 0xb66b87, solid: true }) as DeptFixture),
+      ];
+      case 5: return [
+        { ...counter, color: 0xb88942 },
+        ...[[3, 6], [6, 6], [9, 6], [3, 8], [6, 8], [9, 8]].map(([col, row]) =>
+          ({ kind: 'store-table', col, row, color: 0xb88942, solid: true }) as DeptFixture),
+      ];
+      default: return [
+        { kind: 'store-vending', col: 3, row: 6, color: 0x4f83aa, solid: true },
+        { kind: 'store-planter', col: 1, row: 5, color: 0x8b6a48, solid: true },
+        { kind: 'store-planter', col: 5, row: 5, color: 0x8b6a48, solid: true },
+        { kind: 'store-planter', col: 11, row: 5, color: 0x8b6a48, solid: true },
+        { kind: 'store-planter', col: 1, row: 8, color: 0x8b6a48, solid: true },
+        { kind: 'store-planter', col: 12, row: 8, color: 0x8b6a48, solid: true },
+        { kind: 'store-bench', col: 5, row: 8, w: 3, d: 1, color: 0x507a65, solid: true },
+        { kind: 'store-bench', col: 9, row: 8, w: 2, d: 1, color: 0x507a65, solid: true },
+      ];
+    }
+  }
+
+  private build3DProps(): PropPlot[] {
+    const fixtures = this.floorFixtures().map(f => ({
+      x: f.col, y: f.row, kind: f.kind, w: f.w ?? 1, d: f.d ?? 1, color: f.color,
+    } as PropPlot));
+    const lift: PropPlot = { x: 11, y: 2, kind: 'store-elevator', w: 2, d: 2, color: 0x718da7 };
+    if (this.floor === 6) {
+      return [
+        lift,
+        { x: 0, y: 4, kind: 'store-railing', w: 15, d: 0.18, color: 0x9099a5 },
+        ...fixtures,
+      ];
+    }
+    return [
+      { x: 0, y: 0, kind: 'store-wall', w: 15, d: 1, color: 0x8a6a4a },
+      { x: 0, y: 1, kind: 'store-wall', w: 1, d: 9, color: 0x8a6a4a },
+      { x: 14, y: 1, kind: 'store-wall', w: 1, d: 9, color: 0x8a6a4a },
+      { x: 0, y: 10, kind: 'store-wall', w: 7, d: 1, color: 0x8a6a4a },
+      { x: 8, y: 10, kind: 'store-wall', w: 7, d: 1, color: 0x8a6a4a },
+      lift,
+      ...fixtures,
+    ];
+  }
+
+  private drawFixtureFootprint(g: Phaser.GameObjects.Graphics, f: DeptFixture) {
+    const x = f.col * TILE, y = f.row * TILE, w = (f.w ?? 1) * TILE, d = (f.d ?? 1) * TILE;
+    const color = f.color ?? 0x6a7f9a;
+    g.fillStyle(0x000000, 0.14); g.fillEllipse(x + w / 2, y + d - 1, Math.max(16, w * 0.78), 8);
+    g.fillStyle(color, 1); g.fillRect(x + 3, y + 3, w - 6, d - 6);
+    if (f.kind === 'store-shelf') {
+      g.fillStyle(0xe9dfc8, 1); for (let sx = x + 8; sx < x + w - 5; sx += 14) g.fillRect(sx, y + 7, 8, d - 14);
+    } else if (f.kind === 'store-tmrack') {
+      g.fillStyle(0x68d6ff, 1); g.fillCircle(x + w / 2, y + d / 2, 7);
+    } else if (f.kind === 'store-display') {
+      g.fillStyle(0xffd46a, 1); g.fillCircle(x + w / 2, y + d / 2, 6);
+    } else if (f.kind === 'store-table') {
+      g.fillStyle(0xf1dcc0, 1); g.fillCircle(x + w / 2, y + d / 2, 10);
+    } else if (f.kind === 'store-planter') {
+      g.fillStyle(0x3f8248, 1); g.fillCircle(x + w / 2, y + d / 2, Math.min(w, d) * 0.26);
+    } else if (f.kind === 'store-sofa' || f.kind === 'store-bench') {
+      g.fillStyle(0xffffff, 0.18); g.fillRect(x + 6, y + 6, w - 12, 5);
+    } else if (f.kind === 'store-directory') {
+      g.fillStyle(0xffd76a, 1); for (let sy = y + 9; sy < y + d - 6; sy += 9) g.fillRect(x + 7, sy, w - 14, 3);
+    } else if (f.kind === 'store-vending') {
+      g.fillStyle(0xbfeeff, 1); g.fillRect(x + 7, y + 6, w - 14, d - 15);
+    }
+    if (f.solid) this.addSolid(f.col, f.row, f.col + (f.w ?? 1) - 1, f.row + (f.d ?? 1) - 1);
+  }
+
   private drawFloor() {
     const g = this.make.graphics({ x: 0, y: 0 });
     const W = COLS * TILE, H = ROWS * TILE;
@@ -127,8 +239,6 @@ export class DeptStoreScene extends Phaser.Scene {
       g.fillStyle(0x6a7a94, 0.9);
       const sky = [[10,130,60],[70,90,55],[120,150,80],[190,80,50],[240,120,70],[300,100,60],[350,160,90],[420,90,55]];
       for (const [x, h, w] of sky) { g.fillRect(x, H * 0.42 - h, w, h); g.fillStyle(0xffe488, 0.5); for (let wy = 0; wy < h - 14; wy += 16) g.fillRect(x + 6, H * 0.42 - h + 8 + wy, 6, 8); g.fillStyle(0x6a7a94, 0.9); }
-      // planters
-      g.fillStyle(0x3a5a2a); for (const c of [2, 5, 9, 12]) g.fillRect(c * TILE + 4, 5 * TILE, TILE - 8, TILE - 6);
     } else {
       // Interior: walls + tiled floor
       g.fillStyle(0x8a6a4a); g.fillRect(0, 0, W, H);
@@ -142,14 +252,9 @@ export class DeptStoreScene extends Phaser.Scene {
     g.fillStyle(0x222); g.fillRect(12 * TILE - 1, 2 * TILE + 4, 2, 2 * TILE - 8);
     this.addSolid(11, 2, 12, 3);
 
-    // Counter (floors with a clerk) — top-left
-    if (FLOORS[this.floor].stock) {
-      g.fillStyle(0x6a4a2a); g.fillRect(3 * TILE, 2 * TILE, 5 * TILE, TILE); g.fillStyle(0x4a3218); g.fillRect(3 * TILE, 3 * TILE - 4, 5 * TILE, 5);
-      this.addSolid(3, 2, 7, 2);
-    }
-    // 1F reception desk + 5F tables
-    if (this.floor === 1) { g.fillStyle(0xbf7a3a); g.fillRect(3 * TILE, 2 * TILE, 5 * TILE, TILE); this.addSolid(3, 2, 7, 2); }
-    if (this.floor === 5) { g.fillStyle(0xcaa76a); for (const [c, r] of [[3,6],[6,6],[9,6]] as [number,number][]) { g.fillRect(c*TILE+4, r*TILE+4, TILE-8, TILE-8); } }
+    // Floor-specific counters, shelves, displays, seating and garden furniture.
+    // The same definitions also feed the authored 3D prop pass.
+    for (const fixture of this.floorFixtures()) this.drawFixtureFootprint(g, fixture);
 
     // Door (1F only) — bottom centre
     if (this.floor === 1) { g.fillStyle(0x6b4a28); g.fillRect(7 * TILE, (ROWS - 1) * TILE, TILE, TILE); }
@@ -193,21 +298,22 @@ export class DeptStoreScene extends Phaser.Scene {
     if (f.stock && this.floor !== 6) {
       const g = this.add.graphics().setDepth(10);
       g.setPosition(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 16);
+      g.setData('characterModel3DKey', 'dept-clerk-girl');
       drawNpcBody(g, f.clerkColor ?? 0x66bbaa, { hair: 0x2a2018 });
-      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, f.clerkLabel ?? 'Clerk',
+      this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, speakerName(f.clerkLabel ?? 'Clerk'),
         { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
     }
 
     if (this.floor === 1) {
       const g = this.add.graphics().setDepth(10);
       g.setPosition(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE + 16);
+      g.setData('characterModel3DKey', 'dept-receptionist-girl');
       drawNpcBody(g, 0xcc6688, { hair: 0x2a2018 });
       this.add.text(this.clerkAt.col * TILE + 16, this.clerkAt.row * TILE - 8, speakerName('Receptionist'),
         { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
       // Directory board
       this.add.text(2.2 * TILE, 6 * TILE, tr('📋 FLOORS\n1 Reception\n2 Medicine\n3 TMs\n4 Souvenirs\n5 Food Court\n6 Rooftop'),
         { fontSize: '8px', color: '#334', backgroundColor: '#e8e0d0dd', padding: { x: 4, y: 3 }, lineSpacing: 2 }).setOrigin(0, 0).setDepth(5);
-      this.add.text(7.5 * TILE, 10.2 * TILE, tr('🚪 exit'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5);
     }
 
     if (this.floor === 6) {
@@ -217,6 +323,7 @@ export class DeptStoreScene extends Phaser.Scene {
       // City-watcher NPC (a gift once)
       const g = this.add.graphics().setDepth(10);
       g.setPosition(9 * TILE + 16, 6 * TILE + 16);
+      g.setData('characterModel3DKey', 'dept-collector-boy');
       drawNpcBody(g, 0x5a7a9a, { hair: 0x2a2018 });
       this.add.text(9 * TILE + 16, 6 * TILE - 8, speakerName('Collector'), { fontSize: '8px', color: '#cfe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(11);
       this.add.text(this.scale.width / 2, 66, tr('— Balcony over Capitol City —'), { fontSize: '11px', color: '#fff', backgroundColor: '#00000066', padding: { x: 6, y: 2 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
@@ -229,6 +336,7 @@ export class DeptStoreScene extends Phaser.Scene {
   private setupInput() {
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.elevatorKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.xKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X);
     this.wasd = { up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'), left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D') };
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
@@ -239,7 +347,7 @@ export class DeptStoreScene extends Phaser.Scene {
     if (this.elevatorOpen) {
       if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.wasd.up)) this.moveElevatorSel(-1);
       if (Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.wasd.down)) this.moveElevatorSel(1);
-      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey) || Phaser.Input.Keyboard.JustDown(this.elevatorKey)) {
         const fl = this.elevatorBtns[this.elevatorSel]?.fl;
         this.closeElevator();
         if (fl !== undefined) this.goToFloor(fl);
@@ -285,7 +393,9 @@ export class DeptStoreScene extends Phaser.Scene {
 
   private checkInteract() {
     const f = FLOORS[this.floor];
-    const nearElevator = this.near(this.elevatorAt.col, this.elevatorAt.row + 1, 1.3) || this.near(this.elevatorAt.col, this.elevatorAt.row, 1.3);
+    // The visible lift occupies rows 2–3 and opens onto rows 4–5. Accept both
+    // tiles so the prompt does not disappear at the edge of its collision box.
+    const nearElevator = this.near(this.elevatorAt.col, this.elevatorAt.row + 1, 1.8) || this.near(this.elevatorAt.col, this.elevatorAt.row, 1.8);
     const nearClerk = (f.stock && this.floor !== 6 && this.near(this.clerkAt.col, this.clerkAt.row + 1, 1.4)) ||
                       (this.floor === 6 && this.near(this.clerkAt.col, this.clerkAt.row, 1.5));
     const nearCollector = this.floor === 6 && this.near(9, 6, 1.5);
@@ -293,11 +403,12 @@ export class DeptStoreScene extends Phaser.Scene {
 
     this.prompt.setVisible(false);
     if (nearElevator) { this.prompt.setText(tr('SPACE — Elevator')).setVisible(true); }
-    else if (nearClerk) { this.prompt.setText(this.floor === 6 ? 'SPACE — Vending machine' : 'SPACE — Shop').setVisible(true); }
+    else if (nearClerk) { this.prompt.setText(tr(this.floor === 6 ? 'SPACE — Vending machine' : 'SPACE — Shop')).setVisible(true); }
     else if (nearCollector) { this.prompt.setText(tr('SPACE — Talk')).setVisible(true); }
     else if (near1F) { this.prompt.setText(tr('SPACE — Info')).setVisible(true); }
 
-    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
+    const usePressed = Phaser.Input.Keyboard.JustDown(this.spaceKey) || Phaser.Input.Keyboard.JustDown(this.elevatorKey);
+    if (!usePressed) return;
     if (nearElevator) { this.openElevator(); return; }
     if (nearClerk && f.stock) { this.openShop(f); return; }
     if (nearCollector) { this.rooftopCollector(); return; }
@@ -333,7 +444,7 @@ export class DeptStoreScene extends Phaser.Scene {
   }
 
   private openElevator() {
-    if (this.elevatorOpen) return;
+    if (this.elevatorOpen || this.floorTransitioning) return;
     this.cutsceneActive = true;
     this.elevatorOpen = true;
     this.elevatorBtns = [];
@@ -385,9 +496,16 @@ export class DeptStoreScene extends Phaser.Scene {
   }
 
   private goToFloor(fl: number) {
+    if (this.floorTransitioning || fl === this.floor) return;
+    this.floorTransitioning = true;
+    this.cutsceneActive = true;
     this.registry.set('deptFloor', fl);
     this.registry.set('deptViaElevator', true);
-    this.cameras.main.fadeOut(150, 0, 0, 0, () => this.scene.restart());
+    this.input.keyboard?.resetKeys();
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart();
+    });
+    this.cameras.main.fadeOut(180, 0, 0, 0);
   }
 
   private checkExit() {

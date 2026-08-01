@@ -24,7 +24,6 @@ export class CapitolMarketScene extends BaseInteriorScene {
 
     const dp = this.tile(6, this.ROWS - 1);
     g.fillStyle(0x8b6020); g.fillRect(dp.x + 4, dp.y, 32, 32);
-    this.add.text(dp.x + 16, dp.y + 16, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
     this.addSolid(0, 0, this.COLS - 1, 0);
     this.addSolid(0, 0, 0, this.ROWS - 1);
     this.addSolid(this.COLS - 1, 0, this.COLS - 1, this.ROWS - 1);

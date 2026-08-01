@@ -2,6 +2,7 @@ import { BaseInteriorScene, NPC } from './BaseInteriorScene';
 import { Inventory, formatMoney } from '../../systems/Items';
 import { PartySystem } from '../../systems/PartySystem';
 import { playJingle } from '../../systems/Music';
+import { tr } from '../../systems/i18n';
 
 // ── 함흥냉면 (Hamhung Naengmyeon restaurant) ─────────────────────────────────────
 // A little noodle house off the steel-city square. Order a bowl of the famous
@@ -29,7 +30,7 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
     for (let r = 3; r < this.ROWS; r++) { const p = this.tile(0, r); g.lineBetween(p.x, p.y, p.x + this.COLS * 32, p.y); }
 
     // Sign
-    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, '🍜  함흥냉면  ·  HAMHUNG NAENGMYEON  🍜', {
+    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, tr('🍜  함흥냉면  ·  HAMHUNG NAENGMYEON  🍜'), {
       fontSize: '13px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
 

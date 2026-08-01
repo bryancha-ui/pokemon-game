@@ -185,7 +185,7 @@ export class KaesongCityScene extends Phaser.Scene {
       for (let wx = 8; wx < w - 8; wx += 22) bg.fillRect(x + wx, y + 16, 14, 16);
       const dx = b.doorCol * TILE, dy = (b.y + b.h - 1) * TILE;
       bg.fillStyle(0x5a3a1a); bg.fillRect(dx + 4, dy, TILE - 8, TILE);
-      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? '🏛️ 어사대 Hall — Chief Hyeon' : tr(b.label), {
+      this.add.text((b.x + b.w / 2) * TILE, (b.y - 1.2) * TILE, b.hall ? tr('🏛️ 어사대 Hall — Chief Hyeon') : tr(b.label), {
         fontSize: b.hall ? '10px' : '9px', color: b.hall ? '#ffe44e' : '#fff', fontStyle: b.hall ? 'bold' : 'normal',
         backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
@@ -292,7 +292,7 @@ export class KaesongCityScene extends Phaser.Scene {
     const near = Math.hypot(this.px - (CHIEF.col * TILE + 16), this.py - (CHIEF.row * TILE + 16)) < TILE * 1.5;
     if (!near) { if (!this.nearBuilding()) this.enterPrompt.setVisible(false); return; }
     if (hasMapae(this.registry, 'kaesong')) {
-      this.enterPrompt.setText('SPACE: 어사대장 Hyeon').setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE:')} ${speakerName('어사대장 Hyeon')}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       this.dialog.show(['어사대장 Hyeon: Kaesong has taken your measure. The next province waits — carry the 마패 with honour.'],
@@ -301,7 +301,7 @@ export class KaesongCityScene extends Phaser.Scene {
     }
     // A scholar's oral examination gates the duel — no battle, just wisdom.
     if (!this.registry.get('KaesongMissionDone')) {
-      this.enterPrompt.setText('SPACE: 어사대장 Hyeon').setVisible(true);
+      this.enterPrompt.setText(`${tr('SPACE:')} ${speakerName('어사대장 Hyeon')}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       const intro = this.registry.get('KaesongQuizSeen') ? [] : [
@@ -361,7 +361,7 @@ export class KaesongCityScene extends Phaser.Scene {
       return;
     }
     const item = QUIZ[i];
-    this.dialog.show([`Question ${i + 1} of ${QUIZ.length}.`, item.q + '     ( ▶YES = true  /  NO = false )'], () => {
+    this.dialog.show([`Question ${i + 1} of ${QUIZ.length}.`, `${tr(item.q)}${tr('     ( ▶YES = true  /  NO = false )')}`], () => {
       this.dialog.showChoice(
         () => this.answerQuiz(i, correct, item.a === true),
         () => this.answerQuiz(i, correct, item.a === false),

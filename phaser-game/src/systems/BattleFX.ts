@@ -21,6 +21,8 @@ export function playMoveFX(
   onImpact: () => void,
 ): void {
   const color = (TYPE_COLORS as Record<string, number>)[move.type] ?? 0xffffff;
+  const engine3D = (window as unknown as { __pk3d?: { isRendering(scene: Phaser.Scene): boolean } }).__pk3d;
+  const using3D = !!engine3D?.isRendering(scene);
   // Visual-layer hook only: lets the 3D renderer mirror this move as a 3D
   // effect (projectile / impact burst). No game behavior depends on it.
   scene.events.emit('pk3d-movefx', {
@@ -32,7 +34,7 @@ export function playMoveFX(
   const tx = target.x, ty = target.y;
 
   const impact = () => {
-    flashTarget(scene, target, color);
+    flashTarget(scene, target, color, !using3D);
     scene.cameras.main.shake(150, 0.006);
     playHitSfx(scene, effectiveness);
     onImpact();
@@ -48,6 +50,12 @@ export function playMoveFX(
       onComplete: () => attacker.setPosition(ax, ay),
     });
   } else {
+    if (using3D) {
+      // Keep damage timing identical while the richer effect is drawn by the
+      // 3D mirror. Drawing the generic 2D orb here would cover that effect.
+      scene.time.delayedCall(240, impact);
+      return;
+    }
     const orb  = scene.add.circle(ax, ay, 11, color, 0.95).setDepth(9);
     const glow = scene.add.circle(ax, ay, 20, color, 0.30).setDepth(9);
     scene.tweens.add({
@@ -57,7 +65,7 @@ export function playMoveFX(
   }
 }
 
-function flashTarget(scene: Phaser.Scene, target: Phaser.GameObjects.Image, color: number): void {
+function flashTarget(scene: Phaser.Scene, target: Phaser.GameObjects.Image, color: number, particles = true): void {
   target.setTint(color);
   scene.time.delayedCall(100, () => target.clearTint());
   const ox = target.x;
@@ -65,6 +73,7 @@ function flashTarget(scene: Phaser.Scene, target: Phaser.GameObjects.Image, colo
     targets: target, x: ox - 7, duration: 45, yoyo: true, repeat: 3,
     onComplete: () => target.setX(ox),
   });
+  if (!particles) return;
   for (let i = 0; i < 12; i++) {
     const ang = Math.random() * Math.PI * 2;
     const dist = 18 + Math.random() * 34;

@@ -206,6 +206,8 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Snow Worker': '제설 작업자',
   'Mountaineer': '등반가',
   'Continental Traveler': '대륙 여행자',
+  'Traveler': '여행자', 'Attendant': '안내원', 'Warden Cheol': '경비대 철',
+  'Hyeon': '현', 'Seolwon': '설원',
   // ── Buildings, landmarks & trainer roles (auto-added) ──
   'Farmer': '농부',
   'Fisher-\nman': '낚시\n꾼',
@@ -1627,8 +1629,6 @@ export const KO_STRINGS: Record<string, string> = {
   'The Songchon river has fed this plain for centuries. The steel came later — the water was always here.':
     '성천강이 수백 년 동안 이 평야를 먹여 살렸지. 강철은 나중이야 — 물은 늘 여기 있었어.',
   // Chongjin
-  "s edge stands the old Fogbound Manor — abandoned for years. Lately a Gengar has nested inside, and from its windows the fog spills out to lead our night crews off the pier. Two boats are lost.":
-    '가장자리엔 오래된 안개저택이 서 있어 — 수년째 버려진 채로. 근래 팬텀 하나가 안에 둥지를 틀고, 그 창문에서 안개가 새어 나와 야간 인부들을 부두 밖으로 홀려내지. 배 두 척을 잃었어.',
   'Take the fog road and go into the manor. End its game. What you cannot see can still be faced... if you keep your nerve. Go.':
     '안개길을 따라 저택으로 들어가라. 그 장난을 끝내라. 보이지 않는 것도 맞설 수 있다... 담대함을 잃지 않는다면. 가라.',
   'The Fog-Wraith Gengar\'s laugh echoes from everywhere at once. Steady yourself!':
@@ -1686,6 +1686,171 @@ export const KO_STRINGS: Record<string, string> = {
     '맑은 밤이면 세 호수 위로 하늘이 초록과 보라로 타올라. 한반도 어디에도 그런 광경은 없지.',
   "The 노스단 산책로 runs east off the plateau, up to our 아지트. Don't take that path unless you mean to climb.":
     '노스단 산책로는 고원 동쪽으로, 우리 아지트까지 이어져. 오를 각오가 아니면 그 길로 들어서지 마.',
+
+  // ── Northern cities — remaining UI, interiors and city scripts ──
+  'SPACE:': 'SPACE:',
+  'SPACE — Confront': 'SPACE — 대면',
+  'AhobiryongPass': '아호비령 고개',
+  'SijungCoast': '시중호 해안길',
+  'ChilboHighlands': '칠보산 길',
+  'KaemaPlateau': '개마고원',
+  'RangrimFoothills': '낭림산맥 기슭',
+  'RangrimSummit': '낭림산맥 정상',
+  'RyesongValley': '예성강 들녘',
+
+  // Kaesong
+  'You arrive in Kaesong (개성) — old Koryo capital, terraced under Songak Mountain, its ginseng fields green to the ridgelines.':
+    '개성에 도착했다 — 송악산 아래 계단식으로 자리한 옛 고려의 도읍. 산등성이까지 인삼밭이 푸르게 이어진다.',
+  '🏛️ 어사대 Hall — Chief Hyeon': '🏛️ 어사대 전당 — 어사대장 현',
+  'True or false: the 마패 you seek is the token of the royal Inspectorate — the 어사대.':
+    '참 또는 거짓: 네가 찾는 마패는 왕실 감찰 조직인 어사대의 증표다.',
+  "Hyeon: Titles mean nothing to the 어사대 — only what you show us. Read your opponent, adapt, and do not flinch. Begin.":
+    '현: 직함은 어사대에 아무 의미가 없다 — 네가 보여주는 것만이 전부다. 상대를 읽고, 적응하고, 물러서지 마라. 시작.',
+  "Hyeon: Wisdom before force — that is Kaesong's way. When you are ready, present yourself for the duel and the 마패.":
+    '현: 힘보다 지혜가 먼저다 — 그것이 개성의 방식이지. 준비가 되면 결투와 마패를 위해 내 앞에 다시 서라.',
+  '어사대장 Hyeon: ...Composed. Adaptable. You read the exam, not just the battle. The southern Champion is no rumour.':
+    '어사대장 현: ...침착하고 유연하군. 넌 배틀뿐 아니라 시험 자체를 읽었다. 남쪽 챔피언의 명성은 헛소문이 아니었어.',
+  '어사대장 Hyeon: Before any duel — the 어사대 of Kaesong tests the mind. This hall was a Confucian academy long before it examined trainers.':
+    '어사대장 현: 결투에 앞서 개성 어사대는 지혜를 시험한다. 이 전당은 트레이너를 시험하기 훨씬 전부터 성균관이었지.',
+  '어사대장 Hyeon: Kaesong has taken your measure. The next province waits — carry the 마패 with honour.':
+    '어사대장 현: 개성은 네 역량을 확인했다. 다음 지방이 기다린다 — 마패를 명예롭게 지녀라.',
+  '어사대장 Hyeon: Your reasoning is sound. Now let us see whether your team matches your mind.':
+    '어사대장 현: 판단이 옳다. 이제 네 팀도 네 지혜에 걸맞은지 보자.',
+
+  // Pyeongseong
+  'Supreme Gwang: But Pyeongseong demands more. The north demands perfection. Only those who can defeat the Supreme Commander may claim the final 마패.':
+    '총수 광: 하지만 평성은 더 많은 것을 요구한다. 북부는 완벽을 요구하지. 어사대 총수를 이긴 자만이 마지막 마패를 차지할 수 있다.',
+  'Supreme Gwang: With all eight 마패 in your possession, the Northern League awaits. Go forth and claim your destiny.':
+    '총수 광: 여덟 마패를 모두 손에 넣었으니 북방 리그가 기다린다. 나아가 네 운명을 쟁취하라.',
+  'Supreme Gwang: You have come far, southern Champion. Seven 마패 adorn your belt — each a testament to your worth.':
+    '총수 광: 멀리도 왔군, 남쪽의 챔피언. 허리춤의 일곱 마패 하나하나가 네 자격을 증명한다.',
+  'Supreme Gwang: You have mastered every trial the north could devise. The final 마패 is yours.':
+    '총수 광: 북부가 마련한 모든 시험을 훌륭히 통과했다. 마지막 마패는 네 것이다.',
+  'Warden Cheol: Supreme Commander Gwang awaits in the palace grounds. He holds the final 마패 — defeat him, and the Northern League lies beyond.':
+    '경비대 철: 궁궐 뜰에서 어사대 총수 광이 기다리고 있소. 그가 마지막 마패를 지녔지 — 그를 이기면 북방 리그로 가는 길이 열릴 것이오.',
+  '🐎 You received the Pyeongseong 마패 — the eighth and final tablet!':
+    '🐎 평성 마패를 받았다 — 여덟 번째이자 마지막 마패다!',
+
+  // Enterable city interiors
+  "남포 뱃사람 주막 · Nampo Sailors' Tavern": '남포 뱃사람 주막',
+  '갈마 해변 카페 · Kalma Beach Café': '갈마 해변 카페',
+  '함흥 대중목욕탕 · Hamhung Bathhouse': '함흥 대중목욕탕',
+  "뱃사람 여관 · Foggy Sailors' Inn": '뱃사람 여관',
+  '압록강 국경 교역소 · Amrok Border Trading Post': '압록강 국경 교역소',
+  '삼지연 고원 산장 · Samjiyon Highland Lodge': '삼지연 고원 산장',
+  'Attendant: 어서오세요! A steaming soak washes the forge-soot right off. Take your team in.':
+    '안내원: 어서 오세요! 따뜻한 물에 몸을 담그면 용광로 그을음도 말끔히 씻겨요. 포켓몬들도 함께 데려오세요.',
+  '🍜  함흥냉면  ·  HAMHUNG NAENGMYEON  🍜': '🍜  함흥냉면  🍜',
+  'You slurp the icy, springy noodles in spicy broth — 시원하고 쫄깃하다! 😋':
+    '차갑고 쫄깃한 면을 매콤한 육수와 함께 후루룩 먹는다 — 시원하고 쫄깃하다! 😋',
+
+  // Wonsan
+  'Wonsan (원산) — sunlight off Kalma Beach, the blue shoulder of Mt. Kumgang on the horizon, sand still warm from dawn training.':
+    '원산 — 갈마 해변에 햇빛이 부서지고, 수평선 너머로 금강산의 푸른 능선이 보인다. 새벽 훈련의 열기가 모래에 아직 남아 있다.',
+  '어사대장 Haegang cracks his knuckles and grins.':
+    '어사대장 해강이 손가락 마디를 꺾으며 씩 웃는다.',
+  '어사대장 Haegang: HA! Now THAT was a bout. You\'ve got it.':
+    '어사대장 해강: 하! 바로 이런 승부를 원했지. 합격이다.',
+  '어사대장 Haegang: HAH! Three of my best, one after another, and still standing! THAT is endurance.':
+    '어사대장 해강: 하하! 내 최고의 제자 셋을 연달아 꺾고도 서 있군! 바로 그게 지구력이다.',
+  '어사대장 Haegang: No tricks on my sand — just conviction and clean technique. Show me. Begin!':
+    '어사대장 해강: 내 모래밭엔 잔재주 없다 — 오직 신념과 정확한 기술뿐. 보여줘라. 시작!',
+  "어사대장 Haegang: You haven't bested all three yet. Baekho's at the pier, Miru at the training ground — and Cheon is down at KALMA BEACH, along the shore road off the east edge of town. Beat all three, then return.":
+    '어사대장 해강: 아직 셋 모두를 꺾지 못했다. 백호는 부두, 미루는 훈련장, 천은 마을 동쪽 끝 해안길의 갈마 해변에 있다. 셋을 모두 이긴 뒤 돌아와라.',
+
+  // Hamhung
+  'Hamhung (함흥) — furnace-light and clanging steel, the great works pouring iron day and night.':
+    '함흥 — 용광로 불빛과 강철 부딪는 소리로 가득한 도시. 거대한 제철소가 밤낮없이 쇳물을 쏟아낸다.',
+  '어사대장 Cheolju stands like a girder, arms folded.':
+    '어사대장 철주가 대들보처럼 굳건히 팔짱을 끼고 서 있다.',
+  "어사대장 Cheolju: ...Unbent. Hm. You'll do.":
+    '어사대장 철주: ...꺾이지 않았군. 흠. 합격이다.',
+  '어사대장 Cheolju: ...You want the exam. First, the works.':
+    '어사대장 철주: ...시험을 원하나. 먼저, 제철소부터다.',
+  '어사대장 Cheolju: The Steelix still rages in the mine. Take the pit road south to the mine, subdue it, then return to me.':
+    '어사대장 철주: 강철톤이 아직 광산에서 날뛰고 있다. 남쪽 갱도길로 광산에 가서 제압한 뒤 내게 돌아와라.',
+  '어사대장 Cheolju: The forge rewards only endurance. Outlast my steel, if you can. Begin.':
+    '어사대장 철주: 용광로는 오직 인내에 보답한다. 내 강철보다 오래 버텨 보아라. 시작.',
+  '어사대장 Cheolju: ...The mine is quiet and the furnaces are lit again. A thousand families eat because of tonight.':
+    '어사대장 철주: ...광산은 조용해졌고 용광로엔 다시 불이 붙었다. 오늘 밤 천 가구가 네 덕분에 밥을 먹는다.',
+  'Noodle Lover: You HAVE to try the 함흥냉면 — chewy sweet-potato noodles, fiery cold broth. Best in the north!':
+    '국수 애호가: 함흥냉면은 꼭 먹어 봐야 해 — 쫄깃한 고구마 전분 면에 맵고 시원한 육수. 북부 최고야!',
+  '🐎 You received the Hamhung 마패!': '🐎 함흥 마패를 받았다!',
+
+  // Chongjin
+  'Chongjin (청진) — the last northern harbor, cranes looming out of a cold sea-fog, gulls unseen but heard.':
+    '청진 — 차가운 바다 안개 너머로 기중기가 우뚝 솟은 북쪽 끝 항구. 갈매기는 보이지 않고 울음소리만 들린다.',
+  'From the mist, 어사대장 Mukyeong watches without a word.':
+    '안개 속에서 어사대장 무경이 말없이 지켜본다.',
+  'Fog-Wraith Gengar (안개 팬텀)': '안개 팬텀',
+  '어사대장 Mukyeong: ...You came for the exam. But something else came first.':
+    '어사대장 무경: ...시험을 보러 왔군. 하지만 먼저 온 일이 있다.',
+  '어사대장 Mukyeong: The manor on the fog road still breathes mist over my harbor. Go inside, face the Gengar, then return... if it lets you.':
+    '어사대장 무경: 안개길의 저택이 아직도 내 항구에 안개를 뿜고 있다. 안으로 들어가 팬텀과 맞선 뒤 돌아와라... 녀석이 보내 준다면.',
+  "어사대장 Mukyeong: ...As I feared. That Gengar wore a trainer's command — someone loosed it in the manor to blind my harbor.":
+    '어사대장 무경: ...우려한 대로다. 그 팬텀은 트레이너의 명령을 따르고 있었어 — 누군가 항구를 가리려고 저택에 풀어놓은 거다.',
+  '어사대장 Mukyeong: In fog, you cannot see what comes. Only adapt. ...Begin.':
+    '어사대장 무경: 안개 속에선 무엇이 오는지 볼 수 없다. 오직 적응할 뿐. ...시작.',
+  '어사대장 Mukyeong: You saw the hand behind the fog, and you struck it. That is worth more than any drill against me.':
+    '어사대장 무경: 안개 뒤의 손을 보고 정확히 쳤군. 나와 하는 어떤 훈련보다 값지다.',
+  '노스단. They run cargo through Chongjin under the fog, bound for the sacred peak. Now that the mist has lifted, my crews will hunt them down — that is my burden, not yours.':
+    '노스단이다. 놈들은 안개를 틈타 청진으로 화물을 들여와 성스러운 봉우리로 보내고 있다. 이제 안개가 걷혔으니 내 부하들이 추적할 것이다 — 그건 내 짐이지, 네 짐이 아니다.',
+  '🐎 You received the Chongjin 마패!': '🐎 청진 마패를 받았다!',
+
+  // Sinuiju
+  'Sinuiju (신의주) — the Amrok river locked in blue ice, a broken bridge-span reaching toward the far bank.':
+    '신의주 — 압록강은 푸른 얼음에 갇혀 있고, 끊어진 교각이 건너편 강기슭을 향해 뻗어 있다.',
+  '어사대장 Amrok bars the crossing, breath fogging in the still cold.':
+    '어사대장 압록이 고요한 추위 속에서 입김을 피우며 건널목을 막아선다.',
+  '어사대장 Amrok: The coldest gate. Cross it before the ice cracks beneath you. Begin.':
+    '어사대장 압록: 가장 차가운 관문이다. 발밑 얼음이 갈라지기 전에 건너라. 시작.',
+  '어사대장 Amrok: ...You crossed. Few do.':
+    '어사대장 압록: ...건넜군. 해내는 이는 드물다.',
+  '어사대장 Amrok: ...The cracking has stopped. The crossing holds. You slid blind through that frozen maze and faced the beast in its own lair.':
+    '어사대장 압록: ...갈라지는 소리가 멎었다. 건널목은 버텨냈다. 너는 얼어붙은 미로를 앞도 보지 못한 채 지나, 녀석의 소굴에서 정면으로 맞섰군.',
+  '(unused — the Beartic is confronted in the heart of the ice cave.)':
+    '(사용하지 않음 — 툰베어는 얼음 동굴 중심부에서 대면한다.)',
+  'Stationmaster: Welcome to the 압록강 국제철도역! Grandest terminal in the north — and the emptiest.':
+    '역장: 압록강 국제철도역에 오신 걸 환영합니다! 북부에서 가장 웅장하고 — 가장 텅 빈 역이지요.',
+  'The line was built to run clear across the 미지의 대륙 — the Unknown Continent, off past the frozen river. Iron rails to the very edge of the map, and beyond.':
+    '이 철도는 얼어붙은 강 너머 미지의 대륙을 가로지르도록 놓였습니다. 지도의 끝까지, 그리고 그 너머까지 이어지는 철길이죠.',
+  'Traveler: I came all this way to catch the train to the 미지의 대륙. They tell me the line has been shut for years.':
+    '여행자: 미지의 대륙행 기차를 타려고 여기까지 왔어요. 몇 년째 운행이 중단됐다고 하네요.',
+  '🐎 You received the Sinuiju 마패!': '🐎 신의주 마패를 받았다!',
+
+  // Samjiyon
+  'Samjiyon (삼지연) — the three-lake plateau under Baekdu, larch forests deep in snow, an aurora ghosting the sky.':
+    '삼지연 — 백두산 아래 세 호수의 고원. 낙엽송 숲은 깊은 눈에 잠기고, 오로라가 하늘을 유령처럼 스친다.',
+  '어사대장 Seolwon, last of the eight, stands serene where the world turns white.':
+    '여덟 번째이자 마지막 어사대장 설원이 온 세상이 하얗게 변하는 곳에서 고요히 서 있다.',
+  '어사대장 Seolwon: Pass me, and the road to the sacred peak — and the Northern League — is yours. Begin.':
+    '어사대장 설원: 나를 통과하면 성스러운 봉우리와 북방 리그로 가는 길이 네 것이다. 시작.',
+  '어사대장 Seolwon: Eight 마패. You are worthy to climb. The Northern League will know you now.':
+    '어사대장 설원: 마패 여덟 개. 오를 자격이 있다. 이제 북방 리그가 널 알아볼 것이다.',
+  '🐎 You received the Samjiyon 마패!  (Present all eight at the Northern League.)':
+    '🐎 삼지연 마패를 받았다!  (북방 리그에서 여덟 마패를 모두 제시하자.)',
+  '어사대장 Seolwon: The last of the eight. Steady your breath, Champion — begin—':
+    '어사대장 설원: 마지막 여덟 번째다. 호흡을 가다듬어라, 챔피언 — 시작—',
+  '💥 The Hall doors burst open in a gust of snow! The 노스단 Sovereign strides in, grunts fanning out behind him.':
+    '💥 눈보라와 함께 전당의 문이 터지듯 열린다! 노스단 군주가 성큼 들어오고, 조무래기들이 뒤로 퍼져 선다.',
+  'Sovereign Clemont: The exam is cancelled, Inspector. 노스단 has raised its 아지트 at the head of your mountain road — Samjiyon is OURS now, the gateway to the sacred peak.':
+    '군주 클레몽: 시험은 취소다, 감찰관. 노스단이 네 산길 꼭대기에 아지트를 세웠다 — 이제 삼지연은 우리의 땅이며, 성스러운 봉우리로 가는 관문이다.',
+  '어사대장 Seolwon: ...So they come at last, into the open. Champion — I cannot grant the exam while that tower stands over my people.':
+    '어사대장 설원: ...마침내 놈들이 모습을 드러냈군. 챔피언 — 저 탑이 백성들 위에 서 있는 동안엔 시험을 허락할 수 없다.',
+  'Seolwon: Take the mountain road to their 아지트. Climb it, floor by floor, and cast down the 간부 at its top. Break their hold on Samjiyon — then, and only then, face me.':
+    '설원: 산길을 따라 놈들의 아지트로 가라. 층층이 올라 꼭대기의 간부를 끌어내려라. 삼지연에 대한 놈들의 지배를 깨뜨려야 — 그때야 비로소 나와 맞설 수 있다.',
+  '어사대장 Seolwon: The 노스단 아지트 still looms at the head of the mountain road. Climb it, throw down their 간부, and return — then the last exam is yours.':
+    '어사대장 설원: 노스단 아지트가 아직 산길 꼭대기를 짓누르고 있다. 올라가 간부를 쓰러뜨린 뒤 돌아와라 — 그러면 마지막 시험을 치르게 해주겠다.',
+  '어사대장 Seolwon: ...The tower has fallen. Word came down the mountain — the 노스단 flag is torn down and their grunts scatter into the snow.':
+    '어사대장 설원: ...탑이 무너졌다. 산 아래서 소식이 왔다 — 노스단 깃발이 찢겨 내려왔고 조무래기들이 눈밭으로 흩어지고 있다.',
+  'You stormed their whole 아지트 alone, on the eve of your own trial. That is the spirit the peak asks for. Now — face me. Begin.':
+    '자신의 시험 전날에 혼자서 놈들의 아지트를 돌파했군. 그것이 봉우리가 요구하는 정신이다. 이제 — 나와 맞서라. 시작.',
+  '(unused — the 간부 is confronted at the top of the 노스단 아지트.)':
+    '(사용하지 않음 — 간부는 노스단 아지트 꼭대기에서 대면한다.)',
+  'Snow Child: The snow stopped falling! The Abomasnow used to make it blizzard FOREVER. Thank you, mister!':
+    '눈아이: 눈이 그쳤어요! 눈설왕 때문에 끝없이 눈보라가 쳤는데. 고마워요, 아저씨!',
+  'Pilgrim: Beyond the plateau lies the sacred peak itself. Only those worthy of all eight 마패 may climb. ...Is that you?':
+    '순례자: 고원 너머에는 성스러운 봉우리가 있지. 여덟 마패를 모두 지닐 자격이 있는 자만 오를 수 있어. ...그게 자네인가?',
 
   // ── Gym badge names (Scholars' Road gate + menu badge screen) ──
   'Shadow Court Badge (Capitol)': '섀도우 코트 배지 (수도)',

@@ -44,8 +44,8 @@ export class DialogBox {
       .setStrokeStyle(2, 0xffffff).setVisible(false);
 
     this.choiceItems = [
-      scene.add.text(W - 128, H - 224, '▶ YES', { fontSize: '22px', color: '#ffffff' }).setVisible(false),
-      scene.add.text(W - 128, H - 194, '  NO',  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
+      scene.add.text(W - 128, H - 224, `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setVisible(false),
+      scene.add.text(W - 128, H - 194, `  ${tr('NO')}`,  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
     ];
 
     this.root = scene.add.container(0, 0, [
@@ -166,9 +166,9 @@ export class DialogBox {
   }
 
   private refreshChoice() {
-    this.choiceItems[0].setText(this.choiceIdx === 0 ? '▶ YES' : '  YES')
+    this.choiceItems[0].setText(`${this.choiceIdx === 0 ? '▶' : '  '} ${tr('YES')}`)
       .setColor(this.choiceIdx === 0 ? '#ffffff' : '#888888');
-    this.choiceItems[1].setText(this.choiceIdx === 1 ? '▶ NO'  : '  NO')
+    this.choiceItems[1].setText(`${this.choiceIdx === 1 ? '▶' : '  '} ${tr('NO')}`)
       .setColor(this.choiceIdx === 1 ? '#ffffff' : '#888888');
   }
 

@@ -46,7 +46,6 @@ export class SeoraeBuildingScene extends BaseInteriorScene {
     this.drawRect(g, 7, 12, 2, 1, 0x886622, 0x664400);
     this.add.text(400, this.tile(0, 1).y + 16, this.room.title, { fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(10);
     this.add.text(this.tile(3, 7).x + 48, this.tile(7, 7).y + 32, this.kind === 'baths' ? '♨ STEAM POOL' : this.kind === 'market' ? '🍡 LOCAL GOODS' : this.kind === 'skateshop' ? '⛸ SKATE RENTAL' : '🔥 WARM HEARTH', { fontSize: '9px', color: '#fff' }).setOrigin(0.5).setDepth(10);
-    this.add.text(this.tile(7, 12).x + 32, this.tile(7, 12).y + 16, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(10);
     this.addSolid(0, 0, this.COLS - 1, 0); this.addSolid(0, 0, 0, this.ROWS - 1);
     this.addSolid(this.COLS - 1, 0, this.COLS - 1, this.ROWS - 1);
     this.addSolid(0, this.ROWS - 1, 6, this.ROWS - 1); this.addSolid(9, this.ROWS - 1, this.COLS - 1, this.ROWS - 1);

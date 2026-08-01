@@ -468,6 +468,111 @@ export function makeStall(): THREE.Group {
   return g;
 }
 
+// ── Department-store interior fixtures ─────────────────────────────────────
+// These are deliberately procedural: every floor can share a coherent visual
+// language without depending on external model downloads, and the 2D fallback
+// remains usable when WebGL is unavailable.
+export type StoreFixtureKind =
+  | 'store-wall' | 'store-counter' | 'store-shelf' | 'store-display'
+  | 'store-tmrack' | 'store-table' | 'store-elevator' | 'store-planter'
+  | 'store-bench' | 'store-directory' | 'store-sofa' | 'store-vending'
+  | 'store-railing';
+
+/** Low-poly fixture sized in world tiles and centred on the origin. */
+export function makeStoreFixture(
+  kind: StoreFixtureKind,
+  width = 1,
+  depth = 1,
+  color = 0x6a7f9a,
+): THREE.Group {
+  const g = new THREE.Group();
+  const w = Math.max(0.18, width), d = Math.max(0.12, depth);
+  const dark = 0x343946, metal = 0xaeb8c4, wood = 0x8b623e;
+  const box = (bw: number, bh: number, bd: number, matColor: number, x: number, y: number, z: number) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), toonMat(matColor));
+    m.position.set(x, y, z); g.add(m); return m;
+  };
+
+  if (kind === 'store-wall') {
+    box(w, 1.3, d, color, 0, 0.65, 0);
+    box(w, 0.08, d + 0.04, 0xe1c77c, 0, 1.18, 0);
+  } else if (kind === 'store-counter') {
+    box(w * 0.96, 0.78, d * 0.86, color, 0, 0.39, 0);
+    box(w, 0.12, d, 0xe5d4b0, 0, 0.84, 0);
+    box(w * 0.78, 0.08, 0.04, dark, 0, 0.48, d * 0.45);
+  } else if (kind === 'store-shelf') {
+    for (const x of [-w * 0.46, w * 0.46]) box(0.08, 1.45, d * 0.84, dark, x, 0.73, 0);
+    for (const y of [0.16, 0.62, 1.08, 1.46]) box(w, 0.08, d * 0.9, color, 0, y, 0);
+    const count = Math.max(3, Math.min(10, Math.round(w * 3)));
+    const productColors = [0xf26b5b, 0x5ba8e8, 0xf0c44f, 0x70c98b, 0xb787d7];
+    for (let i = 0; i < count; i++) {
+      const x = -w * 0.42 + (i + 0.5) * (w * 0.84 / count);
+      box(Math.max(0.08, w * 0.55 / count), 0.22, d * 0.46, productColors[i % productColors.length], x, 0.31 + (i % 3) * 0.46, 0);
+    }
+  } else if (kind === 'store-display' || kind === 'store-tmrack') {
+    box(w * 0.82, 0.48, d * 0.82, color, 0, 0.24, 0);
+    box(w * 0.94, 0.1, d * 0.94, 0xf0dfbd, 0, 0.53, 0);
+    if (kind === 'store-tmrack') {
+      for (const [x, c] of [[-0.22, 0x55c8ff], [0, 0xffd85a], [0.22, 0xff6cae]] as [number, number][]) {
+        const disc = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 6, 14), toonMat(c));
+        disc.position.set(x * Math.min(1, w), 0.86, 0); disc.rotation.x = Math.PI / 2.8; g.add(disc);
+      }
+    } else {
+      const gift = new THREE.Mesh(new THREE.DodecahedronGeometry(Math.min(0.3, w * 0.24), 0), toonMat(0xff8ab4));
+      gift.position.y = 0.84; gift.rotation.y = 0.45; g.add(gift);
+      box(0.06, 0.58, 0.06, 0xf4d04e, 0, 0.86, 0);
+    }
+  } else if (kind === 'store-table') {
+    box(w * 0.72, 0.12, d * 0.72, 0xd8b47a, 0, 0.72, 0);
+    box(0.13, 0.68, 0.13, dark, 0, 0.35, 0);
+    for (const [x, z] of [[-w * 0.43, 0], [w * 0.43, 0], [0, -d * 0.43], [0, d * 0.43]] as [number, number][]) {
+      box(0.34, 0.1, 0.34, color, x, 0.42, z);
+      box(0.09, 0.4, 0.09, dark, x, 0.2, z);
+    }
+  } else if (kind === 'store-elevator') {
+    box(w, 2.4, d * 0.34, dark, 0, 1.2, -d * 0.33);
+    box(0.16, 2.35, d, metal, -w * 0.45, 1.17, 0);
+    box(0.16, 2.35, d, metal, w * 0.45, 1.17, 0);
+    box(w, 0.2, d, metal, 0, 2.28, 0);
+    box(w * 0.43, 2.0, 0.08, 0x7297b8, -w * 0.22, 1.1, d * 0.42);
+    box(w * 0.43, 2.0, 0.08, 0x7297b8, w * 0.22, 1.1, d * 0.42);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd85a }));
+    lamp.position.set(w * 0.38, 1.45, d * 0.5); g.add(lamp);
+  } else if (kind === 'store-planter') {
+    box(w * 0.94, 0.42, d * 0.94, color, 0, 0.21, 0);
+    box(w * 0.82, 0.08, d * 0.82, 0x4a3324, 0, 0.44, 0);
+    const n = Math.max(2, Math.round(w * 2));
+    for (let i = 0; i < n; i++) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 5), toonMat(i % 2 ? 0x4e9b52 : 0x397a45));
+      leaf.scale.set(0.8, 1.45, 0.8);
+      leaf.position.set(-w * 0.34 + (i + 0.5) * (w * 0.68 / n), 0.75, (i % 2 ? 0.12 : -0.1) * d);
+      g.add(leaf);
+    }
+  } else if (kind === 'store-bench') {
+    box(w, 0.12, d * 0.72, wood, 0, 0.48, 0);
+    box(w, 0.5, 0.1, color, 0, 0.76, -d * 0.28);
+    for (const x of [-w * 0.36, w * 0.36]) box(0.1, 0.48, 0.1, dark, x, 0.24, 0);
+  } else if (kind === 'store-directory') {
+    box(w * 0.85, 1.35, 0.14, 0x334863, 0, 1.05, 0);
+    box(w, 0.12, d * 0.62, metal, 0, 0.08, 0);
+    for (let i = 0; i < 6; i++) box(w * 0.62, 0.055, 0.02, i % 2 ? 0xffd76a : 0xcfe8ff, 0, 1.48 - i * 0.18, 0.08);
+  } else if (kind === 'store-sofa') {
+    box(w, 0.42, d * 0.88, color, 0, 0.31, 0);
+    box(w, 0.58, 0.22, color, 0, 0.68, -d * 0.34);
+    for (const x of [-w * 0.46, w * 0.46]) box(0.16, 0.42, d, dark, x, 0.42, 0);
+  } else if (kind === 'store-vending') {
+    box(w * 0.9, 1.72, d * 0.78, color, 0, 0.86, 0);
+    box(w * 0.68, 0.82, 0.05, 0xc8efff, 0, 1.12, d * 0.41);
+    for (let i = 0; i < 6; i++) box(0.1, 0.18, 0.06, [0x5cc9ff, 0xff6d73, 0xffd04f][i % 3], -0.22 + (i % 3) * 0.22, 1.37 - Math.floor(i / 3) * 0.32, d * 0.46);
+    box(w * 0.42, 0.16, 0.05, dark, 0, 0.3, d * 0.42);
+  } else if (kind === 'store-railing') {
+    box(w, 0.1, Math.max(0.08, d), metal, 0, 0.9, 0);
+    const n = Math.max(2, Math.round(w / 0.7));
+    for (let i = 0; i <= n; i++) box(0.07, 0.92, Math.max(0.08, d), dark, -w / 2 + i * (w / n), 0.46, 0);
+  }
+  return g;
+}
+
 /** Grey-granite civic obelisk with a stepped base and gold finial. */
 export function makeGrandObelisk(): THREE.Group {
   const g = new THREE.Group();

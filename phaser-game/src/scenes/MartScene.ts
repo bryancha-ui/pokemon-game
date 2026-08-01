@@ -42,7 +42,6 @@ export class MartScene extends BaseInteriorScene {
 
     // Door
     this.drawRect(g, 7, 12, 2, 1, 0x886622, 0x664400);
-    this.add.text(this.tile(7, 12).x + 32, this.tile(7, 12).y + 16, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
 
     // Walls (with the door gap at the bottom)
     this.addSolid(0, 0, this.COLS - 1, 0);

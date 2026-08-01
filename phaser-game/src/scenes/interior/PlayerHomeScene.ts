@@ -25,7 +25,6 @@ export class PlayerHomeScene extends BaseInteriorScene {
     // ── Door (bottom center, rows 12, cols 7-8) ──
     this.drawRect(g, 7, 12, 2, 1, 0x8b6914, 0x4a3a0a); // door mat
     const dp = this.tile(7, 12);
-    this.add.text(dp.x + 32, dp.y + 16, '🚪', { fontSize: '20px' }).setOrigin(0.5).setDepth(5);
 
     // ── Windows (top wall) ──
     this.drawRect(g, 3, 0, 2, 1, 0x88ccff, 0xffffff);

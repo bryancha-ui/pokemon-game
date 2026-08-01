@@ -2,15 +2,17 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  type StoreFixtureKind,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall';
+  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall' | StoreFixtureKind;
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
+  w?: number; d?: number; color?: number; // authored interior-fixture footprint/theme
 }
 import { getProp, pickProp, primeProps, propById, propFailed, propsFor } from './PropModels';
 import type { EnvProfile } from './ThreeStage';
@@ -823,7 +825,9 @@ export function buildTerrain(
   // Scene-pinned decorative props (pines, stone lanterns, ice statues), placed
   // at the centre of their tile.
   for (const p of propPlots) {
-    const obj = p.kind === 'pine' ? makePineTree()
+    const storeFixture = p.kind.startsWith('store-');
+    const obj = storeFixture ? makeStoreFixture(p.kind as StoreFixtureKind, p.w ?? 1, p.d ?? 1, p.color)
+      : p.kind === 'pine' ? makePineTree()
       : p.kind === 'lantern' ? makeStoneLantern()
         : p.kind === 'rail' ? makeRailTrack(p.len ?? 4)
           : p.kind === 'obelisk' ? makeGrandObelisk()
@@ -835,11 +839,11 @@ export function buildTerrain(
                       : p.kind === 'cherry' ? makeCherryTree()
                         : p.kind === 'stall' ? makeStall()
                           : makeIceStatue();
-    obj.position.set(p.x + 0.5, 0, p.y + 0.5);
+    obj.position.set(p.x + (storeFixture ? (p.w ?? 1) / 2 : 0.5), 0, p.y + (storeFixture ? (p.d ?? 1) / 2 : 0.5));
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;
     group.add(obj);
-    blockers.push({ node: obj, r: Math.max(0.7, p.scale ?? 1), fade: 0 });
+    blockers.push({ node: obj, r: Math.max(0.7, storeFixture ? Math.max(p.w ?? 1, p.d ?? 1) / 2 : (p.scale ?? 1)), fade: 0 });
   }
 
   return {
