@@ -11,7 +11,7 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
-import { AVATAR_URL, playerAvatarKey, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
+import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvatar';
 import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
@@ -221,24 +221,17 @@ export class RivalBattleScene extends Phaser.Scene {
     this.fitSprite(this.rivalSprite, 168);   // enlarge the rival's Pokémon so it reads as a real threat
     this.fitSprite(this.playerSprite, 150);
 
-    // Trainer portraits drive full 3D characters during the intro, each at the
-    // same side of the arena as the Pokémon they are about to send out.
+    // The player and rival both have authored 2D trainer images. Keep those
+    // images on Phaser's foreground while the arena itself remains 3D.
     const pAvatar = playerAvatarKey(this.registry), rAvatar = rivalAvatarKey(this.registry);
     if (this.textures.exists(pAvatar)) {
-      const playerDesign: 'boy' | 'girl' = playerGender(this.registry);
       this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0)
-        .setData('battleTrainerPlayerAnchor', true)
-        .setData('characterModel3DKey', pAvatar)
-        .setData('characterGender3D', playerDesign);
+        .setData('no3d', true);
       fitPortrait(this.playerTrainer);
     }
     if (this.textures.exists(rAvatar)) {
-      // The rival becomes a walking 3D character on the battle stage (it strides
-      // in toward the player during the intro). The rival is always the opposite
-      // gender of the player. The flat image remains available in 2D mode.
-      const rivalDesign: 'boy' | 'girl' = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
       this.rivalTrainer = this.add.image(RIVAL_STAGE_X, RIVAL_STAGE_Y, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
-        .setData('battleTrainer', rivalDesign).setData('characterModel3DKey', rAvatar);
+        .setData('no3d', true);
       fitPortrait(this.rivalTrainer);
     }
   }

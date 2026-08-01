@@ -17,9 +17,9 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
-import { portraitFor, fitPortrait, usesAuthored2DBattlePortrait } from '../data/BattlePortraits';
+import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { trainerClassPortrait } from '../data/TrainerClassPortrait';
-import { AVATAR_URL, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
+import { AVATAR_URL, rivalAvatarKey } from '../data/PlayerAvatar';
 import { DexTracker } from '../systems/DexTracker';
 import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
 import { tmForMove } from '../data/TMs';
@@ -405,23 +405,15 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Trainer portraits normally drive a 3D character on the battle stage.
-    // Gym Leaders, Elite Four members and Champions keep their authored 2D
-    // battle artwork on Phaser's foreground layer even while 3D mode is active.
+    // Every resolved trainer portrait is already authored/generated as a 2D
+    // battle image. Keep it on Phaser's foreground above the 3D arena instead
+    // of replacing it with a procedural 3D character.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
-      this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
-      if (usesAuthored2DBattlePortrait(this.trainerKey)) {
-        this.trainerPortrait.setData('no3d', true);
-      } else {
-        this.trainerPortrait.setData('characterModel3DKey', portrait.key);
-        if (this.trainerKey.startsWith('rival')) {
-          const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-          this.trainerPortrait.setData('battleTrainer', design);
-        } else {
-          this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
-        }
-      }
+      this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key)
+        .setDepth(6)
+        .setAlpha(0)
+        .setData('no3d', true);
       fitPortrait(this.trainerPortrait);
     }
 
