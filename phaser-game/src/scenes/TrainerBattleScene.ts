@@ -17,7 +17,7 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
-import { portraitFor, fitPortrait } from '../data/BattlePortraits';
+import { portraitFor, fitPortrait, usesAuthored2DBattlePortrait } from '../data/BattlePortraits';
 import { trainerClassPortrait } from '../data/TrainerClassPortrait';
 import { AVATAR_URL, playerGender, rivalAvatarKey } from '../data/PlayerAvatar';
 import { DexTracker } from '../systems/DexTracker';
@@ -405,17 +405,22 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Every trainer portrait drives a real 3D character on the battle stage.
-    // The image remains the authoritative 2D fallback when F3 disables 3D.
+    // Trainer portraits normally drive a 3D character on the battle stage.
+    // Gym Leaders, Elite Four members and Champions keep their authored 2D
+    // battle artwork on Phaser's foreground layer even while 3D mode is active.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
-      this.trainerPortrait.setData('characterModel3DKey', portrait.key);
-      if (this.trainerKey.startsWith('rival')) {
-        const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-        this.trainerPortrait.setData('battleTrainer', design);
+      if (usesAuthored2DBattlePortrait(this.trainerKey)) {
+        this.trainerPortrait.setData('no3d', true);
       } else {
-        this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+        this.trainerPortrait.setData('characterModel3DKey', portrait.key);
+        if (this.trainerKey.startsWith('rival')) {
+          const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
+          this.trainerPortrait.setData('battleTrainer', design);
+        } else {
+          this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+        }
       }
       fitPortrait(this.trainerPortrait);
     }

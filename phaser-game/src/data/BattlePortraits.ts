@@ -71,6 +71,37 @@ export function portraitFor(trainerKey: string): Portrait | undefined {
   return PORTRAITS[trainerKey];
 }
 
+// Major League characters keep their hand-authored 2D artwork during battle.
+// This affects the intro portrait only; their overworld characters can still
+// use the 3D character mirror.
+const AUTHORED_2D_BATTLE_PORTRAITS = new Set([
+  // Gym Leaders
+  'capitol-jin',
+  'baekdu-byeoksan',
+  'geumgang-namsun',
+  'haean-harang',
+  'forest-noksaek',
+  'sunrise-beonge',
+  'dolmoe-sandol',
+  'seorae-yeona',
+  // Onnuri Elite Four + Champion
+  'e4-gyeoul',
+  'e4-hwageum',
+  'e4-baram',
+  'e4-saleum',
+  'champion-hwangeum',
+  // Northern Elite Four + Champion
+  'north-seorak',
+  'north-hanseol',
+  'north-cheolgang',
+  'north-baekho',
+  'north-taewang',
+]);
+
+export function usesAuthored2DBattlePortrait(trainerKey: string): boolean {
+  return AUTHORED_2D_BATTLE_PORTRAITS.has(trainerKey);
+}
+
 /**
  * Attach an existing full-body portrait to an overworld character. The 2D
  * Graphics object remains authoritative for position/visibility/gameplay, while

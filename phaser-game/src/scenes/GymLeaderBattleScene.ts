@@ -246,13 +246,12 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 160);
     this.updateEnemySprite();
 
-    // Jin stands as a portrait-derived 3D character at the enemy Pokémon's
-    // arena anchor, then steps aside on reveal.
+    // Jin keeps his existing authored 2D battle portrait, matching every other
+    // Gym Leader, Elite Four member and Champion.
     const jin = portraitFor('capitol-jin');
     if (jin && this.textures.exists(jin.key)) {
       this.leaderPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, jin.key).setDepth(6)
-        .setData('battleTrainerEnemyAnchor', true)
-        .setData('characterModel3DKey', jin.key);
+        .setData('no3d', true);
       fitPortrait(this.leaderPortrait);
     }
   }

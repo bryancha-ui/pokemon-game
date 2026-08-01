@@ -282,6 +282,9 @@ export class BattleMirror {
     }
     if (!(obj instanceof Phaser.GameObjects.Image) && !(obj instanceof Phaser.GameObjects.Sprite)) return;
     const im = obj as GO & Phaser.GameObjects.Image;
+    // Explicit 2D artwork always wins over trainer/model tags. Major battle
+    // portraits use this to stay on Phaser's foreground above the 3D arena.
+    if ((im as Phaser.GameObjects.Image).getData?.('no3d')) return;
     // A scene can promote a battle trainer to a walking 3D character (the rival
     // striding in toward the player) by tagging its intro portrait with
     // `battleTrainer: 'boy' | 'girl'`. Spawn the 3D walker and keep the flat 2D
@@ -301,9 +304,6 @@ export class BattleMirror {
       );
       return;
     }
-    // Battle UI images that aren't combatants (trainer/leader portraits) opt out
-    // of the 3D arena so they don't stand on the stage as a stray relief.
-    if (!trainerAtEnemy && (im as Phaser.GameObjects.Image).getData?.('no3d')) return;
     const dw = im.displayWidth ?? 0, dh = im.displayHeight ?? 0;
     const W = this.scene.scale.width, H = this.scene.scale.height;
 
@@ -318,9 +318,6 @@ export class BattleMirror {
     // trainer for a UI icon or it remains in Phaser's upper-left battle layer
     // instead of being handed to the enemy Pokémon's 3D arena anchor.
     if (!trainerAtEnemy && (dw < 70 || dh < 70)) return; // icons stay 2D
-    // Explicit opt-out: scenes can tag any object to stay in the 2D layer.
-    if ((im as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) return;
-
     const src = this.frameCanvas(im);
     // Creatures WITHOUT a generated 3D model keep their authored art on a thin
     // relief so pixel rows cannot turn into a stretched accordion. Creatures
