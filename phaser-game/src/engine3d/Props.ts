@@ -447,6 +447,27 @@ export function makeCherryTree(): THREE.Group {
   return g;
 }
 
+/** Open-front market stall: a wooden counter with goods under a striped awning
+ *  on two posts — a street vendor / fish-market stand. */
+export function makeStall(): THREE.Group {
+  const g = new THREE.Group();
+  const wood = 0x9a6a3a, awning = 0xd84a3a;
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.4, 0.5), toonMat(wood));
+  counter.position.set(0, 0.2, 0.05);
+  const goods = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.12, 0.4), toonMat(0x9fd0e6));
+  goods.position.set(0, 0.46, 0.05);
+  for (const x of [-0.42, 0.42]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.95, 6), toonMat(0x6a4a2a));
+    post.position.set(x, 0.55, -0.18); g.add(post);
+  }
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.06, 0.56), toonMat(awning));
+  roof.position.set(0, 1.0, 0.02); roof.rotation.x = -0.18;
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.12, 0.04), toonMat(0xf0f0f0));
+  trim.position.set(0, 0.95, 0.28); trim.rotation.x = -0.18;
+  g.add(counter, goods, roof, trim);
+  return g;
+}
+
 /** Grey-granite civic obelisk with a stepped base and gold finial. */
 export function makeGrandObelisk(): THREE.Group {
   const g = new THREE.Group();

@@ -47,6 +47,10 @@ export abstract class CliffClimbScene extends Phaser.Scene {
   // (there are none) rise in 3D, so every auto-detected building is erased to
   // clean ground instead of extruding stray facades on the cliffs.
   public onlyNamedBuildings = true;
+  // The dark rock FLOOR must stay flat walkable ground (not extrude into low
+  // walls the player appears to phase through); the solid CLIFF barriers stay
+  // raised. Collision (SOLID: CLIFF/SEA) is unchanged.
+  public caveFloorHint = true;
 
   protected abstract sceneKey: string;
   protected abstract title: string;

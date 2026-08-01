@@ -82,10 +82,14 @@ export class SunriseCityScene extends Phaser.Scene {
   // that bury the player. caveFloorHint applies the wall-height cap (and dark-
   // floor rule) without switching to cave lighting, so the player stays visible.
   public caveFloorHint = true;
-  // Street lamps framing the gym gate and along the boulevard, as 3D lamps with
-  // a lit head (coords mirror the T.LANTERN tiles).
-  public propPlots = ([[18, 12], [22, 12], [9, 11], [29, 11]] as [number, number][])
-    .map(([x, y]) => ({ x, y, kind: 'streetlamp' as const }));
+  // Street lamps framing the gym gate + boulevard, and the Fish Market row as 3D
+  // vendor stalls (coords mirror the T.LANTERN / T.STALL tiles).
+  public propPlots = [
+    ...([[18, 12], [22, 12], [9, 11], [29, 11]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'streetlamp' as const })),
+    ...([[6, 17], [8, 17], [10, 17]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'stall' as const })),
+  ];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

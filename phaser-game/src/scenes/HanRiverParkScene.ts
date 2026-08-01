@@ -19,7 +19,7 @@ const T = {
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 46, ROWS = 26;
 const COLORS: Record<Tile, number> = {
-  [T.GRASS]: 0x4f8a3e, [T.PATH]: 0xcabb9a, [T.BIKE]: 0x9a4636, [T.WATER]: 0x2f78b4,
+  [T.GRASS]: 0x74b85e, [T.PATH]: 0xcabb9a, [T.BIKE]: 0x9a4636, [T.WATER]: 0x2f78b4,
   [T.SAND]: 0xcdba86, [T.BUILDING]: 0xe6dcc6, [T.TREE]: 0x2c5a2c, [T.BRIDGE]: 0x8a8f98,
   [T.FLOWER]: 0x4f8a3e, [T.PLAZA]: 0xbfb59a, [T.BENCH]: 0x8a5a2a,
 };

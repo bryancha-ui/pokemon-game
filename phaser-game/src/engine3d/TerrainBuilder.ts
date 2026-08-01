@@ -2,13 +2,13 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeNosdanHQ, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry';
+  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall';
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
 }
@@ -212,7 +212,7 @@ function classify(hsl: HSL, snowy: boolean, variance = 0, cavey = false, interio
   if (!interior && h >= 185 && h <= 255 && s > 0.28 && l >= 0.32 && l < 0.75 && variance < 420) return 'water';
   if (h >= 60 && h <= 170) {                                          // green family
     if (l < 0.30) return snowy ? 'pine' : 'tree';                     // darker greens = foliage
-    if (s > 0.40 && l < 0.48) return 'grass';                         // saturated mid greens = tall grass (plain bright lawns stay flat)
+    if (s > 0.34 && l < 0.50) return 'grass';                         // mid greens = tall grass (brighter lawns, l≥0.50, stay flat)
     // Snowy passes paint their tall-grass clearings a pale frosted green (low
     // saturation, light) — treat that as grass so it grows snow-dusted tufts.
     if (snowy && s > 0.12 && l >= 0.5 && l < 0.75) return 'grass';
@@ -833,7 +833,8 @@ export function buildTerrain(
                   : p.kind === 'streetlamp' ? makeStreetlamp()
                     : p.kind === 'minecart' ? makeMineCart()
                       : p.kind === 'cherry' ? makeCherryTree()
-                        : makeIceStatue();
+                        : p.kind === 'stall' ? makeStall()
+                          : makeIceStatue();
     obj.position.set(p.x + 0.5, 0, p.y + 0.5);
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;
