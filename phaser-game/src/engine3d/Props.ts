@@ -52,8 +52,14 @@ export function makeBlobShadow(radius: number): THREE.Mesh {
 // ── Trees ───────────────────────────────────────────────────────────────────
 export interface InstancedProp {
   meshes: THREE.InstancedMesh[];
+  /** Original transforms, shared by every mesh part of an instance. */
+  placements: ReadonlyArray<{ x: number; z: number; s: number; rot: number }>;
   /** Place one instance; call finalize() when done. */
   place(x: number, z: number, s: number, rot: number): void;
+  /** Tilt one placed instance around its rooted position (used by grass rustle). */
+  setSway(index: number, pitch: number, roll: number): void;
+  /** Upload changed instance matrices after a batch of setSway calls. */
+  commit(): void;
   finalize(): void;
   count: number;
 }
@@ -66,22 +72,32 @@ function makeInstanced(parts: { geo: THREE.BufferGeometry; mat: THREE.Material; 
     return im;
   });
   const dummy = new THREE.Object3D();
+  const placements: { x: number; z: number; s: number; rot: number }[] = [];
   let n = 0;
+  const writeTransform = (index: number, pitch = 0, roll = 0) => {
+    const p = placements[index];
+    if (!p) return;
+    for (let i = 0; i < meshes.length; i++) {
+      dummy.position.set(p.x, parts[i].y * p.s, p.z);
+      dummy.scale.setScalar(p.s);
+      dummy.rotation.set(pitch, p.rot, roll);
+      dummy.updateMatrix();
+      meshes[i].setMatrixAt(index, dummy.matrix);
+    }
+  };
   return {
     meshes,
+    placements,
     count: 0,
     place(x, z, s, rot) {
       if (n >= max) return;
-      for (let i = 0; i < meshes.length; i++) {
-        dummy.position.set(x, parts[i].y * s, z);
-        dummy.scale.setScalar(s);
-        dummy.rotation.set(0, rot, 0);
-        dummy.updateMatrix();
-        meshes[i].setMatrixAt(n, dummy.matrix);
-      }
+      placements.push({ x, z, s, rot });
+      writeTransform(n);
       n++;
       this.count = n;
     },
+    setSway(index, pitch, roll) { writeTransform(index, pitch, roll); },
+    commit() { for (const m of meshes) m.instanceMatrix.needsUpdate = true; },
     finalize() {
       for (const m of meshes) { m.count = n; m.instanceMatrix.needsUpdate = true; }
     },

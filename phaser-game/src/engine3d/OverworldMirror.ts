@@ -600,8 +600,6 @@ export class OverworldMirror {
       this.needsTerrainRebuild = false;
       this.rebuildTerrain();
     }
-    this.terrain?.update(this.time);
-
     // Map graphics occasionally redraw (doors opening, cut trees): re-composite at most ~2Hz.
     this.mapRedrawCooldown -= dt;
     if (this.mapRedrawCooldown <= 0) {
@@ -710,6 +708,13 @@ export class OverworldMirror {
     // The follow target might be untracked (e.g. a Container player) — derive from raw coords.
     if (!playerPos && followT && followT.x !== undefined) {
       playerPos = new THREE.Vector3((followT.x ?? 0) / PX, 0, ((followT.y ?? 0) + 14) / PX);
+    }
+
+    // Terrain props are authored in group-local tile coordinates. Passing the
+    // live hero position lets nearby tall-grass instances react to footsteps.
+    if (this.terrain) {
+      const localPlayer = playerPos?.clone().sub(this.terrain.group.position) ?? null;
+      this.terrain.update(this.time, localPlayer);
     }
 
     // 2D camera shake → 3D shake.

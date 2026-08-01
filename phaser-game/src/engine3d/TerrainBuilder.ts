@@ -55,7 +55,8 @@ export const PX = 32;            // game pixels per tile == world units per tile
 export interface TerrainResult {
   group: THREE.Group;
   env: EnvProfile;
-  update(t: number): void;
+  /** playerPos is local to this terrain group (tiles, x/z). */
+  update(t: number, playerPos?: { x: number; z: number } | null): void;
   /** world size in tiles */
   cols: number; rows: number;
   /** detected building plots (debug/inspection) */
@@ -702,6 +703,16 @@ export function buildTerrain(
 
   trees.finalize(); grass.finalize(); flowers.finalize(); rocks.finalize();
   for (const p of [...trees.meshes, ...grass.meshes, ...flowers.meshes, ...rocks.meshes]) group.add(p);
+  const grassMotion = grass.placements.map((_, i) => ({
+    phase: i * 1.618,
+    age: 99,
+    near: false,
+    dirX: 0,
+    dirZ: 1,
+    pitch: 0,
+    roll: 0,
+  }));
+  let lastGrassPlayer: { x: number; z: number } | null = null;
   const wallMesh = walls.build();
   if (wallMesh) group.add(wallMesh);
 
@@ -852,10 +863,49 @@ export function buildTerrain(
     plots: buildings.map(b => ({ x: b.x, z: b.z, w: b.w, d: b.d })),
     blockers,
     envStats: { dark: darkCells / total, vivid: vividCells / total, light: lightCells / total },
-    update(t: number) {
+    update(t: number, playerPos?: { x: number; z: number } | null) {
       const dt = lastT < 0 ? 0 : Math.max(0, Math.min(0.5, t - lastT));
       lastT = t;
       for (const w of waters) w.update(t);
+
+      // Rustle only the tufts around a moving player. Each contact produces a
+      // quick oscillation that bends with travel direction and eases back to
+      // rest; a faint local breeze keeps the patch from looking mechanical.
+      const dx = playerPos && lastGrassPlayer ? playerPos.x - lastGrassPlayer.x : 0;
+      const dz = playerPos && lastGrassPlayer ? playerPos.z - lastGrassPlayer.z : 0;
+      const moved = Math.hypot(dx, dz);
+      const moving = moved > 0.002;
+      const invMove = moving ? 1 / moved : 0;
+      let grassDirty = false;
+      for (let i = 0; i < grassMotion.length; i++) {
+        const motion = grassMotion[i];
+        const p = grass.placements[i];
+        const pdx = playerPos ? playerPos.x - p.x : 99;
+        const pdz = playerPos ? playerPos.z - p.z : 99;
+        const distSq = pdx * pdx + pdz * pdz;
+        const near = distSq < 0.82 * 0.82;
+        motion.age += dt;
+        if (near && moving && (!motion.near || motion.age > 0.2)) {
+          motion.age = 0;
+          motion.dirX = dx * invMove;
+          motion.dirZ = dz * invMove;
+        }
+        motion.near = near;
+
+        const energy = Math.exp(-motion.age * 3.8);
+        const kick = Math.sin(motion.age * 19) * 0.34 * energy;
+        const breeze = distSq < 2.4 * 2.4 ? Math.sin(t * 3.1 + motion.phase) * 0.025 : 0;
+        const pitch = -motion.dirZ * kick + breeze;
+        const roll = motion.dirX * kick + breeze * 0.55;
+        if (Math.abs(pitch - motion.pitch) > 0.001 || Math.abs(roll - motion.roll) > 0.001) {
+          motion.pitch = pitch;
+          motion.roll = roll;
+          grass.setSway(i, pitch, roll);
+          grassDirty = true;
+        }
+      }
+      if (grassDirty) grass.commit();
+      lastGrassPlayer = playerPos ? { x: playerPos.x, z: playerPos.z } : null;
 
       // Generated building/vehicle models stream in asynchronously — attach and
       // fit each one to its plot as soon as its GLB finishes loading.
