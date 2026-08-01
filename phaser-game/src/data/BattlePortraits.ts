@@ -116,7 +116,7 @@ const PORTRAIT_SCALE: Record<string, number> = {
   npc_saleum:   1.105,  // 0.85 × 1.3 — Saleum's portrait enlarged 1.3×
   npc_ryeo:     1.305,   // Commander Ryeo (Team Suri)
   npc_jito:     1.305,
-  npc_gapcheol: 1.305
+  npc_gapcheol: 1.305,
 };
 
 export function fitPortrait(img: Phaser.GameObjects.Image, maxW = 200, maxH = 290): void {

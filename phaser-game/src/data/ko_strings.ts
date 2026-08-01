@@ -737,7 +737,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Rival: Six of them and he still won\'t move? Fine by me. We hold this gate together!': '라이벌: 여섯이나 되는데도 안 비켜? 나야 좋지. 이 문은 같이 지키는 거다!',
   'Executive Mubaek: The gate holds while I stand. Come, then.': '간부 무백: 내가 서 있는 한 이 문은 지켜진다. 그럼, 와라.',
   'Prof. Song (comms): Now — while he\'s calm. This is your chance. End his suffering, or make him yours.': '송 박사 (통신): 지금 — 저 녀석이 잠잠할 때. 이게 네 기회야. 저 고통을 끝내주거나, 네 것으로 만들어.',
-  'Prof. Song: You have to SURVIVE. Hold out — keep your team alive — until the moment is right. Then release her.': '송 박사: 넌 반드시 살아남아야 해. 버텨 — 팀을 살려둬 — 때가 올 때까지. 그런 다음 그녀를 풀어놔.',
+  'Prof. Song: You have to SURVIVE. Hold out — keep your team alive — until the moment is right. Then release her.': '송 박사: 넌 반드시 살아남아야 해. 버텨 — 팀을 살려둬 — 때가 올 때까지. 그런 다음 그를 풀어놔.',
   'You steel yourself and weather another wave of Hwanwoong\'s fury...': '너는 마음을 다잡고 환웅의 분노가 몰아치는 또 한 번의 파도를 견뎌낸다...',
   'You burst onto the summit. At the center of the ring of towers, the volcanic lake churns — and Hwanwoong rises, dragging the siphoned power of the captured trio in a thrashing red-and-purple corona around its body.': '너는 정상으로 뛰쳐나간다. 탑들이 이룬 고리 한가운데 화산 호수가 소용돌이치고 — 환웅이 솟아오르며, 붙잡힌 삼신의 빨아들인 힘을 붉고 보랏빛으로 요동치는 코로나처럼 제 몸 주위에 휘감고 있다.',
   'Together, you place the final seventh tablet into the central pedestal. The six towers don\'t shut down — they HARMONIZE.': '함께, 너희는 마지막 일곱 번째 석판을 중앙 받침대에 끼워 넣는다. 여섯 탑은 멈추지 않는다 — 조화를 이룬다.',
@@ -971,12 +971,12 @@ export const KO_STRINGS: Record<string, string> = {
   '↑ Vent Trail (the climb)': '↑ 분화구 등반로 (오르막)',
   '↓ Ferry → back to Haean City': '↓ 여객선 → 해안시로 돌아가기',
   'Dock Worker: Nobody climbs that fast without a reason. The summit\'s no place for tourists — mind the lava.': '부두 인부: 이유 없이 그렇게 빨리 오르는 사람은 없지. 정상은 관광객이 갈 곳이 아니야 — 용암을 조심해.',
-  'Commander Ryeo: No. They don\'t. (She turns and walks down the mountain, alone.)': '려 사령관: 그래. 안 오르지. (그녀는 돌아서서 홀로 산을 내려간다.)',
+  'Commander Ryeo: No. They don\'t. (She turns and walks down the mountain, alone.)': '려 사령관: 그래. 안 오르지. (그는 돌아서서 홀로 산을 내려간다.)',
   '⛰ Summit — the Vents': '⛰ 정상 — 분화구',
   'Commander Ryeo: Hold it. HOLD IT.': '려 사령관: 멈춰. 멈추라고.',
-  'Commander Ryeo: ...Impossible. She was never going to be a battery. She\'s not a tool. We were wrong about what she was. (She orders a retreat.)': '려 사령관: ...말도 안 돼. 그녀는 애초에 동력원이 될 존재가 아니었어. 도구가 아니야. 우린 그녀가 무엇인지 잘못 알고 있었어. (그녀는 후퇴를 명령한다.)',
-  'Prof. Song (comms): She\'s frightened, and testing you. The old texts say she binds only to a guardian she deems worthy of protecting the south.': '송 박사 (통신): 그녀는 겁먹은 채 너를 시험하고 있어. 옛 문헌에 따르면 그녀는 남쪽을 지킬 자격이 있다고 여기는 수호자에게만 마음을 맡긴대.',
-  'Prof. Song: Your Master Ball — this is the moment Dosik meant. Weaken her first, then throw it.': '송 박사: 네 마스터볼 — 이게 바로 도식이 말한 그 순간이야. 먼저 그녀를 약하게 만든 다음, 던져.',
+  'Commander Ryeo: ...Impossible. She was never going to be a battery. She\'s not a tool. We were wrong about what she was. (She orders a retreat.)': '려 사령관: ...말도 안 돼. 그는 애초에 동력원이 될 존재가 아니었어. 도구가 아니야. 우린 그가 무엇인지 잘못 알고 있었어. (그는 후퇴를 명령한다.)',
+  'Prof. Song (comms): She\'s frightened, and testing you. The old texts say she binds only to a guardian she deems worthy of protecting the south.': '송 박사 (통신): 그는 겁먹은 채 너를 시험하고 있어. 옛 문헌에 따르면 그는 남쪽을 지킬 자격이 있다고 여기는 수호자에게만 마음을 맡긴대.',
+  'Prof. Song: Your Master Ball — this is the moment Dosik meant. Weaken her first, then throw it.': '송 박사: 네 마스터볼 — 이게 바로 도식이 말한 그 순간이야. 먼저 그를 약하게 만든 다음, 던져.',
   '🌋 Jeju Vents Portal': '🌋 제주 분화구 관문',
   'WASD: move  SHIFT: run  M: menu': 'WASD: 이동  SHIFT: 달리기  M: 메뉴',
   'My deer graze this whole plateau, from lake to larch. They fear neither cold nor stranger — let\'s see if you do!': '내 사슴들은 이 고원 전체를, 호수에서 낙엽송까지 누비며 풀을 뜯지. 추위도 낯선 이도 두려워하지 않아 — 너는 어떤지 보자!',
@@ -1154,7 +1154,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Commander Ryeo stands at the shrine gate, silhouetted against the rising sun.': '려 사령관이 떠오르는 해를 등지고, 사당 문 앞에 실루엣으로 서 있다.',
   'Commander Ryeo: You freed the Grandmother. You\'ve cost us our backup plan.': '려 사령관: 네가 할망을 풀어줬군. 우리 예비책을 날려버렸어.',
   'Commander Ryeo: But Cheonji remains. I\'ll see you at the top — and I cannot guarantee your safety.': '려 사령관: 하지만 천지는 그대로다. 정상에서 보지 — 그리고 네 안전은 보장 못 한다.',
-  '(She walks on toward the Sunrise Cliffs without another word.)': '(그녀는 더 말없이 해돋이 절벽 쪽으로 걸어간다.)',
+  '(She walks on toward the Sunrise Cliffs without another word.)': '(그는 더 말없이 해돋이 절벽 쪽으로 걸어간다.)',
   '← walk in the grass to find them': '← 풀숲을 걸으며 찾아봐',
   '🗺 Route 1 — Mountain Pass': '🗺 1번 도로 — 산길 고개',
   'WASD/Arrows: move  |  SHIFT: run  |  M: menu': 'WASD/화살표: 이동  |  SHIFT: 달리기  |  M: 메뉴',
@@ -1206,7 +1206,7 @@ export const KO_STRINGS: Record<string, string> = {
   '🍡  SEORAE FROST MARKET': '🍡  서래 서리 시장',
   'Skate Technician: The Skate Link will take you all the way to Sunrise City—fast and safe!': '스케이트 기술자: 스케이트 연결로가 해돋이시까지 쭉 데려다줄 거예요 — 빠르고 안전하게!',
   'Yeona: The thaw you carry will melt more than snow, I think. Go gently with it.': '여나: 네가 지닌 해빙은 눈보다 더 많은 걸 녹일 거야, 아마도. 그걸 조심히 다뤄.',
-  'Prof. Song: Sail back to Jeju and climb the vent trail. Old Dosik\'s ferry will carry you. Go — she needs a guardian who can stand.': '송 박사: 제주로 다시 항해해서 분화구 등반로를 올라. 늙은 도식의 여객선이 데려다줄 거야. 가 — 그녀에겐 굳건히 설 수 있는 수호자가 필요해.',
+  'Prof. Song: Sail back to Jeju and climb the vent trail. Old Dosik\'s ferry will carry you. Go — she needs a guardian who can stand.': '송 박사: 제주로 다시 항해해서 분화구 등반로를 올라. 늙은 도식의 여객선이 데려다줄 거야. 가 — 그에겐 굳건히 설 수 있는 수호자가 필요해.',
   '← LEADER YEONA →': '← 리더 여나 →',
   '(A poised woman in white-and-frost-blue robes rings a small frost-bell once. Her breath mists.)': '(하양과 서리 파랑 의상을 입은 침착한 여인이 작은 서리종을 한 번 울린다. 그녀의 숨결이 뿌옇게 서린다.)',
   'Fresh powder and a fresh challenger! Both make my day. Ready?': '갓 내린 눈과 갓 온 도전자! 둘 다 내 하루를 즐겁게 하지. 준비됐어?',
@@ -1445,7 +1445,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Explore the city, visit the Capitol Tower,\nand challenge the Capitol Gym!':
     '도시를 둘러보고, 수도 타워를 방문하고,\n수도 체육관에 도전하세요!',
   'The Gym Leader Jin awaits at the northern gym.\nPrepare well — her shadow Pokémon are powerful.':
-    '관장 진이 북쪽 체육관에서 기다리고 있어요.\n잘 준비하세요 — 그녀의 섀도우 포켓몬은 강력합니다.',
+    '관장 진이 북쪽 체육관에서 기다리고 있어요.\n잘 준비하세요 — 그의 섀도우 포켓몬은 강력합니다.',
 
   // ── Baekdu Gym (Summit Dojo) ──
   'Open-walled training hall built into the mountainside, overlooking the highland lake.':
@@ -1462,7 +1462,7 @@ export const KO_STRINGS: Record<string, string> = {
   // ── Geumgang Gym (Lantern Stage) ──
   'You step onto the Lantern Stage (등불 무대)!': '등불 무대에 올라섰다!',
   'The lanterns choose who advances. Tonight, they chose me!': '등불이 나아갈 자를 고른다. 오늘 밤, 등불은 나를 골랐어!',
-  '(She lowers her voice.)': '(그녀가 목소리를 낮춘다.)',
+  '(He lowers his voice.)': '(그가 목소리를 낮춘다.)',
   'A group in dark uniforms passed through carrying large sealed containers, moving south.':
     '어두운 제복을 입은 무리가 커다란 밀봉 용기를 들고 남쪽으로 지나갔어.',
   'My Pokémon were agitated all night. Whatever they carry, it does not sit right with the living world.':
@@ -2326,7 +2326,7 @@ export const KO_STRINGS: Record<string, string> = {
     '사령관 려: 억제장을 조여! 저 나방의 날개는 천지 에너지를 중화할 수 있어 — 저것을 확보하면 호수 없이도 무기가 완성된다!',
   '노스단 Operative: Commander, her output is climbing—': '노스단 대원: 사령관님, 저것의 출력이 치솟고 있습니다—',
   'Commander Ryeo staggers backward, her Pokémon recalled. She looks at the towering moth beside you — at the glow of her wings — and something breaks in her expression.':
-    '사령관 려가 비틀거리며 물러서고, 포켓몬을 회수한다. 네 곁에 우뚝 선 나방을 바라본다 — 그 날개의 빛을 — 그러자 그녀의 표정에서 무언가가 무너진다.',
+    '사령관 려가 비틀거리며 물러서고, 포켓몬을 회수한다. 네 곁에 우뚝 선 나방을 바라본다 — 그 날개의 빛을 — 그러자 그의 표정에서 무언가가 무너진다.',
   'Prof. Song: Reach the Onnuri League, prove yourself champion. Then the world opens up. The north has lessons too.':
     '송 박사: 온누리 리그에 도달해, 챔피언임을 증명해. 그러면 세계가 열릴 거야. 북쪽에도 배울 것들이 있단다.',
 

@@ -89,13 +89,13 @@ export class Route3Scene extends Phaser.Scene {
     {
       key: 'r3-seulgi', name: 'Photographer Seulgi', col: 17, row: 38, color: 0x44aacc, label: 'Photo-\ngrapher',
       line: "Hold still! ...Actually, my Pokémon are better subjects. And better fighters. Smile!",
-      pokemon: JSON.stringify([{ id: 0, level: 27, custom: 'doribi' }, { id: 0, level: 28, custom: 'bookkuddoong' }]),
+      pokemon: JSON.stringify([{ id: 0, level: 22, custom: 'doribi' }, { id: 0, level: 23, custom: 'bookkuddoong' }]),
       expPool: 520,
     },
     {
       key: 'r3-hyunwoo', name: 'Ranger Hyunwoo', col: 16, row: 10, color: 0x33aa55, label: 'Ranger',
       line: "I patrol this gorge. Lately the wildlife's been spooked by people in dark coats. Let's spar — keeps me sharp.",
-      pokemon: JSON.stringify([{ id: 0, level: 29, custom: 'liondance' }, { id: 0, level: 29, custom: 'kingfisher' }]),
+      pokemon: JSON.stringify([{ id: 0, level: 23, custom: 'liondance' }, { id: 0, level: 25, custom: 'kingfisher' }]),
       expPool: 560,
     },
   ] as const;
