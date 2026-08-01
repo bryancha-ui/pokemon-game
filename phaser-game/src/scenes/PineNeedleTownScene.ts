@@ -54,6 +54,8 @@ export class PineNeedleTownScene extends Phaser.Scene {
   // house) gets its own generated house GLB. Only these named plots rise.
   public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'pinehouse'][i] }));
   public onlyNamedBuildings = true;
+  // The 떡볶이 (tteokbokki) street stall as a 3D vendor stand.
+  public propPlots = [{ x: 21, y: 17, kind: 'stall' as const }];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
