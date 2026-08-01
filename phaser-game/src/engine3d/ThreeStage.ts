@@ -171,6 +171,12 @@ export class ThreeStage {
     this.cloudMaterial.opacity = e.cloudOpacity;
   }
 
+  /** Scene-specific clear/fog colour used by bright authored interiors. */
+  setBackgroundColor(color: number): void {
+    this.scene.background = new THREE.Color(color);
+    if (this.scene.fog instanceof THREE.Fog) this.scene.fog.color.set(color);
+  }
+
   setVisible(v: boolean): void {
     this.canvas.style.display = v ? 'block' : 'none';
   }

@@ -207,6 +207,8 @@ export class OverworldMirror {
     const t = this.buildTerrainPass();
     const isInterior = this.isInterior;
     this.stage.setEnvironment(isInterior && t.env !== 'cave' ? 'interior' : t.env);
+    const backgroundColor3D = (this.scene as unknown as { backgroundColor3D?: unknown }).backgroundColor3D;
+    if (typeof backgroundColor3D === 'number') this.stage.setBackgroundColor(backgroundColor3D);
     this.rig.setMode(isInterior ? 'interior' : 'overworld');
     this.rig.setWorldBounds(
       this.worldX / PX, this.worldY / PX,
@@ -336,6 +338,8 @@ export class OverworldMirror {
     disposeDeep(this.terrain.group);
     const t = this.buildTerrainPass();
     this.stage.setEnvironment(this.isInterior && t.env !== 'cave' ? 'interior' : t.env);
+    const backgroundColor3D = (this.scene as unknown as { backgroundColor3D?: unknown }).backgroundColor3D;
+    if (typeof backgroundColor3D === 'number') this.stage.setBackgroundColor(backgroundColor3D);
   }
 
   /** Cheap content signature of a map image's texture (8×8 downsample sum) —

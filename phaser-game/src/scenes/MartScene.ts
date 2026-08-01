@@ -1,20 +1,28 @@
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
 import { tr } from '../systems/i18n';
+import type { PropPlot } from '../engine3d/TerrainBuilder';
 
 // A Poké Mart interior: walk up to the clerk at the counter and press SPACE to open
 // the shopping menu (ShopScene). Returns to whatever city launched it (martReturnScene).
 export class MartScene extends BaseInteriorScene {
-  // A shop interior rendered in 3D. interior3D gives it indoor treatment (no
-  // outdoor props, and its blue wall/shelf trim is never mistaken for water — an
-  // indoor room has no ocean, so the "blue waves" behind the counter are gone).
+  // A shop interior rendered in 3D. The supplied pokemart.glb is an exterior
+  // plane/prop rather than a walkable room; scaling it to the room footprint
+  // covered the camera and floor in black. These authored fixtures keep the 3D
+  // room bright and share the exact same footprints as the 2D fallback below.
   public interior3D = true;
   public clearSight3D = true;
-  public interiorModel3D = {
-    id: 'pokemart-interior',
-    url: 'assets/map3d/interiors/pokemart.glb',
-    // Fit inside the 14-tile shop floor and leave the front entrance aisle open.
-    x: 2, z: 2, width: 14, maxDepth: 9,
-  };
+  public backgroundColor3D = 0xc8dce8;
+  // BaseInteriorScene rooms receive one terrain tile of padding on every side.
+  public propPlots: PropPlot[] = [
+    { x: 1, y: 1, kind: 'store-wall', w: 16, d: 1, color: 0x4c91bd },
+    { x: 1, y: 2, kind: 'store-wall', w: 1, d: 11, color: 0x4c91bd },
+    { x: 16, y: 2, kind: 'store-wall', w: 1, d: 11, color: 0x4c91bd },
+    { x: 1, y: 13, kind: 'store-wall', w: 7, d: 1, color: 0x4c91bd },
+    { x: 10, y: 13, kind: 'store-wall', w: 7, d: 1, color: 0x4c91bd },
+    { x: 5, y: 4, kind: 'store-counter', w: 8, d: 1, color: 0x8a6038 },
+    { x: 3, y: 7, kind: 'store-shelf', w: 2, d: 3, color: 0x72a9cf },
+    { x: 13, y: 7, kind: 'store-shelf', w: 2, d: 3, color: 0x72a9cf },
+  ];
   protected bgmKey = 'mart';
   constructor() { super({ key: 'MartScene' }); }
 
@@ -39,9 +47,9 @@ export class MartScene extends BaseInteriorScene {
     }).setOrigin(0.5).setDepth(10);
 
     // Counter (the clerk stands behind it)
-    this.drawRect(g, 4, 3, 8, 2, 0x6a4a2a, 0x4a3218);
+    this.drawRect(g, 4, 3, 8, 1, 0x6a4a2a, 0x4a3218);
     this.label('COUNTER', 7, 3, 10, '#ffe9c0');
-    this.addSolid(4, 3, 11, 4);
+    this.addSolid(4, 3, 11, 3);
 
     // Stock shelves left + right
     this.drawRect(g, 2, 6, 2, 3, 0x88aacc, 0x6688aa); this.label('🧴', 2, 7, 14); this.addSolid(2, 6, 3, 8);
@@ -61,7 +69,7 @@ export class MartScene extends BaseInteriorScene {
   protected setupNPCs() {
     const clerk = this.createNPCGraphic(7, 2, 0x33aa66, 0x223322, false, 0);
     (clerk as NPC & { role?: string }).role = 'clerk';
-    const counterFront = this.tile(7, 5);
+    const counterFront = this.tile(7, 4);
     clerk.interactX = counterFront.x + 16;
     clerk.interactY = counterFront.y + 16;
     clerk.interactRadius = 44;
