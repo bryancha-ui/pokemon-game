@@ -41,6 +41,10 @@ export class DolmoeCityScene extends Phaser.Scene {
     { x: 7,  y: 12, w: 2, h: 2, model: 'nabihalmang' },
   ];
   public onlyNamedBuildings = true;
+  // Traditional 옹기 pottery jars around the plaza, as real 3D urns (coords mirror
+  // the 2D jar() spots).
+  public propPlots = ([[4, 15], [5, 15], [21, 16], [30, 18], [13, 20], [14, 20]] as [number, number][])
+    .map(([x, y]) => ({ x, y, kind: 'pot' as const }));
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

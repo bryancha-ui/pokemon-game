@@ -54,6 +54,9 @@ export class BaekduCityScene extends Phaser.Scene {
   private map!: Tile[][];
   public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'dojo', 'gearshop'][i] }));
   public onlyNamedBuildings = true;
+  // Street lamps with a lit head, as 3D props (coords mirror the T.LANTERN tiles).
+  public propPlots = ([[11, 10], [18, 10]] as [number, number][])
+    .map(([x, y]) => ({ x, y, kind: 'streetlamp' as const }));
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

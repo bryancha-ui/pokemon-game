@@ -289,6 +289,43 @@ export function makeIceStatue(): THREE.Group {
   return g;
 }
 
+/** Traditional Korean 옹기 pottery jar — glossy dark-clay body with a narrow
+ *  mouth and rolled rim, a wide-bellied fermenting urn. */
+export function makePot(): THREE.Group {
+  const g = new THREE.Group();
+  const clay = 0x4a3324, glaze = 0x6a4a34;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 9), toonMat(glaze));
+  body.scale.set(1, 1.12, 1); body.position.y = 0.36;
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.08, 12), toonMat(clay));
+  foot.position.y = 0.04;
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.24, 0.13, 12), toonMat(glaze));
+  neck.position.y = 0.66;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.045, 6, 14), toonMat(clay));
+  rim.rotation.x = Math.PI / 2; rim.position.y = 0.72;
+  g.add(foot, body, neck, rim);
+  return g;
+}
+
+/** Street lamp: a slim post with a warm glowing lantern head (unlit bright
+ *  material so it reads as lit without a per-lamp light — mobile-friendly). */
+export function makeStreetlamp(): THREE.Group {
+  const g = new THREE.Group();
+  const metal = 0x3a3a42;
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.16, 8), toonMat(metal));
+  base.position.y = 0.08;
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.6, 8), toonMat(metal));
+  post.position.y = 0.9;
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.28, 6), toonMat(metal));
+  arm.rotation.z = Math.PI / 2; arm.position.set(0, 1.7, 0);
+  // Warm glowing lamp head.
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.2), new THREE.MeshBasicMaterial({ color: 0xffe6a0 }));
+  glass.position.y = 1.62;
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 6), toonMat(metal));
+  cap.position.y = 1.8;
+  g.add(base, post, arm, glass, cap);
+  return g;
+}
+
 /** Grey-granite civic obelisk with a stepped base and gold finial. */
 export function makeGrandObelisk(): THREE.Group {
   const g = new THREE.Group();

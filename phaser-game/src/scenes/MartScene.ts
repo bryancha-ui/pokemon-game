@@ -4,6 +4,9 @@ import { tr } from '../systems/i18n';
 // A Poké Mart interior: walk up to the clerk at the counter and press SPACE to open
 // the shopping menu (ShopScene). Returns to whatever city launched it (martReturnScene).
 export class MartScene extends BaseInteriorScene {
+  // Flat shop interior: its blue wall trim otherwise reads as animated water in
+  // 3D (the "blue waves" behind the counter). Render as the clean authored 2D.
+  public disable3D = true;
   protected bgmKey = 'mart';
   constructor() { super({ key: 'MartScene' }); }
 

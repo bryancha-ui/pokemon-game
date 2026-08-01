@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
-  makeGrassTufts, makeIceStatue, makePineTree, makePines, makeRailTrack,
-  makeRocks, makeStoneLantern, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  makeGrassTufts, makeIceStatue, makePineTree, makePines, makePot, makeRailTrack,
+  makeRocks, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch';
+  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp';
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
 }
@@ -816,7 +816,9 @@ export function buildTerrain(
           : p.kind === 'obelisk' ? makeGrandObelisk()
             : p.kind === 'statue' ? makeBronzeStatue()
               : p.kind === 'arch' ? makeTriumphalArch()
-                : makeIceStatue();
+                : p.kind === 'pot' ? makePot()
+                  : p.kind === 'streetlamp' ? makeStreetlamp()
+                    : makeIceStatue();
     obj.position.set(p.x + 0.5, 0, p.y + 0.5);
     if (p.scale) obj.scale.setScalar(p.scale);
     if (p.rot) obj.rotation.y = p.rot;
