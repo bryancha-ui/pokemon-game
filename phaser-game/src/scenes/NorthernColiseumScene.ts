@@ -450,7 +450,7 @@ export class NorthernColiseumScene extends Phaser.Scene {
 
     const firstVictoryLines = [
       'Taewang rises from his throne for the first time — slowly, deliberately.',
-      'Taewang: ...In thirty years on this throne, I have beaten every Hanbando Champion sent to me. Every one.',
+      'Taewang: ...In thirty years on this throne, I have beaten every Onnuri Champion sent to me. Every one.',
       'Taewang: Until now.',
       'Taewang (inclining his head — a king\'s respect): The peninsula bred a real trainer at last. Your team is enshrined in the Northern Hall of Fame, beside the north\'s own legends.',
       '🏆 Your team is recorded in the Northern Hall of Fame — the first southern names ever set in this stone!',

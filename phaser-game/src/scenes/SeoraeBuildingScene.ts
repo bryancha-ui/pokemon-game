@@ -17,7 +17,7 @@ const ROOMS: Record<BuildingKind, { title: string; wall: number; floor: number; 
   },
   skateshop: {
     title: '⛸ SKATE SHOP', wall: 0x4a8fa0, floor: 0xd0e8ef, counter: 0x2a6a8a,
-    host: 'Skate Technician', line: 'Skate Technician: Looking to hit the ice? We\'ve got the fastest skates in Hanbando—rent or buy!',
+    host: 'Skate Technician', line: 'Skate Technician: Looking to hit the ice? We\'ve got the fastest skates in Onnuri—rent or buy!',
   },
 };
 

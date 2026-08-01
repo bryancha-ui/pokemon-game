@@ -247,7 +247,7 @@ export class SudoLabScene extends Phaser.Scene {
 
       const credits = [
         '🌟  POKÉMON  KOREA  🌟', '', '', 'THE COMPLETE PANTHEON', '환웅 · 풍백 · 우사 · 운사 · 나비할망', '', '— TRUE END —', '', '',
-        'You crossed all of Hanbando —', 'south and north, sea and summit —', 'and united a broken peninsula', 'under a single Champion.', '', '',
+        'You crossed all of Onnuri —', 'south and north, sea and summit —', 'and united a broken peninsula', 'under a single Champion.', '', '',
         'Thank you for playing.', '', '', 'Press SPACE to return to the title.',
       ].join('\n');
       const text = this.add.text(W / 2, H + 40, credits, {

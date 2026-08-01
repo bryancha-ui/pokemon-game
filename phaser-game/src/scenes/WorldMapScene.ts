@@ -577,7 +577,7 @@ export class WorldMapScene extends Phaser.Scene {
 
   // ── Northern express bus → Kaesong (개성) ──────────────────────────────────
   // Once Phase 1 is done and the North has opened up (the envoy's invitation, or the
-  // Hanbando Champion beaten), an inter-regional coach runs from Waterfall City
+  // Onnuri Champion beaten), an inter-regional coach runs from Waterfall City
   // straight to Kaesong, the first of the eight 어사대 provinces — so the player can
   // return to the northern circuit from the home hub without retracing the whole way.
   private busUnlocked() {

@@ -1,5 +1,5 @@
 /**
- * Hanbando Pokédex — the full encyclopedia.
+ * Onnuri Pokédex — the full encyclopedia.
  * Custom Pokémon use local sprites in /assets or /assets/dex.
  * PokéAPI wild Pokémon use the official sprite URL and a key of "api-<id>".
  */

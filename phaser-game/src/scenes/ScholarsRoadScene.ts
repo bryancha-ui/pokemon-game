@@ -190,7 +190,7 @@ export class ScholarsRoadScene extends Phaser.Scene {
         this.dialog.show([
           'A grand stone gate behind the palace marks the trailhead of Scholars\' Road (선비로), inscribed with a single line:',
           '"The road tests the prepared. Walk it, and be measured."',
-          'In old Hanbando, scholars walked this road TO the capital to sit the royal exam. Today, trainers walk it OUT, to sit the highest exam of all — the Pokémon League.',
+          'In old Onnuri, scholars walked this road TO the capital to sit the royal exam. Today, trainers walk it OUT, to sit the highest exam of all — the Pokémon League.',
           'Rest at the pavilion midway (SPACE) to heal. The League waits at the summit.',
         ], () => { this.cutsceneActive = false; });
       });

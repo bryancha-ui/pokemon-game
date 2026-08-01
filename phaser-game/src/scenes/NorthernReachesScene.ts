@@ -97,7 +97,7 @@ const JINNOK: Member = {
   key: 'inspector-jinnok', name: '어사대장 Jinnok', type: '어사대 · Head', col: 10, row: 6, color: 0x8fd08a,
   intro: [
     'At the tree-line, where the woods give way to the bare peak, the head of the order waits with the full 어사대 gathered behind her.',
-    '어사대장 Jinnok: Four hundred years the 어사대 judged outsiders. Today we judge in your favour. You came to save Hanbando — north and south both.',
+    '어사대장 Jinnok: Four hundred years the 어사대 judged outsiders. Today we judge in your favour. You came to save Onnuri — north and south both.',
     '어사대장 Jinnok: One last measure. Then the wards open, and we climb to the shrines together.',
   ],
   pokemon: [ { id: 0, level: 82, custom: 'mugungmama' }, { id: 389, level: 83 }, { id: 407, level: 83 }, { id: 0, level: 85, custom: 'nabiguni' } ],

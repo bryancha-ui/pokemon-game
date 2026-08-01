@@ -14,7 +14,7 @@ const LINES: string[] = [
   'Hello there! Welcome to the world of Pokémon!',
   'My name is Song. Song Nam-woo. But everyone in the region simply calls me the Professor.',
   'This world is inhabited far and wide by wonderful creatures called Pokémon. We live alongside them — as friends, as partners, and sometimes as rivals in battle.',
-  'This land is the Hanbando region: a peninsula of pine-needle towns and misty highlands, of volcanic isles in the south and a cold, watchful North.',
+  'This land is the Onnuri region: a peninsula of pine-needle towns and misty highlands, of volcanic isles in the south and a cold, watchful North.',
   'For some, Pokémon are beloved companions. For others, they are a subject of study. I have devoted my whole life to understanding the bond between people and Pokémon.',
   'Your very own story is about to unfold. A world of dreams and adventures with Pokémon awaits! Let\'s go!',
   'But first — tell me a little about yourself. Are you a boy? Or are you a girl?',

@@ -34,7 +34,7 @@ export class PokedexScene extends Phaser.Scene {
     // Header
     const seen = DexTracker.seenCount(this.registry);
     const caught = DexTracker.caughtCount(this.registry);
-    this.add.text(this.W / 2, 34, t('📖  HANBANDO POKÉDEX', '📖  한반도 도감'), {
+    this.add.text(this.W / 2, 34, t('📖  ONNURI POKÉDEX', '📖  온누리 도감'), {
       fontSize: '24px', color: '#ffe44e', fontStyle: 'bold',
       stroke: '#221133', strokeThickness: 4,
     }).setOrigin(0.5);

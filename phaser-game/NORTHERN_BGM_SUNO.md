@@ -1,4 +1,4 @@
-# Northern Hanbando — BGM Suno Prompts & Reference Tracks
+# Northern Onnuri — BGM Suno Prompts & Reference Tracks
 
 Theme-music scripts for every **northern-region** city, town, route and special map.
 For each map you get:

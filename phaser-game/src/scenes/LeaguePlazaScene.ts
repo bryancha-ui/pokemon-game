@@ -40,7 +40,7 @@ const TALKERS: Talker[] = [
   {
     col: 5, row: 22, coat: 0xcc4466, cap: 0xffffff, label: 'Reporter', id: 'reporter',
     lines: [
-      'Reporter: Hanbando News, live from the League steps! You — you came down from Baekdu Peak, didn\'t you?',
+      'Reporter: Onnuri News, live from the League steps! You — you came down from Baekdu Peak, didn\'t you?',
       'Reporter: The whole region is watching. If you take the title today, you\'ll be the trainer who healed the land AND became Champion. Some story!',
     ],
   },
@@ -121,7 +121,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
         this.cutsceneActive = true;
         this.dialog.show([
           'Beyond the summit gate, the road opens onto a vast stone courtyard.',
-          'The Hanbando Pokémon League rises before you — a great palace hall in the old style, its tiered roofs sweeping skyward, eaves bright with dancheong, vermilion pillars catching the light.',
+          'The Onnuri Pokémon League rises before you — a great palace hall in the old style, its tiered roofs sweeping skyward, eaves bright with dancheong, vermilion pillars catching the light.',
           'Cross the courtyard and climb the steps. The Elite Four and the Champion wait within.',
         ], () => { this.cutsceneActive = false; });
       });
@@ -187,7 +187,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
     // Signboard (현판).
     g.fillStyle(0x1b110a); g.fillRect(cx - 78, bodyTop - 46, 156, 30);
     g.lineStyle(3, 0xddb24a); g.strokeRect(cx - 78, bodyTop - 46, 156, 30);
-    this.add.text(cx, bodyTop - 31, '한반도 포켓몬 리그', {
+    this.add.text(cx, bodyTop - 31, '온누리 포켓몬 리그', {
       fontSize: '13px', color: '#f4d68a', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(5);
     this.add.text(cx, baseY - 70, tr('⬆ THE POKÉMON LEAGUE'), {
@@ -390,7 +390,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
       "Veteran: The trainer who finally surpassed Hwangeum... I'm glad I lived to see it. Congratulations, Champion.",
     ];
     if (champ && t.id === 'reporter') return [
-      'Reporter: Hanbando News, LIVE — we have a NEW CHAMPION, and you saw it here first!',
+      'Reporter: Onnuri News, LIVE — we have a NEW CHAMPION, and you saw it here first!',
       'Reporter: From Baekdu Peak to the throne of the League — the trainer who healed the land now wears the crown. What a day for the region!',
     ];
     return t.lines;
@@ -419,7 +419,7 @@ export class LeaguePlazaScene extends Phaser.Scene {
       ];
     }
     return [
-      'Receptionist: Welcome, challenger, to the Hanbando Pokémon League.',
+      'Receptionist: Welcome, challenger, to the Onnuri Pokémon League.',
       'Receptionist: Beyond these doors wait the Elite Four — Gyeoul, Hwageum, Baram, and Saleum — and then the Champion, Hwangeum.',
       'Receptionist: Each hall restores your team to full before its match, so battle freely. Stock up at the Mart, then climb. Good luck.',
     ];

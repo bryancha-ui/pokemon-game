@@ -70,7 +70,7 @@ export const TRACKS: Record<string, string> = {
   rival:      BASE + 'bgm_rival.mp3',
   suri:       BASE + 'bgm_suri.mp3',        // Team Suri
   groupnorth: BASE + 'bgm_groupnorth.mp3',  // 노스단 (Group North)
-  elitefour:  BASE + 'bgm_elitefour.mp3',   // Hanbando League Elite Four
+  elitefour:  BASE + 'bgm_elitefour.mp3',   // Onnuri League Elite Four
   champion:   BASE + 'bgm_champion.mp3',    // Champion Hwangeum
   northelite: BASE + 'bgm_northelite.mp3',  // Northern League Elite Four
   taewang:    BASE + 'bgm_taewang.mp3',     // Northern Champion Taewang

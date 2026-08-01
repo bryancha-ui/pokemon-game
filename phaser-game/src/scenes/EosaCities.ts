@@ -319,7 +319,7 @@ const SAMJIYON: EosaCity = {
     { col: 20, row: 23, color: 0xaab0d0, label: 'Pilgrim', lines: ['Pilgrim: Beyond the plateau lies the sacred peak itself. Only those worthy of all eight 마패 may climb. ...Is that you?'] },
     { col: 32, row: 15, color: 0xcfe0e8, label: 'Snow Child', lines: ['Snow Child: The snow stopped falling! The Abomasnow used to make it blizzard FOREVER. Thank you, mister!'] },
     { col: 9,  row: 12, color: 0x6a7590, label: 'Lodge Guest', lines: ['Lodge Guest: Warm up at the Highland Lodge before you climb. It\'s a long, cold road to the peak.'] },
-    { col: 8,  row: 21, color: 0xaef0ff, label: 'Aurora Watcher', lines: ['Aurora Watcher: On clear nights the sky burns green and violet over the three lakes. There\'s no sight like it in all Hanbando.'] },
+    { col: 8,  row: 21, color: 0xaef0ff, label: 'Aurora Watcher', lines: ['Aurora Watcher: On clear nights the sky burns green and violet over the three lakes. There\'s no sight like it in all Onnuri.'] },
     { col: 34, row: 14, color: 0x5a1024, label: '노스단 Lookout', lines: ['노스단 Lookout: The 노스단 산책로 runs east off the plateau, up to our 아지트. Don\'t take that path unless you mean to climb.'] },
   ],
   prev: { scene: 'RangrimSummitScene', returnKey: 'rgPeak', x: 11 * 32 + 16, y: 3 * 32 + 16 },   // south down the Rangrim mountain (5 maps) → Sinuiju

@@ -224,10 +224,9 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
   public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
-  /** Only the named landmark GLBs rise in 3D — the procedural residential blocks
-   *  are erased so none of them tower in front of and hide the Pokémon Center /
-   *  Central Market. */
-  public onlyNamedBuildings = true;
+  /** Landmarks use their named GLBs; the residential district's apartment blocks
+   *  still rise as procedural 3D buildings (keep the district's 3D design). */
+  public onlyNamedBuildings = false;
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;
@@ -349,7 +348,7 @@ export class CapitolCityScene extends Phaser.Scene {
       'Chaeyeon leads the regional restoration — real, patient work. Commander Ryeo and Executive Mubaek are taken into custody. Ryeo says only: "The cause was just. The method was wrong. I know the difference now."',
       'Freed from the matrix, 풍백, 우사, and 운사 return to roaming the wild peaks — Wind on the high ridges, Rain in the storm valleys, Clouds at the cloud-wreathed summits.',
       'Professor Song: The Spirit\'s return stabilized the region. The three old spirits are free. And 나비할망 found her guardian. Remarkable. Both of you.',
-      'Professor Song: There\'s one road left to walk. The Hanbando Pokémon League sits beyond the mountains — and Scholars\' Road begins right here, behind the palace where your journey started.',
+      'Professor Song: There\'s one road left to walk. The Onnuri Pokémon League sits beyond the mountains — and Scholars\' Road begins right here, behind the palace where your journey started.',
       'A grand stone gate has opened behind the palace. ⛩ Scholars\' Road is now open.',
     ], () => { this.cutsceneActive = false; });
   }
@@ -467,10 +466,10 @@ export class CapitolCityScene extends Phaser.Scene {
     this.dialog.show([
       'The Capitol station is packed — the whole region has come to meet the trainer who conquered the Northern League.',
       'Champion Hwangeum: ...You actually did it. You beat Taewang. Three years I carried that loss — you lifted it clean off me. Thank you.',
-      'Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Hanbando\'s history.',
+      'Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Onnuri\'s history.',
       'Rival: I always said I\'d catch up to you someday. ...Yeah, I\'m nowhere close. And honestly? I have never been prouder to lose.',
       'Admin Chaeyeon: Even the people you once fought stood in this crowd tonight. The region you healed came out for you.',
-      'Leader Byeoksan: Every Gym in Hanbando shut its doors today. Tonight — we drink to the Champion of Champions!',
+      'Leader Byeoksan: Every Gym in Onnuri shut its doors today. Tonight — we drink to the Champion of Champions!',
       'The plaza erupts. Lanterns go up over the Han River, the markets roll out food, and music starts.',
     ], () => this.startParty(guests));
   }
@@ -591,7 +590,7 @@ export class CapitolCityScene extends Phaser.Scene {
   }
 
   private checkScholarsGate() {
-    if (!this.registry.get('sunriseGymDefeated')) return;   // 8th badge opens the road to the Hanbando League
+    if (!this.registry.get('sunriseGymDefeated')) return;   // 8th badge opens the road to the Onnuri League
     const wx = this.SCHOLARS_GATE.col * TILE + 16, wy = this.SCHOLARS_GATE.row * TILE + 16;
     if (Math.hypot(this.px - wx, this.py - wy) > TILE * 1.4) return;
     this.enterPrompt.setText(tr('SPACE — Scholars\' Road → Pokémon League')).setVisible(true);
@@ -622,13 +621,13 @@ export class CapitolCityScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 0.8); g.fillTriangle(cx + 80, cy - 80, cx + 64, cy - 50, cx + 96, cy - 50);
     g.fillStyle(0x4488cc); g.fillEllipse(cx + 30, cy + 80, 220, 40);
     screen.add(g);
-    screen.add(this.add.text(cx, cy + sh / 2 - 26, tr('HANBANDO NEWS — Baekdu Highland'), {
+    screen.add(this.add.text(cx, cy + sh / 2 - 26, tr('ONNURI NEWS — Baekdu Highland'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#000000aa', padding: { x: 6, y: 3 },
     }).setOrigin(0.5));
 
     this.dialog.show([
       'NEWS: Unusual seismic activity reported near the Baekdu Highland area...',
-      'NEWS: Researchers from the Hanbando Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...',
+      'NEWS: Researchers from the Onnuri Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...',
     ], () => {
       // Rival appears
       this.dialog.show([

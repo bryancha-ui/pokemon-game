@@ -59,7 +59,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Nunsong': '눈송', 'Baram': '바람', 'Yeona': '연아', 'Quarry Worker': '채석장 인부',
   'Observer Park': '관찰자 박', 'Observer': '관찰자', 'Guard': '경비병', 'Curator': '큐레이터',
   'Royal Warden': '왕실 관리인',
-  // Hanbando League Elite Four + champion
+  // Onnuri League Elite Four + champion
   'Gyeoul': '겨울', 'Hwageum': '화금', 'Saleum': '살음', 'Hwangeum': '황금',
   // Misc trainers (defeat lines)
   'Bug Catcher': '벌레잡이 소년', 'Hiker': '등산가', 'Youngster': '꼬마', 'Team Suri': '수리단',
@@ -333,8 +333,8 @@ export const KO_STRINGS: Record<string, string> = {
   'You lose. We took it. 나비할망 chose our friend. Maybe she knows something about what you\'d actually do with her.': '넌 졌어. 우리가 차지했지. 나비할망은 우리 친구를 택했어. 어쩌면 네가 그분을 어떻게 할지 뭔가 알고 있는지도 몰라.',
   'The Sunrise Gym is the LAST one. Take this leader down and the League is within reach.': '해돋이 체육관이 마지막이야. 이 관장을 쓰러뜨리면 리그가 코앞이지.',
   'Baekdu Peak? That\'s a story for after we\'ve earned the title. Let\'s go become Champions first.': '백두봉? 그건 우리가 타이틀을 딴 다음 이야기야. 먼저 챔피언이 되러 가자.',
-  'Eight badges — you did it. The Hanbando League is waiting; the Scholars\' Road opens from the Capitol now.': '배지 여덟 개 — 해냈구나. 한반도 리그가 기다려. 이제 학자의 길이 소올에서 열려.',
-  'Take the leader down, then it\'s straight on to the Hanbando League.': '관장을 쓰러뜨리면, 곧장 한반도 리그로 직행이야.',
+  'Eight badges — you did it. The Onnuri League is waiting; the Scholars\' Road opens from the Capitol now.': '배지 여덟 개 — 해냈구나. 온누리 리그가 기다려. 이제 학자의 길이 소올에서 열려.',
+  'Take the leader down, then it\'s straight on to the Onnuri League.': '관장을 쓰러뜨리면, 곧장 온누리 리그로 직행이야.',
   'The Sunrise Gym\'s right there in the plaza — the last badge before the League.': '해돋이 체육관은 바로 저 광장에 있어 — 리그 전 마지막 배지지.',
   'A worthy challenger.': '훌륭한 도전자군.',
   'You battled well…': '잘 싸웠어…',
@@ -528,7 +528,7 @@ export const KO_STRINGS: Record<string, string> = {
   '↓ Scholars\' Road': '↓ 학자의 길',
   '↓ Kaesong': '↓ 개성',
   '↑ Nampo': '↑ 남포',
-  '⬇ Jeju City': '⬇ 제주시',
+  '⬇ Jeju City': '⬇ 제주시티',
   '⬆ Summit Trail': '⬆ 정상 등반로',
   '↓ Sinuiju': '↓ 신의주',
   '↑ Samjiyon': '↑ 삼지연',
@@ -717,7 +717,7 @@ export const KO_STRINGS: Record<string, string> = {
   'You burst onto the summit. At the center of the ring of towers, the volcanic lake churns — and Hwanwoong rises, dragging the siphoned power of the captured trio in a thrashing red-and-purple corona around its body.': '너는 정상으로 뛰쳐나간다. 탑들이 이룬 고리 한가운데 화산 호수가 소용돌이치고 — 환웅이 솟아오르며, 붙잡힌 삼신의 빨아들인 힘을 붉고 보랏빛으로 요동치는 코로나처럼 제 몸 주위에 휘감고 있다.',
   'Together, you place the final seventh tablet into the central pedestal. The six towers don\'t shut down — they HARMONIZE.': '함께, 너희는 마지막 일곱 번째 석판을 중앙 받침대에 끼워 넣는다. 여섯 탑은 멈추지 않는다 — 조화를 이룬다.',
   'Loading...': '불러오는 중...',
-  '⬇ Return to Jeju City': '⬇ 제주시로 돌아가기',
+  '⬇ Return to Jeju City': '⬇ 제주시티로 돌아가기',
   '🚲 Han River Bicycle Shop': '🚲 한강 자전거 대여점',
   'Click a PARTY Pokémon, then a BOX Pokémon to swap them.': '동료 포켓몬을 클릭한 다음, 보관함 포켓몬을 클릭하면 서로 교체돼.',
   'You must keep at least one Pokémon in your party.   ·   ESC to close': '동료에는 최소 한 마리의 포켓몬을 남겨야 해.   ·   ESC로 닫기',
@@ -731,7 +731,7 @@ export const KO_STRINGS: Record<string, string> = {
   '— The next morning —': '— 다음 날 아침 —',
   '📟 Your Pokédex buzzes — an incoming call from Professor Song, back at the lab in Sudo City.': '📟 네 포켓몬 도감이 울린다 — 수도시 연구소에 있는 송 박사에게서 걸려온 전화다.',
   'SPACE — Scholars\' Road → Pokémon League': 'SPACE — 학자의 길 → 포켓몬 리그',
-  'HANBANDO NEWS — Baekdu Highland': '한반도 뉴스 — 백두 고원',
+  'ONNURI NEWS — Baekdu Highland': '온누리 뉴스 — 백두 고원',
   'NEWS: Unusual seismic activity reported near the Baekdu Highland area...': '뉴스: 백두 고원 부근에서 이례적인 지진 활동이 보고되었습니다...',
   'Rival: That\'s the direction of Route 2. Baekdu Highland — that\'s where Professor Song said the trail leads.': '라이벌: 저건 2번 도로 방향이야. 백두 고원 — 송 박사가 길이 그리로 이어진다고 했던 곳이지.',
   'Rival: Let\'s see who gets there first. Again.': '라이벌: 누가 먼저 도착하는지 보자. 또 한 번.',
@@ -967,10 +967,10 @@ export const KO_STRINGS: Record<string, string> = {
   'Hyeon: ...No. Mark that error, and reason more carefully.': '현: ...아니다. 그 오류를 새기고, 더 신중히 헤아려라.',
   'Veteran: I\'ve stood in this courtyard four times. Reached the Champion twice. Never beat him.': '베테랑: 난 이 뜰에 네 번 섰지. 챔피언까지 두 번 올랐고. 한 번도 그를 못 이겼어.',
   'Veteran: Hwangeum kneels to his Pokémon before he stands. Win or lose. That\'s the trainer you have to surpass.': '베테랑: 황금은 일어서기 전에 자기 포켓몬에게 무릎을 꿇어. 이기든 지든. 네가 뛰어넘어야 할 트레이너가 바로 그런 사람이야.',
-  'Reporter: Hanbando News, live from the League steps! You — you came down from Baekdu Peak, didn\'t you?': '기자: 한반도 뉴스, 리그 계단에서 생방송입니다! 당신 — 백두봉에서 내려오셨죠, 그렇죠?',
+  'Reporter: Onnuri News, live from the League steps! You — you came down from Baekdu Peak, didn\'t you?': '기자: 온누리 뉴스, 리그 계단에서 생방송입니다! 당신 — 백두봉에서 내려오셨죠, 그렇죠?',
   'Reporter: The whole region is watching. If you take the title today, you\'ll be the trainer who healed the land AND became Champion. Some story!': '기자: 온 지역이 지켜보고 있습니다. 오늘 타이틀을 차지하면, 땅을 치유하고 챔피언까지 된 트레이너가 되는 거죠. 굉장한 이야깃거리예요!',
   'Beyond the summit gate, the road opens onto a vast stone courtyard.': '정상 관문 너머로, 길이 드넓은 돌 안뜰로 이어진다.',
-  'The Hanbando Pokémon League rises before you — a great palace hall in the old style, its tiered roofs sweeping skyward, eaves bright with dancheong, vermilion pillars catching the light.': '한반도 포켓몬 리그가 네 앞에 솟아 있다 — 옛 양식의 거대한 궁궐 전각, 층층이 겹친 지붕이 하늘로 치켜 올라가고, 처마는 단청으로 밝고, 주홍빛 기둥이 빛을 받는다.',
+  'The Onnuri Pokémon League rises before you — a great palace hall in the old style, its tiered roofs sweeping skyward, eaves bright with dancheong, vermilion pillars catching the light.': '온누리 포켓몬 리그가 네 앞에 솟아 있다 — 옛 양식의 거대한 궁궐 전각, 층층이 겹친 지붕이 하늘로 치켜 올라가고, 처마는 단청으로 밝고, 주홍빛 기둥이 빛을 받는다.',
   'Cross the courtyard and climb the steps. The Elite Four and the Champion wait within.': '안뜰을 가로질러 계단을 올라라. 사천왕과 챔피언이 안에서 기다린다.',
   '⬆ THE POKÉMON LEAGUE': '⬆ 포켓몬 리그',
   '🏯 The Pokémon League': '🏯 포켓몬 리그',
@@ -978,14 +978,14 @@ export const KO_STRINGS: Record<string, string> = {
   'SPACE — Access the Storage PC': 'SPACE — 보관 PC 접속',
   'Veteran: You did it. You actually beat him. Four times I stood in this courtyard and never could.': '베테랑: 해냈군. 정말로 그를 이겼어. 난 이 뜰에 네 번을 섰어도 결코 못 했는데.',
   'Veteran: The trainer who finally surpassed Hwangeum... I\'m glad I lived to see it. Congratulations, Champion.': '베테랑: 마침내 황금을 뛰어넘은 트레이너라... 살아서 보게 되어 기뻐. 축하하네, 챔피언.',
-  'Reporter: Hanbando News, LIVE — we have a NEW CHAMPION, and you saw it here first!': '기자: 한반도 뉴스, 생방송입니다 — 새로운 챔피언이 탄생했고, 여러분은 여기서 가장 먼저 보셨습니다!',
+  'Reporter: Onnuri News, LIVE — we have a NEW CHAMPION, and you saw it here first!': '기자: 온누리 뉴스, 생방송입니다 — 새로운 챔피언이 탄생했고, 여러분은 여기서 가장 먼저 보셨습니다!',
   'Reporter: From Baekdu Peak to the throne of the League — the trainer who healed the land now wears the crown. What a day for the region!': '기자: 백두봉에서 리그의 왕좌까지 — 땅을 치유한 트레이너가 이제 왕관을 씁니다. 지역에 참으로 대단한 날이에요!',
   'Receptionist: Champion! It is an honour to have you back. Your team is enshrined in the Hall of Fame.': '안내원: 챔피언님! 다시 모시게 되어 영광입니다. 당신의 팀은 명예의 전당에 모셔져 있어요.',
   'Receptionist: The whole region heard the news. Whenever you wish to defend your title, the halls are open to you.': '안내원: 온 지역이 소식을 들었습니다. 타이틀을 방어하고 싶으실 때면 언제든 전당은 열려 있어요.',
   'Receptionist: All four of the Elite Four — defeated. Only the Champion remains beyond the final hall.': '안내원: 사천왕 네 명 모두 — 격파. 이제 마지막 전각 너머엔 챔피언만 남았습니다.',
   'Receptionist: Heal here, steady yourself, and walk through. Hwangeum is waiting at the throne.': '안내원: 여기서 회복하고, 마음을 다잡고, 걸어 들어가세요. 황금이 왕좌에서 기다리고 있어요.',
   'Receptionist: Remember, each hall restores your team before the match. Press on, challenger.': '안내원: 각 전각은 대결 전에 팀을 회복시켜 드려요. 계속 나아가세요, 도전자님.',
-  'Receptionist: Welcome, challenger, to the Hanbando Pokémon League.': '안내원: 어서 오세요, 도전자님, 한반도 포켓몬 리그에.',
+  'Receptionist: Welcome, challenger, to the Onnuri Pokémon League.': '안내원: 어서 오세요, 도전자님, 온누리 포켓몬 리그에.',
   'Receptionist: Beyond these doors wait the Elite Four — Gyeoul, Hwageum, Baram, and Saleum — and then the Champion, Hwangeum.': '안내원: 이 문 너머엔 사천왕이 기다립니다 — 겨울, 화금, 바람, 그리고 사름 — 그다음엔 챔피언 황금이 있죠.',
   'Receptionist: Each hall restores your team to full before its match, so battle freely. Stock up at the Mart, then climb. Good luck.': '안내원: 각 전각은 대결 전에 팀을 완전히 회복시켜 드리니 마음껏 싸우세요. 마트에서 물자를 채운 다음, 올라가세요. 행운을 빌어요.',
   'Nurse: Welcome to the League Pokémon Center.': '간호사: 리그 포켓몬 센터에 오신 걸 환영합니다.',
@@ -1018,7 +1018,7 @@ export const KO_STRINGS: Record<string, string> = {
   'The Northern League rises before you — a colossal grey-granite palace, severe and symmetrical, banked with red banners under a single gold star. Trainers from a dozen regions cross the forecourt.': '북부 리그가 네 앞에 솟아 있다 — 거대한 잿빛 화강암 궁전, 준엄하고 좌우대칭으로, 단 하나의 금별 아래 붉은 깃발이 늘어서 있다. 열두 지역의 트레이너들이 앞뜰을 가로지른다.',
   'Rival: You didn\'t think I\'d let you cross an international border without a send-off, did you?': '라이벌: 내가 배웅도 없이 널 국경 너머로 보낼 거라고 생각한 건 아니겠지?',
   'Rival: Everyone back home keeps calling you \'Champion\' this, \'Champion\' that. So before you walk through those doors —': '라이벌: 고향 사람들 다 널 두고 \'챔피언\' 이러니저러니 하더라. 그러니 저 문을 지나기 전에 —',
-  'Rival: Now I will challenge the strongest trainer in Hanbando region! One more, for old times\' sake!': '라이벌: 이제 내가 한반도 지역 최강의 트레이너에게 도전하겠어! 옛정을 봐서, 한 판 더!',
+  'Rival: Now I will challenge the strongest trainer in Onnuri region! One more, for old times\' sake!': '라이벌: 이제 내가 온누리 지역 최강의 트레이너에게 도전하겠어! 옛정을 봐서, 한 판 더!',
   'SPACE — Enter the Northern League': 'SPACE — 북부 리그 입장',
   'League Warden: Eight southern badges first, southerner. Come back a Champion.': '리그 문지기: 남쪽 배지 여덟 개부터다, 남쪽 것. 챔피언이 되어 돌아와.',
   'League Warden: The Northern League awaits you, Champion. Prove yourself worthy of the title.': '리그 문지기: 북부 리그가 당신을 기다립니다, 챔피언. 그 타이틀에 걸맞음을 증명하세요.',
@@ -1065,7 +1065,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Baram: I am Baram. The eagles and cranes of the cliffs answer to the wind.': '바람: 나는 바람. 절벽의 독수리와 학은 바람에 응답한다.',
   'Saleum: The mudang sees what is, and what is coming. I have seen this battle.': '사름: 무당은 있는 것과 다가올 것을 본다. 나는 이 배틀을 이미 보았지.',
   'You were defeated. The four halls seal shut behind you once more.': '너는 패배했다. 네 개의 전각이 다시 네 뒤로 봉인된다.',
-  'The Hanbando Pokémon League. Four masters guard the road to the Champion, each in their own hall.': '한반도 포켓몬 리그. 네 명의 명인이 챔피언으로 가는 길을 지키며, 저마다 자기 전각을 맡고 있다.',
+  'The Onnuri Pokémon League. Four masters guard the road to the Champion, each in their own hall.': '온누리 포켓몬 리그. 네 명의 명인이 챔피언으로 가는 길을 지키며, 저마다 자기 전각을 맡고 있다.',
   '🏆 HALL OF FAME': '🏆 명예의 전당',
   'Hwangeum kneels to his fallen ace first — always his Pokémon first — then stands.': '황금은 쓰러진 에이스에게 먼저 무릎을 꿇는다 — 언제나 자기 포켓몬이 먼저다 — 그런 다음 일어선다.',
   'Rival: ...Starting tomorrow, though. Tonight, you\'ve earned the sleep.': '라이벌: ...그래도, 내일부터야. 오늘 밤은 잠 잘 자격이 있어.',
@@ -1151,12 +1151,12 @@ export const KO_STRINGS: Record<string, string> = {
   'Rival (arriving at your side, breathless): Yeah, that\'s a no. They chased you all the way up here, and I chased THEM. Go — I\'ve got your back like always.': '라이벌 (숨을 헐떡이며 네 곁에 도착한다): 그래, 그건 안 되지. 저것들이 널 여기까지 쫓아왔고, 난 저것들을 쫓아왔어. 가 — 늘 그랬듯 내가 뒤를 봐줄게.',
   '🌟  THE COMPLETE PANTHEON': '🌟  완전한 신들',
   'Rival (looking up at the clearing sky): You caught a GOD, you know that? An actual god. ...I\'m never going to catch up to you, am I? Good. Wouldn\'t want it any other way.': '라이벌 (맑아지는 하늘을 올려다보며): 너 신을 잡은 거야, 알아? 진짜 신을. ...난 너를 영영 못 따라잡겠지, 그렇지? 좋아. 다른 식이었으면 싫었을 거야.',
-  'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Hanbando... it\'s in good hands.': '송 박사: 지역이 온전해졌어. 남과 북, 정령과 군주 — 모두 평화롭고, 모두 네 보살핌 아래에 있지. 앞으로 한반도에 무엇이 오든... 좋은 손에 맡겨졌어.',
+  'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Onnuri... it\'s in good hands.': '송 박사: 지역이 온전해졌어. 남과 북, 정령과 군주 — 모두 평화롭고, 모두 네 보살핌 아래에 있지. 앞으로 온누리에 무엇이 오든... 좋은 손에 맡겨졌어.',
   'Prof. Song: Come home, Champion. All of Sudo City is waiting to celebrate you one last time.': '송 박사: 집으로 돌아와, 챔피언. 수도시 전체가 마지막으로 한 번 더 널 축하하려고 기다리고 있어.',
   'WASD: move  SHIFT: run  C: bike  SPACE: enter/talk  M: menu': 'WASD: 이동  SHIFT: 달리기  C: 자전거  SPACE: 입장/대화  M: 메뉴',
   'Dawon: I\'ve climbed this road three times. The dragons and I know every stone.': '다원: 이 길을 세 번 올랐지. 드래곤들과 나는 돌 하나하나를 다 알아.',
   '"The road tests the prepared. Walk it, and be measured."': '"길은 준비된 자를 시험한다. 걸어라, 그리고 가늠되어라."',
-  'In old Hanbando, scholars walked this road TO the capital to sit the royal exam. Today, trainers walk it OUT, to sit the highest exam of all — the Pokémon League.': '옛 한반도에서, 학자들은 왕의 과거를 보러 이 길을 따라 수도로 걸어 들어갔지. 오늘날 트레이너들은 그 반대로 걸어 나가, 가장 높은 시험 — 포켓몬 리그를 치른다.',
+  'In old Onnuri, scholars walked this road TO the capital to sit the royal exam. Today, trainers walk it OUT, to sit the highest exam of all — the Pokémon League.': '옛 온누리에서, 학자들은 왕의 과거를 보러 이 길을 따라 수도로 걸어 들어갔지. 오늘날 트레이너들은 그 반대로 걸어 나가, 가장 높은 시험 — 포켓몬 리그를 치른다.',
   'Rest at the pavilion midway (SPACE) to heal. The League waits at the summit.': '중간 정자에서 쉬며(SPACE) 회복하자. 리그는 정상에서 기다린다.',
   'WASD: move  SHIFT: run  SPACE: talk/rest  M: menu': 'WASD: 이동  SHIFT: 달리기  SPACE: 대화/휴식  M: 메뉴',
   'Badge Scanner: The road tests the prepared. It is yours. Pass.': '배지 스캐너: 길은 준비된 자를 시험한다. 이 길은 네 것이다. 지나가라.',
@@ -1177,7 +1177,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Lodge Keeper: Welcome in from the cold. The hearth is always warm for travelers in Seorae.': '산장지기: 추위를 피해 어서 들어와요. 서래에선 여행자를 위해 난롯불이 늘 따뜻하죠.',
   'Bath Attendant: The spring comes up hot beneath the snow. Rest your feet and let the mountain steam do its work.': '온천지기: 눈 아래에서 온천이 뜨겁게 솟아나요. 발을 담그고 산의 김이 제 일을 하게 두세요.',
   'Market Vendor: Frost-berries, handwarmers, trail snacks—we have everything a climber needs.': '시장 상인: 서리열매, 손난로, 등산 간식 — 등반가에게 필요한 건 다 있어요.',
-  'Skate Technician: Looking to hit the ice? We\'ve got the fastest skates in Hanbando—rent or buy!': '스케이트 기술자: 얼음을 지치러 가시게요? 한반도에서 제일 빠른 스케이트가 있죠 — 대여도 구매도 가능해요!',
+  'Skate Technician: Looking to hit the ice? We\'ve got the fastest skates in Onnuri—rent or buy!': '스케이트 기술자: 얼음을 지치러 가시게요? 온누리에서 제일 빠른 스케이트가 있죠 — 대여도 구매도 가능해요!',
   '🍡  SEORAE FROST MARKET': '🍡  서래 서리 시장',
   'Skate Technician: The Skate Link will take you all the way to Sunrise City—fast and safe!': '스케이트 기술자: 스케이트 연결로가 해돋이시까지 쭉 데려다줄 거예요 — 빠르고 안전하게!',
   'Yeona: The thaw you carry will melt more than snow, I think. Go gently with it.': '여나: 네가 지닌 해빙은 눈보다 더 많은 걸 녹일 거야, 아마도. 그걸 조심히 다뤄.',
@@ -1212,7 +1212,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Rival: Before we split up to cover ground, one more battle. I told you my starter would evolve.': '라이벌: 흩어져서 넓게 살피기 전에, 한 판 더. 내 스타팅 포켓몬이 진화할 거라고 했잖아.',
   '🌟  POKÉMON  KOREA  🌟': '🌟  포켓몬  코리아  🌟',
   '— TRUE END —': '— 진정한 엔딩 —',
-  'You crossed all of Hanbando —': '너는 한반도 전체를 가로질렀다 —',
+  'You crossed all of Onnuri —': '너는 온누리 전체를 가로질렀다 —',
   'south and north, sea and summit —': '남과 북, 바다와 정상을 —',
   'and united a broken peninsula': '그리고 갈라진 반도를 하나로 이었다,',
   'under a single Champion.': '단 한 명의 챔피언 아래.',
@@ -1232,7 +1232,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Revive which Pokémon?': '어떤 포켓몬을 되살릴까?',
   'Use on which Pokémon?': '어떤 포켓몬에게 사용할까?',
   'Hwangeum: ...Good. Three years I\'ve wondered when someone would come who could do this.': '황금: ...좋아. 삼 년 동안, 이걸 해낼 수 있는 누군가가 언제쯤 올지 궁금했지.',
-  'Rival: Yeah. YEAH. Go show these northerners what a Hanbando trainer looks like. I\'ll be in the stands, losing my voice for you.': '라이벌: 그래. 그래! 가서 이 북쪽 사람들에게 한반도 트레이너가 어떤 건지 보여줘. 난 관중석에서 널 위해 목이 터져라 응원할게.',
+  'Rival: Yeah. YEAH. Go show these northerners what an Onnuri trainer looks like. I\'ll be in the stands, losing my voice for you.': '라이벌: 그래. 그래! 가서 이 북쪽 사람들에게 온누리 트레이너가 어떤 건지 보여줘. 난 관중석에서 널 위해 목이 터져라 응원할게.',
   'Will you switch?': '교체할까?',
   'You have none of that ball!': '그런 볼이 하나도 없어!',
   'Your party is full!': '동료가 가득 찼어!',
@@ -1281,8 +1281,8 @@ export const KO_STRINGS: Record<string, string> = {
     '하지만 먼저 — 너에 대해 조금 알려주렴. 남자아이니? 아니면 여자아이니?',
   'This world is inhabited far and wide by wonderful creatures called Pokémon. We live alongside them — as friends, as partners, and sometimes as rivals in battle.':
     '이 세계는 널리, 포켓몬이라 불리는 멋진 생명체들이 살고 있단다. 우리는 그들과 함께 살아가지 — 친구로, 파트너로, 때로는 배틀의 라이벌로.',
-  'This land is the Hanbando region: a peninsula of pine-needle towns and misty highlands, of volcanic isles in the south and a cold, watchful North.':
-    '이 땅은 한반도 지방 — 솔잎 마을과 안개 낀 고원, 남쪽의 화산섬과 차갑고 경계 어린 북쪽으로 이루어진 반도란다.',
+  'This land is the Onnuri region: a peninsula of pine-needle towns and misty highlands, of volcanic isles in the south and a cold, watchful North.':
+    '이 땅은 온누리 지방 — 솔잎 마을과 안개 낀 고원, 남쪽의 화산섬과 차갑고 경계 어린 북쪽으로 이루어진 반도란다.',
   'For some, Pokémon are beloved companions. For others, they are a subject of study. I have devoted my whole life to understanding the bond between people and Pokémon.':
     '누군가에겐 포켓몬은 사랑하는 동반자이고, 누군가에겐 연구의 대상이지. 나는 사람과 포켓몬의 유대를 이해하는 데 평생을 바쳐 왔단다.',
   "Your very own story is about to unfold. A world of dreams and adventures with Pokémon awaits! Let's go!":
@@ -1538,8 +1538,8 @@ export const KO_STRINGS: Record<string, string> = {
   // ── Sudo finale party (cont.) ──
   'Rival: Two leagues, a whole villain syndicate, and now an actual GOD. ...I stopped trying to catch up a long time ago. I just get to say I knew you.':
     '라이벌: 리그 두 개, 악당 조직 하나, 그리고 이제 진짜 신까지. ...난 오래전에 널 따라잡길 포기했어. 그냥 널 알았다고 말할 수 있는 걸로 만족해.',
-  'Prof. Song: 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care. Hanbando has never been safer, or more whole.':
-    '송 박사: 환웅, 풍백, 우사, 운사, 나비할망 — 모든 신들이 평화롭게 너의 보살핌 아래에 있어. 한반도는 이보다 더 안전하거나 온전한 적이 없었어.',
+  'Prof. Song: 환웅, 풍백, 우사, 운사, 나비할망 — the entire pantheon, at peace and in your care. Onnuri has never been safer, or more whole.':
+    '송 박사: 환웅, 풍백, 우사, 운사, 나비할망 — 모든 신들이 평화롭게 너의 보살핌 아래에 있어. 온누리는 이보다 더 안전하거나 온전한 적이 없었어.',
   'Prof. Song: Whatever legend they tell about this region a thousand years from now, it starts with you. Thank you, Champion.':
     '송 박사: 천 년 뒤 이 지방에 대해 어떤 전설을 이야기하든, 그건 너로부터 시작될 거야. 고맙다, 챔피언.',
 
@@ -1681,8 +1681,8 @@ export const KO_STRINGS: Record<string, string> = {
   // ── Samjiyon NPCs (highland plateau) ──
   "The larch forests run right up to Baekdu's foot. Good timber — if the blizzards let you fell it.":
     '낙엽송 숲이 백두산 발치까지 이어져. 좋은 목재지 — 눈보라가 베게 놔둔다면.',
-  "On clear nights the sky burns green and violet over the three lakes. There's no sight like it in all Hanbando.":
-    '맑은 밤이면 세 호수 위로 하늘이 초록과 보라로 타올라. 한반도 어디에도 그런 광경은 없지.',
+  "On clear nights the sky burns green and violet over the three lakes. There's no sight like it in all Onnuri.":
+    '맑은 밤이면 세 호수 위로 하늘이 초록과 보라로 타올라. 온누리 어디에도 그런 광경은 없지.',
   "The 노스단 산책로 runs east off the plateau, up to our 아지트. Don't take that path unless you mean to climb.":
     '노스단 산책로는 고원 동쪽으로, 우리 아지트까지 이어져. 오를 각오가 아니면 그 길로 들어서지 마.',
 
@@ -2037,8 +2037,8 @@ export const KO_STRINGS: Record<string, string> = {
   'The snow sculptures here are incredible!': '여기 눈 조각들 정말 대단해!',
   'Ring the wrong bell, and the winter answers. Let it answer for you!': '엉뚱한 종을 울리면 겨울이 응답하지. 그 응답을 네가 받아봐!',
   'The frost-bells chose me to slow you. Do not take that lightly.': '서리종이 널 늦추라고 날 골랐어. 가볍게 여기지 마.',
-  "Above Seorae the road drops to Sunrise City, and the first light of Hanbando. Leave by the south door when you're ready.":
-    '서래 위로 길은 일출 시티, 한반도의 첫 빛으로 내려가. 준비되면 남쪽 문으로 나가.',
+  "Above Seorae the road drops to Sunrise City, and the first light of Onnuri. Leave by the south door when you're ready.":
+    '서래 위로 길은 일출 시티, 온누리의 첫 빛으로 내려가. 준비되면 남쪽 문으로 나가.',
   '📟 Your Pokédex buzzes — Professor Song, urgent.': '📟 도감이 울린다 — 송 박사, 긴급.',
   'A sheet of blue ice, frost-bells hung in rows, hot-spring steam curling at the eaves.':
     '푸른 얼음판, 줄지어 걸린 서리종, 처마 끝에 감기는 온천의 김.',
@@ -2166,8 +2166,8 @@ export const KO_STRINGS: Record<string, string> = {
   // ── Northern League (coliseum, cont.) ──
   "(The hall's healing machine restores your team to full health.)": '(홀의 회복 장치가 네 팀을 완전히 회복시킨다.)',
   'Taewang rises from his throne for the first time — slowly, deliberately.': '태왕이 처음으로 옥좌에서 일어선다 — 천천히, 신중하게.',
-  'Taewang: ...In thirty years on this throne, I have beaten every Hanbando Champion sent to me. Every one.':
-    '태왕: ...이 옥좌에 앉은 삼십 년간, 내게 보내진 모든 한반도 챔피언을 이겼다. 하나도 빠짐없이.',
+  'Taewang: ...In thirty years on this throne, I have beaten every Onnuri Champion sent to me. Every one.':
+    '태왕: ...이 옥좌에 앉은 삼십 년간, 내게 보내진 모든 온누리 챔피언을 이겼다. 하나도 빠짐없이.',
   "Taewang (inclining his head — a king's respect): The peninsula bred a real trainer at last. Your team is enshrined in the Northern Hall of Fame, beside the north's own legends.":
     '태왕 (고개를 숙이며 — 왕의 예우): 반도가 마침내 진짜 트레이너를 길러냈군. 너의 팀은 북방 명예의 전당에, 북부 자신의 전설들 곁에 봉안된다.',
   'Taewang: You have climbed the Northern League and defeated me once again. Your strength is beyond dispute.':
@@ -2182,8 +2182,8 @@ export const KO_STRINGS: Record<string, string> = {
   'Royal Warden: The gate to Pyeongseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.':
     '왕실 관리인: 평성으로 가는 문이 네게 열렸다. 수도에서 최고위 광을 찾아라 — 그가 마지막 시험을 쥐고 있다.',
 
-  // ══ Hanbando League (Elite Four + Champion Hwangeum) ══
-  '🏛 Hanbando Pokémon League': '🏛 한반도 포켓몬 리그',
+  // ══ Onnuri League (Elite Four + Champion Hwangeum) ══
+  '🏛 Onnuri Pokémon League': '🏛 온누리 포켓몬 리그',
   'The League is a single trial — best all four masters again, in one unbroken run, to reach the Champion.':
     '리그는 하나의 시련 — 네 명의 명인을 한 번에, 끊김 없이 다시 꺾어야 챔피언에 이른다.',
   'Defeat one to unseal the way to the next. Each hall has a healing machine, so your team is restored to full before every match.':
@@ -2200,8 +2200,8 @@ export const KO_STRINGS: Record<string, string> = {
   'Hwangeum (extending his hand): Welcome to the Hall of Fame. You earned every step of it.':
     '황금 (손을 내밀며): 명예의 전당에 온 걸 환영해. 그 한 걸음 한 걸음을 네가 이뤄냈어.',
   '🏆 Your team is recorded in the Hall of Fame!': '🏆 너의 팀이 명예의 전당에 기록되었다!',
-  '— The credits roll over a montage of the Hanbando League arc — Capitol City, the Diamond Gorge, the tidal coasts, the ancient forest, the Jeju vents, the Jeju Summit —':
-    '— 한반도 리그 여정의 몽타주 위로 크레딧이 흐른다 — 소올 시티, 다이아몬드 협곡, 조수의 해안, 고목 숲, 제주 분화구, 제주 정상 —',
+  '— The credits roll over a montage of the Onnuri League arc — Capitol City, the Diamond Gorge, the tidal coasts, the ancient forest, the Jeju vents, the Jeju Summit —':
+    '— 온누리 리그 여정의 몽타주 위로 크레딧이 흐른다 — 소올 시티, 다이아몬드 협곡, 조수의 해안, 고목 숲, 제주 분화구, 제주 정상 —',
   'At the bottom of the League steps, your Rival is waiting — because of course they are.':
     '리그 계단 아래, 라이벌이 기다리고 있다 — 당연하게도.',
   'Rival: I found something while you were climbing the league. In the far north, beyond Baekdu Peak — old texts, older than the gym records. References to another spirit. One that predates the Dancheong calendar.':
@@ -2210,7 +2210,7 @@ export const KO_STRINGS: Record<string, string> = {
     '송 박사 (통신): 그건... 심상치 않은데. 북쪽은 늘 불안정했어. 우리가 이해하기도 전에 거기서 뭔가 깨어난다면, 반도 전체가—',
   "Rival: Easy, Professor. We're barely sitting down. But when you're ready, Champion — the Taebaek range has some climbing left to do.":
     '라이벌: 진정해요, 박사님. 이제 겨우 한숨 돌리는 중이잖아요. 하지만 준비되면, 챔피언 — 태백 산맥엔 아직 오를 곳이 남아 있어.',
-  'Phase 1: Hanbando League — COMPLETE ✓': '1막: 한반도 리그 — 완료 ✓',
+  'Phase 1: Onnuri League — COMPLETE ✓': '1막: 온누리 리그 — 완료 ✓',
   'Phase 2: Northern League — UNLOCKED': '2막: 북방 리그 — 해금',
   'Post-game unlocked: rechallenge the Rival in the Shadow Court, rematch Champion Hwangeum, explore the postgame world, and track the freed trio — 풍백, 우사, 운사 — at their mountain shrines.':
     '포스트게임 해금: 섀도우 코트에서 라이벌 재도전, 챔피언 황금 재대결, 포스트게임 세계 탐험, 그리고 풀려난 세 정령 — 풍백, 우사, 운사 — 을 산속 사당에서 추적하기.',
@@ -2257,14 +2257,14 @@ export const KO_STRINGS: Record<string, string> = {
   'My steel held nothing back, and you broke through it. Impressive.': '내 강철은 아무것도 아끼지 않았는데, 넌 그걸 뚫었어. 인상적이야.',
   "Like the wind itself — I couldn't pin you down. Go higher.": '바람 그 자체처럼 — 널 붙잡을 수 없었어. 더 높이 올라가.',
   'The vision held after all. The throne is yours to challenge.': '결국 환영이 버텼군. 옥좌에 도전할 자격은 네 거야.',
-  'Yeah. YEAH. Go show these northerners what a Hanbando trainer looks like. I\'ll be in the stands, losing my voice for you.':
-    '그래. 그렇지! 가서 저 북부인들에게 한반도 트레이너가 어떤지 보여줘. 난 관중석에서 널 위해 목이 터져라 응원할게.',
+  'Yeah. YEAH. Go show these northerners what an Onnuri trainer looks like. I\'ll be in the stands, losing my voice for you.':
+    '그래. 그렇지! 가서 저 북부인들에게 온누리 트레이너가 어떤지 보여줘. 난 관중석에서 널 위해 목이 터져라 응원할게.',
   '...You moved the stone. The next hall is yours to enter, southerner.': '...돌을 움직였군. 다음 홀에 들어갈 자격이 있다, 남부인.',
   "The cold couldn't hold you. Go on — climb higher.": '추위도 널 붙잡지 못했군. 가 — 더 높이 올라가.',
   'My steel broke before you did. That has not happened in years. Pass.': '내 강철이 너보다 먼저 부서졌다. 몇 년 만의 일이지. 지나가라.',
   'The white tiger yields. Only the Great King remains above you now.': '백호가 물러선다. 이제 네 위엔 대왕만이 남았다.',
-  '...Thirty years, and the first to take my throne is a southerner. The north acknowledges Hanbando.':
-    '...삼십 년 만에, 내 옥좌를 빼앗은 첫 번째가 남부인이라니. 북부가 한반도를 인정한다.',
+  '...Thirty years, and the first to take my throne is a southerner. The north acknowledges Onnuri.':
+    '...삼십 년 만에, 내 옥좌를 빼앗은 첫 번째가 남부인이라니. 북부가 온누리를 인정한다.',
   "...Strong, and you fight clean — no tricks, no cruelty. That tells me more than words. Travel our cities. Show me WHY you're here.":
     '...강하고, 깨끗하게 싸우는군 — 속임수도, 잔인함도 없이. 그게 말보다 많은 걸 말해줘. 우리 도시들을 여행해라. 네가 왜 여기 왔는지 보여봐.',
   "...The stars already gave us the shrines. Beating me changes nothing — the Sovereign will descend for US.":
@@ -2302,8 +2302,8 @@ export const KO_STRINGS: Record<string, string> = {
   '노스단 Operative: Commander, her output is climbing—': '노스단 대원: 사령관님, 저것의 출력이 치솟고 있습니다—',
   'Commander Ryeo staggers backward, her Pokémon recalled. She looks at the towering moth beside you — at the glow of her wings — and something breaks in her expression.':
     '사령관 려가 비틀거리며 물러서고, 포켓몬을 회수한다. 네 곁에 우뚝 선 나방을 바라본다 — 그 날개의 빛을 — 그러자 그녀의 표정에서 무언가가 무너진다.',
-  'Prof. Song: Reach the Hanbando League, prove yourself champion. Then the world opens up. The north has lessons too.':
-    '송 박사: 한반도 리그에 도달해, 챔피언임을 증명해. 그러면 세계가 열릴 거야. 북쪽에도 배울 것들이 있단다.',
+  'Prof. Song: Reach the Onnuri League, prove yourself champion. Then the world opens up. The north has lessons too.':
+    '송 박사: 온누리 리그에 도달해, 챔피언임을 증명해. 그러면 세계가 열릴 거야. 북쪽에도 배울 것들이 있단다.',
 
   // ── Baekdu Checkpoint (노스단 garrison) ──
   'The plane sets down on a wind-scoured snowfield at the foot of Baekdu. The highland pass ahead has been sealed — a fortified 노스단 checkpoint blocks the trail, with an iron gate, watchtowers, and searchlights sweeping the snow.':
@@ -2336,8 +2336,8 @@ export const KO_STRINGS: Record<string, string> = {
   'The cause was just. The method was wrong. I know the difference now.': '대의는 옳았어. 방법이 틀렸지. 이제 그 차이를 알아.',
   'Freed from the matrix, 풍백, 우사, and 운사 return to roaming the wild peaks — Wind on the high ridges, Rain in the storm valleys, Clouds at the cloud-wreathed summits.':
     '매트릭스에서 풀려난 풍백, 우사, 운사가 야생의 봉우리로 돌아가 떠돈다 — 바람은 높은 능선에, 비는 폭풍의 골짜기에, 구름은 구름에 감긴 정상에.',
-  "Professor Song: There's one road left to walk. The Hanbando Pokémon League sits beyond the mountains — and Scholars' Road begins right here, behind the palace where your journey started.":
-    '송 박사: 이제 걸어야 할 길이 하나 남았어. 한반도 포켓몬 리그가 산 너머에 있고 — 선비의 길이 바로 여기, 네 여정이 시작된 궁궐 뒤에서 시작돼.',
+  "Professor Song: There's one road left to walk. The Onnuri Pokémon League sits beyond the mountains — and Scholars' Road begins right here, behind the palace where your journey started.":
+    '송 박사: 이제 걸어야 할 길이 하나 남았어. 온누리 포켓몬 리그가 산 너머에 있고 — 선비의 길이 바로 여기, 네 여정이 시작된 궁궐 뒤에서 시작돼.',
   "Professor Song: The HM stays in your Bag — teach Fly to any Flying-type. Then open the Town Map, pick a city you've visited, and Fly straight there.":
     '송 박사: 비전머신은 가방에 남아 있어 — 비행 타입 아무에게나 하늘을날기를 가르쳐. 그런 다음 마을 지도를 열어, 가본 도시를 골라 곧장 날아가.',
   "Professor Song: And there's something else. Word from beyond the northern border — the Northern League, and the eight 어사대 provinces that guard the road to it. They've heard of you.":
@@ -2346,14 +2346,14 @@ export const KO_STRINGS: Record<string, string> = {
     '송 박사: 폭포 시티에서 개성까지 — 여덟 곳 중 첫 번째까지 버스가 다닌다더군. 북쪽으로 갈 생각이면 그 버스로 가면 돼. 가 — 네가 구한 지방을, 그리고 그 너머의 지방을 보렴.',
   'Champion Hwangeum: ...You actually did it. You beat Taewang. Three years I carried that loss — you lifted it clean off me. Thank you.':
     '챔피언 황금: ...정말 해냈군. 태왕을 이기다니. 삼 년간 그 패배를 짊어졌는데 — 네가 깨끗이 걷어내 줬어. 고마워.',
-  "Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Hanbando's history.":
-    '송 박사: 리그 둘, 남과 북. 한반도 역사를 통틀어 너 같은 트레이너는 없었어.',
+  "Professor Song: Two leagues, north and south. There has never been a trainer like you in all of Onnuri's history.":
+    '송 박사: 리그 둘, 남과 북. 온누리 역사를 통틀어 너 같은 트레이너는 없었어.',
   "Rival: I always said I'd catch up to you someday. ...Yeah, I'm nowhere close. And honestly? I have never been prouder to lose.":
     '라이벌: 언젠가 널 따라잡겠다고 늘 말했지. ...그래, 근처도 못 갔어. 그리고 솔직히? 이렇게 자랑스럽게 진 적은 없어.',
   'Admin Chaeyeon: Even the people you once fought stood in this crowd tonight. The region you healed came out for you.':
     '간부 채연: 네가 한때 맞서 싸운 사람들조차 오늘 밤 이 인파 속에 서 있었어. 네가 치유한 지방이 널 위해 나온 거야.',
-  'Leader Byeoksan: Every Gym in Hanbando shut its doors today. Tonight — we drink to the Champion of Champions!':
-    '관장 벽산: 오늘 한반도의 모든 체육관이 문을 닫았어. 오늘 밤 — 챔피언 중의 챔피언을 위해 건배하자!',
+  'Leader Byeoksan: Every Gym in Onnuri shut its doors today. Tonight — we drink to the Champion of Champions!':
+    '관장 벽산: 오늘 온누리의 모든 체육관이 문을 닫았어. 오늘 밤 — 챔피언 중의 챔피언을 위해 건배하자!',
   'The plaza erupts. Lanterns go up over the Han River, the markets roll out food, and music starts.':
     '광장이 터져 나온다. 한강 위로 등불이 오르고, 시장은 음식을 내오고, 음악이 시작된다.',
   '🎉  The Capitol throws a party in your honour!': '🎉  수도가 너를 기리는 파티를 연다!',
@@ -2387,8 +2387,8 @@ export const KO_STRINGS: Record<string, string> = {
   'Prof. Song (over the Pokédex): The northern reaches are waiting, Champion — and 노스단 is already climbing toward the shrines. Ready to head north?':
     '송 박사 (도감 너머로): 북방 관문이 기다리고 있어, 챔피언 — 그리고 노스단은 이미 사당을 향해 오르고 있어. 북쪽으로 갈 준비됐어?',
   '❄  Beyond the border tunnels — into the Northern Reaches…': '❄  국경 터널 너머 — 북방 관문으로…',
-  'NEWS: Researchers from the Hanbando Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...':
-    '뉴스: 한반도 포켓몬 연구소의 연구원들이 천지 호수 근처의 희귀 포켓몬 이동과 연관된 패턴을 조사하고 있습니다...',
+  'NEWS: Researchers from the Onnuri Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...':
+    '뉴스: 온누리 포켓몬 연구소의 연구원들이 천지 호수 근처의 희귀 포켓몬 이동과 연관된 패턴을 조사하고 있습니다...',
   'Route 2 is now open to the NORTH of the city.': '이제 도시 북쪽으로 2번 도로가 열렸다.',
 
   // ══ Baekdu Summit finale (Ch.11 — 나비할망 shield, Hwanwoong calmed) ══
@@ -2534,7 +2534,7 @@ export const KO_STRINGS: Record<string, string> = {
     '편의점 점원: 어서 오세요! 음료, 주먹밥, 상비약 — 강변의 필수품이죠.',
   'Pharmacist: Potions, cures, Poké Balls — all your travelling needs.':
     '약사: 상처약, 치료제, 몬스터볼 — 여행에 필요한 모든 것.',
-  'Gift Clerk: Take home a little piece of Hanbando!': '선물 가게 점원: 한반도의 작은 조각을 집으로 가져가세요!',
+  'Gift Clerk: Take home a little piece of Onnuri!': '선물 가게 점원: 온누리의 작은 조각을 집으로 가져가세요!',
   'The Han River opens wide before you — sunlight scattering off the water, a great bridge striding across to the far bank.':
     '한강이 눈앞에 넓게 펼쳐진다 — 물 위로 흩어지는 햇살, 건너편 강기슭까지 성큼 뻗은 거대한 다리.',
   'Cyclists whir along the riverside road; families picnic on the lawns; cherry petals drift over the promenade.':
@@ -2653,7 +2653,7 @@ export const KO_STRINGS: Record<string, string> = {
   '🔒 보석함 (locked)': '🔒 보석함 (잠김)',
   '🔔 Seorae Town — 서래 마을': '🔔 서래 마을',
   '🔬 Professor Song\'s Lab — Sudo City (수도 시티)': '🔬 송 박사 연구소 — 수도 시티',
-  '🗺️  HANBANDO REGION MAP  ·  한반도 지역 지도': '🗺️  한반도 지역 지도',
+  '🗺️  ONNURI REGION MAP  ·  온누리 지역 지도': '🗺️  온누리 지역 지도',
   '🗿 고인돌 유적 — DOLMEN RUINS': '🗿 고인돌 유적',
   '🚌 Bus → Kaesong 개성': '🚌 버스 → 개성',
   '🏬 Capitol Dept. Store —': '🏬 소올 백화점 —',

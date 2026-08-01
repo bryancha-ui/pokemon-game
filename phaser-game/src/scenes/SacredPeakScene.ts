@@ -383,8 +383,8 @@ export class SacredPeakScene extends Phaser.Scene {
       'Rival (looking up at the clearing sky): You caught a GOD, you know that? An actual god. ...I\'m never going to catch up to you, am I? Good. Wouldn\'t want it any other way.',
       '어사대장 Jinnok (bowing, the deepest honour of her order): Four hundred years the 어사대 guarded these peaks against outsiders. Today an outsider guarded them for US. You are no outsider anymore, southerner.',
       '어사대장 Jinnok: Carry this 마패. Any 어사대 in any northern city will aid you on sight. The north will remember your name as long as the mountains stand.',
-      'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Hanbando... it\'s in good hands.',
-      '🏆 You hold 환웅, 풍백, 우사, 운사, 나비할망 — the complete mythological pantheon of Hanbando.',
+      'Professor Song: The region is whole. North and south, spirit and sovereign — all at peace, all in your care. Whatever comes next for Onnuri... it\'s in good hands.',
+      '🏆 You hold 환웅, 풍백, 우사, 운사, 나비할망 — the complete mythological pantheon of Onnuri.',
       'Prof. Song: Come home, Champion. All of Sudo City is waiting to celebrate you one last time.',
     ], () => {
       this.cameras.main.fadeOut(1200, 0, 0, 0, () => {

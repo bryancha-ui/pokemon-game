@@ -306,7 +306,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
         this.dialog.show([
           "Rival: You didn't think I'd let you cross an international border without a send-off, did you?",
           "Rival: Everyone back home keeps calling you 'Champion' this, 'Champion' that. So before you walk through those doors —",
-          'Rival: Now I will challenge the strongest trainer in Hanbando region! One more, for old times\' sake!',
+          'Rival: Now I will challenge the strongest trainer in Onnuri region! One more, for old times\' sake!',
         ], () => {
           PartySystem.healAll(this.registry);
           const team = RIVAL_TEAM.map(p => p.custom === RIVAL_CLOSER ? { ...p, custom: this.rivalFinal() } : p);

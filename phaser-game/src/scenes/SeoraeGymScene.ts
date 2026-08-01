@@ -78,7 +78,7 @@ export class SeoraeGymScene extends Phaser.Scene {
       this.cutsceneActive = true;
       this.dialog.show([
         'Yeona: The thaw you carry will melt more than snow, I think. Go gently with it.',
-        'Yeona: Above Seorae the road drops to Sunrise City, and the first light of Hanbando. Leave by the south door when you\'re ready.',
+        'Yeona: Above Seorae the road drops to Sunrise City, and the first light of Onnuri. Leave by the south door when you\'re ready.',
         '📟 Your Pokédex buzzes — Professor Song, urgent.',
         "Prof. Song: It's begun. 노스단 has moved on 나비할망 at the Jeju vents — RIGHT NOW. Your Frostbell Badge says you're finally ready for this.",
         "Prof. Song: Sail back to Jeju and climb the vent trail. Old Dosik's ferry will carry you. Go — she needs a guardian who can stand.",

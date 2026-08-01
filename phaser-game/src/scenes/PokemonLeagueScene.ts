@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tr } from '../systems/i18n';
+import { t, tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
@@ -216,7 +216,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
       this.time.delayedCall(500, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'The Hanbando Pokémon League. Four masters guard the road to the Champion, each in their own hall.',
+          'The Onnuri Pokémon League. Four masters guard the road to the Champion, each in their own hall.',
           'Each master occupies a separate floor. Defeat one, climb the newly opened stairs, and continue upward.',
           'The Champion awaits on the fifth-floor main stage. Each floor restores your team before its match.',
         ], () => { this.cutsceneActive = false; });
@@ -380,7 +380,10 @@ export class PokemonLeagueScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr(`🏛 Hanbando Pokémon League — ${this.floor}F · ${ROOMS[this.floor - 1].ko}`), {
+    this.add.text(this.scale.width / 2, 22, t(
+      `🏛 Onnuri Pokémon League — ${this.floor}F · ${ROOMS[this.floor - 1].title}`,
+      `🏛 온누리 포켓몬 리그 — ${this.floor}층 · ${ROOMS[this.floor - 1].ko}`,
+    ), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: challenge  M: menu'), {
@@ -543,7 +546,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
       'Hwangeum: ...Good. Three years I\'ve wondered when someone would come who could do this. I think I\'ve been waiting for you specifically.',
       'Hwangeum (extending his hand): Welcome to the Hall of Fame. You earned every step of it.',
       '🏆 Your team is recorded in the Hall of Fame!',
-      '— The credits roll over a montage of the Hanbando League arc — Capitol City, the Diamond Gorge, the tidal coasts, the ancient forest, the Jeju vents, the Jeju Summit —',
+      '— The credits roll over a montage of the Onnuri League arc — Capitol City, the Diamond Gorge, the tidal coasts, the ancient forest, the Jeju vents, the Jeju Summit —',
       "— culminating in 나비할망's metallic wings catching the dawn light as she settles beside you, the guardian of the south you have become.",
       'At the bottom of the League steps, your Rival is waiting — because of course they are.',
       "Rival: Champion of the south. And 나비할망's chosen one. Has a ring to it.",
@@ -552,7 +555,7 @@ export class PokemonLeagueScene extends Phaser.Scene {
       'Rival: Easy, Professor. We\'re barely sitting down. But when you\'re ready, Champion — the Taebaek range has some climbing left to do.',
       "Rival: ...Starting tomorrow, though. Tonight, you've earned the sleep.",
       '— THE END —',
-      'Phase 1: Hanbando League — COMPLETE ✓',
+      'Phase 1: Onnuri League — COMPLETE ✓',
       'Phase 2: Northern League — UNLOCKED',
       'Post-game unlocked: rechallenge the Rival in the Shadow Court, rematch Champion Hwangeum, explore the postgame world, and track the freed trio — 풍백, 우사, 운사 — at their mountain shrines.',
     ], () => {

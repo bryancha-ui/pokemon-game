@@ -10,7 +10,7 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
 // ── Rangrim Range (낭림산맥) — a five-map mountain ─────────────────────────────────
-// Hanbando's Mt. Coronet, climbed as FIVE stacked, connected maps between Sinuiju
+// Onnuri's Mt. Coronet, climbed as FIVE stacked, connected maps between Sinuiju
 // (foot) and Samjiyon (peak): rocky foothills → a pitch-dark lower cavern → the mystic
 // Altar Hall at its heart → a windswept snowfield → the summit. Each map's north edge
 // opens onto the next map's south edge, so the whole spine reads as one ascent.

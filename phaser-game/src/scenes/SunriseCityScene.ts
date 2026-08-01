@@ -336,17 +336,17 @@ export class SunriseCityScene extends Phaser.Scene {
     this.enterPrompt.setVisible(false);
     const rn = rivalTrainerName(this.registry);
 
-    // Phase 1 ends at the Hanbando League — no more pre-League flight to Baekdu Peak.
+    // Phase 1 ends at the Onnuri League — no more pre-League flight to Baekdu Peak.
     // (Baekdu / the Cheonji spirit is now a post-League, northern-region destination.)
     if (this.registry.get('sunriseGymDefeated')) {
       this.dialog.show([
-        `${rn}: Eight badges — you did it. The Hanbando League is waiting; the Scholars' Road opens from the Capitol now.`,
+        `${rn}: Eight badges — you did it. The Onnuri League is waiting; the Scholars' Road opens from the Capitol now.`,
         `${rn}: Baekdu Peak? That's a story for after we've earned the title. Let's go become Champions first.`,
       ], () => { this.cutsceneActive = false; });
     } else {
       this.dialog.show([
         `${rn}: The Sunrise Gym's right there in the plaza — the last badge before the League.`,
-        `${rn}: Take the leader down, then it's straight on to the Hanbando League.`,
+        `${rn}: Take the leader down, then it's straight on to the Onnuri League.`,
       ], () => { this.cutsceneActive = false; });
     }
   }

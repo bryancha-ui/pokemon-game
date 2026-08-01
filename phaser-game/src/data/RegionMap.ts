@@ -1,5 +1,5 @@
 // ── Region map data ───────────────────────────────────────────────────────────
-// A schematic map of the Hanbando (한반도) region. Each node is a place the player
+// A schematic map of the Onnuri (온누리) region. Each node is a place the player
 // can travel through; the ones flagged `fly` are valid Fly destinations once the
 // player has earned HM Fly by beating the Pokémon League.
 //
@@ -34,7 +34,7 @@ export interface RegionNode {
 }
 
 // The whole Korean peninsula: a NORTHERN region (Cheonji / Pyeongseong / Northern
-// League) across the border at the top, then HANBANDO filling the body down to Jeju.
+// League) across the border at the top, then ONNURI filling the body down to Jeju.
 export const REGION_NODES: RegionNode[] = [
   // ── Northern region (across the border) ──────────────────────────────────
   { id: 'summit', scene: 'BaekduSummitScene', name: 'Cheonji · Baekdu', kr: '천지 · 백두산',
@@ -72,7 +72,7 @@ export const REGION_NODES: RegionNode[] = [
     nx: 0.72, ny: 0.055, kind: 'city', fly: true, region: 'north', returnKey: 'ChongjinCityScene',
     scenes: ['ChongjinCityScene'] },
 
-  // ── Hanbando (the south) ─────────────────────────────────────────────────
+  // ── Onnuri (the south) ─────────────────────────────────────────────────
   { id: 'waterfall', scene: 'WorldMapScene', name: 'Waterfall City', kr: '폭포시티',
     nx: 0.15, ny: 0.3, kind: 'city', fly: true, region: 'south', returnKey: 'return',
     scenes: ['WorldMapScene', 'PlayerHomeScene', 'RivalHomeScene', 'PokemonCenterScene', 'StarterSelectScene'] },
@@ -131,7 +131,7 @@ export const REGION_NODES: RegionNode[] = [
     nx: 0.90, ny: 0.80, kind: 'route', fly: false, region: 'south', returnKey: 'ferry',
     scenes: ['FerryScene'] },
 
-  { id: 'jeju', scene: 'JejuCityScene', name: 'Jeju City', kr: '제주시',
+  { id: 'jeju', scene: 'JejuCityScene', name: 'Jeju City', kr: '제주시티',
     nx: 0.94, ny: 0.93, kind: 'city', fly: true, region: 'south', returnKey: 'jejuCity',
     scenes: ['JejuCityScene', 'JejuPortScene', 'JejuPCScene', 'JejuVentScene'] },
 

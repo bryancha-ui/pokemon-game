@@ -10,7 +10,7 @@ const NPC = 'assets/npc/';
 const P = (file: string): Portrait => ({ key: file.replace(/\.\w+$/, ''), url: NPC + file });
 
 export const PORTRAITS: Record<string, Portrait> = {
-  // ── Hanbando League — Elite Four + Champion ──
+  // ── Onnuri League — Elite Four + Champion ──
   'e4-gyeoul':  P('npc_gyeoul.png'),
   'e4-hwageum': P('npc_hwageum.png'),
   'e4-baram':   P('npc_baram.png'),

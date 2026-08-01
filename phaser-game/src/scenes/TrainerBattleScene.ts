@@ -208,7 +208,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     else if (k.startsWith('north-taewang')) track = 'taewang';   // Northern Champion
     else if (k.startsWith('north-'))    track = 'northelite';  // Northern League Elite Four
     else if (k.startsWith('champion'))  track = 'champion';    // Champion Hwangeum
-    else if (k.startsWith('e4-'))       track = 'elitefour';   // Hanbando League Elite Four
+    else if (k.startsWith('e4-'))       track = 'elitefour';   // Onnuri League Elite Four
     pushBgm(this, track);
     this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
 
@@ -833,12 +833,12 @@ export class TrainerBattleScene extends Phaser.Scene {
       'e4-saleum': "Saleum: The vision held after all. The throne is yours to challenge.",
       'champion-hwangeum': "Hwangeum: ...Good. Three years I've wondered when someone would come who could do this.",
       // ── POST-GAME I — The Northern League ──
-      'rival-5': "Rival: Yeah. YEAH. Go show these northerners what a Hanbando trainer looks like. I'll be in the stands, losing my voice for you.",
+      'rival-5': "Rival: Yeah. YEAH. Go show these northerners what an Onnuri trainer looks like. I'll be in the stands, losing my voice for you.",
       'north-seorak': "Seorak: ...You moved the stone. The next hall is yours to enter, southerner.",
       'north-hanseol': "Hanseol: The cold couldn't hold you. Go on — climb higher.",
       'north-cheolgang': "Cheolgang: My steel broke before you did. That has not happened in years. Pass.",
       'north-baekho': "Baekho: The white tiger yields. Only the Great King remains above you now.",
-      'north-taewang': "Taewang: ...Thirty years, and the first to take my throne is a southerner. The north acknowledges Hanbando.",
+      'north-taewang': "Taewang: ...Thirty years, and the first to take my throne is a southerner. The north acknowledges Onnuri.",
       // ── POST-GAME II — The Descent of Hwanung ──
       'inspector-jito': "어사대장 Jito: ...Strong, and you fight clean — no tricks, no cruelty. That tells me more than words. Travel our cities. Show me WHY you're here.",
       'nosdan-admin': "노스단 Admin: ...The stars already gave us the shrines. Beating me changes nothing — the Sovereign will descend for US.",

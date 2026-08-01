@@ -197,7 +197,7 @@ export class JejuVentScene extends Phaser.Scene {
             "Commander Ryeo: No. They don't. (She turns and walks down the mountain, alone.)",
             "Prof. Song: She's leaving. Let her. 노스단's reach here is broken.",
             "나비할망's wings catch the dawn light. You've earned something rare — the choice of a legendary.",
-            "Prof. Song: Reach the Hanbando League, prove yourself champion. Then the world opens up. The north has lessons too.",
+            "Prof. Song: Reach the Onnuri League, prove yourself champion. Then the world opens up. The north has lessons too.",
             `${rivalTrainerName(this.registry)}: To the League, then. 나비할망 will make sure we get there in one piece.`,
           ], () => { this.cutsceneActive = false; });
         });

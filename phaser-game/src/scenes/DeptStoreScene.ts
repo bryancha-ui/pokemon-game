@@ -37,7 +37,7 @@ const FLOORS: Record<number, FloorDef> = {
        greet: 'TM Seller: Broaden your team\'s horizons — teach them a new move.',
        stock: ['tm_bodyslam','tm_brickbreak','tm_shadowclaw','tm_icebeam','tm_flamethrower'] },
   4: { name: '4F · Souvenirs', title: '🧸  4F — Souvenirs', clerkLabel: 'Gift Clerk', clerkColor: 0xdd88aa,
-       greet: 'Gift Clerk: Take home a little piece of Hanbando!',
+       greet: 'Gift Clerk: Take home a little piece of Onnuri!',
        stock: ['sv_munkain','sv_vipour','sv_onnurian','sv_corrpanda','sv_nabi','sv_jangseung'] },
   5: { name: '5F · Food Court', title: '🥤  5F — Food Court', clerkLabel: 'Vendor', clerkColor: 0xddaa55,
        greet: 'Vendor: Fresh drinks and treats — they perk your Pokémon right up!',

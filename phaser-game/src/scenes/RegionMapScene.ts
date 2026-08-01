@@ -4,7 +4,7 @@ import { REGION_NODES, RegionNode, nodeForScene, visitedNodeIds, FLY_MOVE } from
 import { PartySystem } from '../systems/PartySystem';
 
 // ── Region map (Town Map) ──────────────────────────────────────────────────────
-// A full-screen, view-anywhere map of the Hanbando region. Shows every place, a
+// A full-screen, view-anywhere map of the Onnuri region. Shows every place, a
 // pulsing "You are here" marker, and — once HM Fly is earned and a party Pokémon
 // knows Fly — lets the player pick a city and fly straight there.
 //
@@ -75,7 +75,7 @@ export class RegionMapScene extends Phaser.Scene {
     // Fly is available after HM Fly is earned AND a party Pokémon knows Fly,
     // and only to cities you have already visited.
     // The NORTHERN part of the map stays hidden until Phase 1 is cleared and the north
-    // is reached (Hanbando Champion beaten / the northern invite seen).
+    // is reached (Onnuri Champion beaten / the northern invite seen).
     this.northUnlocked = !!(this.registry.get('championDefeated') || this.registry.get('northInviteSeen') || this.registry.get('northLeagueDone'));
 
     this.canFly = !!this.registry.get('hasFlyHM') && PartySystem.anyKnows(this.registry, FLY_MOVE);
@@ -92,7 +92,7 @@ export class RegionMapScene extends Phaser.Scene {
     this.drawNodes(currentNode);
 
     // ── Header ────────────────────────────────────────────────────────────────
-    this.add.text(W / 2, 46, tr('🗺️  HANBANDO REGION MAP  ·  한반도 지역 지도'), {
+    this.add.text(W / 2, 46, tr('🗺️  ONNURI REGION MAP  ·  온누리 지역 지도'), {
       fontSize: '24px', color: '#ffe44e', fontStyle: 'bold', stroke: '#221133', strokeThickness: 4,
     }).setOrigin(0.5);
 
