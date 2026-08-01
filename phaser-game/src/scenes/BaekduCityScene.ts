@@ -108,7 +108,7 @@ export class BaekduCityScene extends Phaser.Scene {
       this.time.delayedCall(700, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'You reach Baekdu City (백두 시티).',
+          'You reach Seolbong City (설봉시티).',
           'A rugged highland city built around a brilliant blue crater lake — Cheonji, the Heaven Lake.',
           'Mountaineers in heavy coats trade gear and soak in hot springs.',
           'But here and there, figures in black coats with red thread linger... watching.',
@@ -201,7 +201,7 @@ export class BaekduCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏙️ Baekdu City (백두 시티)'), {
+    this.add.text(this.scale.width / 2, 22, tr('🏙️ Seolbong City (설봉시티)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {

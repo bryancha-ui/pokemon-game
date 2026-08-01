@@ -688,17 +688,17 @@ export class CapitolCityScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 0.8); g.fillTriangle(cx + 80, cy - 80, cx + 64, cy - 50, cx + 96, cy - 50);
     g.fillStyle(0x4488cc); g.fillEllipse(cx + 30, cy + 80, 220, 40);
     screen.add(g);
-    screen.add(this.add.text(cx, cy + sh / 2 - 26, tr('ONNURI NEWS — Baekdu Highland'), {
+    screen.add(this.add.text(cx, cy + sh / 2 - 26, tr('ONNURI NEWS — Seolbong Highland'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#000000aa', padding: { x: 6, y: 3 },
     }).setOrigin(0.5));
 
     this.dialog.show([
-      'NEWS: Unusual seismic activity reported near the Baekdu Highland area...',
+      'NEWS: Unusual seismic activity reported near the Seolbong Highland area...',
       'NEWS: Researchers from the Onnuri Pokémon Institute are investigating a pattern linked to rare Pokémon migrations near Cheonji Lake...',
     ], () => {
       // Rival appears
       this.dialog.show([
-        "Rival: That's the direction of Route 2. Baekdu Highland — that's where Professor Song said the trail leads.",
+        "Rival: That's the direction of Route 2. Seolbong Highland — that's where Professor Song said the trail leads.",
         "Rival: Let's see who gets there first. Again.",
         'Route 2 is now open to the NORTH of the city.',
       ], () => {

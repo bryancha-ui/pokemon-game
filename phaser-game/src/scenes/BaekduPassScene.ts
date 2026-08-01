@@ -97,7 +97,7 @@ function buildMap(): Tile[][] {
   fill(0, 6, 15, 20, T.CLIFF);
   fill(2, 4, 9, 15, T.CAVE);   // dark cave opening behind the choke
   // Keep a walkable corridor straight through the cave to the north edge,
-  // so the player can exit to Baekdu City after clearing Team Suri.
+  // so the player can exit to Seolbong City after clearing Team Suri.
   fill(0, ROWS, 10, 14, T.PATH);
 
   return m;
@@ -162,7 +162,7 @@ export class BaekduPassScene extends Phaser.Scene {
       this.time.delayedCall(650, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'You climb into the Baekdu Highland Pass (백두 고갯길).',
+          'You climb into the Seolbong Highland Pass (설봉 고갯길).',
           'Snow-capped peaks loom above the treeline. The wind carries the cry of cranes.',
           'The air is thin and cold — wild Pokémon here are hardened by ice and stone.',
         ], () => { this.cutsceneActive = false; });
@@ -192,7 +192,7 @@ export class BaekduPassScene extends Phaser.Scene {
     this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Pine Needle Town'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Baekdu City'), {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Seolbong City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -277,7 +277,7 @@ export class BaekduPassScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏔️ Baekdu Highland Pass (백두 고갯길)'), {
+    this.add.text(this.scale.width / 2, 22, tr('🏔️ Seolbong Highland Pass (설봉 고갯길)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  SPACE: talk  M: menu'), {
@@ -401,7 +401,7 @@ export class BaekduPassScene extends Phaser.Scene {
         this.scene.start('PineNeedleTownScene');
       });
     }
-    // North → Baekdu City (only passable once the blockade is cleared)
+    // North → Seolbong City (only passable once the blockade is cleared)
     if (this.py < 1 * TILE && this.suriDefeated) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

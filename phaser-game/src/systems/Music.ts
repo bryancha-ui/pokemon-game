@@ -14,7 +14,7 @@ export const TRACKS: Record<string, string> = {
   pineneedle: BASE + 'bgm_pineneedle.mp3',  // Pine Needle Town
   sudo:       BASE + 'bgm_sudo.mp3',        // Sudo / Capital City
   deptstore:  BASE + 'bgm_deptstore.mp3',   // Department Store
-  baekdu:     BASE + 'bgm_baekdu.mp3',      // Baekdu City
+  baekdu:     BASE + 'bgm_baekdu.mp3',      // Seolbong City
   geumgang:   BASE + 'bgm_geumgang.mp3',    // Geumgang City
   haean:      BASE + 'bgm_haean.mp3',       // Haean City
   dolmoe:     BASE + 'bgm_dolmoe.mp3',      // Dolmoe City
@@ -53,7 +53,7 @@ export const TRACKS: Record<string, string> = {
   route4:     BASE + 'bgm_route4.mp3',
   route5:     BASE + 'bgm_route5.mp3',
   route6:     BASE + 'bgm_route6.mp3',
-  baekdupass: BASE + 'bgm_baekdupass.mp3',  // Baekdu Highland Pass
+  baekdupass: BASE + 'bgm_baekdupass.mp3',  // Seolbong Highland Pass
   baekdupeak: BASE + 'bgm_baekdupeak.mp3',  // Baekdu Peak climb / Cheonji gate
   scholarsroad: BASE + 'bgm_scholarsroad.mp3', // Scholar's Road (victory road)
   seoraepass: BASE + 'bgm_seoraepass.mp3',  // Seorae Pass

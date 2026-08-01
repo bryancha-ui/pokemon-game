@@ -66,10 +66,10 @@ export const POKEDEX: DexEntry[] = [
   // ── Gawlhawk line (Rock/Flying) ──────────────────────────────────────────
   { num: 10, key: 'gawlhawk', name: 'Gawlhawk', type1: 'rock', type2: 'flying', ability: 'Sturdy',
     dexText: 'A young raptor with stony plumage. It rides updrafts over the highland cliffs.',
-    spriteUrl: D + 'gawlhawk.png', evolvesTo: 'prowlrock', evolvesAtLevel: 14, dist: 'Wild', where: 'Baekdu Highland Pass' },
+    spriteUrl: D + 'gawlhawk.png', evolvesTo: 'prowlrock', evolvesAtLevel: 14, dist: 'Wild', where: 'Seolbong Highland Pass' },
   { num: 11, key: 'prowlrock', name: 'Prowlrock', type1: 'rock', type2: 'flying', ability: 'Sand Force',
     dexText: 'It dives from the peaks in a cloud of grit, talons hard as granite.',
-    spriteUrl: D + 'prowlrock.png', evolvesTo: 'prowlnox', evolvesAtLevel: 38, dist: 'Wild', where: 'Baekdu Highland Pass' },
+    spriteUrl: D + 'prowlrock.png', evolvesTo: 'prowlnox', evolvesAtLevel: 38, dist: 'Wild', where: 'Seolbong Highland Pass' },
   { num: 170, key: 'prowlnox', name: 'Prowlnox', type1: 'rock', type2: 'flying', ability: 'Stonegaze',
     dexText: 'The silent apex of the highland skies. Its granite-feathered wings blot out the moon, and a single glare from its burning eyes roots quarry to the spot.',
     spriteUrl: D + 'prowlnox.png', dist: 'Wild', where: 'Evolve Prowlrock' },
@@ -152,7 +152,7 @@ export const POKEDEX: DexEntry[] = [
   // ── Arctorodon (Rock/Ice) ────────────────────────────────────────────────
   { num: 146, key: 'arctorodon', name: 'Arctorodon', type1: 'rock', type2: 'ice', ability: 'Sturdy',
     dexText: 'A glacier-backed leviathan that hauls itself across the snowfields. The ancient stone beneath its icy shell has never once thawed.',
-    spriteUrl: D + 'arctorodon.png', dist: 'Wild', where: 'Baekdu Highland Pass (rare)' },
+    spriteUrl: D + 'arctorodon.png', dist: 'Wild', where: 'Seolbong Highland Pass (rare)' },
 
   // ── Onnuri-region additions ──────────────────────────────────────────────
   { num: 148, key: 'zoltile', name: 'Zoltile', type1: 'electric', type2: 'rock', ability: 'Volt Absorb',

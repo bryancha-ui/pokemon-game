@@ -1,4 +1,4 @@
-// Baekdu City Pokémon Center & Mountain Rescue Station — reuses PokemonCenterScene,
+// Seolbong City Pokémon Center & Mountain Rescue Station — reuses PokemonCenterScene,
 // exits back to BaekduCityScene.
 import { PokemonCenterScene } from './interior/PokemonCenterScene';
 

@@ -532,7 +532,7 @@ export const KO_STRINGS: Record<string, string> = {
   '↓ Parangpo': '↓ 파랑포',
   '↑ Haesol': '↑ 해솔',
   '→ Dolmoe City': '→ 돌뫼시',
-  '↑ Baekdu City': '↑ 백두시',
+  '↑ Seolbong City': '↑ 설봉시티',
   '↓ Geumgang City': '↓ 금강시',
   '↑ Haean City': '↑ 해안시',
   '↓ Ancient Forest': '↓ 고대 숲',
@@ -556,7 +556,7 @@ export const KO_STRINGS: Record<string, string> = {
   '↓ Dolmoe City': '↓ 돌뫼시',
   '↑ Seorae Pass': '↑ 서래 고개',
   '↓ Route 6': '↓ 6번 도로',
-  '↓ Baekdu City': '↓ 백두시',
+  '↓ Seolbong City': '↓ 설봉시티',
   '↑ Geumgang City': '↑ 금강시',
   '↓ Dolmoe Mine': '↓ 돌뫼 광산',
   '↑ Seorae Town': '↑ 서래 마을',
@@ -690,7 +690,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Watchtower Sentry: You\'ll not cut my searchlight, southerner!': '감시탑 보초: 내 탐조등은 못 끈다, 남쪽 것!',
   '↑ Baekdu Peak — the climb': '↑ 백두봉 — 등반로',
   '⛓ The Iron Gate': '⛓ 철문',
-  '⛓ Baekdu Pass — The Garrison Gate': '⛓ 백두 고개 — 수비대 관문',
+  '⛓ Seolbong Pass — The Garrison Gate': '⛓ 설봉 고개 — 수비대 관문',
   'With the towers dark, the garrison\'s commanding officer plants herself before the iron gate.': '탑들이 어두워지자, 수비대의 지휘관이 철문 앞에 버티고 선다.',
   'Gate Captain Seollan: You\'ve cut my lights and scattered my line. Impressive, for a southerner.': '관문장 설란: 내 불을 끄고 내 대열을 흩어놨군. 남쪽 것치곤 제법이다.',
   'Seollan: But this gate does not open for the likes of you.': '설란: 하지만 이 문은 너 같은 자에게 열리지 않는다.',
@@ -746,9 +746,9 @@ export const KO_STRINGS: Record<string, string> = {
   '— The next morning —': '— 다음 날 아침 —',
   '📟 Your Pokédex buzzes — an incoming call from Professor Song, back at the lab in Sudo City.': '📟 네 포켓몬 도감이 울린다 — 수도시 연구소에 있는 송 박사에게서 걸려온 전화다.',
   'SPACE — Scholars\' Road → Pokémon League': 'SPACE — 학자의 길 → 포켓몬 리그',
-  'ONNURI NEWS — Baekdu Highland': '온누리 뉴스 — 백두 고원',
-  'NEWS: Unusual seismic activity reported near the Baekdu Highland area...': '뉴스: 백두 고원 부근에서 이례적인 지진 활동이 보고되었습니다...',
-  'Rival: That\'s the direction of Route 2. Baekdu Highland — that\'s where Professor Song said the trail leads.': '라이벌: 저건 2번 도로 방향이야. 백두 고원 — 송 박사가 길이 그리로 이어진다고 했던 곳이지.',
+  'ONNURI NEWS — Seolbong Highland': '온누리 뉴스 — 설봉 고원',
+  'NEWS: Unusual seismic activity reported near the Seolbong Highland area...': '뉴스: 설봉 고원 부근에서 이례적인 지진 활동이 보고되었습니다...',
+  'Rival: That\'s the direction of Route 2. Seolbong Highland — that\'s where Professor Song said the trail leads.': '라이벌: 저건 2번 도로 방향이야. 설봉 고원 — 송 박사가 길이 그리로 이어진다고 했던 곳이지.',
   'Rival: Let\'s see who gets there first. Again.': '라이벌: 누가 먼저 도착하는지 보자. 또 한 번.',
   'WASD: move  SPACE: enter  M: menu  SHIFT: run': 'WASD: 이동  SPACE: 입장  M: 메뉴  SHIFT: 달리기',
   'Jaemin: Leader Jin\'s shadows protect this hall!': '재민: 진 관장님의 그림자들이 이 홀을 지킨다!',
@@ -1067,12 +1067,12 @@ export const KO_STRINGS: Record<string, string> = {
   'Artist Sora: I last heard it chittering out by the garden window. Please, find it!': '화가 소라: 마지막으로 정원 창가 쪽에서 재잘거리는 소릴 들었어요. 제발, 찾아주세요!',
   '(The Smeargle has appeared by the garden window — go talk to it!)': '(루브도가 정원 창가에 나타났어 — 가서 말을 걸어봐!)',
   'Pokémon Center & Gallery': '포켓몬 센터 & 미술관',
-  '↑ Baekdu Highland Pass': '↑ 백두 고원 고개',
+  '↑ Seolbong Highland Pass': '↑ 설봉 고원 고개',
   'Rival: Finally. I\'ve been here an hour. Try this — the lady makes it with a doenjang base. Incredible.': '라이벌: 드디어 왔네. 한 시간이나 기다렸어. 이거 먹어봐 — 아주머니가 된장 베이스로 만들어. 끝내줘.',
   'Rival: Anyway. Some group has been up in the highland caves to the north — they keep locals away, call it \'research.\'': '라이벌: 아무튼. 어떤 무리가 북쪽 고원 동굴에 들어와 있어 — 주민들을 못 오게 하면서, \'연구\'라고 부르더라.',
   'Rival: Research with that many people and that much equipment doesn\'t look like research to me.': '라이벌: 그렇게 많은 사람에 그렇게 많은 장비로 하는 연구는, 내 눈엔 연구로 안 보여.',
   'Rival: Professor Song sent me a message too. Something about Pokémon behaving strangely near Baekdu Peak.': '라이벌: 송 박사도 나한테 메시지를 보냈어. 백두봉 근처에서 포켓몬들이 이상하게 행동한다나.',
-  'Rival: We should check it out after the next gym. Baekdu City — north through the highland pass.': '라이벌: 다음 체육관 끝나고 확인해보는 게 좋겠어. 백두시 — 고원 고개를 지나 북쪽이야.',
+  'Rival: We should check it out after the next gym. Seolbong City — north through the highland pass.': '라이벌: 다음 체육관 끝나고 확인해보는 게 좋겠어. 설봉시티 — 고원 고개를 지나 북쪽이야.',
   'Rival: Oh — there\'s an artist near the studio looking for her lost Smeargle. You should help her. (Side quest!)': '라이벌: 아 — 화실 근처에 잃어버린 루브도를 찾는 화가가 있어. 도와주는 게 좋을 거야. (사이드 퀘스트!)',
   'You don\'t know the way yet — better find a guide or a map first.': '아직 길을 몰라 — 먼저 안내자나 지도를 구하는 게 좋겠어.',
   'Gyeoul: I am Gyeoul, first of the Elite Four. My cranes nest on the glacier.': '겨울: 나는 겨울, 사천왕의 첫째다. 내 학들은 빙하 위에 둥지를 튼다.',
@@ -1373,7 +1373,7 @@ export const KO_STRINGS: Record<string, string> = {
   // ── City arrivals / building entries ──
   'You have arrived at Capitol City!': '소올 시티에 도착했다!',
   'This vast capital holds the heart of the nation.': '이 거대한 수도는 나라의 중심지다.',
-  'You reach Baekdu City (백두 시티).': '백두 시티에 도착했다.',
+  'You reach Seolbong City (설봉시티).': '설봉시티에 도착했다.',
   'You descend into Haean City (해안 시티).': '해안 시티로 내려간다.',
   'You reach Sunrise City (일출 시티) — the easternmost city, first to greet the dawn.':
     '일출 시티에 도착했다 — 새벽을 가장 먼저 맞이하는 가장 동쪽의 도시.',
@@ -1387,7 +1387,7 @@ export const KO_STRINGS: Record<string, string> = {
   'WASD: move  SHIFT: run  SPACE: talk  M: menu': 'WASD: 이동  SHIFT: 달리기  SPACE: 대화  M: 메뉴',
   'WASD: move  SPACE: interact  M: menu': 'WASD: 이동  SPACE: 상호작용  M: 메뉴',
 
-  // ── Baekdu City ──
+  // ── Seolbong City ──
   'A rugged highland city built around a brilliant blue crater lake — Cheonji, the Heaven Lake.':
     '눈부시게 푸른 화구호 — 천지를 중심으로 세워진 험준한 고산 도시.',
   'Mountaineers in heavy coats trade gear and soak in hot springs.':
@@ -1491,7 +1491,7 @@ export const KO_STRINGS: Record<string, string> = {
     '두 체육관 트레이너를 물리치고, 폭풍지기 관장 번개와 맞서라.',
   'Read the current, or it reads you. Light it up!': '전류를 읽든지, 전류에 읽히든지. 불을 밝혀!',
   'The sky over Baekdu has been wrong for days — charged, waiting. Whatever you mean to do up there, do it soon.':
-    '백두 위 하늘이 며칠째 이상해 — 잔뜩 충전된 채 기다리고 있어. 거기서 뭘 할 생각이든, 서둘러.',
+    '설봉 위 하늘이 며칠째 이상해 — 잔뜩 충전된 채 기다리고 있어. 거기서 뭘 할 생각이든, 서둘러.',
   'Perfect timing. The sky is yours.': '완벽한 타이밍이야. 하늘은 네 거다.',
 
   // ── Capitol Gym ──
@@ -1868,7 +1868,7 @@ export const KO_STRINGS: Record<string, string> = {
 
   // ── Gym badge names (Scholars' Road gate + menu badge screen) ──
   'Shadow Court Badge (Capitol)': '섀도우 코트 배지 (수도)',
-  'Summit Dojo Badge (Baekdu)': '정상 도장 배지 (백두)',
+  'Summit Dojo Badge (Baekdu)': '정상 도장 배지 (설봉)',
   'Lantern Stage Badge (Geumgang)': '등불 무대 배지 (금강)',
   'Tidal Arena Badge (Haean)': '조류 경기장 배지 (해안)',
   'Ancient Keeper Badge (Forest)': '고대 수호자 배지 (숲)',
@@ -2658,8 +2658,8 @@ export const KO_STRINGS: Record<string, string> = {
   '🌅 Sunrise City (일출 시티)': '🌅 일출 시티',
   '🌲 Forest City (숲 시티)': '🌲 숲 시티',
   '🏆 NORTHERN HALL OF FAME · 북방 명예의 전당': '🏆 북방 명예의 전당',
-  '🏔️ Baekdu Highland Pass (백두 고갯길)': '🏔️ 백두 고갯길',
-  '🏙️ Baekdu City (백두 시티)': '🏙️ 백두 시티',
+  '🏔️ Seolbong Highland Pass (설봉 고갯길)': '🏔️ 설봉 고갯길',
+  '🏙️ Seolbong City (설봉시티)': '🏙️ 설봉시티',
   '🏙️ Geumgang City (금강 시티)': '🏙️ 금강 시티',
   '🏙️ Haean City (해안 시티)': '🏙️ 해안 시티',
   '🏯 Songhyeon (송현)': '🏯 송현',

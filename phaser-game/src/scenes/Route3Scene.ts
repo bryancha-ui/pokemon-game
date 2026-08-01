@@ -146,7 +146,7 @@ export class Route3Scene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Baekdu City'), {
+    this.add.text(12 * TILE, 58.4 * TILE, tr('↓ Seolbong City'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Geumgang City'), {
@@ -335,7 +335,7 @@ export class Route3Scene extends Phaser.Scene {
   private checkExits() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // South → Baekdu City
+    // South → Seolbong City
     if (this.py > (ROWS - 1) * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

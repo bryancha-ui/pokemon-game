@@ -235,7 +235,7 @@ export class BaekduCheckpointScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('⛓ Baekdu Pass — The Garrison Gate'), {
+    this.add.text(this.scale.width / 2, 22, tr('⛓ Seolbong Pass — The Garrison Gate'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {

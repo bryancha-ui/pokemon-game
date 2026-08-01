@@ -153,7 +153,7 @@ export class PineNeedleTownScene extends Phaser.Scene {
       fontSize: '9px', color: '#444', backgroundColor: '#ffffffaa', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
     if (this.registry.get('hasHighlandMap')) {
-      this.add.text(15 * TILE, 0.6 * TILE, tr('↑ Baekdu Highland Pass'), {
+      this.add.text(15 * TILE, 0.6 * TILE, tr('↑ Seolbong Highland Pass'), {
         fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
       }).setOrigin(0.5).setDepth(5);
     }
@@ -260,7 +260,7 @@ export class PineNeedleTownScene extends Phaser.Scene {
         "Rival: Anyway. Some group has been up in the highland caves to the north — they keep locals away, call it 'research.'",
         "Rival: Research with that many people and that much equipment doesn't look like research to me.",
         "Rival: Professor Song sent me a message too. Something about Pokémon behaving strangely near Baekdu Peak.",
-        "Rival: We should check it out after the next gym. Baekdu City — north through the highland pass.",
+        "Rival: We should check it out after the next gym. Seolbong City — north through the highland pass.",
         "Rival: Oh — there's an artist near the studio looking for her lost Smeargle. You should help her. (Side quest!)",
       ], () => { this.cutsceneActive = false; });
     }
@@ -294,7 +294,7 @@ export class PineNeedleTownScene extends Phaser.Scene {
         this.scene.start('Route2Scene');
       });
     }
-    // North → Baekdu Highland Pass (unlocked once the Highland Map is obtained)
+    // North → Seolbong Highland Pass (unlocked once the Highland Map is obtained)
     if (this.py < 1 * TILE) {
       if (!this.registry.get('hasHighlandMap')) {
         this.px = 15 * TILE; this.py = 1.2 * TILE;

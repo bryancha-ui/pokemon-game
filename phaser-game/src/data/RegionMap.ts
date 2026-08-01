@@ -94,11 +94,11 @@ export const REGION_NODES: RegionNode[] = [
     nx: 0.37, ny: 0.53, kind: 'city', fly: true, region: 'south', returnKey: 'pine',
     scenes: ['PineNeedleTownScene', 'PineNeedlePCScene', 'PineNeedleStudioScene'] },
 
-  { id: 'baekdupass', scene: 'BaekduPassScene', name: 'Baekdu Pass', kr: '백두 고개',
+  { id: 'baekdupass', scene: 'BaekduPassScene', name: 'Seolbong Pass', kr: '설봉 고개',
     nx: 0.3, ny: 0.35, kind: 'route', fly: false, region: 'south', returnKey: 'baekduPass',
     scenes: ['BaekduPassScene', 'BaekduCheckpointScene', 'CliffClimbScene'] },
 
-  { id: 'baekducity', scene: 'BaekduCityScene', name: 'Baekdu City', kr: '백두시티',
+  { id: 'baekducity', scene: 'BaekduCityScene', name: 'Seolbong City', kr: '설봉시티',
     nx: 0.21, ny: 0.47, kind: 'city', fly: true, region: 'south', returnKey: 'baekduCity',
     scenes: ['BaekduCityScene', 'BaekduPCScene', 'BaekduGymScene'] },
 
