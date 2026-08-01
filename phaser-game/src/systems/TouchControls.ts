@@ -309,6 +309,10 @@ export function deckShowLeadPicker(
     cell.append(name, sub);
     if (!disabled) cell.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      if (cell.dataset.picked === 'true') return;
+      cell.dataset.picked = 'true';
+      cell.style.pointerEvents = 'none';
       cell.style.background = 'rgba(70,112,180,0.98)';
       onPick(index);
     });

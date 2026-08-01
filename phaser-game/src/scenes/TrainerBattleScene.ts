@@ -129,6 +129,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   // twice if two delayed callbacks finish on the same frame (which previously
   // allowed Byeoksan's Balchataek slot to be jumped over).
   private advancingEnemy = false;
+  private awaitingForcedSwitch = false;
   private totalExp = 0;
   private state: State = 'loading';
   // Gym-leader reward (snapshotted at create so it can't leak to later battles)
@@ -189,6 +190,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     // previous team's size (e.g. Director Suri only sending out 1 after Commander Ryeo).
     this.enemyIdx = 0;
     this.advancingEnemy = false;
+    this.awaitingForcedSwitch = false;
     this.activeSlot = 0;
     this.participants = new Set<number>([0]);
 
@@ -1042,6 +1044,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private sendNextOrLose() {
+    if (this.awaitingForcedSwitch) return;
     const party = PartySystem.get(this.registry);
 
     // Mark current slot as fainted
@@ -1074,11 +1077,14 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.state = 'busy';
     this.hideAllPanels();
     this.typeDialog('Choose your next Pokémon!');
+    this.awaitingForcedSwitch = true;
     openSwitchPanel(this, this.activeSlot, () => {}, (idx) => this.sendInChosen(idx), false);
   }
 
   /** Bring in the player-chosen Pokémon after a faint, then resume the player's turn. */
   private sendInChosen(nextIdx: number) {
+    if (!this.awaitingForcedSwitch) return;
+    this.awaitingForcedSwitch = false;
     this.state = 'busy';
     this.activeSlot = nextIdx;
     this.participants.add(nextIdx);

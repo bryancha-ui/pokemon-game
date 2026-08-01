@@ -58,6 +58,7 @@ export class WildBattleScene extends Phaser.Scene {
   private H = 720;
   private activeSlot = 0;  // which party slot is currently battling
   private participants = new Set<number>([0]);   // all battlers share EXP
+  private awaitingForcedSwitch = false;
 
   constructor() { super('WildBattleScene'); }
 
@@ -76,6 +77,7 @@ export class WildBattleScene extends Phaser.Scene {
 
   async create() {
     this.cameras.main.fadeIn(300);
+    this.awaitingForcedSwitch = false;
     Inventory.ensureInit(this.registry);   // sync legacy Pokéballs into the item system
     this.registry.set('wildOutcome', 'none');   // set to won/caught/fled on exit (callers may gate on it)
 
@@ -855,6 +857,7 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private sendNextOrLose() {
+    if (this.awaitingForcedSwitch) return;
     const party = PartySystem.get(this.registry);
 
     // Mark current slot fainted
@@ -875,10 +878,13 @@ export class WildBattleScene extends Phaser.Scene {
     this.state = 'busy';
     this.hideAllPanels();
     this.typeDialog('Choose your next Pokémon!');
+    this.awaitingForcedSwitch = true;
     openSwitchPanel(this, this.activeSlot, () => {}, (idx) => this.sendInChosen(idx), false);
   }
 
   private sendInChosen(nextIdx: number) {
+    if (!this.awaitingForcedSwitch) return;
+    this.awaitingForcedSwitch = false;
     this.state = 'busy';
     this.activeSlot = nextIdx;
     this.participants.add(nextIdx);

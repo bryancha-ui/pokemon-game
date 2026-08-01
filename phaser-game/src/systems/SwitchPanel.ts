@@ -8,6 +8,11 @@ import { TYPE_COLORS } from '../data/StarterData';
 import { t, tr, typeName, pokeNameEn} from './i18n';
 import { deckHideLeadPicker, deckShowLeadPicker } from './TouchControls';
 
+// A duplicated faint callback must never stack two identical modal pickers.
+// With two overlays, the first click only destroyed the top one and made the
+// player click the same Pokémon again to dismiss the second.
+const activePanels = new WeakMap<Phaser.Scene, Phaser.GameObjects.Container>();
+
 export function openSwitchPanel(
   scene:        Phaser.Scene,
   activeSlot:   number,
@@ -19,6 +24,13 @@ export function openSwitchPanel(
   canSelectFn?: (entry: import('./PartySystem').PartyEntry, idx: number) => boolean,
   title = 'Choose a Pokémon',
 ) {
+  const currentPanel = activePanels.get(scene);
+  if (currentPanel?.active) {
+    currentPanel.setDepth(100_100);
+    return;
+  }
+  if (currentPanel) activePanels.delete(scene);
+
   const W  = scene.scale.width;
   const H  = scene.scale.height;
   const cx = W / 2;
@@ -30,25 +42,31 @@ export function openSwitchPanel(
 
   // Keep the picker above battle particles and the global post-FX overlay.
   const overlay = scene.add.container(0, 0).setDepth(100_100);
+  activePanels.set(scene, overlay);
   const selectableSlots: number[] = [];
   const rowBackgrounds = new Map<number, { row: Phaser.GameObjects.Rectangle; baseColor: number }>();
   let focusedSlot = -1;
   let finished = false;
+  let cleaned = false;
 
   const keyboard = scene.input.keyboard;
 
   const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
     deckHideLeadPicker();
-    if (!keyboard) return;
-    keyboard.off('keydown-UP', focusPrevious);
-    keyboard.off('keydown-W', focusPrevious);
-    keyboard.off('keydown-DOWN', focusNext);
-    keyboard.off('keydown-S', focusNext);
-    keyboard.off('keydown-SPACE', confirmFocused);
-    keyboard.off('keydown-ENTER', confirmFocused);
-    keyboard.off('keydown-ESC', cancelSelection);
-    keyboard.off('keydown-SHIFT', cancelSelection);
+    if (keyboard) {
+      keyboard.off('keydown-UP', focusPrevious);
+      keyboard.off('keydown-W', focusPrevious);
+      keyboard.off('keydown-DOWN', focusNext);
+      keyboard.off('keydown-S', focusNext);
+      keyboard.off('keydown-SPACE', confirmFocused);
+      keyboard.off('keydown-ENTER', confirmFocused);
+      keyboard.off('keydown-ESC', cancelSelection);
+      keyboard.off('keydown-SHIFT', cancelSelection);
+    }
     scene.events.off('shutdown', cleanup);
+    if (activePanels.get(scene) === overlay) activePanels.delete(scene);
   };
 
   const closeAndSelect = (slotIdx: number) => {
@@ -208,7 +226,16 @@ export function openSwitchPanel(
           paintFocus();
         })
         .on('pointerout', () => paintFocus())
-        .on('pointerdown', () => closeAndSelect(i));
+        .on('pointerdown', (
+          _pointer: Phaser.Input.Pointer,
+          _localX: number,
+          _localY: number,
+          event: Phaser.Types.Input.EventData,
+        ) => {
+          event.stopPropagation();
+          focusedSlot = i;
+          closeAndSelect(i);
+        });
       overlay.add(hitTarget);
     }
   }
