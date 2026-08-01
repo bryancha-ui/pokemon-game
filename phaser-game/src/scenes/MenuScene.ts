@@ -9,6 +9,7 @@ import type { MoveData } from '../battle/Pokemon';
 import { caughtOriginForDexKey, dexEntry, dexKeyFor } from '../data/Pokedex';
 import { fetchPokemon, fetchPokemonSpeciesInfo, fetchPokemonAbilityInfo } from '../data/PokeAPI';
 import { genderForPokemon, genderSymbol } from '../data/PokemonGender';
+import { deckHideLeadPicker, deckShowLeadPicker } from '../systems/TouchControls';
 
 // Battle data for HM field moves, so teaching one on a full moveset can offer the
 // same "which move to forget?" picker that TMs use.
@@ -53,6 +54,7 @@ export class MenuScene extends Phaser.Scene {
   create() {
     this.scene.bringToTop();   // render above the field/route scene that launched it
     this.cameras.main.fadeIn(180);
+    this.events.once('shutdown', () => deckHideLeadPicker());
 
     // Retroactive: any trainer who already has a starter owns a Pokédex
     if (this.registry.get('starterChosen') && !this.registry.get('hasPokedex')) {
@@ -147,6 +149,7 @@ export class MenuScene extends Phaser.Scene {
   // ── Tabs ──────────────────────────────────────────────────────────────────
 
   private switchTab(tab: 'pokemon' | 'bag') {
+    if (tab === 'bag') deckHideLeadPicker();
     if (tab === 'bag' && this.tab !== 'bag') this.bagScroll = 0;   // fresh bag view starts at the top
     this.tab = tab;
     this.tabPokemon.setColor(tab === 'pokemon' ? '#ffffff' : '#888888')
@@ -167,6 +170,7 @@ export class MenuScene extends Phaser.Scene {
     const cy    = this.H / 2;
 
     if (party.length === 0) {
+      deckHideLeadPicker();
       const t = this.add.text(cx, cy + 20,
         tr("You have no Pokémon yet.\nVisit Prof. Song's Lab to choose your starter!"),
         { fontSize: '14px', color: '#cccccc', align: 'center', lineSpacing: 8 },
@@ -189,6 +193,13 @@ export class MenuScene extends Phaser.Scene {
 
       this.drawPartyCard(entry, x, y, cardW, cardH, i === 0, i);
     });
+
+    // The Phaser canvas is heavily scaled down on phones, so expose the same
+    // action as large native-size buttons on the mobile lower control screen.
+    deckShowLeadPicker(party.map((entry, index) => ({
+      name: this.partyName(entry), level: entry.level,
+      hp: entry.hp, maxHp: entry.maxHp, isLead: index === 0,
+    })), index => this.setPartyLead(index));
 
     // Hint
     this.contentContainer.add(this.add.text(cx, cy + 196,
@@ -220,15 +231,11 @@ export class MenuScene extends Phaser.Scene {
       .on('pointerdown', () => this.showPokemonDetails(index));
     this.contentContainer.add(bg);
     // Lead badge
-    const tag = this.add.text(x + w / 2 - 8, y + h / 2 - 12,
+    const tag = this.add.text(x + w / 2 - 8, y + h / 2 - 8,
       isLead ? t('★ LEAD', '★ 선두') : t('SET LEAD', '선두 변경'),
-      { fontSize: '9px', color: isLead ? '#ffe44e' : '#aaccff',
-        backgroundColor: isLead ? undefined : '#243b66', padding: { x: 4, y: 3 } }).setOrigin(1, 1);
-    if (!isLead) tag.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-      PartySystem.setLead(this.registry, index);
-      this.showToast(t(`${this.partyName(entry)} is now your lead!`, `${this.partyName(entry)}을(를) 선두로 지정했습니다!`));
-      this.switchTab('pokemon');
-    });
+      { fontSize: isLead ? '10px' : '11px', color: isLead ? '#ffe44e' : '#ffffff',
+        backgroundColor: isLead ? undefined : '#315a9a', padding: { x: isLead ? 5 : 10, y: isLead ? 3 : 7 } }).setOrigin(1, 1);
+    if (!isLead) tag.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.setPartyLead(index));
     this.contentContainer.add(tag);
 
     const lx = x - w / 2 + 8;   // left edge
@@ -305,6 +312,17 @@ export class MenuScene extends Phaser.Scene {
     const korean = entry.nameKo ?? pokeName(key, pokeNameEn(entry.name));
     const english = entry.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     return t(english, korean);
+  }
+
+  /** Shared by the on-canvas button and the large mobile lower-screen picker. */
+  private setPartyLead(index: number): void {
+    const party = PartySystem.get(this.registry);
+    const entry = party[index];
+    if (!entry || index === 0) return;
+    const name = this.partyName(entry);
+    PartySystem.setLead(this.registry, index);
+    this.showToast(t(`${name} is now your lead!`, `${name}을(를) 선두로 지정했습니다!`));
+    this.switchTab('pokemon');
   }
 
   /** Enrich old saves without requiring the player to recapture anything. The
@@ -765,6 +783,7 @@ export class MenuScene extends Phaser.Scene {
   // ── Close ─────────────────────────────────────────────────────────────────
 
   private closeMenu() {
+    deckHideLeadPicker();
     this.cameras.main.fadeOut(150, 0, 0, 0, () => {
       this.scene.stop('MenuScene');
     });

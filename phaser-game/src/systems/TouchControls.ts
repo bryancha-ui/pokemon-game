@@ -1,4 +1,4 @@
-import { tr } from './i18n';
+import { t, tr } from './i18n';
 // ── Mobile "dual-screen" shell + on-screen controls ──────────────────────────
 // On touch devices the page is split like a Nintendo DS: the Phaser game canvas
 // lives on the TOP screen, and a solid control DECK fills the BOTTOM screen so the
@@ -79,6 +79,8 @@ function tapButton(label: string, css: string, code: number): HTMLElement {
 let deckEl: HTMLElement | null = null;
 let controlLayer: HTMLElement | null = null;
 let moveLayer: HTMLElement | null = null;
+let partyLeadLayer: HTMLElement | null = null;
+let layerBeforeLeadPicker: 'control' | 'move' = 'control';
 let mobile = false;
 
 /** Recompute the `--u` sizing unit from the deck's real box so nothing overflows. */
@@ -86,8 +88,11 @@ function updateUnit(): void {
   if (!deckEl) return;
   const r = deckEl.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return;
-  // Fit the D-pad (~9u wide incl. the A/B cluster; ~11u tall incl. pills) into the deck.
-  const u = Math.max(6, Math.min(72, Math.min(r.width / 16, r.height / 12)));
+  // Keep the smallest landscape-phone controls at roughly a 44px touch target.
+  // The old height / 12 calculation reduced D-pad cells to about 30px on a
+  // short 16:9 phone, which made diagonal thumbs and quick A/B taps unreliable.
+  // The complete layout is 17.5u wide and 9.4u tall, so it still cannot overflow.
+  const u = Math.max(6, Math.min(72, Math.min(r.width / 17.5, r.height / 9.4)));
   deckEl.style.setProperty('--u', u.toFixed(2) + 'px');
 }
 
@@ -119,13 +124,14 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
   // The control deck is a capped minority of the screen (always shorter than the
   // game pane), so the playfield stays dominant.
   deckEl.style.cssText =
-    'position:relative;flex:0 0 40vh;height:40vh;max-height:40vh;width:100vw;min-height:0;--u:24px;' +
+    'position:relative;flex:0 0 42vh;height:42vh;max-height:42vh;width:100vw;min-height:0;--u:24px;' +
     'background:linear-gradient(#141a2e,#0b0f1e);border-top:3px solid #33406a;' +
     'box-shadow:inset 0 3px 8px rgba(0,0,0,0.5);touch-action:none;';
 
   buildControlLayer();
   buildMoveLayer();
-  deckEl.append(controlLayer!, moveLayer!);
+  buildPartyLeadLayer();
+  deckEl.append(controlLayer!, moveLayer!, partyLeadLayer!);
   document.body.append(gamePane, deckEl);
 
   // ── Rotate-to-landscape hint ──────────────────────────────────────────────
@@ -170,13 +176,13 @@ function buildControlLayer(): void {
   const layer = document.createElement('div');
   layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
 
-  // D-pad — a 3×3 grid in the bottom-left; the four arrows sit in the plus cells so
-  // the cluster scales as one block and can never spill outside the deck.
+  // D-pad — a 3×3 grid in the bottom-left. At the minimum supported landscape
+  // deck height, each direction remains a full finger-sized (~44px) target.
   const pad = document.createElement('div');
   pad.style.cssText =
-    'position:absolute;left:var(--u);bottom:var(--u);' +
-    'width:calc(var(--u)*7.6);height:calc(var(--u)*7.6);display:grid;' +
-    'grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(var(--u)*0.28);';
+    'position:absolute;left:calc(var(--u)*0.5);bottom:calc(var(--u)*0.5);' +
+    'width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);display:grid;' +
+    'grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(var(--u)*0.22);';
   const cell = 'border-radius:calc(var(--u)*0.55);font-size:calc(var(--u)*1.7);';
   const up    = holdButton('▲', cell + 'grid-column:2;grid-row:1;', KEY.up);
   const left  = holdButton('◀', cell + 'grid-column:1;grid-row:2;', KEY.left);
@@ -185,14 +191,14 @@ function buildControlLayer(): void {
   pad.append(up, left, right, down);
 
   // A / B — bottom-right cluster.
-  const a = tapButton('A',  'position:absolute;right:var(--u);bottom:calc(var(--u)*1.6);width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);border-radius:50%;font-size:calc(var(--u)*1.6);background:rgba(46,120,74,0.92);', KEY.space);
-  const b = holdButton('B', 'position:absolute;right:calc(var(--u)*3.9);bottom:calc(var(--u)*3.1);width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;font-size:calc(var(--u)*1.25);background:rgba(150,64,64,0.92);', KEY.shift);
+  const a = tapButton('A',  'position:absolute;right:calc(var(--u)*0.5);bottom:calc(var(--u)*1.1);width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;font-size:calc(var(--u)*1.85);background:rgba(46,120,74,0.92);', KEY.space);
+  const b = holdButton('B', 'position:absolute;right:calc(var(--u)*4.9);bottom:calc(var(--u)*1.2);width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);border-radius:50%;font-size:calc(var(--u)*1.5);background:rgba(150,64,64,0.92);', KEY.shift);
 
   // Utility pills — top-right of the deck.
-  const pill = 'top:calc(var(--u)*0.6);width:calc(var(--u)*1.95);height:calc(var(--u)*1.95);border-radius:calc(var(--u)*0.45);font-size:calc(var(--u)*1);';
-  const menu = tapButton('☰',  `position:absolute;right:var(--u);${pill}`,              KEY.m);
-  const back = tapButton('✕',  `position:absolute;right:calc(var(--u)*3.25);${pill}`,   KEY.esc);
-  const bike = tapButton('🚲', `position:absolute;right:calc(var(--u)*5.5);${pill}`,    KEY.c);
+  const pill = 'top:calc(var(--u)*0.35);width:calc(var(--u)*2.7);height:calc(var(--u)*2.7);border-radius:calc(var(--u)*0.55);font-size:calc(var(--u)*1.25);';
+  const menu = tapButton('☰',  `position:absolute;right:calc(var(--u)*0.5);${pill}`, KEY.m);
+  const back = tapButton('✕',  `position:absolute;right:calc(var(--u)*3.5);${pill}`, KEY.esc);
+  const bike = tapButton('🚲', `position:absolute;right:calc(var(--u)*6.5);${pill}`, KEY.c);
 
   layer.append(pad, a, b, menu, back, bike);
   controlLayer = layer;
@@ -214,6 +220,97 @@ function buildMoveLayer(): void {
   back.dataset.role = 'back';
   layer.append(title, grid, back);
   moveLayer = layer;
+}
+
+/** Large, canvas-independent party picker used by the mobile Pokémon menu. */
+function buildPartyLeadLayer(): void {
+  const layer = document.createElement('div');
+  layer.style.cssText =
+    'position:absolute;inset:0;display:none;flex-direction:column;' +
+    'padding:calc(var(--u)*0.45);box-sizing:border-box;pointer-events:none;';
+
+  const title = document.createElement('div');
+  title.dataset.role = 'lead-title';
+  title.textContent = t('CHANGE LEAD POKÉMON', '선두 포켓몬 변경');
+  title.style.cssText =
+    'height:clamp(30px,calc(var(--u)*1.65),52px);display:flex;align-items:center;justify-content:center;' +
+    'color:#ffe44e;font-weight:900;font-size:clamp(13px,calc(var(--u)*0.82),21px);' +
+    'letter-spacing:1px;flex:0 0 auto;';
+
+  const close = tapButton(t('✕ CLOSE', '✕ 닫기'),
+    'position:absolute;right:calc(var(--u)*0.5);top:calc(var(--u)*0.48);' +
+    'width:clamp(64px,calc(var(--u)*3.2),112px);height:clamp(30px,calc(var(--u)*1.65),52px);' +
+    'border-radius:calc(var(--u)*0.38);font-size:clamp(11px,calc(var(--u)*0.65),17px);', KEY.esc);
+
+  const grid = document.createElement('div');
+  grid.className = '__leadgrid';
+  grid.style.cssText =
+    'flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));' +
+    'grid-template-rows:repeat(2,minmax(0,1fr));gap:calc(var(--u)*0.38);pointer-events:auto;';
+  layer.append(title, close, grid);
+  partyLeadLayer = layer;
+}
+
+export interface DeckLeadChoice {
+  name: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  isLead: boolean;
+}
+
+/** Show large physical-size lead buttons on the mobile lower screen. */
+export function deckShowLeadPicker(choices: DeckLeadChoice[], onPick: (index: number) => void): boolean {
+  if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return false;
+  const alreadyOpen = partyLeadLayer.style.display === 'flex';
+  if (!alreadyOpen) layerBeforeLeadPicker = moveLayer.style.display === 'flex' ? 'move' : 'control';
+
+  const grid = partyLeadLayer.querySelector('.__leadgrid') as HTMLElement;
+  grid.textContent = '';
+  choices.slice(0, 6).forEach((choice, index) => {
+    const cell = document.createElement('div');
+    cell.style.cssText = btnBase +
+      'min-width:0;min-height:0;flex-direction:column;border-radius:calc(var(--u)*0.45);' +
+      `padding:calc(var(--u)*0.24);background:${choice.isLead ? 'rgba(112,91,25,0.96)' : 'rgba(25,43,78,0.96)'};` +
+      `border-color:${choice.isLead ? '#ffe44e' : '#668bc7'};line-height:1.08;text-align:center;`;
+    const name = document.createElement('div');
+    name.textContent = `${choice.isLead ? '★ ' : ''}${choice.name}`;
+    name.style.cssText =
+      'max-width:100%;font-size:clamp(12px,calc(var(--u)*0.78),21px);font-weight:900;' +
+      'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const sub = document.createElement('div');
+    sub.textContent = choice.isLead
+      ? t(`LEAD · Lv.${choice.level}`, `현재 선두 · Lv.${choice.level}`)
+      : `Lv.${choice.level} · HP ${choice.hp}/${choice.maxHp}`;
+    sub.style.cssText =
+      `margin-top:calc(var(--u)*0.18);font-size:clamp(9px,calc(var(--u)*0.52),15px);` +
+      `color:${choice.isLead ? '#fff0a8' : '#cbdcff'};`;
+    cell.append(name, sub);
+    if (!choice.isLead) cell.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      cell.style.background = 'rgba(70,112,180,0.98)';
+      onPick(index);
+    });
+    grid.append(cell);
+  });
+
+  controlLayer.style.display = 'none';
+  moveLayer.style.display = 'none';
+  partyLeadLayer.style.display = 'flex';
+  return true;
+}
+
+/** Restore the lower screen that was visible before the menu lead picker. */
+export function deckHideLeadPicker(): void {
+  if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return;
+  partyLeadLayer.style.display = 'none';
+  if (layerBeforeLeadPicker === 'move') {
+    moveLayer.style.display = 'flex';
+    controlLayer.style.display = 'none';
+  } else {
+    moveLayer.style.display = 'none';
+    controlLayer.style.display = 'block';
+  }
 }
 
 /**

@@ -125,6 +125,10 @@ export class TrainerBattleScene extends Phaser.Scene {
   private _returnScene  = 'RouteScene';  // filled from registry in create()
   private enemyQueue: { id: number; level: number; custom?: string }[] = [];
   private enemyIdx = 0;
+  // A faint/EXP sequence is asynchronous. Keep it from advancing the roster
+  // twice if two delayed callbacks finish on the same frame (which previously
+  // allowed Byeoksan's Balchataek slot to be jumped over).
+  private advancingEnemy = false;
   private totalExp = 0;
   private state: State = 'loading';
   // Gym-leader reward (snapshotted at create so it can't leak to later battles)
@@ -184,6 +188,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     // trainer fought after another multi-Pokémon trainer loses Pokémon equal to the
     // previous team's size (e.g. Director Suri only sending out 1 after Commander Ryeo).
     this.enemyIdx = 0;
+    this.advancingEnemy = false;
     this.activeSlot = 0;
     this.participants = new Set<number>([0]);
 
@@ -748,32 +753,59 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private afterEnemyKO() {
+    if (this.advancingEnemy) return;
+    this.advancingEnemy = true;
+    this.state = 'busy';
+
     // Award EXP to the active Pokémon for this defeated enemy, mid-battle.
     // Northern (Phase 2) battles award extra EXP to keep up with the steep level curve.
     this.awardExp(Math.round(this.enemy.level * 24 * expMultiplierFor(this.registry)), () => {
-      this.enemyIdx++;
-      if (this.enemyIdx < this.enemyQueue.length) {
-        // Send out next Pokémon
-        this.loadEnemyPokemon(this.enemyIdx).then(() => {
-          this.buffBoss();   // extra HP for a 우두머리 boss
-          const teKey = (this.registry.get('_teKey') as string);
-          this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
-          this.fitSprite(this.enemySprite, this.enemySpriteSize());   // re-scale: custom sprites differ in size (bosses loom larger)
-          this.animateHpBar('enemy', () => {});
-          this.enemyNameText?.setText(this.enemyHudName());
-          this.enemyLvText.setText(`Lv.${this.enemy.level}`);
-          this.enemyHpBar.width  = HP_W;
-          this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
-          playBallSendOut(this, this.enemySprite, {
-            side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
-            onComplete: () => this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`,
-              () => this.offerSwitchAfterKO()),
-          });
-        });
-      } else {
+      const nextIdx = this.enemyIdx + 1;
+      if (nextIdx >= this.enemyQueue.length) {
+        this.advancingEnemy = false;
         this.handleWin();
+        return;
       }
+
+      // Resolve exactly the captured next slot. enemyIdx changes only after the
+      // Pokémon has loaded, so an asset delay cannot mutate or skip the roster.
+      void this.sendNextEnemy(nextIdx);
     });
+  }
+
+  /** Load and present one exact opponent roster slot without advancing past it. */
+  private async sendNextEnemy(nextIdx: number): Promise<void> {
+    try {
+      await this.loadEnemyPokemon(nextIdx);
+      if (!this.enemy) throw new Error(`Opponent roster slot ${nextIdx} did not produce a Pokémon`);
+      this.enemyIdx = nextIdx;
+      this.buffBoss();   // extra HP for a 우두머리 boss
+      const teKey = (this.registry.get('_teKey') as string);
+      this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
+      this.fitSprite(this.enemySprite, this.enemySpriteSize());
+      this.animateHpBar('enemy', () => {});
+      this.enemyNameText?.setText(this.enemyHudName());
+      this.enemyLvText.setText(`Lv.${this.enemy.level}`);
+      this.enemyHpBar.width = HP_W;
+      this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
+      playBallSendOut(this, this.enemySprite, {
+        side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
+        onComplete: () => this.typeDialog(
+          `${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`,
+          () => {
+            this.advancingEnemy = false;
+            this.offerSwitchAfterKO();
+          },
+        ),
+      });
+    } catch (error) {
+      // Do not increment again or silently continue to the following slot. A
+      // transient asset/API failure retries this same Pokémon after a clear log.
+      console.error(`[TrainerBattle] Failed to load roster slot ${nextIdx}; retrying without skipping.`, error);
+      this.typeDialog('The next Pokémon is entering the battle…', () => {
+        void this.sendNextEnemy(nextIdx);
+      });
+    }
   }
 
   /** Grant EXP to the active Pokémon, persist it, and show the message + level-up. */
