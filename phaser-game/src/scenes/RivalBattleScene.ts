@@ -226,12 +226,14 @@ export class RivalBattleScene extends Phaser.Scene {
     const pAvatar = playerAvatarKey(this.registry), rAvatar = rivalAvatarKey(this.registry);
     if (this.textures.exists(pAvatar)) {
       this.playerTrainer = this.add.image(200, 268, pAvatar).setDepth(6).setAlpha(0)
-        .setData('no3d', true);
+        .setData('no3d', true)
+        .setData('battleTrainer2DAnchor', 'player');
       fitPortrait(this.playerTrainer);
     }
     if (this.textures.exists(rAvatar)) {
       this.rivalTrainer = this.add.image(RIVAL_STAGE_X, RIVAL_STAGE_Y, rAvatar).setDepth(6).setAlpha(0).setFlipX(true)
-        .setData('no3d', true);
+        .setData('no3d', true)
+        .setData('battleTrainer2DAnchor', 'enemy');
       fitPortrait(this.rivalTrainer);
     }
   }

@@ -413,7 +413,8 @@ export class TrainerBattleScene extends Phaser.Scene {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key)
         .setDepth(6)
         .setAlpha(0)
-        .setData('no3d', true);
+        .setData('no3d', true)
+        .setData('battleTrainer2DAnchor', 'enemy');
       fitPortrait(this.trainerPortrait);
     }
 

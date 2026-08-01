@@ -251,7 +251,8 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const jin = portraitFor('capitol-jin');
     if (jin && this.textures.exists(jin.key)) {
       this.leaderPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, jin.key).setDepth(6)
-        .setData('no3d', true);
+        .setData('no3d', true)
+        .setData('battleTrainer2DAnchor', 'enemy');
       fitPortrait(this.leaderPortrait);
     }
   }

@@ -86,6 +86,12 @@ interface TrainerWalker {
   end: THREE.Vector3;
 }
 
+interface Pinned2DTrainer {
+  side: 'player' | 'enemy';
+  originalX: number;
+  originalY: number;
+}
+
 interface ScreenTargetRequest {
   target: GO;
   x: number;
@@ -107,6 +113,7 @@ export class BattleMirror {
   private root: THREE.Group;
   private combatants = new Map<GO, Combatant>();
   private trainers: TrainerWalker[] = [];
+  private pinned2DTrainers = new Map<GO & Phaser.GameObjects.Image, Pinned2DTrainer>();
   private hiddenBackdrops = new Set<GO>();
   // Phaser adds factory-created objects to the display list before the caller's
   // fluent setup runs. Defer classification until the next frame so Graphics
@@ -163,6 +170,7 @@ export class BattleMirror {
     this.combatants.clear();
     for (const w of this.trainers) this.root.remove(w.group);
     this.trainers.length = 0;
+    this.pinned2DTrainers.clear();
     this.hiddenBackdrops.clear();
     this.pendingObjects.clear();
   }
@@ -284,7 +292,17 @@ export class BattleMirror {
     const im = obj as GO & Phaser.GameObjects.Image;
     // Explicit 2D artwork always wins over trainer/model tags. Major battle
     // portraits use this to stay on Phaser's foreground above the 3D arena.
-    if ((im as Phaser.GameObjects.Image).getData?.('no3d')) return;
+    if ((im as Phaser.GameObjects.Image).getData?.('no3d')) {
+      const side = (im as Phaser.GameObjects.Image).getData?.('battleTrainer2DAnchor') as ('player' | 'enemy' | undefined);
+      if ((side === 'player' || side === 'enemy') && !this.pinned2DTrainers.has(im)) {
+        this.pinned2DTrainers.set(im, {
+          side,
+          originalX: im.x ?? 0,
+          originalY: im.y ?? 0,
+        });
+      }
+      return;
+    }
     // A scene can promote a battle trainer to a walking 3D character (the rival
     // striding in toward the player) by tagging its intro portrait with
     // `battleTrainer: 'boy' | 'girl'`. Spawn the 3D walker and keep the flat 2D
@@ -504,6 +522,31 @@ export class BattleMirror {
     }
   }
 
+  /** Keep a retained 2D trainer's feet on the same projected ground anchor as
+   *  the Pokémon for that side. The portrait remains crisp Phaser artwork while
+   *  following camera drift and punch-ins from the 3D battle. */
+  private syncPinned2DTrainers(): void {
+    if (!this.active3D || !this.pinned2DTrainers.size) return;
+    const camera = this.stage.camera;
+    camera.updateMatrixWorld();
+    for (const [im, pinned] of this.pinned2DTrainers) {
+      if (!im.scene) {
+        this.pinned2DTrainers.delete(im);
+        continue;
+      }
+      const feet = ANCHORS[pinned.side][0].clone().project(camera);
+      if (!Number.isFinite(feet.x) || !Number.isFinite(feet.y) || feet.z < -1 || feet.z > 1) continue;
+      const anchorX = (feet.x + 1) * 0.5 * this.scene.scale.width;
+      const anchorY = (1 - feet.y) * 0.5 * this.scene.scale.height;
+      const originX = Number.isFinite(im.originX) ? im.originX : 0.5;
+      const originY = Number.isFinite(im.originY) ? im.originY : 0.5;
+      im.setPosition(
+        anchorX + (originX - 0.5) * (im.displayWidth ?? 0),
+        anchorY - (1 - originY) * (im.displayHeight ?? 0),
+      );
+    }
+  }
+
   // ── Frame sync ──
   update(dt: number): void {
     if (!this.built) return;
@@ -669,6 +712,7 @@ export class BattleMirror {
     if (cam.shakeEffect?.isRunning) this.rig.addShake(0.4);
 
     this.rig.update(dt, null);
+    this.syncPinned2DTrainers();
   }
 
   restore2D(): void {
@@ -678,6 +722,9 @@ export class BattleMirror {
     for (const cb of this.combatants.values()) unhide(cb.obj);
     for (const w of this.trainers) unhide(w.obj);
     for (const b of this.hiddenBackdrops) unhide(b);
+    for (const [im, pinned] of this.pinned2DTrainers) {
+      im.setPosition(pinned.originalX, pinned.originalY);
+    }
   }
 
   apply3D(): void {
