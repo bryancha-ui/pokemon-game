@@ -335,9 +335,18 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
     const crown = cylinder(0.11 * width, 0.15 * width, 0.17, 0x202127, 10); crown.position.y = 1.15; head.add(crown);
   } else if (p.hat === 'crown') {
     const crown = cylinder(0.07 * width, 0.12 * width, 0.17, p.accent, 6); crown.position.y = 1.14; head.add(crown);
-  } else if (p.hat === 'hood' || p.hat === 'helmet') {
-    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.18 * width, 8, 6), toonMat(p.hat === 'hood' ? p.outfit : p.secondary));
+  } else if (p.hat === 'hood') {
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.18 * width, 8, 6), toonMat(p.outfit));
     hood.scale.z = 0.8; hood.position.y = 0.96; head.add(hood); face.position.z = 0.08;
+  } else if (p.hat === 'helmet') {
+    // Open-face helmet: a dome caps the crown and a brow band sits above the
+    // eyes, so the face (and eyes) stay visible instead of being covered.
+    const dome = new THREE.Mesh(
+      new THREE.SphereGeometry(0.175 * width, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+      toonMat(p.secondary),
+    );
+    dome.position.y = 1.0; head.add(dome);
+    const band = box(0.3 * width, 0.05, 0.245, p.accent); band.position.set(0, 0.985, 0.01); head.add(band);
   } else if (p.hat === 'mask') {
     const mask = box(0.2 * width, 0.18, 0.03, 0xb89a68); mask.position.set(0, 0.91, 0.145); head.add(mask);
     for (const ex of [-0.055, 0.055]) { const slit = box(0.035, 0.02, 0.012, 0x18201a); slit.position.set(ex, 0.92, 0.165); head.add(slit); }
