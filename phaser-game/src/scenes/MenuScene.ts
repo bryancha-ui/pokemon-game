@@ -17,7 +17,7 @@ const HM_MOVE_DATA: Record<string, MoveData> = {
   fly: { name: 'Fly', type: 'flying', category: 'physical', power: 90, accuracy: 95, pp: 15 },
 };
 import { DexTracker } from '../systems/DexTracker';
-import { ITEMS, Inventory, itemDef, useItemOnSlot, teachHM, canLearnMove, formatMoney } from '../systems/Items';
+import { ITEMS, Inventory, itemDef, itemDescription, itemName, useItemOnSlot, teachHM, canLearnMove, formatMoney } from '../systems/Items';
 import { TMS } from '../data/TMs';
 import { BADGES } from '../data/Badges';
 
@@ -518,8 +518,8 @@ export class MenuScene extends Phaser.Scene {
     for (const def of ITEMS) {
       if (def.category !== 'hm' || (inv[def.key] ?? 0) <= 0) continue;
       rows.push({
-        name: def.name, icon: def.icon,
-        desc: def.desc + (def.move ? ' Tap to teach.' : ''),
+        name: itemName(def), icon: def.icon,
+        desc: itemDescription(def) + (def.move ? t(' Tap to teach.', ' 눌러서 가르치기.') : ''),
         onClick: () => this.beginTeachHM(def.key),
       });
     }
@@ -529,7 +529,7 @@ export class MenuScene extends Phaser.Scene {
       const n = inv[def.key] ?? 0;
       if (n <= 0 || def.category === 'hm') continue;
       rows.push({
-        name: def.name, icon: def.icon, desc: def.desc, count: n,
+        name: itemName(def), icon: def.icon, desc: itemDescription(def), count: n,
         onClick: (def.category === 'ball' || def.category === 'souvenir') ? undefined : () => this.beginUseItem(def.key),
       });
     }

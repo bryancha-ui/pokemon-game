@@ -3,7 +3,7 @@ import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -75,7 +75,8 @@ export class WonsanBeachScene extends Phaser.Scene {
   private py = 3 * TILE + 16;   // enter from the top (the road down from Haesol)
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false; private spawnPx = 0; private spawnPy = 0;
   private steps = 0; private nextEnc = 10;
   private readonly SPEED = 120; private readonly RUN = 250;

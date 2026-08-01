@@ -3,7 +3,7 @@ import { tr } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 
@@ -65,7 +65,8 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   private py = 30 * TILE + 16;   // enter from the south (Samho side)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false; private spawnPx = 0; private spawnPy = 0;
   private readonly SPEED = 120; private readonly RUN = 250;
 

@@ -849,6 +849,7 @@ export class OverworldMirror {
         const speed = Math.hypot(dx, dz) / Math.max(dt, 0.001);
         const moving = speed > 0.35;
         t.characterPhase = (t.characterPhase ?? 0) + (moving ? Math.min(15, 6 + speed * 1.5) : 2.1) * dt;
+        t.character.setRiding?.(o.getData?.('characterVehicle3D') === 'bike');
         t.character.setWalk(t.characterPhase, moving, dt);
         const lookAt = o.getData?.('characterLookAt3D') as { x?: number; y?: number } | undefined;
         if (!moving && typeof lookAt?.x === 'number' && typeof lookAt.y === 'number'

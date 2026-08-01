@@ -112,6 +112,17 @@ export class CreatureAnimator {
     this.play('faint', true);
   }
 
+  /** Cancel a held faint/recoil pose when the battle slot is reused. */
+  standUp(): void {
+    this.action = null;
+    this.state = 'idle';
+    this.onImpact = null;
+    this.impactFired = false;
+    this.root.position.set(0, this.baseY, 0);
+    this.root.rotation.set(0, this.facing, 0);
+    this.play('idle');
+  }
+
   /** Base position the creature returns to (its arena anchor). */
   setBase(y: number): void { this.baseY = y; }
 

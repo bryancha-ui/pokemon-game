@@ -72,7 +72,7 @@ export class PineNeedleStudioScene extends BaseInteriorScene {
   protected setupNPCs() {
     // The artist (female, ink-stained apron)
     const artist = this.createNPCGraphic(6, 4, 0x556699, 0x222222, true, 0);
-    this.add.text(this.tile(6, 4).x + 16, this.tile(6, 4).y - 6, 'Artist Sora', {
+    this.add.text(this.tile(6, 4).x + 16, this.tile(6, 4).y - 6, tr('Artist Sora'), {
       fontSize: '9px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(artist);

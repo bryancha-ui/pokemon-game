@@ -444,6 +444,7 @@ export class BattleMirror {
     }
     cb.glbKey = nk;
     cb.fainted = false;
+    cb.anim?.standUp();
   }
 
   private frameCanvas(im: Phaser.GameObjects.Image): HTMLCanvasElement | null {
@@ -679,7 +680,12 @@ export class BattleMirror {
         // Fainting: the battle fades/drops the sprite — play the topple once.
         const down = (o.alpha ?? 1) < 0.5 || o.visible === false;
         if (down && !cb.fainted && cb.base) { cb.fainted = true; cb.anim?.faint(); }
-        if (!down && cb.fainted) cb.fainted = false;
+        if (!down && cb.fainted) {
+          cb.fainted = false;
+          // A send-out/switch also fades the shared Phaser image. That fade is
+          // not a knockout: reset the held topple before showing the new mon.
+          cb.anim?.standUp();
+        }
         // The animator owns this model's transform (position/rotation/scale).
         cb.anim?.update(dt, cb.targetH * uniformRel);
         cb.glb.visible = (o.alpha ?? 1) > 0.05;

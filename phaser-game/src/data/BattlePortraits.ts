@@ -104,7 +104,11 @@ export function markRivalPortrait(
  * scale). Keeps every trainer's portrait roughly the same size in battle.
  */
 // Global shrink for ALL NPC battle portraits (they were rendering oversized).
-const GLOBAL_PORTRAIT_SCALE = 0.4;
+// Battle portraits were globally reduced to 40%, which made every authored
+// 2D trainer (gym leaders, Elite Four, rivals and ordinary trainers) tiny in
+// the 3D battle layout. Keep their per-image tuning, but render them at twice
+// the previous global size.
+const GLOBAL_PORTRAIT_SCALE = 0.8;
 
 // Per-portrait extra tweak (by texture key) for figures that fill their frame too
 // tightly. Multiplied on top of the global scale. 1 = the standard fit.

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -60,7 +60,8 @@ export class HaeanCityScene extends Phaser.Scene {
   private px = 3 * TILE; private py = 12 * TILE;   // west entrance on the main path (NOT the sea)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private readonly SPEED = 120; private readonly RUN = 250;
@@ -116,6 +117,7 @@ export class HaeanCityScene extends Phaser.Scene {
           "Prof. Song: I've pieced together what Team Suri and 노스단 are really after. You need to hear this in person.",
           "Rival: Express boat's at the dock. Let's move.",
         ], () => {
+          this.registry.set('sudoLabReturnScene', 'HaeanCityScene');
           this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('SudoLabScene'));
         });
       });

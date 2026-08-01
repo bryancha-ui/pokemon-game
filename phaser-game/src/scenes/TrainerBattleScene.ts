@@ -21,7 +21,7 @@ import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { trainerClassPortrait } from '../data/TrainerClassPortrait';
 import { AVATAR_URL, rivalAvatarKey } from '../data/PlayerAvatar';
 import { DexTracker } from '../systems/DexTracker';
-import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../systems/Items';
+import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef, itemName } from '../systems/Items';
 import { tmForMove } from '../data/TMs';
 import { SaveManager } from '../utils/SaveManager';
 import { playBallSendOut } from '../systems/BattleBallFX';
@@ -519,6 +519,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.movePanel.add(bg);
     this.movePanel.add(
       this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+        .setOrigin(1, 0)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.playerAction()),
     );
@@ -556,6 +557,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const bg = this.add.rectangle(this.W / 2, 60, this.W - 16, 120, 0x111133, 0.95).setStrokeStyle(1, 0x5577aa);
     this.bagPanel.add(bg);
     this.bagPanel.add(this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()));
 
     const inv = Inventory.all(this.registry);
@@ -571,7 +573,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       const r = this.add.rectangle(x + 100, y + 14, 210, 40, 0x1a3a2a)
         .setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
       this.bagPanel.add(r);
-      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${def.name}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${itemName(def)}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
       this.bagPanel.add(this.add.text(x + 8, y + 20, `×${inv[def.key]}`, { fontSize: '11px', color: '#ffe44e' }));
       r.on('pointerover', () => r.setFillStyle(0x2a5a3a));
       r.on('pointerout',  () => r.setFillStyle(0x1a3a2a));
@@ -830,6 +832,10 @@ export class TrainerBattleScene extends Phaser.Scene {
     stopBgm(this);
     // Milestone jingle: badge get for gym leaders, victory fanfare otherwise.
     playJingle(this, this.badgeFlag ? 'badge' : 'victory');
+
+    // Commit the Chapter 7 milestone at victory time. If the lab return is
+    // interrupted or reloaded, Haean City will no longer replay the summons.
+    if (this.trainerKey === 'rival-3') this.registry.set('chapter7Done', true);
 
     // ── Gym-leader victory (badge + TM reward) ────────────────────────────
     if (this.badgeFlag) {

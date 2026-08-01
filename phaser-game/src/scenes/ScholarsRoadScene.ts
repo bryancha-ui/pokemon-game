@@ -3,7 +3,7 @@ import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
@@ -104,6 +104,7 @@ function buildMap(): Tile[][] {
 }
 
 export class ScholarsRoadScene extends Phaser.Scene {
+  public grassTileIds3D = [T.GRASS];
   private map!: Tile[][];
   /** A mountain road, not a town: drop any building the terrain heuristics
    *  hallucinate from cliff/forest shading. */
@@ -120,7 +121,8 @@ export class ScholarsRoadScene extends Phaser.Scene {
   private py = 56 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private steps = 0; private nextEnc = 10;

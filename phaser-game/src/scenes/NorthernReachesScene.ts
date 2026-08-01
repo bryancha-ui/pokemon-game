@@ -125,6 +125,7 @@ const QUIZZES: Quiz[] = [
 ];
 
 export class NorthernReachesScene extends Phaser.Scene {
+  public grassTileIds3D = [T.SNOWGRASS];
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

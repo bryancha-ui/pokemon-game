@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -180,7 +180,9 @@ export abstract class EosaCityScene extends Phaser.Scene {
   private enterPrompt!: Phaser.GameObjects.Text;
   private px = 13.5 * TILE; private py = 17 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
-  private cutsceneActive = false; private cycling = false;
+  private cutsceneActive = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false; private spawnPx = 0; private spawnPy = 0;
   private readonly SPEED = 120; private readonly RUN = 250;
 
@@ -193,7 +195,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const cfg = this.cfg;
     this.cols = cfg.size?.cols ?? DEF_COLS; this.rows = cfg.size?.rows ?? DEF_ROWS;
     playBgm(this, cfg.bgm);
-    this.cutsceneActive = false; this.walkFrame = 0; this.cycling = false;
+    this.cutsceneActive = false; this.walkFrame = 0;
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get(cfg.key + 'ReturnX') as number | undefined;
     const ry = this.registry.get(cfg.key + 'ReturnY') as number | undefined;

@@ -5,6 +5,7 @@
  */
 import Phaser from 'phaser';
 import { TMS } from '../data/TMs';
+import { t, tr } from './i18n';
 
 export type ItemCategory = 'heal' | 'status' | 'revive' | 'ball' | 'hm' | 'ppheal' | 'souvenir';
 
@@ -66,6 +67,30 @@ export const ITEMS: ItemDef[] = [
 
 const BY_KEY = new Map(ITEMS.map(i => [i.key, i]));
 export function itemDef(key: string): ItemDef | undefined { return BY_KEY.get(key); }
+
+/** Localized item copy. TM strings are generated dynamically, so an exact
+ * dictionary lookup cannot translate their move-dependent names/descriptions. */
+export function itemName(def: ItemDef): string {
+  if (def.key.startsWith('tm_') && def.move)
+    return t(`TM · ${def.move}`, `기술머신 · ${tr(def.move)}`);
+  if (def.key === 'hm_fly' && def.move)
+    return t(`HM01 · ${def.move}`, `비전머신01 · ${tr(def.move)}`);
+  return tr(def.name);
+}
+
+export function itemDescription(def: ItemDef): string {
+  if (def.key.startsWith('tm_') && def.move)
+    return t(
+      `Teaches ${def.move}. Reusable — any Pokémon can learn it.`,
+      `${tr(def.move)} 기술을 가르친다. 재사용 가능 — 모든 포켓몬이 배울 수 있다.`,
+    );
+  if (def.key === 'hm_fly' && def.move)
+    return t(
+      'Teach Fly to a Flying-type Pokémon. Reusable.',
+      `비행타입 포켓몬에게 ${tr(def.move)} 기술을 가르친다. 재사용 가능.`,
+    );
+  return tr(def.desc);
+}
 
 const INV = 'inventory';
 

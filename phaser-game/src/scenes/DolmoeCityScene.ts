@@ -5,7 +5,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 
 // ── Dolmoe City (돌뫼 시티) — The Stonecutters' City ──────────────────────────────
 // A granite quarry-country city on the way up from Route 6. Holds the Stonemason's
@@ -56,7 +56,8 @@ export class DolmoeCityScene extends Phaser.Scene {
   private py = 19 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private readonly SPEED = 130;
   private readonly RUN = 250;

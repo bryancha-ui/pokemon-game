@@ -226,6 +226,7 @@ export class BattleScene extends Phaser.Scene {
     this.movePanel.add(bg);
 
     const back = this.add.text(this.W - 40, 10, tr('← BACK'), { fontSize: '14px', color: '#aaa' })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); });
     this.movePanel.add(back);

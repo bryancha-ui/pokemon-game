@@ -62,6 +62,7 @@ export abstract class CliffClimbScene extends Phaser.Scene {
   /** Walk off the top → next area (return false to block, e.g. summit). */
   protected abstract exitNorth(): boolean;
 
+  public grassTileIds3D = [T.TALLGRASS];
   protected map!: Tile[][];
   protected playerG!: Phaser.GameObjects.Graphics;
   protected cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

@@ -77,6 +77,7 @@ function buildMap(): Tile[][] {
 }
 
 export class JejuVentScene extends Phaser.Scene {
+  public grassTileIds3D = [T.TALLGRASS];
   private map!: Tile[][];
   /** Volcanic vent terrain, not a town — drop any building the heuristics
    *  hallucinate from the dark basalt/steam shading. */

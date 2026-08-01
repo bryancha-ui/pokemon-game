@@ -78,7 +78,7 @@ export class GeumgangGymScene extends Phaser.Scene {
       this.cutsceneActive = true;
       this.dialog.show([
         'Namsun: A fine performance. The lanterns will remember you.',
-        '(She lowers her voice.)',
+        '(He lowers his voice.)',
         'Namsun: A group in dark uniforms passed through carrying large sealed containers, moving south.',
         'Namsun: My Pokémon were agitated all night. Whatever they carry, it does not sit right with the living world.',
         'You may leave through the south door whenever you are ready.',

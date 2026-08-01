@@ -423,14 +423,18 @@ export function buildTerrain(
     }
   }
 
-  // Authored grass tiles are definitive.  In particular, Route 5 paints dark
-  // blades over a green base; averaging that artwork used to put it below the
-  // foliage threshold and grow a tree directly on top of the clearing.
-  if (tileMap && grassTileIds3D.length > 0) {
+  // Tile maps are authoritative for encounter grass.  Colour sampling is only
+  // a fallback for baked image maps: on authored tile maps it made ordinary
+  // lawns, green paths and decorative ground sprout misleading 3D grass even
+  // though wild encounters could never happen there.
+  if (tileMap) {
     const grassIds = new Set(grassTileIds3D);
-    for (let r = 0; r < Math.min(rows, tileMap.length); r++) {
-      for (let c = 0; c < Math.min(cols, tileMap[r]?.length ?? 0); c++) {
-        if (grassIds.has(tileMap[r][c])) cells[r * cols + c] = 'grass';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        const tileId = tileMap[r]?.[c];
+        if (tileId !== undefined && grassIds.has(tileId)) cells[i] = 'grass';
+        else if (cells[i] === 'grass') cells[i] = 'flat';
       }
     }
   }

@@ -315,6 +315,7 @@ export class RivalBattleScene extends Phaser.Scene {
     this.movePanel.add(bg);
 
     const back = this.add.text(this.W - 36, 12, tr('← BACK'), { fontSize: '13px', color: '#aaa' })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); });
     this.movePanel.add(back);

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
-import { ITEMS, ItemDef, Inventory, formatMoney } from '../systems/Items';
+import { ITEMS, ItemDef, Inventory, formatMoney, itemDescription, itemName } from '../systems/Items';
 import { t, tr } from '../systems/i18n';
 
 /** Default stock sold in town marts. */
@@ -62,8 +62,8 @@ export class ShopScene extends Phaser.Scene {
       const cx = this.W / 2;
       this.add.rectangle(cx, y, 900, rowH - 6, 0x111526).setStrokeStyle(1, 0x2a3550);
       this.add.text(cx - 430, y, def.icon, { fontSize: '24px' }).setOrigin(0.5);
-      this.add.text(cx - 400, y - 12, def.name, { fontSize: '16px', color: '#fff', fontStyle: 'bold' });
-      this.add.text(cx - 400, y + 9, def.desc, { fontSize: '11px', color: '#99aabb' });
+      this.add.text(cx - 400, y - 12, itemName(def), { fontSize: '16px', color: '#fff', fontStyle: 'bold' });
+      this.add.text(cx - 400, y + 9, itemDescription(def), { fontSize: '11px', color: '#99aabb' });
       this.add.text(cx + 110, y, formatMoney(def.price), { fontSize: '15px', color: '#ffe44e' }).setOrigin(1, 0.5);
       const owned = this.add.text(cx + 130, y, '', { fontSize: '12px', color: '#88aacc' }).setOrigin(0, 0.5);
       this.rows.push({ def, ownedText: owned });
@@ -93,11 +93,13 @@ export class ShopScene extends Phaser.Scene {
   private buy(def: ItemDef, qty: number) {
     const total = def.price * qty;
     if (!Inventory.spend(this.registry, total)) {
-      this.flash(t(`Not enough money for ${qty}× ${def.name}.`, `${def.name} ${qty}개를 살 돈이 부족해요.`), '#ff8888');
+      const name = itemName(def);
+      this.flash(t(`Not enough money for ${qty}× ${name}.`, `${name} ${qty}개를 살 돈이 부족해요.`), '#ff8888');
       return;
     }
     Inventory.add(this.registry, def.key, qty);
-    this.flash(t(`Bought ${qty}× ${def.name}!  (-${formatMoney(total)})`, `${def.name} ${qty}개 구매!  (-${formatMoney(total)})`), '#aaffaa');
+    const name = itemName(def);
+    this.flash(t(`Bought ${qty}× ${name}!  (-${formatMoney(total)})`, `${name} ${qty}개 구매!  (-${formatMoney(total)})`), '#aaffaa');
     this.refresh();
   }
 

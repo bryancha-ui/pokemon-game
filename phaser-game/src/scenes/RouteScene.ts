@@ -3,7 +3,7 @@ import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -169,6 +169,7 @@ function buildRouteMap(): RTile[][] {
 // ── Route Scene ───────────────────────────────────────────────────────────────
 
 export class RouteScene extends Phaser.Scene {
+  public grassTileIds3D = [RT.TALL_GRASS];
   private map!: RTile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -192,7 +193,8 @@ export class RouteScene extends Phaser.Scene {
    *  walkable ground (not extrude into walls that bury the player). */
   caveFloorHint = true;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // edge exits fire once you've stepped away from spawn
 

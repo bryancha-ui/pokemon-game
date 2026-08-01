@@ -4,7 +4,7 @@ import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
 import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -67,6 +67,7 @@ function buildMap(): Tile[][] {
 }
 
 export class Route3Scene extends Phaser.Scene {
+  public grassTileIds3D = [T.TALLGRASS];
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -78,10 +79,11 @@ export class Route3Scene extends Phaser.Scene {
   private py = 57 * TILE + 16;   // enter from south (Baekdu side)
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
-  private steps = 0; private nextEnc = 10;
+  private steps = 0; private nextEnc = 5;
   private ryeoCutsceneRival?: { g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text };
   private readonly SPEED = 120; private readonly RUN = 250;
 
@@ -271,8 +273,8 @@ export class Route3Scene extends Phaser.Scene {
     const t = this.map[row]?.[col];
     if (!t || !ENCOUNTER.has(t)) { this.steps = 0; return; }
     if (this.steps < this.nextEnc) return;
-    if (Math.random() > 0.22) return;
-    this.steps = 0; this.nextEnc = 8 + Math.floor(Math.random() * 8);
+    if (Math.random() > 0.35) return;
+    this.steps = 0; this.nextEnc = 5 + Math.floor(Math.random() * 5);
     const e = pickEncounter(R3_ENCOUNTERS);
     this.registry.set('wildId', e.id);
     this.registry.set('wildLevel', randomLevel(e));

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { playBgm } from '../systems/Music';
@@ -141,7 +141,8 @@ export class JejuCityScene extends Phaser.Scene {
   private py = 24 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private readonly SPEED = 120; private readonly RUN = 250;
 
   constructor() { super('JejuCityScene'); }

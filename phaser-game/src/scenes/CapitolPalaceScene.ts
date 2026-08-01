@@ -1,4 +1,5 @@
 import { BaseInteriorScene, NPC } from './interior/BaseInteriorScene';
+import { tr } from '../systems/i18n';
 
 export class CapitolPalaceScene extends BaseInteriorScene {
   protected readonly COLS = 18; protected readonly ROWS = 14;
@@ -48,7 +49,7 @@ export class CapitolPalaceScene extends BaseInteriorScene {
 
   protected setupNPCs() {
     const guard = this.createNPCGraphic(8, 4, 0x336622, 0x111100, false, 0);
-    this.add.text(this.tile(8, 4).x + 16, this.tile(8, 4).y - 6, 'Palace Guard',
+    this.add.text(this.tile(8, 4).x + 16, this.tile(8, 4).y - 6, tr('Palace Guard'),
       { fontSize: '9px', color: '#ffe44e', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }
     ).setOrigin(0.5, 1).setDepth(16);
     this.npcs.push(guard);

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
+import { drawTrainerBody, markProceduralCharacter3D, playerDesign } from '../data/CharacterSprite';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { DialogBox } from '../ui/DialogBox';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
@@ -205,6 +205,10 @@ export class CapitolGymScene extends Phaser.Scene {
       g.fillStyle(0xddbbff); g.fillRect(-7, -22, 14, 12);
       g.fillStyle(0x220044); g.fillRect(-7, -22, 14, 5);
       g.fillStyle(0xff6600); g.fillRect(-3, -16, 2, 2); g.fillRect(1, -16, 2, 2);
+      markProceduralCharacter3D(g, {
+        outfit: 0x330066, hair: 0x220044, skin: 0xddbbff,
+        footY: 13, outfitStyle: 'uniform',
+      });
 
       this.add.text(x, y - 28, tr.name.split(' ').pop() ?? tr.name, {
         fontSize: '8px', color: '#cc88ff', backgroundColor: '#00000088', padding: { x: 2, y: 1 },

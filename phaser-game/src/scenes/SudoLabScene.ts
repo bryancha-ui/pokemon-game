@@ -6,6 +6,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { dexEntry } from '../data/Pokedex';
 import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
+import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 
 // The mythological pantheon shown drifting through the ending credits.
 const PANTHEON = ['hwanwoong', 'nabihalmang', 'poongbaek', 'woosa', 'woonsa'];
@@ -16,6 +17,9 @@ const PANTHEON = ['hwanwoong', 'nabihalmang', 'poongbaek', 'woosa', 'woonsa'];
  * then the Rival challenges you to one last battle with his fully-evolved starter.
  */
 export class SudoLabScene extends Phaser.Scene {
+  public interior3D = true;
+  public clearSight3D = true;
+  private playerG!: Phaser.GameObjects.Graphics;
   private dialog!: DialogBox;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private busy = false;
@@ -95,17 +99,29 @@ export class SudoLabScene extends Phaser.Scene {
       return;
     }
 
-    if (rivalDone) {
+    if (rivalDone && !this.registry.get('sudoRivalAftermathSeen')) {
       // Returned from Rival Battle #3 → closing beat, then head onward.
       this.busy = true;
       this.registry.set('chapter7Done', true);
-      SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
+      this.registry.set('sudoRivalAftermathSeen', true);
+      SaveManager.save(this.registry, 3 * 32, 12 * 32, 'HaeanCityScene');
       this.dialog.show([
         "Rival: ...You really are something. Okay. Let's go save a giant moth grandmother.",
         "Rival: A sentence I never thought I'd say.",
         "Prof. Song: 노스단 has already moved south, toward the Jeju vents. There's no time to lose.",
         "Prof. Song: Protect 나비할망 — and through her, the whole south. Go. Now.",
         "▶ Chapter 8 — Route 5 & the Ancient Forest — continues your journey south.",
+      ], () => this.leaveLab('HaeanCityScene'));
+      return;
+    }
+
+    // The lab is now a normal, revisitable Capitol building. Do not start the
+    // Chapter 7 rival battle before the Tidekeeper Badge, or repeat it later.
+    if (!this.registry.get('haeanGymDefeated') || this.registry.get('chapter7Done')) {
+      this.busy = true;
+      this.dialog.show([
+        'Prof. Song: Welcome back. The lab is always open when you need a place to review your journey.',
+        'Prof. Song: Keep your team healthy, and come see me whenever the Pokédex turns up something unusual.',
       ], () => { this.busy = false; });
       return;
     }
@@ -130,6 +146,9 @@ export class SudoLabScene extends Phaser.Scene {
   }
 
   private startRivalBattle() {
+    // This battle follows immediately after a gym and a long cutscene. Restore
+    // the full party here so story progression never punishes skipped healing.
+    PartySystem.healAll(this.registry);
     // Rival's team is built around his OWN fully-evolved starter (the opposite type
     // the rival chose at the lab). Use rivalKey — starterKey can be changed by setLead.
     const rivalKey = (this.registry.get('rivalKey') as string) ?? 'vipour';
@@ -140,13 +159,14 @@ export class SudoLabScene extends Phaser.Scene {
     this.registry.set('trainerName', 'Rival');
     this.registry.set('trainerKey', 'rival-3');
     this.registry.set('trainerPokemon', JSON.stringify([
-      { id: 0, level: 38, custom: 'martbadger' },   // Dark/Steel (evolved)
-      { id: 0, level: 39, custom: 'squirrel2' },     // Soarrel — Normal/Flying (evolved)
-      { id: 0, level: 40, custom: 'tokkigongju' },   // Dark/Fairy ace support
-      { id: 0, level: 41, custom: rivalFinal },       // Starter FINAL evo (opposite type)
+      { id: 0, level: 34, custom: 'martbadger' },   // Dark/Steel (evolved)
+      { id: 0, level: 35, custom: 'squirrel2' },     // Soarrel — Normal/Flying (evolved)
+      { id: 0, level: 36, custom: 'tokkigongju' },   // Dark/Fairy ace support
+      { id: 0, level: 37, custom: rivalFinal },       // Starter FINAL evo (opposite type)
     ]));
     this.registry.set('trainerExpPool', 1500);
     this.registry.set('trainerReturnScene', 'SudoLabScene');
+    SaveManager.save(this.registry, 0, 0, 'SudoLabScene');
     this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('TrainerBattleScene'));
   }
 
@@ -199,6 +219,28 @@ export class SudoLabScene extends Phaser.Scene {
     this.add.text(W / 2, H - 12, tr('SPACE to continue'), {
       fontSize: '11px', color: '#7f93b5',
     }).setOrigin(0.5).setDepth(8);
+
+    // A concrete player anchor lets the overworld 3D mirror build this room as
+    // an interior instead of leaving it as a flat full-screen cutscene.
+    this.playerG = this.add.graphics().setDepth(7);
+    drawTrainerBody(this.playerG, 1, 0, playerDesign(this.registry));
+    this.playerG.setPosition(W * 0.5, H * 0.82);
+  }
+
+  private leaveLab(scene?: string) {
+    const target = scene ?? (this.registry.get('sudoLabReturnScene') as string | undefined) ?? 'HaeanCityScene';
+    this.registry.remove('sudoLabReturnScene');
+    this.busy = true;
+    this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+      if (target === 'CapitolCityScene') {
+        this.registry.set('capitalReturnX', 56 * 32 + 16);
+        this.registry.set('capitalReturnY', 14 * 32 + 16);
+      } else {
+        this.registry.set('haeanCityReturnX', 3 * 32);
+        this.registry.set('haeanCityReturnY', 12 * 32);
+      }
+      this.scene.start(target);
+    });
   }
 
   update() {
@@ -210,13 +252,9 @@ export class SudoLabScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
       return;
     }
-    // After the closing beat, SPACE leaves the lab and returns south.
+    // Outside story dialogue, SPACE exits to whichever city entrance was used.
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-        this.registry.set('haeanCityReturnX', 3 * 32);
-        this.registry.set('haeanCityReturnY', 12 * 32);
-        this.scene.start('HaeanCityScene');
-      });
+      this.leaveLab();
     }
   }
 

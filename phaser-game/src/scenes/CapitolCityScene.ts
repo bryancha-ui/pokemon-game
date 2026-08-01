@@ -3,7 +3,7 @@ import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign, rivalDesign } from '../data/CharacterSprite';
 import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -51,7 +51,6 @@ interface CapitalLandmark {
 /** Non-enterable civic monuments. Each footprint is solid in 2D and is also
  *  published to the overworld mirror, which fits the named GLB to the plot. */
 const CAPITAL_LANDMARKS: CapitalLandmark[] = [
-  { label: 'Royal Archives',         x: 52, y: 4,  w: 9,  h: 10, model: 'hanok',       wallColor: 0xd9c39a, roofColor: 0x31584c },
   { label: 'National Assembly Hall', x: 52, y: 20, w: 10, h: 12, model: 'league',      wallColor: 0xe3d5b8, roofColor: 0x8f2e2e },
   { label: 'Onnuri National Museum', x: 52, y: 44, w: 10, h: 7,  model: 'contesthall', wallColor: 0xd8d1c5, roofColor: 0x4b6078 },
   { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'shrine',      wallColor: 0xcaa574, roofColor: 0x314d3a },
@@ -211,6 +210,10 @@ function buildCityMap(): CTile[][] {
   // Landmark footprints are placed last so district paving cannot overwrite
   // their solid collision area. None intersects an exit or boulevard.
   for (const lm of CAPITAL_LANDMARKS) fill(lm.y, lm.x, lm.y + lm.h, lm.x + lm.w, B);
+  // Professor Song's lab replaces the old non-enterable Royal Archives. Keep
+  // the south-facing door walkable while the remaining footprint is solid.
+  fill(4, 52, 14, 61, B);
+  map[13][56] = SW;
 
   void G; void T;
   return map;
@@ -228,6 +231,9 @@ interface CityLocation {
 }
 
 const LOCATIONS: CityLocation[] = [
+  { label: "Professor Song's Lab", scene: 'SudoLabScene', model: 'lab',
+    doorRow: 13, doorCol: 56,
+    x: 52, y: 4, w: 9, h: 10, roofColor: 0x31584c, wallColor: 0xd9c39a },
   { label: "Pokémon Center",   scene: 'CapitolPCScene', model: 'pokecenter',
     doorRow: 51, doorCol: 7,
     x: 3, y: 44, w: 10, h: 8, roofColor: 0xcc2244, wallColor: 0xffffff },
@@ -264,7 +270,8 @@ export class CapitolCityScene extends Phaser.Scene {
   private py = 80 * TILE + 16;   // start at the expanded south entrance
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits arm once the player has stepped away from here
 
@@ -316,7 +323,6 @@ export class CapitolCityScene extends Phaser.Scene {
     this.spawnGuard = true;
     this.northArmed = false;
     this.eastArmed = false;
-    this.cycling = false;
     this.time.delayedCall(600, () => { this.spawnGuard = false; });
     this.input.keyboard?.resetKeys();
 
@@ -971,6 +977,7 @@ export class CapitolCityScene extends Phaser.Scene {
         const loc = near;
         this.registry.set('capitalReturnX', loc.doorCol * TILE + TILE / 2);
         this.registry.set('capitalReturnY', (loc.doorRow + 1) * TILE + TILE / 2);
+        if (loc.scene === 'SudoLabScene') this.registry.set('sudoLabReturnScene', 'CapitolCityScene');
         this.cutsceneActive = true;
         this.cameras.main.fadeOut(400, 0, 0, 0, () => {
           this.scene.start(loc.scene);

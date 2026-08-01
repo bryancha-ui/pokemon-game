@@ -5,7 +5,7 @@ import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../da
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 
 // ── Han River Park (한강공원) — a grand riverside district east of the Capitol ─────
 // A wide waterfront: the Han River along the north, a bicycle road with cyclists,
@@ -98,14 +98,15 @@ export class HanRiverParkScene extends Phaser.Scene {
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private spawnGuard = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private readonly SPEED = 120; private readonly RUN = 250;
 
   constructor() { super('HanRiverParkScene'); }
 
   create() {
     playBgm(this, 'sudo');
-    this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.cyclists = []; this.cycling = false;
+    this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.cyclists = [];
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('hanRiverReturnX') as number | undefined;
     const ry = this.registry.get('hanRiverReturnY') as number | undefined;
@@ -219,6 +220,12 @@ export class HanRiverParkScene extends Phaser.Scene {
     g.fillStyle(0x2a5aaa); g.fillRect(-2, -6, 5, 10);              // rider torso
     g.fillStyle(0xf0c8a0); g.fillCircle(1, -9, 4);                 // head
     g.fillStyle(0xdd3333); g.fillRect(-2, -13, 6, 3);              // helmet
+    // Use the full player rig (including its bicycle) in the 3D mirror while
+    // retaining this compact 2D fallback.
+    g.setData('characterModel3DKey', 'trainer_boy');
+    g.setData('characterGender3D', 'boy');
+    g.setData('characterVehicle3D', 'bike');
+    g.setData('characterFootY3D', 12);
   }
 
   private spawnPicnickers() {

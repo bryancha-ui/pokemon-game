@@ -2,6 +2,76 @@ import { markVisited } from '../data/RegionMap';
 
 const SAVE_KEY = 'pokemon_korea_v2';
 const BACKUP_KEY = 'pokemon_korea_v2_backup';
+const DURABLE_DB = 'pokemon_korea_saves';
+const DURABLE_STORE = 'slots';
+
+function openDurableDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in globalThis)) { reject(new Error('IndexedDB unavailable')); return; }
+    const req = indexedDB.open(DURABLE_DB, 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(DURABLE_STORE)) req.result.createObjectStore(DURABLE_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB open failed'));
+  });
+}
+
+async function durableGet(key: string): Promise<string | null> {
+  const db = await openDurableDb();
+  try {
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction(DURABLE_STORE, 'readonly').objectStore(DURABLE_STORE).get(key);
+      req.onsuccess = () => resolve(typeof req.result === 'string' ? req.result : null);
+      req.onerror = () => reject(req.error);
+    });
+  } finally { db.close(); }
+}
+
+async function durableSet(key: string, value: string): Promise<void> {
+  const db = await openDurableDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(DURABLE_STORE, 'readwrite');
+      tx.objectStore(DURABLE_STORE).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB write aborted'));
+    });
+  } finally { db.close(); }
+}
+
+async function durableDelete(key: string): Promise<void> {
+  const db = await openDurableDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(DURABLE_STORE, 'readwrite');
+      tx.objectStore(DURABLE_STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB delete aborted'));
+    });
+  } finally { db.close(); }
+}
+
+function saveTimestamp(raw: string | null): number {
+  if (!raw) return 0;
+  try { return Number((JSON.parse(raw) as { timestamp?: number }).timestamp) || 0; }
+  catch { return 0; }
+}
+
+function reportDurableError(action: string, error: unknown): void {
+  // IndexedDB may be disabled in private browsing. localStorage remains the
+  // primary synchronous path, so durable-mirror failure must not stop play.
+  console.warn(`SaveManager ${action} failed:`, error);
+}
+
+// Preserve save/delete ordering. Without a queue, a slow save mirror could
+// finish after New Game deleted the slot and unexpectedly resurrect old data.
+let durableQueue: Promise<void> = Promise.resolve();
+function queueDurable(action: string, task: () => Promise<void>): void {
+  durableQueue = durableQueue.then(task, task).catch(e => reportDurableError(action, e));
+}
 
 // Transient navigation keys that must NOT be persisted (they drive one-shot transitions).
 const TRANSIENT = new Set<string>([
@@ -51,6 +121,24 @@ export interface SaveData {
 
 export const SaveManager = {
 
+  /** Restore the newest valid save mirror before TitleScene checks Continue. */
+  async bootstrapDurableStorage(): Promise<void> {
+    try {
+      const storage = navigator.storage;
+      if (storage?.persist) void storage.persist().catch(() => false);
+
+      for (const key of [SAVE_KEY, BACKUP_KEY]) {
+        const local = localStorage.getItem(key);
+        const durable = await durableGet(key);
+        const newest = saveTimestamp(durable) > saveTimestamp(local) ? durable : local;
+        if (newest) {
+          if (newest !== local) localStorage.setItem(key, newest);
+          if (newest !== durable) await durableSet(key, newest);
+        }
+      }
+    } catch (e) { reportDurableError('bootstrap', e); }
+  },
+
   /** Persist the game. Returns true on success, false if it couldn't be written
    *  (e.g. storage quota) — callers should surface a failure instead of assuming saved. */
   save(registry: Phaser.Data.DataManager, px: number, py: number, scene = 'WorldMapScene'): boolean {
@@ -90,7 +178,9 @@ export const SaveManager = {
       starterLevel: leadLevel,
     };
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+      const raw = JSON.stringify(payload);
+      localStorage.setItem(SAVE_KEY, raw);
+      queueDurable('mirror save', () => durableSet(SAVE_KEY, raw));
       return true;
     } catch (e) {
       console.error('SaveManager.save failed:', e);
@@ -133,8 +223,14 @@ export const SaveManager = {
   /** Delete the save — but keep a one-slot backup first so a mistaken New Game is recoverable. */
   delete(): void {
     const cur = localStorage.getItem(SAVE_KEY);
-    if (cur) { try { localStorage.setItem(BACKUP_KEY, cur); } catch { /* quota */ } }
+    if (cur) {
+      try { localStorage.setItem(BACKUP_KEY, cur); } catch { /* quota */ }
+    }
     localStorage.removeItem(SAVE_KEY);
+    queueDurable('delete mirror', async () => {
+      if (cur) await durableSet(BACKUP_KEY, cur);
+      await durableDelete(SAVE_KEY);
+    });
   },
 
   hasBackup(): boolean {
@@ -145,7 +241,11 @@ export const SaveManager = {
   restoreBackup(): boolean {
     const b = localStorage.getItem(BACKUP_KEY);
     if (!b) return false;
-    try { localStorage.setItem(SAVE_KEY, b); return true; } catch { return false; }
+    try {
+      localStorage.setItem(SAVE_KEY, b);
+      queueDurable('restore mirror', () => durableSet(SAVE_KEY, b));
+      return true;
+    } catch { return false; }
   },
 
   formatDate(ts: number): string {

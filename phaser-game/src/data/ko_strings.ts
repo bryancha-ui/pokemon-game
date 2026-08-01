@@ -68,6 +68,7 @@ export const KO_SPEAKERS: Record<string, string> = {
   'Monk': '스님', 'Team Suri Grunt': '수리단 조무래기', '노스단 Operative': '노스단 대원',
   '노스단 Garrison Officer': '노스단 수비대 장교', 'Gate Captain Seollan': '문지기 대장 설란', 'Daejangseung': '대장승',
   'Artist Sora': '화가 소라', 'Dock Worker': '부두 인부', 'Trader': '상인',
+  'Bishop': '비숍',
   'Shop Clerk': '가게 점원', 'Store Clerk': '편의점 점원', 'Pharmacist': '약사', 'Gift Clerk': '선물 가게 점원',
   // ── Long-tail trainer / NPC names (auto-added) ──
   'Hiker Cheolho': '등산가 철호',
@@ -604,6 +605,7 @@ export const KO_STRINGS: Record<string, string> = {
   '✕ Close': '✕ 닫기',
   '✕ Cancel': '✕ 취소',
   '← BACK': '← 뒤로',
+  "Professor Song's Lab": '송 박사 연구소',
   '✚ Pokémon Center': '✚ 포켓몬 센터',
   '✚ Center': '✚ 센터',
   '🛒 Mart': '🛒 마트',
@@ -1509,6 +1511,9 @@ export const KO_STRINGS: Record<string, string> = {
   'Defeat the three Shadow Trainers to reach Leader Jin.': '세 명의 섀도우 트레이너를 물리치고 관장 진에게 도달하라.',
   'In darkness, only the strong survive!': '어둠 속에선 강한 자만이 살아남아!',
   'You defeated all my Shadow Trainers. Impressive.': '내 섀도우 트레이너들을 모두 물리쳤군. 인상적이야.',
+
+  // ── Seolbong Highland Pass ──
+  'You climb into the Seolbong Highland Pass (설봉 고갯길).': '설봉 고갯길에 들어섰다.',
 
   // ── Route signs / prompts ──
   '🏞️ Route 3 — Diamond Gorge (금강 협곡)': '🏞️ 3번 도로 — 다이아몬드 협곡 (금강 협곡)',

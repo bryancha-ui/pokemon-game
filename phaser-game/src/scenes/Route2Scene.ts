@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
-import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { drawTrainerBody, drawRiderBody, markProceduralCharacter3D, playerDesign } from '../data/CharacterSprite';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -83,6 +83,7 @@ function buildMap(): Tile[][] {
 }
 
 export class Route2Scene extends Phaser.Scene {
+  public grassTileIds3D = [T.GRASS];
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -96,7 +97,8 @@ export class Route2Scene extends Phaser.Scene {
   private py = 57 * TILE + 16;   // enter from south
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves away from spawn
   private steps = 0; private nextEnc = 10;
@@ -226,6 +228,10 @@ export class Route2Scene extends Phaser.Scene {
     g.fillStyle(0xdddddd); g.fillRect(-6, -20, 12, 4);      // white hair
     g.fillStyle(0xeeeeee); g.fillRect(-5, -9, 10, 4);       // white beard
     g.fillStyle(0x000000); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
+    markProceduralCharacter3D(g, {
+      outfit: 0x9a8a6a, hair: 0xeeeeee, skin: 0xd9b58f,
+      footY: 13, outfitStyle: 'hanbok', hairStyle: 'short',
+    });
     this.add.text(17 * TILE + 16, 21 * TILE - 8, speakerName('Harabeoji'), {
       fontSize: '8px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);

@@ -4,7 +4,7 @@ import { playBgm } from '../systems/Music';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 
 // ── Seorae Town (서래 마을) — The Alpine Frost Town ───────────────────────────────
 // A broad snowbound resort town: the Frostbell Shrine, a full Pokémon Center,
@@ -73,7 +73,8 @@ export class SeoraeTownScene extends Phaser.Scene {
   private py = 40 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private readonly SPEED = 130;
   private readonly RUN = 250;

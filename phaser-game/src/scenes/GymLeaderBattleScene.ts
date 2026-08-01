@@ -9,7 +9,7 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
-import { ITEMS, Inventory, useItemOnSlot } from '../systems/Items';
+import { ITEMS, Inventory, itemName, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
@@ -326,6 +326,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.movePanel.add(bg);
     this.movePanel.add(
       this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+        .setOrigin(1, 0)
         .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()),
     );
     const cols = [40, 226, 412, 598];
@@ -366,6 +367,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const bg = this.add.rectangle(this.W / 2 - 60, 60, this.W * 0.76, 120, 0x110022).setStrokeStyle(1, 0x9933cc);
     this.bagPanel.add(bg);
     this.bagPanel.add(this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { this.state = 'playerAction'; this.showActionPanel(); this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`); }));
 
@@ -382,7 +384,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       const x = cols[i % 4], y = 18 + Math.floor(i / 4) * 50;
       const r = this.add.rectangle(x + 100, y + 14, 210, 40, 0x1a3a2a).setStrokeStyle(1, 0x3a8a5a).setInteractive({ useHandCursor: true });
       this.bagPanel.add(r);
-      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${def.name}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${itemName(def)}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
       this.bagPanel.add(this.add.text(x + 8, y + 20, `×${inv[def.key]}`, { fontSize: '11px', color: '#ffe44e' }));
       r.on('pointerover', () => r.setFillStyle(0x2a5a3a));
       r.on('pointerout',  () => r.setFillStyle(0x1a3a2a));
@@ -653,7 +655,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
         this.cameras.main.fadeOut(600, 0, 0, 0, () => this.scene.start('CapitolCityScene'));
         return;
       }
-      this.dialogText.setText(lines[idx++]);
+      this.dialogText.setText(tr(lines[idx++]));
       this.time.delayedCall(300, () => { this.input.keyboard!.once('keydown-SPACE', next); });
     };
     this.time.delayedCall(500, next);

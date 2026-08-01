@@ -3,7 +3,7 @@ import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -71,6 +71,7 @@ export class AhobiryongPassScene extends Phaser.Scene {
   // A mountain pass has no buildings — erase every auto-detected building shape
   // (only named-model plots, of which there are none, would rise in 3D).
   public onlyNamedBuildings = true;
+  public grassTileIds3D = [T.TALLGRASS];
 
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
@@ -83,7 +84,8 @@ export class AhobiryongPassScene extends Phaser.Scene {
   private py = 47 * TILE + 16;   // default: enter from the south (Parangpo side), a few tiles inside the edge
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;
   private steps = 0; private nextEnc = 10;

@@ -55,6 +55,7 @@ function buildMap(): Tile[][] {
 }
 
 export class FerryScene extends Phaser.Scene {
+  public grassTileIds3D = [T.STORMGRASS];
   private map!: Tile[][];
   /** A boat deck at sea, not a town — drop any building the terrain heuristics
    *  hallucinate from the deck/cabin shading. */

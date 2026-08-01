@@ -17,7 +17,7 @@ import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
-import { ITEMS, Inventory, itemDef, useItemOnSlot } from '../systems/Items';
+import { ITEMS, Inventory, itemDef, itemName, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { drawBattleBall, playBallSendOut } from '../systems/BattleBallFX';
 import { genderedName, genderForPokemon } from '../data/PokemonGender';
@@ -332,6 +332,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.movePanel.add(bg);
     this.movePanel.add(
       this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+        .setOrigin(1, 0)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.playerAction()),
     );
@@ -365,6 +366,7 @@ export class WildBattleScene extends Phaser.Scene {
     const bg = this.add.rectangle(this.W / 2, 60, this.W - 16, 120, 0x111133, 0.95).setStrokeStyle(1, 0x5577aa);
     this.bagPanel.add(bg);
     this.bagPanel.add(this.add.text(this.W - 30, 10, tr('← BACK'), { fontSize: '12px', color: '#aaa' })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.playerAction()));
 
     // Show owned balls + healing/status items
@@ -378,7 +380,7 @@ export class WildBattleScene extends Phaser.Scene {
       const r = this.add.rectangle(x + 100, y + 14, 210, 40, def.category === 'ball' ? 0x1a2a4a : 0x1a3a2a)
         .setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
       this.bagPanel.add(r);
-      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${def.name}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      this.bagPanel.add(this.add.text(x + 8, y + 4, `${def.icon} ${itemName(def)}`, { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
       this.bagPanel.add(this.add.text(x + 8, y + 20, `×${inv[def.key]}`, { fontSize: '11px', color: '#ffe44e' }));
       r.on('pointerover', () => r.setFillStyle(def.category === 'ball' ? 0x2a4a7a : 0x2a5a3a));
       r.on('pointerout',  () => r.setFillStyle(def.category === 'ball' ? 0x1a2a4a : 0x1a3a2a));

@@ -3,7 +3,7 @@ import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
-import { hasBike, BIKE_SPEED } from '../data/Bike';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
@@ -59,6 +59,7 @@ function buildMap(): Tile[][] {
 }
 
 export class Route4Scene extends Phaser.Scene {
+  public grassTileIds3D = [T.TALLGRASS];
   private map!: Tile[][];
   /** Coastal road: no random bus scatter (its flat road tiles were sprouting buses). */
   public noVehicles = true;
@@ -72,7 +73,8 @@ export class Route4Scene extends Phaser.Scene {
   private py = 57 * TILE + 16;   // enter from south (Geumgang side)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
-  private cycling = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private steps = 0; private nextEnc = 10;
