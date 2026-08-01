@@ -68,9 +68,6 @@ const ANCHORS = {
 // exact enemy Pokémon anchor, then retires as its Pokémon is sent out.
 const TRAINER_START = new THREE.Vector3(3.4, 0, -4.7);
 const TRAINER_END   = ANCHORS.enemy[0].clone();
-// A non-battling story companion stands just behind and outside the player's
-// lead so both silhouettes remain readable throughout the fight.
-const TRAINER_COMPANION_END = new THREE.Vector3(-3.0, 0, 1.75);
 
 interface TrainerWalker {
   obj: GO;                 // the 2D intro portrait whose alpha drives the walk
@@ -80,9 +77,6 @@ interface TrainerWalker {
   phase: number;           // leg-swing phase
   seen: boolean;           // portrait has been visible at least once
   walkIn: boolean;         // rival enters; other major trainers hold the anchor
-  side: 'player' | 'enemy';
-  start: THREE.Vector3;
-  end: THREE.Vector3;
 }
 
 interface ScreenTargetRequest {
@@ -269,17 +263,10 @@ export class BattleMirror {
     // `battleTrainer: 'boy' | 'girl'`. Spawn the 3D walker and keep the flat 2D
     // portrait off the render layer while it plays.
     const trainerDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainer') as ('boy' | 'girl' | undefined);
-    const companionDesign = (im as Phaser.GameObjects.Image).getData?.('battleTrainerCompanion') as ('boy' | 'girl' | undefined);
     const trainerAtEnemy = !!(im as Phaser.GameObjects.Image).getData?.('battleTrainerEnemyAnchor');
     const modelKey = (im as Phaser.GameObjects.Image).getData?.('characterModel3DKey') as string | undefined;
-    if (trainerDesign || trainerAtEnemy || companionDesign) {
-      this.spawnTrainer(
-        im,
-        companionDesign ?? trainerDesign ?? (modelKey?.includes('girl') ? 'girl' : 'boy'),
-        modelKey ?? im.texture.key,
-        !!trainerDesign,
-        companionDesign ? 'player' : 'enemy',
-      );
+    if (trainerDesign || trainerAtEnemy) {
+      this.spawnTrainer(im, trainerDesign ?? (modelKey?.includes('girl') ? 'girl' : 'boy'), modelKey ?? im.texture.key, !!trainerDesign);
       return;
     }
     // Ryeo deliberately remains her authored 2D image. Pin her feet to the
@@ -442,22 +429,16 @@ export class BattleMirror {
     design: 'boy' | 'girl',
     modelKey: string,
     walkIn: boolean,
-    side: 'player' | 'enemy' = 'enemy',
   ): void {
     if (this.trainers.some(w => w.obj === im)) return;
     const model = buildCharacterModel(modelKey, design);
     model.group.scale.multiplyScalar(1.6);
     const holder = new THREE.Group();
     holder.add(model.group, makeBlobShadow(0.5));
-    const end = side === 'player' ? TRAINER_COMPANION_END : TRAINER_END;
-    const start = walkIn ? TRAINER_START : end;
-    holder.position.copy(start);
+    holder.position.copy(walkIn ? TRAINER_START : TRAINER_END);
     holder.visible = false;
     this.root.add(holder);
-    this.trainers.push({
-      obj: im, model, group: holder, t: walkIn ? 0 : 1, phase: 0,
-      seen: false, walkIn, side, start: start.clone(), end: end.clone(),
-    });
+    this.trainers.push({ obj: im, model, group: holder, t: walkIn ? 0 : 1, phase: 0, seen: false, walkIn });
     // The flat 2D portrait stays off the render layer while the 3D walker plays;
     // its alpha tween still drives the walk-in / retirement.
     this.scene.cameras.main.ignore(im);
@@ -480,15 +461,15 @@ export class BattleMirror {
       }
       if (visible && w.walkIn) w.t = Math.min(1, w.t + dt / 1.5);
       const e = 1 - Math.pow(1 - w.t, 3);       // easeOutCubic
-      w.group.position.x = THREE.MathUtils.lerp(w.start.x, w.end.x, e);
-      w.group.position.z = THREE.MathUtils.lerp(w.start.z, w.end.z, e);
+      w.group.position.x = THREE.MathUtils.lerp(TRAINER_START.x, TRAINER_END.x, e);
+      w.group.position.z = THREE.MathUtils.lerp(TRAINER_START.z, TRAINER_END.z, e);
       const moving = visible && w.walkIn && w.t < 1;
       if (moving) w.phase += dt * 9;
       else w.phase += dt * 2.1;
       w.model.setWalk(w.phase, moving, dt);     // sets group.position.y (bob)
       const facing = moving
-        ? w.end.clone().sub(w.start)
-        : ANCHORS[w.side === 'enemy' ? 'player' : 'enemy'][0].clone().sub(w.end);
+        ? TRAINER_END.clone().sub(TRAINER_START)
+        : ANCHORS.player[0].clone().sub(TRAINER_END);
       w.model.face(facing.x, facing.z, dt);
     }
   }

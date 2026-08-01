@@ -142,7 +142,6 @@ export class TrainerBattleScene extends Phaser.Scene {
   private enemySprite!: Phaser.GameObjects.Image;
   private playerSprite!: Phaser.GameObjects.Image;
   private trainerPortrait?: Phaser.GameObjects.Image;
-  private rivalCompanion?: Phaser.GameObjects.Image;
   private actionPanel!: Phaser.GameObjects.Container;
   private movePanel!: Phaser.GameObjects.Container;
   private bagPanel!: Phaser.GameObjects.Container;
@@ -227,14 +226,8 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     // Load this trainer's battle portrait (shown only during the intro).
     const portrait = this.resolvePortrait();
-    const companionPortrait = this.resolveRivalCompanionPortrait();
-    let portraitLoadQueued = false;
-    for (const asset of [portrait, companionPortrait]) {
-      if (!asset || this.textures.exists(asset.key)) continue;
-      this.load.image(asset.key, asset.url);
-      portraitLoadQueued = true;
-    }
-    if (portraitLoadQueued) {
+    if (portrait && !this.textures.exists(portrait.key)) {
+      this.load.image(portrait.key, portrait.url);
       await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
     }
 
@@ -269,9 +262,6 @@ export class TrainerBattleScene extends Phaser.Scene {
     // showdowns already made their challenge in the overworld, so they skip the
     // "wants to battle!" card; everyone else still gets it.
     if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 1, duration: 300 });
-    // In the first clash with Ryeo, the rival is physically present in the
-    // gorge cutscene and now remains beside the player's team in the 3D arena.
-    if (this.rivalCompanion) this.tweens.add({ targets: this.rivalCompanion, alpha: 1, duration: 300 });
     if (!this.trainerKey.startsWith('rival')) this.typeDialog(`${this.trainerName} wants to battle!`);
     this.time.delayedCall(3000, sendOut);
   }
@@ -419,14 +409,6 @@ export class TrainerBattleScene extends Phaser.Scene {
       fitPortrait(this.trainerPortrait);
     }
 
-    const companion = this.resolveRivalCompanionPortrait();
-    if (companion && this.textures.exists(companion.key)) {
-      const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-      this.rivalCompanion = this.add.image(76, 252, companion.key).setDepth(6).setAlpha(0);
-      this.rivalCompanion.setData('characterModel3DKey', companion.key);
-      this.rivalCompanion.setData('battleTrainerCompanion', design);
-      fitPortrait(this.rivalCompanion);
-    }
   }
 
   /** The portrait for this battle: the gender-based rival avatar for any rival fight,
@@ -445,15 +427,9 @@ export class TrainerBattleScene extends Phaser.Scene {
     return trainerClassPortrait(this, this.trainerName);
   }
 
-  /** The first Ryeo encounter is staged as a two-on-one story confrontation:
-   *  the rival accompanies the player even though only the player's party acts. */
+  /** The first Ryeo encounter keeps her authored 2D image pinned to the live
+   *  enemy Pokémon anchor in the otherwise-3D battle presentation. */
   private get isFirstRyeoBattle() { return this.trainerKey === 'nosdan-ryeo-1'; }
-
-  private resolveRivalCompanionPortrait(): { key: string; url: string } | undefined {
-    if (!this.isFirstRyeoBattle) return undefined;
-    const key = rivalAvatarKey(this.registry);
-    return { key, url: AVATAR_URL[key] };
-  }
 
   /** A 우두머리 (boss) — the 어사대 mission threats (Rampaging Gyarados, Fog-Wraith
    *  Gengar, Berserk Steelix…). They loom larger in battle than ordinary Pokémon. */

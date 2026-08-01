@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
+import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -81,6 +82,7 @@ export class Route3Scene extends Phaser.Scene {
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private steps = 0; private nextEnc = 10;
+  private ryeoCutsceneRival?: { g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text };
   private readonly SPEED = 120; private readonly RUN = 250;
 
   private readonly TRAINERS = [
@@ -186,6 +188,7 @@ export class Route3Scene extends Phaser.Scene {
     g.fillStyle(0xffcc99); g.fillRect(-6, -20, 12, 11);
     g.fillStyle(0x0a0a10); g.fillRect(-6, -21, 12, 5);
     g.fillStyle(0x88ccff); g.fillRect(-3, -15, 2, 2); g.fillRect(1, -15, 2, 2);
+    markTrainerPortrait(g, 'nosdan-ryeo-1');
     this.add.text(12 * TILE + 16, 25 * TILE - 12, speakerName('노스단 Commander Ryeo'), {
       fontSize: '8px', color: '#aab8ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(9);
@@ -304,6 +307,7 @@ export class Route3Scene extends Phaser.Scene {
     if (this.ryeoDone) return;
     if (this.py > 29 * TILE) return;
     this.cutsceneActive = true;
+    this.spawnRyeoCutsceneRival();
     const launch = () => {
       this.registry.set('trainerName', 'Commander Ryeo');
       this.registry.set('trainerKey', 'nosdan-ryeo-1');
@@ -330,6 +334,23 @@ export class Route3Scene extends Phaser.Scene {
     } else {
       this.dialog.show(["Commander Ryeo: Still in my way? So be it."], launch);
     }
+  }
+
+  /** The rival's spoken line belongs to the pre-battle gorge confrontation,
+   *  so their selected 3D avatar stands beside the player here—not in battle. */
+  private spawnRyeoCutsceneRival() {
+    if (this.ryeoCutsceneRival?.g.active) return;
+    const side = this.px <= 12 * TILE + 16 ? TILE * 0.9 : -TILE * 0.9;
+    const rx = Phaser.Math.Clamp(this.px + side, 9.5 * TILE, 14.5 * TILE);
+    const ry = Phaser.Math.Clamp(this.py + TILE * 0.45, 27 * TILE, 30 * TILE);
+    const g = this.add.graphics().setDepth(19);
+    drawTrainerBody(g, 1, 0, rivalDesign(this.registry)); // face Ryeo to the north
+    g.setPosition(rx, ry);
+    markRivalPortrait(g, this.registry);
+    const label = this.add.text(rx, ry - 28, rivalTrainerName(this.registry), {
+      fontSize: '8px', color: '#cfe8ff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5).setDepth(20);
+    this.ryeoCutsceneRival = { g, label };
   }
 
   private checkExits() {
