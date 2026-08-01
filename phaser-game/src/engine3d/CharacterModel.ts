@@ -172,6 +172,12 @@ const DEFAULT_PROFILE: CharacterProfile = {
  * describe silhouettes and signature colours rather than copying portrait
  * pixels: every result is a genuine, rotatable low-poly humanoid. */
 const CHARACTER_PROFILES: Record<string, CharacterProfile> = {
+  // Pokémon Center staff use opaque low-poly characters. Previously their
+  // generic Graphics were extruded as alpha-blended reliefs, which made faces
+  // appear transparent against the bright Center interior.
+  center_nurse:        { skin: 0xf0c8a0, hair: 0xc94f76, outfit: 0xf7f4f2, secondary: 0xf08aaa, accent: 0xc92d4c, outfitStyle: 'uniform', hairStyle: 'bun', body: 'slim' },
+  center_clerk:        { skin: 0xf0c8a0, hair: 0x27241f, outfit: 0x2f8c58, secondary: 0xd9f1e2, accent: 0xf0c94e, outfitStyle: 'uniform', hairStyle: 'short' },
+  center_pc_attendant: { skin: 0xf0c8a0, hair: 0x18243b, outfit: 0x315dc0, secondary: 0xdbe8ff, accent: 0x70d6f2, outfitStyle: 'uniform', hairStyle: 'short' },
   npc_gyeoul:    { hair: 0xe8edf2, outfit: 0xeef7fa, secondary: 0xa8dceb, accent: 0x73b8d4, outfitStyle: 'hanbok', hairStyle: 'long', body: 'slim' },
   npc_hwageum:   { hair: 0x31352d, outfit: 0x536b54, secondary: 0x313b35, accent: 0xb89a53, outfitStyle: 'armor', hairStyle: 'topknot', prop: 'sword' },
   npc_baram:     { hair: 0xd9e0e7, outfit: 0x33485c, secondary: 0x899bab, accent: 0x6b91b3, outfitStyle: 'coat', hairStyle: 'spiky', cape: 0x8fa2ae, body: 'slim' },

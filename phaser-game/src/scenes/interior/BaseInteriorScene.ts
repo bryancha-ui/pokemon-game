@@ -180,12 +180,19 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
   }
 
   // Draw an NPC character sprite
-  protected createNPCGraphic(col: number, row: number, bodyColor: number, hairColor: number, isFemale: boolean, facing = 0): NPC {
+  protected createNPCGraphic(
+    col: number, row: number, bodyColor: number, hairColor: number,
+    isFemale: boolean, facing = 0, model3DKey?: string,
+  ): NPC {
     const p = this.tile(col, row);
     const x = p.x + IT / 2, y = p.y + IT / 2;
     const g = this.add.graphics().setDepth(15);
     const npc: NPC = { x, y, graphic: g, bodyColor, hairColor, isFemale, facing };
     this.drawNPCAt(g, 0, 0, bodyColor, hairColor, isFemale, facing);
+    // Interior NPCs that opt into a real character model avoid the translucent
+    // relief used for generic decorative Graphics while retaining this 2D art
+    // as the pure-2D fallback and interaction source.
+    if (model3DKey) g.setData('characterModel3DKey', model3DKey);
     g.setPosition(x, y);
     return npc;
   }
