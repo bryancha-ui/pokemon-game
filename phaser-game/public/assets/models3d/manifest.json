@@ -36,8 +36,7 @@
     },
     {
       "key": "cerrapin",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/4ec510a2-4a42-443a-814c-38b8741b0253.glb",
-      "rotY": 90
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/4ec510a2-4a42-443a-814c-38b8741b0253.glb"
     },
     {
       "key": "foxgeist",
@@ -138,7 +137,8 @@
     },
     {
       "key": "dracopaia",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/417a9249-59ab-427e-bff1-6c6cfbfddbe8.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/417a9249-59ab-427e-bff1-6c6cfbfddbe8.glb",
+      "scale": 1.2
     },
     {
       "key": "dracoelido",
@@ -170,7 +170,7 @@
     {
       "key": "kingfisher",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b178296c-5028-438b-9d90-eecf21b6c974.glb",
-      "scale": 0.79
+      "scale": 0.50
     },
     {
       "key": "liondance",
@@ -182,7 +182,8 @@
     },
     {
       "key": "tigerbabe",
-      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d5ae72f4-6d9f-401e-b8d4-0865ec83e07d.glb"
+      "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/d5ae72f4-6d9f-401e-b8d4-0865ec83e07d.glb",
+      "scale": 0.5
     },
     {
       "key": "ghograss",
