@@ -6,7 +6,22 @@
     <title>Pokemon Korea</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+      html, body { width: 100%; min-height: 100%; overflow: hidden; }
+      body {
+        background:
+          radial-gradient(circle at 18% 22%, rgba(225, 59, 55, 0.18), transparent 36%),
+          radial-gradient(circle at 82% 78%, rgba(61, 157, 224, 0.2), transparent 38%),
+          linear-gradient(145deg, #090d1d 0%, #111a35 52%, #08111f 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "Trebuchet MS", "Arial Rounded MT Bold", "Noto Sans KR", sans-serif;
+      }
+      canvas {
+        border-radius: 10px;
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
     </style>
   </head>
   <body>

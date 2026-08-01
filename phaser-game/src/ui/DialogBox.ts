@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 
 export class DialogBox {
-  private bg!: Phaser.GameObjects.Rectangle;
+  private bg!: Phaser.GameObjects.Graphics;
   private msgText!: Phaser.GameObjects.Text;
   private arrow!: Phaser.GameObjects.Text;
-  private choiceBg!: Phaser.GameObjects.Rectangle;
+  private choiceBg!: Phaser.GameObjects.Graphics;
   private choiceItems!: Phaser.GameObjects.Text[];
 
   private queue: string[] = [];
@@ -24,14 +24,12 @@ export class DialogBox {
   private root!: Phaser.GameObjects.Container;
 
   constructor(private scene: Phaser.Scene, private W: number, private H: number) {
-    const bx = W / 2, by = H - 78;
     // All objects are placed at absolute screen-design coordinates, then parented
     // into a container that counteracts the camera zoom so the dialog is always
     // fully visible at the bottom of the screen (see applyZoomCompensation()).
     // Box + font are sized large so dialogue stays legible when the 16:9 canvas is
     // scaled down to fit a phone's narrow top pane.
-    this.bg = scene.add.rectangle(bx, by, W - 16, 148, 0x0d0d2e, 0.96)
-      .setStrokeStyle(2, 0xffffff).setVisible(false);
+    this.bg = this.makePanel(8, H - 152, W - 16, 148, 18).setVisible(false);
 
     this.msgText = scene.add.text(20, H - 146, '', {
       fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8,
@@ -40,8 +38,7 @@ export class DialogBox {
     this.arrow = scene.add.text(W - 28, H - 24, '▼', { fontSize: '18px', color: '#ffe44e' })
       .setVisible(false);
 
-    this.choiceBg = scene.add.rectangle(W - 90, H - 196, 150, 84, 0x0d0d2e, 0.96)
-      .setStrokeStyle(2, 0xffffff).setVisible(false);
+    this.choiceBg = this.makePanel(W - 165, H - 238, 150, 84, 14).setVisible(false);
 
     this.choiceItems = [
       scene.add.text(W - 128, H - 224, `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setVisible(false),
@@ -53,6 +50,28 @@ export class DialogBox {
     ]).setScrollFactor(0).setDepth(300);
 
     this.applyZoomCompensation();
+  }
+
+  /** Layered navy/white/red panel used by every overworld conversation. */
+  private makePanel(x: number, y: number, w: number, h: number, radius: number): Phaser.GameObjects.Graphics {
+    const g = this.scene.add.graphics();
+    g.fillStyle(0x071027, 0.36);
+    g.fillRoundedRect(x + 5, y + 7, w, h, radius);
+    g.fillStyle(0xf7fbff, 0.98);
+    g.fillRoundedRect(x, y, w, h, radius);
+    g.fillStyle(0x15264d, 0.98);
+    g.fillRoundedRect(x + 4, y + 4, w - 8, h - 8, Math.max(4, radius - 4));
+    g.lineStyle(3, 0xe9443f, 0.95);
+    g.beginPath();
+    g.moveTo(x + radius, y + 5);
+    g.lineTo(x + w * 0.34, y + 5);
+    g.strokePath();
+    g.lineStyle(2, 0x67b9e8, 0.9);
+    g.beginPath();
+    g.moveTo(x + w * 0.66, y + h - 5);
+    g.lineTo(x + w - radius, y + h - 5);
+    g.strokePath();
+    return g;
   }
 
   /** Make the container render at exact screen coords regardless of camera zoom. */

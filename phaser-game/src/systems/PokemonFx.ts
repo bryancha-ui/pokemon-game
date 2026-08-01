@@ -8,6 +8,7 @@ import Phaser from 'phaser';
 
 const VIGNETTE_KEY = '__pkfx_vignette';
 const DEPTH = 100000;
+const REMASTER_FONT = '"Trebuchet MS", "Arial Rounded MT Bold", "Noto Sans KR", sans-serif';
 
 function ensureVignette(scene: Phaser.Scene): void {
   if (scene.textures.exists(VIGNETTE_KEY)) return;
@@ -30,8 +31,19 @@ export class PokemonFxPlugin extends Phaser.Plugins.ScenePlugin {
 
   boot(): void {
     this.systems!.events.on('create', this.apply, this);
+    this.systems!.events.on('addedtoscene', this.styleObject, this);
     this.systems!.events.once('shutdown', this.cleanup, this);
     this.systems!.events.once('destroy', this.cleanup, this);
+  }
+
+  /** Replace Phaser's blocky default Courier face as text is created. Authored
+   * custom faces are preserved; only the engine default/monospace fallback is
+   * remastered into the rounded, clean UI typography used across the 3DS era. */
+  private styleObject(obj: Phaser.GameObjects.GameObject): void {
+    if (!(obj instanceof Phaser.GameObjects.Text)) return;
+    const current = obj.style.fontFamily ?? '';
+    if (!current || /courier|monospace/i.test(current)) obj.setFontFamily(REMASTER_FONT);
+    obj.setResolution(Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
   }
 
   private apply(): void {
@@ -46,6 +58,10 @@ export class PokemonFxPlugin extends Phaser.Plugins.ScenePlugin {
     ensureVignette(scene);
     const W = scene.scale.width, H = scene.scale.height;
 
+    // Catch any objects that were present before the added-to-scene listener
+    // became active (and async scenes whose first visual batch already landed).
+    for (const child of scene.children.list) this.styleObject(child);
+
     // Warm, slightly vivid grade (soft-light keeps it subtle, never muddy).
     scene.add.rectangle(W / 2, H / 2, W, H, 0xffd9a0)
       .setScrollFactor(0).setDepth(DEPTH).setBlendMode(Phaser.BlendModes.SOFT_LIGHT).setAlpha(0.10);
@@ -57,5 +73,6 @@ export class PokemonFxPlugin extends Phaser.Plugins.ScenePlugin {
 
   private cleanup(): void {
     this.systems!.events.off('create', this.apply, this);
+    this.systems!.events.off('addedtoscene', this.styleObject, this);
   }
 }

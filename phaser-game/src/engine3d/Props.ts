@@ -6,13 +6,20 @@ import * as THREE from 'three';
 
 let gradientMap: THREE.DataTexture | null = null;
 
-/** 3-step toon shading ramp shared by all toon materials. */
+/** Five-step pastel ramp. The extra mid-tones keep curved silhouettes readable
+ * without the hard cubic bands that made the procedural world feel voxelled. */
 export function toonRamp(): THREE.DataTexture {
   if (gradientMap) return gradientMap;
-  const data = new Uint8Array([90, 90, 90, 255, 175, 175, 175, 255, 255, 255, 255, 255]);
-  gradientMap = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
-  gradientMap.magFilter = THREE.NearestFilter;
-  gradientMap.minFilter = THREE.NearestFilter;
+  const data = new Uint8Array([
+    82, 82, 88, 255,
+    132, 132, 138, 255,
+    180, 180, 184, 255,
+    221, 221, 224, 255,
+    255, 255, 255, 255,
+  ]);
+  gradientMap = new THREE.DataTexture(data, 5, 1, THREE.RGBAFormat);
+  gradientMap.magFilter = THREE.LinearFilter;
+  gradientMap.minFilter = THREE.LinearFilter;
   gradientMap.needsUpdate = true;
   return gradientMap;
 }
@@ -64,7 +71,18 @@ export interface InstancedProp {
   count: number;
 }
 
-function makeInstanced(parts: { geo: THREE.BufferGeometry; mat: THREE.Material; y: number }[], max: number): InstancedProp {
+interface InstancedPart {
+  geo: THREE.BufferGeometry;
+  mat: THREE.Material;
+  y: number;
+  /** Local offsets/scale let organic props use clustered silhouettes while
+   * retaining the single instanced draw call per component. */
+  x?: number;
+  z?: number;
+  scale?: number;
+}
+
+function makeInstanced(parts: InstancedPart[], max: number): InstancedProp {
   const meshes = parts.map(p => {
     const im = new THREE.InstancedMesh(p.geo, p.mat, max);
     im.count = 0;
@@ -78,8 +96,15 @@ function makeInstanced(parts: { geo: THREE.BufferGeometry; mat: THREE.Material; 
     const p = placements[index];
     if (!p) return;
     for (let i = 0; i < meshes.length; i++) {
-      dummy.position.set(p.x, parts[i].y * p.s, p.z);
-      dummy.scale.setScalar(p.s);
+      const part = parts[i];
+      const lx = (part.x ?? 0) * p.s, lz = (part.z ?? 0) * p.s;
+      const sin = Math.sin(p.rot), cos = Math.cos(p.rot);
+      dummy.position.set(
+        p.x + lx * cos + lz * sin,
+        part.y * p.s,
+        p.z - lx * sin + lz * cos,
+      );
+      dummy.scale.setScalar(p.s * (part.scale ?? 1));
       dummy.rotation.set(pitch, p.rot, roll);
       dummy.updateMatrix();
       meshes[i].setMatrixAt(index, dummy.matrix);
@@ -106,13 +131,20 @@ function makeInstanced(parts: { geo: THREE.BufferGeometry; mat: THREE.Material; 
 
 /** Round leafy tree (temperate zones). */
 export function makeTrees(max: number, canopy = 0x3f9e3a, trunk = 0x6d4c33): InstancedProp {
-  const trunkGeo = new THREE.CylinderGeometry(0.09, 0.13, 0.55, 6);
-  const lo = new THREE.SphereGeometry(0.52, 8, 6); lo.scale(1, 0.82, 1);
-  const hi = new THREE.SphereGeometry(0.36, 8, 6); hi.scale(1, 0.9, 1);
+  const trunkGeo = new THREE.CylinderGeometry(0.08, 0.15, 0.7, 10);
+  const rootGeo = new THREE.CylinderGeometry(0.17, 0.22, 0.12, 10);
+  const crown = new THREE.DodecahedronGeometry(0.46, 1); crown.scale(1, 0.82, 1);
+  const puff = new THREE.DodecahedronGeometry(0.34, 1); puff.scale(1, 0.86, 1);
+  const highlight = mixColor(canopy, 0xffffdc, 0.22);
+  const shade = mixColor(canopy, 0x183d22, 0.24);
   return makeInstanced([
-    { geo: trunkGeo, mat: toonMat(trunk), y: 0.28 },
-    { geo: lo, mat: toonMat(canopy), y: 0.86 },
-    { geo: hi, mat: toonMat(mixColor(canopy, 0xffffff, 0.12)), y: 1.28 },
+    { geo: rootGeo, mat: toonMat(mixColor(trunk, 0x3c2418, 0.22)), y: 0.06 },
+    { geo: trunkGeo, mat: toonMat(trunk), y: 0.36 },
+    { geo: crown, mat: toonMat(shade), y: 0.93, scale: 1.12 },
+    { geo: puff, mat: toonMat(canopy), y: 1.12, x: -0.3, z: 0.02 },
+    { geo: puff, mat: toonMat(canopy), y: 1.1, x: 0.3, z: 0.05, scale: 0.94 },
+    { geo: puff, mat: toonMat(mixColor(canopy, 0xffffff, 0.08)), y: 1.12, z: -0.28, scale: 0.9 },
+    { geo: puff, mat: toonMat(highlight), y: 1.38, x: 0.03, z: -0.02, scale: 0.86 },
   ], max);
 }
 
@@ -120,14 +152,14 @@ export function makeTrees(max: number, canopy = 0x3f9e3a, trunk = 0x6d4c33): Ins
  *  white snow cap and a bright snow crown, so the pines read as snow-covered
  *  evergreens (Samho / Baekdu highlands). */
 export function makePines(max: number, needles = 0x2e6b46, trunk = 0x5a4030): InstancedProp {
-  const trunkGeo = new THREE.CylinderGeometry(0.07, 0.11, 0.5, 6);
-  const c1 = new THREE.ConeGeometry(0.55, 0.8, 8);
-  const c2 = new THREE.ConeGeometry(0.4, 0.7, 8);
-  const c3 = new THREE.ConeGeometry(0.26, 0.55, 8);
+  const trunkGeo = new THREE.CylinderGeometry(0.07, 0.13, 0.62, 10);
+  const c1 = new THREE.ConeGeometry(0.58, 0.82, 12);
+  const c2 = new THREE.ConeGeometry(0.44, 0.76, 12);
+  const c3 = new THREE.ConeGeometry(0.3, 0.64, 12);
   // Flatter white caps sitting on each tier's shoulders like settled snow.
-  const s1 = new THREE.ConeGeometry(0.57, 0.26, 8);
-  const s2 = new THREE.ConeGeometry(0.42, 0.24, 8);
-  const s3 = new THREE.ConeGeometry(0.28, 0.22, 8);
+  const s1 = new THREE.ConeGeometry(0.6, 0.24, 12);
+  const s2 = new THREE.ConeGeometry(0.46, 0.22, 12);
+  const s3 = new THREE.ConeGeometry(0.32, 0.2, 12);
   const snowMat = () => toonMat(0xf4f8ff);
   return makeInstanced([
     { geo: trunkGeo, mat: toonMat(trunk), y: 0.25 },
@@ -142,9 +174,14 @@ export function makePines(max: number, needles = 0x2e6b46, trunk = 0x5a4030): In
 
 /** Rocks / boulders. */
 export function makeRocks(max: number, color = 0x8d8578): InstancedProp {
-  const g = new THREE.IcosahedronGeometry(0.34, 0);
-  g.scale(1.25, 0.8, 1);
-  return makeInstanced([{ geo: g, mat: toonMat(color), y: 0.22 }], max);
+  const g = new THREE.IcosahedronGeometry(0.34, 1);
+  g.scale(1.3, 0.72, 1.02);
+  const cap = new THREE.DodecahedronGeometry(0.18, 0);
+  cap.scale(1.25, 0.45, 0.9);
+  return makeInstanced([
+    { geo: g, mat: toonMat(color), y: 0.22 },
+    { geo: cap, mat: toonMat(mixColor(color, 0xffffff, 0.18)), y: 0.39, x: -0.07, z: -0.02 },
+  ], max);
 }
 
 /** Tall-grass tufts, Pokémon-style: a dense rounded bush of bright blades on
@@ -693,8 +730,7 @@ export function makeTriumphalArch(): THREE.Group {
 }
 
 // ── Water surface ───────────────────────────────────────────────────────────
-/** Paint one bright-cyan water tile with scattered pixel sparkle dashes —
- *  the crisp low-poly look (flat vivid water + little light glints). */
+/** Paint one bright-cyan water tile with curved light ribbons and soft glints. */
 function paintWaterTile(sparkleSeed: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -705,16 +741,27 @@ function paintWaterTile(sparkleSeed: number): HTMLCanvasElement {
   grd.addColorStop(1, '#1ba3e6');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, 128, 128);
-  // Scattered short sparkle dashes (a couple of chunky pixels, like the art).
+  // Broad curved ribbons imply a continuous surface instead of pixel chunks.
+  ctx.strokeStyle = 'rgba(218,248,255,0.48)';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (let band = 0; band < 5; band++) {
+    const y0 = 16 + band * 24;
+    ctx.beginPath();
+    for (let x = -8; x <= 136; x += 8) {
+      const y = y0 + Math.sin(x * 0.07 + band * 1.7) * 4;
+      if (x === -8) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // Small highlights keep the surface lively without a pixel-art checker.
   let s = sparkleSeed;
   const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
-  ctx.fillStyle = 'rgba(224,246,255,0.9)';
-  for (let i = 0; i < 26; i++) {
+  ctx.fillStyle = 'rgba(236,252,255,0.86)';
+  for (let i = 0; i < 12; i++) {
     const x = Math.floor(rnd() * 120) + 4;
     const y = Math.floor(rnd() * 120) + 4;
-    const len = 4 + Math.floor(rnd() * 4);
-    ctx.fillRect(x, y, len, 3);            // main glint
-    if (rnd() > 0.5) ctx.fillRect(x + len + 2, y, 3, 3);  // trailing speck
+    ctx.beginPath(); ctx.ellipse(x, y, 3 + rnd() * 3, 1.2, 0, 0, Math.PI * 2); ctx.fill();
   }
   return c;
 }
@@ -725,7 +772,8 @@ export function makeWater(width: number, depth: number): { mesh: THREE.Mesh; upd
   const mkTex = (seed: number) => {
     const t = new THREE.CanvasTexture(paintWaterTile(seed));
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.magFilter = THREE.NearestFilter;                    // crisp pixel sparkles
+    t.magFilter = THREE.LinearFilter;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
     t.repeat.set(Math.max(1, width / 3.2), Math.max(1, depth / 3.2));
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
@@ -757,7 +805,7 @@ export class WallBuilder {
   add(x0: number, z0: number, x1: number, z1: number, h: number, color: number): void {
     const c = this.tmp.set(color);
     const shade = (f: number) => [c.r * f, c.g * f, c.b * f] as const;
-    const top = shade(1.0), front = shade(0.8), side = shade(0.66);
+    const top = shade(1.08), bevelTone = shade(0.94), front = shade(0.82), side = shade(0.7);
     const base = () => this.pos.length / 3;
     const quad = (
       pts: number[], rgb: readonly [number, number, number],
@@ -767,16 +815,21 @@ export class WallBuilder {
       for (let i = 0; i < 4; i++) this.col.push(rgb[0], rgb[1], rgb[2]);
       this.idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
     };
-    // top
-    quad([x0, h, z0, x1, h, z0, x1, h, z1, x0, h, z1], top);
-    // south face (+z, toward camera)
-    quad([x0, 0, z1, x1, 0, z1, x1, h, z1, x0, h, z1], front);
-    // north face
-    quad([x1, 0, z0, x0, 0, z0, x0, h, z0, x1, h, z0], front);
-    // west face
-    quad([x0, 0, z0, x0, 0, z1, x0, h, z1, x0, h, z0], side);
-    // east face
-    quad([x1, 0, z1, x1, 0, z0, x1, h, z0, x1, h, z1], side);
+    // Chamfered cap: a small sloped shoulder catches the sun and prevents long
+    // cliff runs from reading as stacked rectangular blocks.
+    const bevel = Math.min(0.14, (x1 - x0) * 0.12, (z1 - z0) * 0.12, h * 0.18);
+    const yShoulder = h - bevel;
+    const ix0 = x0 + bevel, ix1 = x1 - bevel, iz0 = z0 + bevel, iz1 = z1 - bevel;
+    quad([ix0, h, iz0, ix1, h, iz0, ix1, h, iz1, ix0, h, iz1], top);
+    quad([x0, yShoulder, z0, x1, yShoulder, z0, ix1, h, iz0, ix0, h, iz0], bevelTone);
+    quad([x1, yShoulder, z1, x0, yShoulder, z1, ix0, h, iz1, ix1, h, iz1], bevelTone);
+    quad([x0, yShoulder, z1, x0, yShoulder, z0, ix0, h, iz0, ix0, h, iz1], bevelTone);
+    quad([x1, yShoulder, z0, x1, yShoulder, z1, ix1, h, iz1, ix1, h, iz0], bevelTone);
+    // Vertical faces stop at the shoulder.
+    quad([x0, 0, z1, x1, 0, z1, x1, yShoulder, z1, x0, yShoulder, z1], front);
+    quad([x1, 0, z0, x0, 0, z0, x0, yShoulder, z0, x1, yShoulder, z0], front);
+    quad([x0, 0, z0, x0, 0, z1, x0, yShoulder, z1, x0, yShoulder, z0], side);
+    quad([x1, 0, z1, x1, 0, z0, x1, yShoulder, z0, x1, yShoulder, z1], side);
   }
 
   build(): THREE.Mesh | null {

@@ -9,10 +9,11 @@ import * as THREE from 'three';
 export type RigMode = 'overworld' | 'interior' | 'battle';
 
 const PRESET = {
-  // Steeper city-friendly angle: the camera sits higher and closer so even
-  // tall buildings south of the player rarely cross the view line.
-  overworld: { back: 4.6, up: 6.6, lookAhead: 1.8, lookUp: 0.8, fov: 49, damp: 4.2 },
-  interior:  { back: 4.4, up: 4.2, lookAhead: 1.2, lookUp: 0.7, fov: 46, damp: 5.0 },
+  // Elevated, lightly telephoto framing matches the miniature-diorama camera
+  // language of Omega Ruby: readable routes and roofs, little perspective
+  // distortion, and no first/third-person voxel-world feeling.
+  overworld: { back: 5.8, up: 8.25, lookAhead: 1.15, lookUp: 0.45, fov: 43, damp: 4.8 },
+  interior:  { back: 5.15, up: 6.25, lookAhead: 0.7, lookUp: 0.45, fov: 42, damp: 5.5 },
 } as const;
 
 export class CameraRig {
@@ -113,7 +114,7 @@ export class CameraRig {
     this.look.lerp(look, k);
 
     this.applyShake(dt);
-    const fovTarget = 46 - this.focusAmt * 5;
+    const fovTarget = 43 - this.focusAmt * 4;
     this.cam.fov += (fovTarget - this.cam.fov) * Math.min(1, dt * 4);
     this.cam.updateProjectionMatrix();
     this.cam.position.copy(this.pos);

@@ -286,6 +286,9 @@ function makeGroundTexture(theme: OutdoorBattleTheme): THREE.CanvasTexture {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.anisotropy = 8;
   return texture;
 }
 
@@ -432,9 +435,15 @@ export function buildGeographicBattleArena(root: THREE.Group, chosen?: OutdoorBa
   ground.rotation.x = -Math.PI / 2;
   root.add(ground);
 
-  const rim = new THREE.Mesh(new THREE.CylinderGeometry(11.15, 11.6, 0.9, 48, 1, true), toonMat(theme.rim));
-  rim.position.y = -0.46;
+  // A shallow landscaped edge replaces the old thick floating cylinder, which
+  // read like a round Minecraft chunk around every battle.
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(11.12, 11.36, 0.34, 64, 1, true), toonMat(theme.rim));
+  rim.position.y = -0.18;
   root.add(rim);
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(11.05, 0.12, 8, 72), toonMat(theme.middle));
+  lip.rotation.x = Math.PI / 2;
+  lip.position.y = -0.015;
+  root.add(lip);
 
   addScenery(root, theme);
   if (theme.geography === 'mountain' || theme.geography === 'gorge') addMountainBackline(root, theme);

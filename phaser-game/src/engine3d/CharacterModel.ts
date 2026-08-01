@@ -22,8 +22,43 @@ export interface PlayerModel {
 }
 
 function box(w: number, h: number, d: number, color: number): THREE.Mesh {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), toonMat(color));
-  return m;
+  // Rounded extruded rectangles preserve crisp costume panels while removing
+  // the cuboid/Minecraft silhouette of the old primitive characters.
+  const r = Math.max(0.002, Math.min(w, h) * 0.16);
+  const shape = new THREE.Shape();
+  shape.moveTo(-w / 2 + r, -h / 2);
+  shape.lineTo(w / 2 - r, -h / 2);
+  shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+  shape.lineTo(w / 2, h / 2 - r);
+  shape.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+  shape.lineTo(-w / 2 + r, h / 2);
+  shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+  shape.lineTo(-w / 2, -h / 2 + r);
+  shape.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+  const bevel = Math.min(r * 0.45, d * 0.18);
+  const depth = Math.max(0.001, d - bevel * 2);
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth, steps: 1, curveSegments: 2,
+    bevelEnabled: bevel > 0.001, bevelSegments: 2,
+    bevelSize: bevel, bevelThickness: bevel,
+  });
+  geo.translate(0, 0, -depth / 2);
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, toonMat(color));
+}
+
+function ellipsoid(w: number, h: number, d: number, color: number, detail = 12): THREE.Mesh {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, detail, Math.max(8, detail - 4)), toonMat(color));
+  mesh.scale.set(w, h, d);
+  return mesh;
+}
+
+function capsule(w: number, h: number, d: number, color: number): THREE.Mesh {
+  const radius = Math.max(0.008, Math.min(w, d) * 0.5);
+  const body = Math.max(0.001, h - radius * 2);
+  const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, body, 4, 10), toonMat(color));
+  mesh.scale.set(w / (radius * 2), 1, d / (radius * 2));
+  return mesh;
 }
 
 export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
@@ -35,9 +70,9 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   const legL = new THREE.Group(), legR = new THREE.Group();
   const legColor = design === 'boy' ? TROUSER : SKIN;
   for (const [leg, off] of [[legL, -0.075], [legR, 0.075]] as [THREE.Group, number][]) {
-    const l = box(0.11 * s, 0.34 * s, 0.13 * s, legColor);
+    const l = capsule(0.11 * s, 0.34 * s, 0.13 * s, legColor);
     l.position.y = -0.17 * s;
-    const shoe = box(0.12 * s, 0.07 * s, 0.17 * s, SHOE);
+    const shoe = ellipsoid(0.13 * s, 0.075 * s, 0.18 * s, SHOE);
     shoe.position.set(0, -0.335 * s, 0.02 * s);
     leg.add(l, shoe);
     leg.position.set(off * s, 0.41 * s, 0);
@@ -46,7 +81,7 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
 
   // ── torso ──
   const torso = new THREE.Group();
-  const jacket = box(0.34 * s, 0.34 * s, 0.2 * s, BLAZER);
+  const jacket = ellipsoid(0.35 * s, 0.36 * s, 0.21 * s, BLAZER, 14);
   jacket.position.y = 0.58 * s;
   torso.add(jacket);
   const collar = box(0.35 * s, 0.055 * s, 0.21 * s, COLLAR);
@@ -69,9 +104,9 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   // ── arms (pivot at shoulder) ──
   const armL = new THREE.Group(), armR = new THREE.Group();
   for (const [arm, off] of [[armL, -0.215], [armR, 0.215]] as [THREE.Group, number][]) {
-    const sleeve = box(0.09 * s, 0.24 * s, 0.11 * s, BLAZER);
+    const sleeve = capsule(0.095 * s, 0.25 * s, 0.115 * s, BLAZER);
     sleeve.position.y = -0.1 * s;
-    const hand = box(0.08 * s, 0.07 * s, 0.09 * s, SKIN);
+    const hand = ellipsoid(0.085 * s, 0.08 * s, 0.095 * s, SKIN);
     hand.position.y = -0.25 * s;
     arm.add(sleeve, hand);
     arm.position.set(off * s, 0.72 * s, 0);
@@ -80,12 +115,12 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
 
   // ── head ──
   const head = new THREE.Group();
-  const face = new THREE.Mesh(new THREE.BoxGeometry(0.26 * s, 0.24 * s, 0.24 * s, 1, 1, 1), toonMat(SKIN));
-  face.position.y = 0.9 * s;
+  const face = ellipsoid(0.285 * s, 0.265 * s, 0.255 * s, SKIN, 16);
+  face.position.y = 0.905 * s;
   head.add(face);
   // hair: cap over the top + back
-  const hairTop = box(0.28 * s, 0.1 * s, 0.26 * s, HAIR);
-  hairTop.position.y = 1.0 * s;
+  const hairTop = ellipsoid(0.302 * s, 0.14 * s, 0.275 * s, HAIR, 14);
+  hairTop.position.y = 1.002 * s;
   head.add(hairTop);
   const hairBack = box(0.28 * s, 0.18 * s, 0.08 * s, HAIR);
   hairBack.position.set(0, 0.9 * s, -0.1 * s);
@@ -101,8 +136,8 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   }
   // simple eyes so the front reads as a face
   for (const ex of [-0.06, 0.06]) {
-    const eye = box(0.035 * s, 0.05 * s, 0.012 * s, 0x22232a);
-    eye.position.set(ex * s, 0.89 * s, 0.125 * s);
+    const eye = ellipsoid(0.034 * s, 0.052 * s, 0.014 * s, 0x22232a, 8);
+    eye.position.set(ex * s, 0.9 * s, 0.128 * s);
     head.add(eye);
   }
   group.add(head);
@@ -232,9 +267,9 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
   const legL = new THREE.Group(), legR = new THREE.Group();
 
   for (const [leg, off] of [[legL, -0.075], [legR, 0.075]] as [THREE.Group, number][]) {
-    const shin = box(0.11 * width, 0.35, 0.13 * width, trousers);
+    const shin = capsule(0.11 * width, 0.35, 0.13 * width, trousers);
     shin.position.y = -0.175;
-    const boot = box(0.13 * width, p.outfitStyle === 'armor' ? 0.12 : 0.075, 0.18, shoes);
+    const boot = ellipsoid(0.14 * width, p.outfitStyle === 'armor' ? 0.125 : 0.08, 0.185, shoes);
     boot.position.set(0, -0.34, 0.025);
     leg.add(shin, boot);
     leg.position.set(off * width, 0.41, 0);
@@ -243,7 +278,9 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
 
   const torso = new THREE.Group();
   const torsoW = 0.35 * width;
-  const torsoMesh = box(torsoW, 0.35, p.outfitStyle === 'armor' ? 0.24 : 0.2, p.outfit);
+  const torsoMesh = p.outfitStyle === 'armor'
+    ? box(torsoW, 0.35, 0.24, p.outfit)
+    : ellipsoid(torsoW, 0.36, 0.205, p.outfit, 14);
   torsoMesh.position.y = 0.59;
   torso.add(torsoMesh);
   if (p.outfitStyle === 'coat' || p.outfitStyle === 'winter') {
@@ -291,9 +328,9 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
 
   const armL = new THREE.Group(), armR = new THREE.Group();
   for (const [arm, off] of [[armL, -0.215 * width], [armR, 0.215 * width]] as [THREE.Group, number][]) {
-    const sleeve = box(0.1 * width, 0.25, 0.12 * width, p.outfit);
+    const sleeve = capsule(0.1 * width, 0.25, 0.12 * width, p.outfit);
     sleeve.position.y = -0.105;
-    const hand = box(0.085 * width, 0.075, 0.095, skin);
+    const hand = ellipsoid(0.09 * width, 0.08, 0.1, skin);
     hand.position.y = -0.255;
     arm.add(sleeve, hand);
     arm.position.set(off, 0.72, 0);
@@ -301,11 +338,13 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
   }
 
   const head = new THREE.Group();
-  const face = box(0.26 * width, 0.24, 0.24, skin); face.position.y = 0.9; head.add(face);
+  const face = ellipsoid(0.285 * width, 0.265, 0.255, skin, 16); face.position.y = 0.905; head.add(face);
   const addHairBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
     const hair = box(w * width, h, d, p.hair); hair.position.set(x * width, y, z); head.add(hair);
   };
-  addHairBox(0.28, 0.1, 0.26, 0, 1.0, 0);
+  const hairCap = ellipsoid(0.302 * width, 0.14, 0.275, p.hair, 14);
+  hairCap.position.y = 1.002;
+  head.add(hairCap);
   if (p.hairStyle === 'long' || p.hairStyle === 'bob' || p.hairStyle === 'braid' || p.hairStyle === 'wild') {
     addHairBox(0.29, p.hairStyle === 'long' ? 0.3 : 0.2, 0.08, 0, p.hairStyle === 'long' ? 0.86 : 0.9, -0.1);
   }
@@ -325,7 +364,7 @@ export function buildCharacterModel(key: string, fallbackDesign: 'boy' | 'girl' 
     }
   }
   for (const ex of [-0.06, 0.06]) {
-    const eye = box(0.032, 0.046, 0.012, 0x22232a); eye.position.set(ex * width, 0.89, 0.125); head.add(eye);
+    const eye = ellipsoid(0.032, 0.048, 0.014, 0x22232a, 8); eye.position.set(ex * width, 0.9, 0.13); head.add(eye);
   }
   if (p.glasses) {
     for (const ex of [-0.06, 0.06]) {

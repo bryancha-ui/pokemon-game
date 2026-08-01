@@ -237,6 +237,44 @@ function plotHeight(w: number, d: number): number {
   return Math.max(2.0, Math.min(10, 1.2 + Math.sqrt(w * d) * 0.72));
 }
 
+/** A compact hipped roof with a central ridge. Replacing the old perfectly flat
+ * roof planes gives even procedural towns the friendly miniature architecture
+ * and strong silhouettes of a modern handheld Pokémon overworld. */
+function makeHipRoofGeometry(width: number, depth: number, height: number): THREE.BufferGeometry {
+  const buildAlongX = (w: number, d: number) => {
+    const hw = w / 2, hd = d / 2;
+    const ridge = Math.max(0, (w - d * 0.55) * 0.5);
+    const A = [-hw, 0, -hd] as const, B = [hw, 0, -hd] as const;
+    const C = [hw, 0, hd] as const, D = [-hw, 0, hd] as const;
+    const E = [-ridge, height, 0] as const, F = [ridge, height, 0] as const;
+    const pos: number[] = [], uv: number[] = [], idx: number[] = [];
+    const face = (points: readonly (readonly [number, number, number])[]) => {
+      const base = pos.length / 3;
+      for (let i = 0; i < points.length; i++) {
+        pos.push(...points[i]);
+        const u = points.length === 3 ? [0, 0.5, 1][i] : [0, 0.18, 0.82, 1][i];
+        uv.push(u, i === 0 || i === points.length - 1 ? 0 : 1);
+      }
+      if (points.length === 3) idx.push(base, base + 1, base + 2);
+      else idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    };
+    face([A, E, F, B]);
+    face([D, C, F, E]);
+    face([A, D, E]);
+    face([B, F, C]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return geo;
+  };
+  if (width >= depth) return buildAlongX(width, depth);
+  const geo = buildAlongX(depth, width);
+  geo.rotateY(Math.PI / 2);
+  return geo;
+}
+
 /**
  * Build terrain from the painted world canvas.
  * `worldW/worldH` are the world's pixel dimensions (from camera bounds).
@@ -294,12 +332,16 @@ export function buildTerrain(
   // ── Ground plane with the painted map ──
   const tex = new THREE.CanvasTexture(ground);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
-  // Unlit: the painted map must read EXACTLY as the 2D game authored it —
-  // toon shading multiplies dark palettes (basalt Jeju, caves) into black.
-  const groundMat = new THREE.MeshBasicMaterial({ map: tex });
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 8;
+  // A small emissive share preserves dark authored maps, while Lambert lighting
+  // lets people, trees and buildings cast soft grounding shadows onto them.
+  const groundMat = new THREE.MeshLambertMaterial({
+    map: tex, color: 0xffffff, emissive: 0xffffff,
+    emissiveMap: tex, emissiveIntensity: 0.14,
+  });
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(cols, rows), groundMat);
   plane.rotation.x = -Math.PI / 2;
   plane.position.set(cols / 2, 0, rows / 2);
@@ -312,8 +354,8 @@ export function buildTerrain(
   skirtTex.wrapS = skirtTex.wrapT = THREE.RepeatWrapping;
   skirtTex.repeat.set(Math.max(1, cols / 5), 1);
   const skirtMat = new THREE.MeshToonMaterial({ map: skirtTex, gradientMap: toonRamp() });
-  const skirt = new THREE.Mesh(new THREE.BoxGeometry(cols, 1.6, rows), skirtMat);
-  skirt.position.set(cols / 2, -0.82, rows / 2);
+  const skirt = new THREE.Mesh(new THREE.BoxGeometry(cols, 0.46, rows), skirtMat);
+  skirt.position.set(cols / 2, -0.25, rows / 2);
   group.add(skirt);
 
   // ── Sample average color per tile ──
@@ -764,15 +806,26 @@ export function buildTerrain(
     const wallsBox = new THREE.Mesh(new THREE.BoxGeometry(b.w, h, b.d), wallMat);
     wallsBox.position.set(cx, h / 2, cz);
     into.add(wallsBox);
-    const roof = new THREE.Mesh(new THREE.PlaneGeometry(b.w + 0.16, b.d + 0.16), roofMaterial(tex, b, cols, rows));
-    roof.rotation.x = -Math.PI / 2;
+    // Layered plinth and corner rhythm make a generic extrusion read as a
+    // designed building rather than a single texture-wrapped cube.
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(b.w + 0.08, 0.18, b.d + 0.08),
+      new THREE.MeshToonMaterial({ color: 0xd8d1c4, gradientMap: toonRamp() }),
+    );
+    base.position.set(cx, 0.09, cz);
+    into.add(base);
+    const roofH = Math.max(0.48, Math.min(1.25, Math.min(b.w, b.d) * 0.24));
+    const roof = new THREE.Mesh(
+      makeHipRoofGeometry(b.w + 0.54, b.d + 0.54, roofH),
+      roofMaterial(tex, b, cols, rows),
+    );
     roof.position.set(cx, h + 0.02, cz);
     into.add(roof);
     const eave = new THREE.Mesh(
-      new THREE.BoxGeometry(b.w + 0.2, 0.09, b.d + 0.2),
+      new THREE.BoxGeometry(b.w + 0.5, 0.11, b.d + 0.5),
       new THREE.MeshToonMaterial({ color: 0x4a4038, gradientMap: toonRamp() }),
     );
-    eave.position.set(cx, h - 0.04, cz);
+    eave.position.set(cx, h + 0.015, cz);
     into.add(eave);
   };
 
