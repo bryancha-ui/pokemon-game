@@ -36,8 +36,9 @@ export const SPRITE_SCALE: Record<string, number> = {
   scorpent:     1.35,
   munklift:     1.35,
   onnujang:     1.35,
-  pipetiger:     1.35,
-  tyranitar:     1.35
+  pipetiger:     0.675, // 1.35 × 0.5 — halve Pipe Tiger's battle size
+  tyranitar:     1.35,
+  palmcockatoo: 1.35,  // 
 };
 
 /** Display-size multiplier for a battle sprite key (default 1). */
