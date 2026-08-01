@@ -13,14 +13,14 @@ import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemo
 // A wind-blown snow pass climbing out of the Dolmoe Mine up to the frozen town of
 // Seorae. Deep drifts hide Ice Pokémon; skiers and snow-workers hold the switchbacks.
 
-const T = { SNOW: 0, PATH: 1, DRIFT: 2, PINE: 3, ROCK: 4 } as const;
+const T = { SNOW: 0, PATH: 1, SNOWGRASS: 2, PINE: 3, ROCK: 4 } as const;
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 20, ROWS = 56;
 const COLORS: Record<Tile, number> = {
-  [T.SNOW]: 0xdfe8f0, [T.PATH]: 0xc2ccd6, [T.DRIFT]: 0xeaf2fa, [T.PINE]: 0x2a4a3a, [T.ROCK]: 0x8a8478,
+  [T.SNOW]: 0xdfe8f0, [T.PATH]: 0xc2ccd6, [T.SNOWGRASS]: 0x8fb59a, [T.PINE]: 0x2a4a3a, [T.ROCK]: 0x8a8478,
 };
 const SOLID = new Set<Tile>([T.PINE, T.ROCK]);
-const ENCOUNTER = new Set<Tile>([T.DRIFT]);
+const ENCOUNTER = new Set<Tile>([T.SNOWGRASS]);
 
 const PASS_ENCOUNTERS: EncounterEntry[] = [
   { id: 'babymammoth', weight: 16, minLevel: 42, maxLevel: 46, isCustom: true, catchRate: 200 }, // Ice
@@ -45,11 +45,12 @@ function buildMap(): Tile[][] {
   // Scattered pines & boulders in the open snow
   for (const [r, c] of [[6,5],[10,14],[18,5],[24,15],[30,4],[36,14],[44,5],[50,14],[14,6],[40,15]] as [number,number][]) m[r][c] = T.PINE;
   for (const [r, c] of [[8,15],[22,4],[34,6],[46,15],[52,4]] as [number,number][]) m[r][c] = T.ROCK;
-  // Deep-drift clearings (encounters)
-  fill(8, 14, 12, 16, T.DRIFT);
-  fill(20, 27, 4, 8, T.DRIFT);
-  fill(32, 39, 12, 16, T.DRIFT);
-  fill(44, 51, 4, 8, T.DRIFT);
+  // Snow-covered tall-grass clearings (wild encounters), alternating along
+  // the switchbacks without covering the central travel corridor.
+  fill(8, 14, 12, 16, T.SNOWGRASS);
+  fill(20, 27, 4, 8, T.SNOWGRASS);
+  fill(32, 39, 12, 16, T.SNOWGRASS);
+  fill(44, 51, 4, 8, T.SNOWGRASS);
   return m;
 }
 
@@ -127,7 +128,7 @@ export class SeoraePassScene extends Phaser.Scene {
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const t = this.map[r][c];
       g.fillStyle(COLORS[t], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
-      if (t === T.DRIFT) { g.fillStyle(0xffffff, 0.8); for (let i=0;i<3;i++){ g.fillCircle(c*TILE+8+i*8, r*TILE+20, 3); } }
+      if (t === T.SNOWGRASS) this.drawSnowGrass(g, c * TILE, r * TILE);
       if (t === T.PINE)  { g.fillStyle(0x1e3a2c); g.fillTriangle(c*TILE+16, r*TILE+2, c*TILE+4, r*TILE+24, c*TILE+28, r*TILE+24); g.fillStyle(0xf0f6ff, 0.7); g.fillTriangle(c*TILE+16, r*TILE+2, c*TILE+10, r*TILE+12, c*TILE+22, r*TILE+12); }
       if (t === T.ROCK)  { g.fillStyle(0x6f6a60); g.fillTriangle(c*TILE+16, r*TILE+6, c*TILE+4, r*TILE+27, c*TILE+28, r*TILE+27); g.fillStyle(0xffffff,0.6); g.fillRect(c*TILE+8, r*TILE+8, 10, 3); }
       if (t === T.PATH)  { g.fillStyle(0xb0bac6, 0.5); g.fillRect(c*TILE+6, r*TILE+13, TILE-12, 6); }
@@ -143,6 +144,18 @@ export class SeoraePassScene extends Phaser.Scene {
     this.add.text(10 * TILE, 0.6 * TILE, tr('↑ Seorae Town'), {
       fontSize: '10px', color: '#123', backgroundColor: '#ffffffcc', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
+  }
+
+  private drawSnowGrass(g: Phaser.GameObjects.Graphics, x: number, y: number) {
+    g.fillStyle(0x5a8a6a, 0.75);
+    for (let i = 0; i < 3; i++) {
+      g.fillRect(x + 5 + i * 8, y + 18, 2, 9);
+      g.fillRect(x + 7 + i * 8, y + 15, 2, 12);
+    }
+    // Uneven white caps make the patch read as grass buried in fresh powder.
+    g.fillStyle(0xffffff, 0.72);
+    g.fillEllipse(x + 10, y + 22, 12, 5);
+    g.fillEllipse(x + 23, y + 24, 15, 5);
   }
 
   private drawTrainers() {

@@ -100,17 +100,27 @@ export function makeTrees(max: number, canopy = 0x3f9e3a, trunk = 0x6d4c33): Ins
   ], max);
 }
 
-/** Conifer (snow / highland zones). */
+/** Conifer (snow / highland zones) — snow-laden: each green tier carries a thin
+ *  white snow cap and a bright snow crown, so the pines read as snow-covered
+ *  evergreens (Samjiyon / Baekdu highlands). */
 export function makePines(max: number, needles = 0x2e6b46, trunk = 0x5a4030): InstancedProp {
   const trunkGeo = new THREE.CylinderGeometry(0.07, 0.11, 0.5, 6);
   const c1 = new THREE.ConeGeometry(0.55, 0.8, 8);
   const c2 = new THREE.ConeGeometry(0.4, 0.7, 8);
   const c3 = new THREE.ConeGeometry(0.26, 0.55, 8);
+  // Flatter white caps sitting on each tier's shoulders like settled snow.
+  const s1 = new THREE.ConeGeometry(0.57, 0.26, 8);
+  const s2 = new THREE.ConeGeometry(0.42, 0.24, 8);
+  const s3 = new THREE.ConeGeometry(0.28, 0.22, 8);
+  const snowMat = () => toonMat(0xf4f8ff);
   return makeInstanced([
     { geo: trunkGeo, mat: toonMat(trunk), y: 0.25 },
     { geo: c1, mat: toonMat(needles), y: 0.75 },
+    { geo: s1, mat: snowMat(), y: 0.99 },
     { geo: c2, mat: toonMat(mixColor(needles, 0xffffff, 0.10)), y: 1.25 },
+    { geo: s2, mat: snowMat(), y: 1.46 },
     { geo: c3, mat: toonMat(mixColor(needles, 0xffffff, 0.22)), y: 1.7 },
+    { geo: s3, mat: snowMat(), y: 1.88 },
   ], max);
 }
 
@@ -123,13 +133,13 @@ export function makeRocks(max: number, color = 0x8d8578): InstancedProp {
 
 /** Tall-grass tufts, Pokémon-style: a dense rounded bush of bright blades on
  *  three crossed alpha planes, with a darker base and lighter sun-lit tips. */
-export function makeGrassTufts(max: number, tone = 0x49b23a): InstancedProp {
+export function makeGrassTufts(max: number, tone = 0x49b23a, snowy = false): InstancedProp {
   const c = document.createElement('canvas');
   c.width = 64; c.height = 56;
   const ctx = c.getContext('2d')!;
   const base = new THREE.Color(tone);
   const dark = base.clone().multiplyScalar(0.62);
-  const tip  = base.clone().lerp(new THREE.Color(0xffffff), 0.35);
+  const tip  = base.clone().lerp(new THREE.Color(0xffffff), snowy ? 0.72 : 0.35);
   const rgb = (col: THREE.Color) => `rgb(${(col.r * 255) | 0},${(col.g * 255) | 0},${(col.b * 255) | 0})`;
   // Base mound so the clump reads as a solid tuft, not floating blades.
   ctx.fillStyle = rgb(dark);
@@ -140,6 +150,7 @@ export function makeGrassTufts(max: number, tone = 0x49b23a): InstancedProp {
     ctx.beginPath(); ctx.moveTo(x, 54);
     ctx.quadraticCurveTo(x + sway * 0.5, (54 + topY) / 2, x + sway, topY); ctx.stroke();
   };
+  const snowTips: [number, number, number][] = [];
   for (let i = 0; i < 22; i++) {
     const t = i / 21;                          // 0..1 across the clump
     const x = 8 + t * 48 + (i % 2) * 2;
@@ -147,6 +158,16 @@ export function makeGrassTufts(max: number, tone = 0x49b23a): InstancedProp {
     const topY = 6 + Math.abs(t - 0.5) * 26 + (front ? -4 : 4);   // rounded top
     const sway = (i % 2 ? 1 : -1) * (5 + (i % 4) * 3);
     blade(x, topY, sway, front ? 4.2 : 3.4, front ? tip.clone().lerp(base, 0.4) : (i % 2 ? base : dark.clone().lerp(base, 0.5)));
+    if (snowy && (front || i % 4 === 1)) snowTips.push([x + sway, topY + 1, front ? 3.4 : 2.6]);
+  }
+  if (snowy) {
+    // Snow catches on blade tips and settles in a thin bank around the roots.
+    ctx.fillStyle = 'rgba(247,252,255,0.94)';
+    for (const [x, y, r] of snowTips) {
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(238,247,252,0.88)';
+    ctx.beginPath(); ctx.ellipse(32, 51, 24, 4.5, 0, 0, Math.PI * 2); ctx.fill();
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;

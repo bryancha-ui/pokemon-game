@@ -35,6 +35,10 @@ export class DolmoeRuinsScene extends Phaser.Scene {
       .map(([r, c]) => ({ x: c, y: r, w: 1, h: 1, model: 'dolmen' })),
   ];
   public onlyNamedBuildings = true;
+  /** Keep the archaeological field completely readable: cliff, tree, rock and
+   * dark dig tiles stay painted on the ground instead of rising into tall 3D
+   * walls. Authored dolmen models in buildingPlots remain standing. */
+  public clearSight3D = true;
   public noVehicles = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

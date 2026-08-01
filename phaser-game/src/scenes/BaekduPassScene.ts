@@ -82,10 +82,15 @@ function buildMap(): Tile[][] {
   // Frozen tarn (small ice lake) mid-pass on the west shoulder
   fill(36, 40, 4, 8, T.ICE);
 
-  // Snowy-grass encounter clearings
+  // Snow-covered encounter meadows. Paired clearings on both shoulders make
+  // the vegetation visible throughout the climb while keeping the central
+  // road, blockade and cave exits unobstructed.
+  fill(47, 55, 5, 9, T.SNOWGRASS);
   fill(46, 54, 15, 19, T.SNOWGRASS);
   fill(30, 36, 5, 9, T.SNOWGRASS);
-  fill(10, 16, 15, 19, T.SNOWGRASS);
+  fill(31, 37, 15, 19, T.SNOWGRASS);
+  fill(9, 16, 5, 9, T.SNOWGRASS);
+  fill(10, 17, 15, 19, T.SNOWGRASS);
 
   // The cave mouth at the top (the path narrows into the mountain)
   fill(0, 6, 4, 9, T.CLIFF);

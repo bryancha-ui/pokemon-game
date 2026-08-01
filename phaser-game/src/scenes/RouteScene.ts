@@ -129,6 +129,11 @@ function buildRouteMap(): RTile[][] {
   fill(49, 56, 8, 9,  CW);
   fill(49, 56, 15, 16, CW);
 
+  // Hiker Minsu's rest alcove. His authored position (11,44) used to be a
+  // CAVE_WALL cell, so the tall black 3D wall rose through and trapped him.
+  // Carve a shallow room that opens directly onto the c12 main passage.
+  fill(43, 47, 10, 13, CP);
+
   // ── SECTION 7: Cave exit to valley (rows 56-62) ───────────────────────────
   fill(55, 57, 8, 20, P);  // cave exit widens
   fill(56, 62, 8, 14, P);

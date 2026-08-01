@@ -615,7 +615,9 @@ export function buildTerrain(
   }
 
   const trees: InstancedProp = snowy ? makePines(nTree + 8) : makeTrees(nTree + 8);
-  const grass = makeGrassTufts(nGrass * 2 + 8);
+  const grass = snowy
+    ? makeGrassTufts(nGrass * 2 + 8, 0x5f8769, true)
+    : makeGrassTufts(nGrass * 2 + 8);
   const flowers = makeFlowers(nFlower * 2 + 8);
   const rocks = makeRocks(nRock + 8);
   const walls = new WallBuilder();

@@ -10,7 +10,7 @@ export const SPRITE_SCALE: Record<string, number> = {
   arctorodon:   1.75,   // Rock/Ice leviathan
   daejangseung: 1.55,   // towering totem-of-totems
   // ── Legendaries / very large ──
-  hwanwoong:    1.5,
+  hwanwoong:    1.8,
   nabihalmang:  1.45,
   cheonjisin:   1.45,
   'nosdan-sovereign': 1.4,

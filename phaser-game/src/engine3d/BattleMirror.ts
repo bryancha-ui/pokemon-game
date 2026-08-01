@@ -397,6 +397,13 @@ export class BattleMirror {
     } catch { return null; }
   }
 
+  /** Local yaw that points a battler's +Z/front axis straight at the live
+   *  battle camera. Model-specific axis fixes remain baked inside the GLB. */
+  private cameraFacingYaw(holder: THREE.Group): number {
+    const toCamera = this.stage.camera.position.clone().sub(holder.position);
+    return Math.atan2(toCamera.x, toCamera.z) - holder.rotation.y;
+  }
+
   // ── Battle trainer walk-in (rival striding toward the player) ──
   private spawnTrainer(
     im: GO & Phaser.GameObjects.Image,
@@ -498,7 +505,10 @@ export class BattleMirror {
         const loaded = getModel(cb.glbKey);
         if (loaded) {
           const model = loaded.group;
-          model.rotation.y = cb.side === 'player' ? Math.PI : 0;   // face the opponent
+          // Enemy Pokémon present their front to the battle camera. The old
+          // fixed zero yaw only followed the world axis, so models such as
+          // Cerrapin appeared side-on in the diagonal battle composition.
+          model.rotation.y = cb.side === 'player' ? Math.PI : this.cameraFacingYaw(cb.holder);
           cb.glb = model;
           cb.inner.visible = false;
           cb.holder.add(model);
@@ -562,6 +572,9 @@ export class BattleMirror {
       const relX = cb.baseSX ? Math.min(3, Math.max(0.2, curSX / cb.baseSX)) : 1;
       const relY = cb.baseSY ? Math.min(3, Math.max(0.2, Math.abs(o.scaleY ?? 1) / cb.baseSY)) : 1;
       if (cb.glb) {
+        // Track the subtle camera drift/punch-ins so every opposing 3D model
+        // continues to face forward throughout the battle, not only on spawn.
+        if (cb.side === 'enemy') cb.anim?.setFacing(this.cameraFacingYaw(cb.holder));
         // Fainting: the battle fades/drops the sprite — play the topple once.
         const down = (o.alpha ?? 1) < 0.5 || o.visible === false;
         if (down && !cb.fainted && cb.base) { cb.fainted = true; cb.anim?.faint(); }

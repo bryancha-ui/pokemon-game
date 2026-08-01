@@ -388,12 +388,18 @@ export class TrainerBattleScene extends Phaser.Scene {
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
-      this.trainerPortrait.setData('characterModel3DKey', portrait.key);
-      if (this.trainerKey.startsWith('rival')) {
-        const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
-        this.trainerPortrait.setData('battleTrainer', design);
+      const use2DRyeo = portrait.key === 'npc_ryeo' || this.trainerKey.includes('ryeo');
+      if (use2DRyeo) {
+        // Commander Ryeo keeps the original 2D battle portrait in every encounter.
+        this.trainerPortrait.setData('no3d', true);
       } else {
-        this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+        this.trainerPortrait.setData('characterModel3DKey', portrait.key);
+        if (this.trainerKey.startsWith('rival')) {
+          const design = playerGender(this.registry) === 'girl' ? 'boy' : 'girl';
+          this.trainerPortrait.setData('battleTrainer', design);
+        } else {
+          this.trainerPortrait.setData('battleTrainerEnemyAnchor', true);
+        }
       }
       fitPortrait(this.trainerPortrait);
     }
