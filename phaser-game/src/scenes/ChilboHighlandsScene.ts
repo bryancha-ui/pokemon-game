@@ -9,11 +9,11 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Chilbo Highlands (칠보산 길) ─────────────────────────────────────────────────
-// The wild northeast-coast road from Hamhung to Chongjin, winding through Mt. Chilbo
-// (칠보산) — the "Seven Treasures": jagged rock spires, sea cliffs plunging into the
+// ── Yeomyeong Highlands (여명산 길) ─────────────────────────────────────────────────
+// The wild northeast-coast road from Gangcheoldo to Muyeonhang, winding through Mt. Yeomyeong
+// (여명산) — the "Seven Treasures": jagged rock spires, sea cliffs plunging into the
 // East Sea, a mountain waterfall, and blazing autumn maples. To the north, the road
-// vanishes into the cold sea-fog that hangs over the port of Chongjin.
+// vanishes into the cold sea-fog that hangs over the port of Muyeonhang.
 
 const T = { GRASS: 0, PATH: 1, TALLGRASS: 2, MAPLE: 3, CLIFF: 4, ROCK: 5, SEA: 6, STREAM: 7 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -54,7 +54,7 @@ function buildMap(): Tile[][] {
   fill(26, 29, 9, 13, T.PATH);
   // a waterfall cascading off the west cliff into the stream
   fill(20, 26, 3, 4, T.STREAM);
-  // Chilbo rock spires — the "Seven Treasures"
+  // Yeomyeong rock spires — the "Seven Treasures"
   for (const [r, c] of [[8,15],[9,15],[8,16],[20,6],[21,6],[15,7],[34,15],[35,15],[40,6],[41,6]] as [number,number][]) m[r][c] = T.CLIFF;
   // blazing autumn maples
   for (const [r, c] of [[6,14],[12,7],[18,16],[24,7],[32,6],[38,16],[44,7],[10,17],[30,17],[4,7]] as [number,number][]) m[r][c] = T.MAPLE;
@@ -83,7 +83,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 10 * TILE + 16;
-  private py = 47 * TILE + 16;   // default: enter from the south (Hamhung side), a few tiles inside
+  private py = 47 * TILE + 16;   // default: enter from the south (Gangcheoldo side), a few tiles inside
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -94,7 +94,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
   private readonly TRAINERS: Trainer[] = [
     {
       key: 'cb-baekcheol', name: 'Hiker Baekcheol', col: 10, row: 45, color: 0x8a6a3a, label: 'Hiker',
-      line: "Chilbo's rocks have broken tougher trainers than you. My team's carved from the same stone — come on!",
+      line: "Yeomyeong's rocks have broken tougher trainers than you. My team's carved from the same stone — come on!",
       pokemon: JSON.stringify([{ id: 75, level: 68 }, { id: 208, level: 69 }, { id: 526, level: 70 }]), expPool: 2200,
     },
     {
@@ -104,7 +104,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
     },
     {
       key: 'cb-jihu', name: 'Ace Trainer Jihu', col: 10, row: 22, color: 0x3a5a9a, label: 'Ace\nTrainer',
-      line: "The higher you climb Chilbo, the thinner the air — and the fiercer the battles. Prove you belong up here.",
+      line: "The higher you climb Yeomyeong, the thinner the air — and the fiercer the battles. Prove you belong up here.",
       pokemon: JSON.stringify([{ id: 112, level: 69 }, { id: 461, level: 70 }, { id: 359, level: 71 }]), expPool: 2400,
     },
     {
@@ -114,7 +114,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
     },
     {
       key: 'cb-ryun', name: '노스단 Scout Ryun', col: 11, row: 9, color: 0x24242e, label: '노스단\nScout',
-      line: "So the Inspectorate's errand-runner reaches Chilbo. Beyond this fog is Chongjin — and 노스단 runs that port. Turn back!",
+      line: "So the Inspectorate's errand-runner reaches Yeomyeong. Beyond this fog is Muyeonhang — and 노스단 runs that port. Turn back!",
       pokemon: JSON.stringify([{ id: 430, level: 69 }, { id: 461, level: 70 }, { id: 553, level: 71 }]), expPool: 2400,
     },
   ];
@@ -166,20 +166,20 @@ export class ChilboHighlandsScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(10.5 * TILE, 51.4 * TILE, tr('↓ Hamhung'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(10.5 * TILE, 0.7 * TILE, tr('↑ Chongjin'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(15 * TILE, 10 * TILE, tr('칠보산\n(Mt. Chilbo)'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10.5 * TILE, 51.4 * TILE, tr('↓ Gangcheoldo'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10.5 * TILE, 0.7 * TILE, tr('↑ Muyeonhang'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(15 * TILE, 10 * TILE, tr('여명산\n(Mt. Yeomyeong)'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(21.5 * TILE, 40 * TILE, tr('동해\nEast Sea'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawIcons() {
-    // Chilbo waterfall pool label at the cascade
-    this.add.text(3.5 * TILE, 24 * TILE, '칠보 폭포', { fontSize: '8px', color: '#eaffff', backgroundColor: '#00000066', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
+    // Yeomyeong waterfall pool label at the cascade
+    this.add.text(3.5 * TILE, 24 * TILE, '여명 폭포', { fontSize: '8px', color: '#eaffff', backgroundColor: '#00000066', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(6);
     // white foam at the base of the waterfall
     const wf = this.add.graphics().setDepth(6);
     wf.fillStyle(0xffffff, 0.5); wf.fillEllipse(3.5 * TILE, 26 * TILE, 26, 10);
 
-    // Cold sea-fog thickening toward Chongjin (the north end). Tagged no3d so the
+    // Cold sea-fog thickening toward Muyeonhang (the north end). Tagged no3d so the
     // 3D mirror never lifts this white overlay into a floating structure.
     const fog = this.add.graphics().setDepth(15).setData('no3d', true);
     fog.fillStyle(0xdfe6ee, 0.32);
@@ -230,7 +230,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('⛰ Chilbo Highlands (칠보산 길)'), {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ Yeomyeong Highlands (여명산 길)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
@@ -318,7 +318,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     const nearCentre = this.px > 7 * TILE && this.px < 14 * TILE;
-    // South → back to Hamhung (arrive at its north road).
+    // South → back to Gangcheoldo (arrive at its north road).
     if (this.py > (ROWS - 1) * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -326,7 +326,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
         this.scene.start('HamhungCityScene');
       });
     }
-    // North → on to Chongjin (arrive at its south road).
+    // North → on to Muyeonhang (arrive at its south road).
     if (this.py < 1 * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

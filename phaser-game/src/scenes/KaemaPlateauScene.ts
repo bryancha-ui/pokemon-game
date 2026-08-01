@@ -9,9 +9,9 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Kaema Plateau (개마고원) ──────────────────────────────────────────────────────
-// The high cold road from Chongjin (fog port, south end) to Sinuiju (Yalu border,
-// north end). 개마고원 is the "roof of Korea": Korea's largest, highest plateau —
+// ── Seolun Plateau (설운고원) ──────────────────────────────────────────────────────
+// The high cold road from Muyeonhang (fog port, south end) to Binghagwan (Yalu border,
+// north end). 설운고원 is the "roof of Korea": Korea's largest, highest plateau —
 // endless highland meadows, golden larch forests (이깔나무), the great Jangjin Lake
 // (장진호), tilled potato fields, and, toward the frozen border, a creeping frost mist.
 
@@ -87,7 +87,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 11 * TILE + 16;
-  private py = 47 * TILE + 16;   // default: enter from the south (Chongjin side), a few tiles inside
+  private py = 47 * TILE + 16;   // default: enter from the south (Muyeonhang side), a few tiles inside
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -118,7 +118,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
     },
     {
       key: 'km-cheol', name: '노스단 Courier Cheol', col: 11, row: 9, color: 0x24242e, label: '노스단\nCourier',
-      line: "You crossed the whole plateau to sniff after us? 노스단 hauls its cargo over Kaema by night — bound for the peak. You've seen too much. Fall here!",
+      line: "You crossed the whole plateau to sniff after us? 노스단 hauls its cargo over Seolun by night — bound for the peak. You've seen too much. Fall here!",
       pokemon: JSON.stringify([{ id: 461, level: 71 }, { id: 460, level: 72 }, { id: 461, level: 72 }]), expPool: 2700,
     },
   ];
@@ -176,10 +176,10 @@ export class KaemaPlateauScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(11 * TILE, 51.4 * TILE, tr('↓ Chongjin'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(11 * TILE, 0.7 * TILE, tr('↑ Sinuiju'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 51.4 * TILE, tr('↓ Muyeonhang'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.7 * TILE, tr('↑ Binghagwan'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(5.5 * TILE, 26.5 * TILE, tr('장진호\nJangjin Lake'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(16 * TILE, 30 * TILE, tr('개마고원\n한국의 지붕'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(16 * TILE, 30 * TILE, tr('설운고원\n한국의 지붕'), { fontSize: '8px', color: '#ffe9c0', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(17 * TILE, 45.5 * TILE, '고원 감자밭', { fontSize: '8px', color: '#ffe9c0', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(3 * TILE, 10 * TILE, tr('이깔나무 숲\nLarch Forest'), { fontSize: '8px', color: '#ffeeb0', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
@@ -239,7 +239,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('⛰ Kaema Plateau (개마고원)'), {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ Seolun Plateau (설운고원)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
@@ -327,7 +327,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     const nearCentre = this.px > 7 * TILE && this.px < 14 * TILE;
-    // South → back down to Chongjin (arrive at its north road).
+    // South → back down to Muyeonhang (arrive at its north road).
     if (this.py > (ROWS - 1) * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -335,7 +335,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
         this.scene.start('ChongjinCityScene');
       });
     }
-    // North → up to Sinuiju (arrive at its south road).
+    // North → up to Binghagwan (arrive at its south road).
     if (this.py < 1 * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

@@ -7,7 +7,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── 노스단 아지트 (Team North Headquarters) ─────────────────────────────────────────
-// A grim four-storey tower that 노스단 has thrown up at the front of Samjiyon's mountain
+// A grim four-storey tower that 노스단 has thrown up at the front of Samho's mountain
 // road, declaring the plateau their new base. Each floor is a warren of warp-pad tricks
 // and grunts blocking the stairs; climb all four and defeat the 노스단 간부 at the very top
 // to break their hold — only then will 어사대장 Seolwon grant her exam.
@@ -35,7 +35,7 @@ const FLOORS: FloorDef[] = [
     ],
     foes: [
       { key: 'nosdan-ajit-1a', name: '노스단 Grunt', col: 3, row: 3, label: '노스단',
-        line: "Far as you climb, runt. 노스단 owns this tower now — and soon all of Samjiyon!",
+        line: "Far as you climb, runt. 노스단 owns this tower now — and soon all of Samho!",
         pokemon: JSON.stringify([{ id: 461, level: 72 }, { id: 553, level: 72 }]), expPool: 2400 },
     ],
   },
@@ -88,7 +88,7 @@ const FLOORS: FloorDef[] = [
         line: "The 간부 is just above. Over my body — that's the only way up!",
         pokemon: JSON.stringify([{ id: 584, level: 74 }, { id: 615, level: 74 }]), expPool: 2700 },
       { key: BOSS_KEY, name: 'Sovereign Clemont', col: 6, row: 3, label: 'Sovereign', boss: true,
-        line: "So the 어사대's little champion crawls to the top. I am Clemont — Sovereign of 노스단. We will take Samjiyon, the peak, and everything beyond it. You end HERE.",
+        line: "So the 어사대's little champion crawls to the top. I am Clemont — Sovereign of 노스단. We will take Samho, the peak, and everything beyond it. You end HERE.",
         pokemon: JSON.stringify([{ id: 461, level: 75 }, { id: 473, level: 75 }, { id: 452, level: 76 }, { id: 625, level: 76 }, { id: 614, level: 77 }]), expPool: 4800 },
     ],
   },
@@ -356,7 +356,7 @@ export class NosdanHideoutScene extends Phaser.Scene {
     this.registry.remove('nosdanReturnX'); this.registry.remove('nosdanReturnY');
     this.dialog.show([
       'Sovereign Clemont: ...Impossible. The whole tower, floor by floor...',
-      'The 노스단 flag is torn down. Their grip on Samjiyon is broken, and the grunts flee down the mountain road.',
+      'The 노스단 flag is torn down. Their grip on Samho is broken, and the grunts flee down the mountain road.',
       '어사대장 Seolwon now awaits your challenge at the 어사대 Hall.',
     ], () => {
       this.registry.set('SamjiyonCitySceneReturnX', 39 * 32 + 16);

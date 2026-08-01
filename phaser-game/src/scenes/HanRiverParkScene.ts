@@ -340,7 +340,8 @@ export class HanRiverParkScene extends Phaser.Scene {
     if (this.py > (ROWS - 1) * TILE && this.px > 20 * TILE && this.px < 26 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-        this.registry.set('capitalReturnX', 45 * TILE + 16);
+        // Return beside the expanded capital's eastern riverside gate.
+        this.registry.set('capitalReturnX', 61 * TILE + 16);
         this.registry.set('capitalReturnY', 61 * TILE + 16);
         this.scene.start('CapitolCityScene');
       });

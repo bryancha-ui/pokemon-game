@@ -102,7 +102,7 @@ export function makeTrees(max: number, canopy = 0x3f9e3a, trunk = 0x6d4c33): Ins
 
 /** Conifer (snow / highland zones) — snow-laden: each green tier carries a thin
  *  white snow cap and a bright snow crown, so the pines read as snow-covered
- *  evergreens (Samjiyon / Baekdu highlands). */
+ *  evergreens (Samho / Baekdu highlands). */
 export function makePines(max: number, needles = 0x2e6b46, trunk = 0x5a4030): InstancedProp {
   const trunkGeo = new THREE.CylinderGeometry(0.07, 0.11, 0.5, 6);
   const c1 = new THREE.ConeGeometry(0.55, 0.8, 8);

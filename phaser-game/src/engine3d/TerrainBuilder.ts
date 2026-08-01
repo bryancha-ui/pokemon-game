@@ -800,7 +800,7 @@ export function buildTerrain(
   let lastT = -1;                       // for real-time deltas in update()
   const pendingVehicles: { group: THREE.Group; def: import('./PropModels').PropDef; scale: number; rot: number }[] = [];
   if (!interior && !noVehicles && placedVehicles.length) {
-    // The scene pins its vehicles (e.g. the Kaesong express bus at its stop) —
+    // The scene pins its vehicles (e.g. the Songhyeon express bus at its stop) —
     // place those exact models at their collision-aware authored locations.
     for (const v of placedVehicles) {
       const def = propById(v.model);

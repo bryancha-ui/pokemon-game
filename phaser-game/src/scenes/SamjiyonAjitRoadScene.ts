@@ -8,7 +8,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 
 // ── 노스단 아지트 진입로 (Team North HQ Approach) ────────────────────────────────────
-// A separate mountain road climbing off Samjiyon's plateau. At its head — right at the
+// A separate mountain road climbing off Samho's plateau. At its head — right at the
 // front of the road — looms the four-storey 노스단 아지트, banners snapping in the snow-wind,
 // grunts posted on the switchbacks. Walk to the gate to storm the headquarters within.
 
@@ -62,7 +62,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = GATE_COL * TILE + 16;
-  private py = 30 * TILE + 16;   // enter from the south (Samjiyon side)
+  private py = 30 * TILE + 16;   // enter from the south (Samho side)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -138,7 +138,7 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text((GATE_COL + 0.5) * TILE, 33.4 * TILE, tr('↓ Samjiyon'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text((GATE_COL + 0.5) * TILE, 33.4 * TILE, tr('↓ Samho'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawTower() {

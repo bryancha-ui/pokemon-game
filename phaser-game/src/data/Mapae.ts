@@ -9,14 +9,14 @@ import Phaser from 'phaser';
 export interface MapaeDef { key: string; city: string; chief: string; }
 
 export const MAPAE: MapaeDef[] = [
-  { key: 'kaesong',   city: 'Kaesong',   chief: '어사대장 Hyeon' },    // scholar / Psychic  (sprite: npc_eosajang)
-  { key: 'nampo',     city: 'Nampo',     chief: '어사대장 Haemin' },   // west-sea barrage / Water
-  { key: 'wonsan',    city: 'Wonsan',    chief: '어사대장 Haegang' },  // east coast / Fighting
-  { key: 'hamhung',   city: 'Hamhung',   chief: '어사대장 Cheolju' },  // steelworks / Steel
-  { key: 'chongjin',  city: 'Chongjin',  chief: '어사대장 Mukyeong' }, // far-NE fog port / Dark
-  { key: 'sinuiju',   city: 'Sinuiju',   chief: '어사대장 Amrok' },    // Yalu border ice / Ice·Dragon
-  { key: 'samjiyon',  city: 'Samjiyon',  chief: '어사대장 Seolwon' },  // Baekdu highland / Ice
-  { key: 'pyeongseong',city: 'Pyeongseong',chief: '어사대장 Supreme Gwang' },  // capital, final certification / Supreme Commander
+  { key: 'kaesong',   city: 'Songhyeon',   chief: '어사대장 Hyeon' },    // scholar / Psychic  (sprite: npc_eosajang)
+  { key: 'nampo',     city: 'Parangpo',     chief: '어사대장 Haemin' },   // west-sea barrage / Water
+  { key: 'wonsan',    city: 'Haesol',    chief: '어사대장 Haegang' },  // east coast / Fighting
+  { key: 'hamhung',   city: 'Gangcheoldo',   chief: '어사대장 Cheolju' },  // steelworks / Steel
+  { key: 'chongjin',  city: 'Muyeonhang',  chief: '어사대장 Mukyeong' }, // far-NE fog port / Dark
+  { key: 'sinuiju',   city: 'Binghagwan',   chief: '어사대장 Amrok' },    // Yalu border ice / Ice·Dragon
+  { key: 'samjiyon',  city: 'Samho',  chief: '어사대장 Seolwon' },  // Baekdu highland / Ice
+  { key: 'pyeongseong',city: 'Gwanmunseong',chief: '어사대장 Supreme Gwang' },  // capital, final certification / Supreme Commander
 ];
 
 const flag = (key: string) => `mapae_${key}`;

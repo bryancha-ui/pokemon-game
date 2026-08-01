@@ -10,7 +10,7 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
 // ── Kalma Beach (갈마 해변) ──────────────────────────────────────────────────────
-// Wonsan's famous East-Sea bathing beach, reached by the paved shore road out of
+// Haesol's famous East-Sea bathing beach, reached by the paved shore road out of
 // town: golden sand and dune grass, the Songdowon pines, a lighthouse and beach
 // umbrellas — and, at the water's edge, the last of Chief Haegang's three disciples.
 
@@ -61,7 +61,7 @@ export class WonsanBeachScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 11 * TILE + 16;
-  private py = 3 * TILE + 16;   // enter from the top (the road down from Wonsan)
+  private py = 3 * TILE + 16;   // enter from the top (the road down from Haesol)
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -124,7 +124,7 @@ export class WonsanBeachScene extends Phaser.Scene {
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
-    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Wonsan'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Haesol'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(COLS * TILE / 2, (ROWS - 0.6) * TILE, tr('～ East Sea (동해) ～'), { fontSize: '9px', color: '#eaf6ff', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
@@ -261,7 +261,7 @@ export class WonsanBeachScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // North edge → back up the shore road to Wonsan.
+    // North edge → back up the shore road to Haesol.
     if (this.py < 1 * TILE && this.px > 8 * TILE && this.px < 14 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

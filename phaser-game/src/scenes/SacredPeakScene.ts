@@ -146,7 +146,7 @@ export class SacredPeakScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
     this.add.text(9 * TILE, 2.4 * TILE, tr('☀ Altar of the Descent'), { fontSize: '10px', color: '#ffe88a', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9 * TILE, 38.4 * TILE, tr('↓ Ancient Altar (Rangrim)'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9 * TILE, 38.4 * TILE, tr('↓ Ancient Altar (Onseong)'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawShrines() {

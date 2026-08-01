@@ -24,13 +24,13 @@ export const TRACKS: Record<string, string> = {
   jejudo:     BASE + 'bgm_jejudo.mp3',      // Jeju Island
   // ── Northern 어사대 circuit (post-league) ──
   pyeongyang: BASE + 'bgm_pyeongyang.mp3',  // Pyeongyang — northern capital
-  kaesong:    BASE + 'bgm_kaesong.mp3',     // Kaesong (개성)
-  nampo:      BASE + 'bgm_nampo.mp3',       // Nampo (남포)
-  wonsan:     BASE + 'bgm_wonsan.mp3',      // Wonsan (원산)
-  hamhung:    BASE + 'bgm_hamhung.mp3',     // Hamhung (함흥)
-  chongjin:   BASE + 'bgm_chongjin.mp3',    // Chongjin (청진)
-  sinuiju:    BASE + 'bgm_sinuiju.mp3',     // Sinuiju (신의주)
-  samjiyon:   BASE + 'bgm_samjiyon.mp3',    // Samjiyon (삼지연)
+  kaesong:    BASE + 'bgm_kaesong.mp3',     // Songhyeon (송현)
+  nampo:      BASE + 'bgm_nampo.mp3',       // Parangpo (파랑포)
+  wonsan:     BASE + 'bgm_wonsan.mp3',      // Haesol (해솔)
+  hamhung:    BASE + 'bgm_hamhung.mp3',     // Gangcheoldo (강철도)
+  chongjin:   BASE + 'bgm_chongjin.mp3',    // Muyeonhang (무연항)
+  sinuiju:    BASE + 'bgm_sinuiju.mp3',     // Binghagwan (빙하관)
+  samjiyon:   BASE + 'bgm_samjiyon.mp3',    // Samho (삼호)
   eosa:       BASE + 'bgm_eosa.mp3',        // 어사대장 exam battle (마패 circuit)
   northplaza: BASE + 'bgm_northplaza.mp3',  // Northern League forecourt
   northleaguebattle: BASE + 'bgm_northleaguebattle.mp3', // Northern League battle

@@ -34,19 +34,19 @@ export const PORTRAITS: Record<string, Portrait> = {
   'jeju-ryeo-final':   P('npc_ryeo.png'),   // the Jeju summit finale
   'suri-director':     P('npc_suri.png'),
   // ── Northern 어사대 (Inspectorate Chiefs) — the 마패 circuit ──
-  'eosa-kaesong':      P('npc_eosajang.png'),   // Kaesong — 어사대장 Hyeon
-  'eosa-nampo':        P('npc_salmu.png'),      // Nampo — 어사대장 Haemin
-  'eosa-wonsan':       P('npc_jito.png'),       // Wonsan — 어사대장 Haegang
-  'eosa-hamhung':      P('npc_gapcheol.webp'),  // Hamhung — 어사대장 Cheolju (Steel)
-  'eosa-chongjin':     P('npc_dosadae.png'),    // Chongjin — 어사대장 Mukyeong
-  'eosa-sinuiju':      P('npc_jinnok.png'),     // Sinuiju — 어사대장 Amrok
-  'eosa-samjiyon':     P('npc_jito.png'),       // Samjiyon — 어사대장 Seolwon
+  'eosa-kaesong':      P('npc_eosajang.png'),   // Songhyeon — 어사대장 Hyeon
+  'eosa-nampo':        P('npc_salmu.png'),      // Parangpo — 어사대장 Haemin
+  'eosa-wonsan':       P('npc_jito.png'),       // Haesol — 어사대장 Haegang
+  'eosa-hamhung':      P('npc_gapcheol.webp'),  // Gangcheoldo — 어사대장 Cheolju (Steel)
+  'eosa-chongjin':     P('npc_dosadae.png'),    // Muyeonhang — 어사대장 Mukyeong
+  'eosa-sinuiju':      P('npc_jinnok.png'),     // Binghagwan — 어사대장 Amrok
+  'eosa-samjiyon':     P('npc_jito.png'),       // Samho — 어사대장 Seolwon
   'eosa-pyeongyang':   P('npc_dosadae.png'),    // Pyeongyang — 어사대장 Jeongan
-  'eosa-pyeongseong':  P('npc_dosadae.png'),    // Pyeongseong — Supreme Commander Gwang
+  'eosa-pyeongseong':  P('npc_dosadae.png'),    // Gwanmunseong — Supreme Commander Gwang
   'suri-chaeyeon-1':   P('npc_chaeyeon.png'),
   'suri-chaeyeon-2':   P('npc_chaeyeon.png'),
   'nosdan-mubaek':     P('npc_mubaek.png'),
-  'nosdan-chongjin':   P('npc_mubaek.png'),   // 노스단 officer Hyeok — Chongjin exam stand-in
+  'nosdan-chongjin':   P('npc_mubaek.png'),   // 노스단 officer Hyeok — Muyeonhang exam stand-in
   'baekdu-seollan':    P('npc_seollan.png'),
 
   // ── POST-GAME I — Northern League ──
@@ -63,7 +63,7 @@ export const PORTRAITS: Record<string, Portrait> = {
   'inspector-jinnok':  P('npc_jinnok.png'),
   'dosadae':           P('npc_dosadae.png'),
   'nosdan-sovereign':  P('npc_sovereign.png'),
-  'nosdan-samjiyon-boss': P('npc_sovereign.png'),   // Sovereign Clemont — atop the Samjiyon 아지트
+  'nosdan-samjiyon-boss': P('npc_sovereign.png'),   // Sovereign Clemont — atop the Samho 아지트
   'prof-song':         P('npc_song.webp'),
 };
 

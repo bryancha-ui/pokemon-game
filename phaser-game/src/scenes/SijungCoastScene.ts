@@ -10,10 +10,10 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
 // ── Sijung Coast (시중호 해안길) ─────────────────────────────────────────────────
-// The East-Sea coast road linking Wonsan to the steel city of Hamhung: the famous
+// The East-Sea coast road linking Haesol to the steel city of Gangcheoldo: the famous
 // Sijung lagoon (시중호) inland, dunes and a pine windbreak along the shore, the
-// paddies of the Hamhung plain to the north — and, on the horizon, the smokestacks
-// of Hamhung's great steelworks.
+// paddies of the Gangcheoldo plain to the north — and, on the horizon, the smokestacks
+// of Gangcheoldo's great steelworks.
 
 const T = { GRASS: 0, PATH: 1, TALLGRASS: 2, PINE: 3, SAND: 4, SEA: 5, ROCK: 6 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -50,7 +50,7 @@ function buildMap(): Tile[][] {
   // Sijung lagoon (inland, west) with a sandy shore
   fill(22, 31, 1, 7, T.SEA);
   fill(21, 32, 6, 7, T.SAND);
-  // a rice paddy of the Hamhung plain, up north
+  // a rice paddy of the Gangcheoldo plain, up north
   fill(4, 8, 2, 6, T.SEA);
   fill(3, 9, 5, 6, T.SAND);
   // tall-grass encounter clearings
@@ -77,7 +77,7 @@ export class SijungCoastScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 9 * TILE + 16;
-  private py = 47 * TILE + 16;   // default: enter from the south (Wonsan side), a few tiles inside
+  private py = 47 * TILE + 16;   // default: enter from the south (Haesol side), a few tiles inside
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -98,7 +98,7 @@ export class SijungCoastScene extends Phaser.Scene {
     },
     {
       key: 'sj-deok', name: 'Paddy Farmer Deok', col: 8, row: 22, color: 0x6a8a3a, label: 'Farmer',
-      line: "The Hamhung plain feeds the whole northeast. My beasts work these paddies — and they don't back down!",
+      line: "The Gangcheoldo plain feeds the whole northeast. My beasts work these paddies — and they don't back down!",
       pokemon: JSON.stringify([{ id: 626, level: 66 }, { id: 241, level: 67 }, { id: 465, level: 67 }]), expPool: 2100,
     },
     {
@@ -108,7 +108,7 @@ export class SijungCoastScene extends Phaser.Scene {
     },
     {
       key: 'sj-cheolsu', name: 'Steelworker Cheolsu', col: 10, row: 8, color: 0x6a6f7a, label: 'Steel\nWorker',
-      line: "Off-shift from the Hamhung works. You'll want to be tough before you reach the steel city — try me first!",
+      line: "Off-shift from the Gangcheoldo works. You'll want to be tough before you reach the steel city — try me first!",
       pokemon: JSON.stringify([{ id: 208, level: 68 }, { id: 462, level: 69 }]), expPool: 2100,
     },
   ];
@@ -159,11 +159,11 @@ export class SijungCoastScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(9.5 * TILE, 51.4 * TILE, tr('↓ Wonsan'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(9.5 * TILE, 0.7 * TILE, tr('↑ Hamhung'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9.5 * TILE, 51.4 * TILE, tr('↓ Haesol'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(9.5 * TILE, 0.7 * TILE, tr('↑ Gangcheoldo'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
     this.add.text(3.5 * TILE, 26 * TILE, tr('시중호\n(Sijung Lagoon)'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000066', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     this.add.text(21.5 * TILE, 34 * TILE, tr('동해\nEast Sea'), { fontSize: '8px', color: '#eaf6ff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(3.5 * TILE, 12 * TILE, tr('함흥 평야\nHamhung Plain'), { fontSize: '8px', color: '#fff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(3.5 * TILE, 12 * TILE, tr('강철도 평야\nHamhung Plain'), { fontSize: '8px', color: '#fff', align: 'center', backgroundColor: '#00000055', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawIcons() {
@@ -175,12 +175,12 @@ export class SijungCoastScene extends Phaser.Scene {
     lg.fillStyle(0xffe066); lg.fillRect(lx - 3, ly - 8, 22, 9);
     this.add.text(lx + 8, ly - 12, '🗼 등대', { fontSize: '8px', color: '#fff', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
 
-    // Hamhung steelworks smokestacks on the northern horizon
+    // Gangcheoldo steelworks smokestacks on the northern horizon
     const sg = this.add.graphics().setDepth(6);
     const sx = 2 * TILE + 4, sy = 1 * TILE + 8;
     sg.fillStyle(0x555a63); sg.fillRect(sx, sy, 40, 18);
     for (let i = 0; i < 3; i++) { sg.fillStyle(0x6a7078); sg.fillRect(sx + 4 + i * 13, sy - 22, 7, 24); sg.fillStyle(0xd8d8d8, 0.55); sg.fillCircle(sx + 7 + i * 13, sy - 26, 6); }
-    this.add.text(sx + 20, sy - 34, tr('🏭 Hamhung Steelworks'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
+    this.add.text(sx + 20, sy - 34, tr('🏭 Gangcheoldo Steelworks'), { fontSize: '8px', color: '#fff', backgroundColor: '#00000099', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
   }
 
   private drawTrainers() {
@@ -310,7 +310,7 @@ export class SijungCoastScene extends Phaser.Scene {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     const nearCentre = this.px > 6 * TILE && this.px < 13 * TILE;
-    // South → back to Wonsan (arrive at its north road).
+    // South → back to Haesol (arrive at its north road).
     if (this.py > (ROWS - 1) * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -318,7 +318,7 @@ export class SijungCoastScene extends Phaser.Scene {
         this.scene.start('WonsanCityScene');
       });
     }
-    // North → on to Hamhung (arrive at its south road).
+    // North → on to Gangcheoldo (arrive at its south road).
     if (this.py < 1 * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

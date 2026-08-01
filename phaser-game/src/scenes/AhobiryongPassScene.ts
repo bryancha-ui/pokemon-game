@@ -9,9 +9,9 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Ahobiryong Pass (아호비령 고개) ──────────────────────────────────────────────
-// The high mountain crossing that carries the circuit from Nampo on the West Sea
-// over the peninsula's granite spine down toward Wonsan on the East Sea: pine
+// ── Bukpung Pass (북풍 고개) ──────────────────────────────────────────────
+// The high mountain crossing that carries the circuit from Parangpo on the West Sea
+// over the peninsula's granite spine down toward Haesol on the East Sea: pine
 // forests, sheer cliffs, a snow-fed stream crossed by a plank bridge, a wayfarers'
 // stone cairn (돌탑) at the summit, wild highland Pokémon and hardy mountain trainers.
 
@@ -80,7 +80,7 @@ export class AhobiryongPassScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 11 * TILE + 16;
-  private py = 47 * TILE + 16;   // default: enter from the south (Nampo side), a few tiles inside the edge
+  private py = 47 * TILE + 16;   // default: enter from the south (Parangpo side), a few tiles inside the edge
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -170,10 +170,10 @@ export class AhobiryongPassScene extends Phaser.Scene {
     for (let i = 0; i < 5; i++) { cg.fillStyle(i % 2 ? 0x7a7064 : 0x8f867a, 1); const w = 22 - i * 3.5; cg.fillEllipse(cx, cy - i * 7, w, 6); }
     this.add.text(cx, cy - 44, '돌탑', { fontSize: '8px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(11.5 * TILE, 51.4 * TILE, tr('↓ Nampo'), {
+    this.add.text(11.5 * TILE, 51.4 * TILE, tr('↓ Parangpo'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(11.5 * TILE, 0.7 * TILE, tr('↑ Wonsan'), {
+    this.add.text(11.5 * TILE, 0.7 * TILE, tr('↑ Haesol'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -217,7 +217,7 @@ export class AhobiryongPassScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('⛰ Ahobiryong Pass (아호비령 고개)'), {
+    this.add.text(this.scale.width / 2, 22, tr('⛰ Bukpung Pass (북풍 고개)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
@@ -305,7 +305,7 @@ export class AhobiryongPassScene extends Phaser.Scene {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     const nearCentre = this.px > 9 * TILE && this.px < 15 * TILE;
-    // South → back to Nampo (arrive at its north road).
+    // South → back to Parangpo (arrive at its north road).
     if (this.py > (ROWS - 1) * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -313,7 +313,7 @@ export class AhobiryongPassScene extends Phaser.Scene {
         this.scene.start('NampoCityScene');
       });
     }
-    // North → on to Wonsan (arrive at its south road).
+    // North → on to Haesol (arrive at its south road).
     if (this.py < 1 * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

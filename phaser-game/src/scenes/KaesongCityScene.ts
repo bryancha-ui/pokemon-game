@@ -10,11 +10,11 @@ import { PartySystem } from '../systems/PartySystem';
 import { hasMapae, awardMapae } from '../data/Mapae';
 import { markTrainerPortrait } from '../data/BattlePortraits';
 
-// ── POST-LEAGUE NORTH — Kaesong (개성), an 어사대 circuit city ──────────────────────
-// Apolitical: real Kaesong geography only — Songak Mountain, the Sungkyunkwan Confucian
+// ── POST-LEAGUE NORTH — Songhyeon (송현), an 어사대 circuit city ──────────────────────
+// Apolitical: real Songhyeon geography only — Songak Mountain, the Sungkyunkwan Confucian
 // academy (here the 어사대 Hall), ginseng fields, and the Seonjukgyo stone bridge over a
 // mountain stream. The 어사대장 (Inspectorate Chief) tests the visiting southern Champion;
-// clearing the exam earns the Kaesong 마패. Template for the other seven circuit cities.
+// clearing the exam earns the Songhyeon 마패. Template for the other seven circuit cities.
 
 const T = { GROUND: 0, PATH: 1, BUILDING: 2, GRASS: 3, WATER: 4, BRIDGE: 5, TREE: 6, GINSENG: 7, FLOWER: 8, ROCK: 9 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -34,7 +34,7 @@ const BUILDINGS: Building[] = [
 ];
 
 const CHIEF = { col: 18, row: 11 };   // 어사대장 stands in the 어사대 Hall doorway (door at col 18, row 11)
-// Kaesong's challenge isn't a battle — the old Confucian academy tests the MIND first.
+// Songhyeon's challenge isn't a battle — the old Confucian academy tests the MIND first.
 // Chief Hyeon poses a short oral examination; answer well to earn the right to duel him.
 const QUIZ: { q: string; a: boolean }[] = [
   { q: 'True or false: a Water-type move is super-effective against a Ground-type Pokémon.', a: true },
@@ -56,12 +56,12 @@ function buildMap(): Tile[][] {
   // Streets
   fill(12, 14, 1, COLS - 1, T.PATH);   // main east-west road (over the bridge)
   fill(11, ROWS, 17, 19, T.PATH);      // south road to the plaza / exit
-  fill(0, 13, 12, 14, T.PATH);         // north road → Nampo (the circuit continues)
+  fill(0, 13, 12, 14, T.PATH);         // north road → Parangpo (the circuit continues)
 
   // Buildings
   for (const b of BUILDINGS) { fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING); set(b.doorRow, b.doorCol, T.PATH); }
 
-  // Ginseng fields (Kaesong's famous crop) — south quarters
+  // Ginseng fields (Songhyeon's famous crop) — south quarters
   fill(16, 20, 2, 8, T.GINSENG);
   fill(16, 20, 24, 31, T.GINSENG);
 
@@ -75,7 +75,7 @@ function buildMap(): Tile[][] {
 
 export class KaesongCityScene extends Phaser.Scene {
   private map!: Tile[][];
-  // Kaesong's real buildings get named 3D models — Poké Mart + Pokémon Center
+  // Songhyeon's real buildings get named 3D models — Poké Mart + Pokémon Center
   // reuse the custom Higgsfield models, the 어사대 Hall uses the palace model.
   // onlyNamedBuildings erases every OTHER detected block (the Songak Mountain
   // backdrop shapes) instead of extruding stray free-asset buildings.
@@ -123,7 +123,7 @@ export class KaesongCityScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'KaesongCityScene');
 
-    // Returned from the exam victorious → award the Kaesong 마패 (once).
+    // Returned from the exam victorious → award the Songhyeon 마패 (once).
     if (this.registry.get('trainerDefeated_eosa-kaesong') && !hasMapae(this.registry, 'kaesong')) {
       awardMapae(this.registry, 'kaesong');
       this.time.delayedCall(500, () => {
@@ -131,7 +131,7 @@ export class KaesongCityScene extends Phaser.Scene {
         this.dialog.show([
           '어사대장 Hyeon: ...Composed. Adaptable. You read the exam, not just the battle. The southern Champion is no rumour.',
           '어사대장 Hyeon presents a small bronze horse-tablet — a 마패.',
-          '🐎 You received the Kaesong 마패! (1 of 8 the Northern League requires.)',
+          '🐎 You received the Songhyeon 마패! (1 of 8 the Northern League requires.)',
           '어사대장 Hyeon: Seven Chiefs remain, across the northern provinces. Earn all eight and the League gate at the far north will know you by them.',
         ], () => { this.cutsceneActive = false; });
       });
@@ -140,7 +140,7 @@ export class KaesongCityScene extends Phaser.Scene {
       this.time.delayedCall(600, () => {
         this.cutsceneActive = true;
         this.dialog.show([
-          'You arrive in Kaesong (개성) — old Koryo capital, terraced under Songak Mountain, its ginseng fields green to the ridgelines.',
+          'You arrive in Songhyeon (송현) — old Koryo capital, terraced under Songak Mountain, its ginseng fields green to the ridgelines.',
           'The Seonjukgyo bridge arches over the stream toward the 어사대 Hall, once a Confucian academy.',
           'A robed inspector waits on its steps, hands folded. This is the first of the north\'s eight tests.',
         ], () => { this.cutsceneActive = false; });
@@ -236,7 +236,7 @@ export class KaesongCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 340, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏯 Kaesong (개성)'), {
+    this.add.text(this.scale.width / 2, 22, tr('🏯 Songhyeon (송현)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
@@ -287,7 +287,7 @@ export class KaesongCityScene extends Phaser.Scene {
     });
   }
 
-  /** The 어사대장's regional exam → the Kaesong battle → 마패. */
+  /** The 어사대장's regional exam → the Songhyeon battle → 마패. */
   private checkChief() {
     const near = Math.hypot(this.px - (CHIEF.col * TILE + 16), this.py - (CHIEF.row * TILE + 16)) < TILE * 1.5;
     if (!near) { if (!this.nearBuilding()) this.enterPrompt.setVisible(false); return; }
@@ -295,7 +295,7 @@ export class KaesongCityScene extends Phaser.Scene {
       this.enterPrompt.setText(`${tr('SPACE:')} ${speakerName('어사대장 Hyeon')}`).setVisible(true);
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
-      this.dialog.show(['어사대장 Hyeon: Kaesong has taken your measure. The next province waits — carry the 마패 with honour.'],
+      this.dialog.show(['어사대장 Hyeon: Songhyeon has taken your measure. The next province waits — carry the 마패 with honour.'],
         () => { this.cutsceneActive = false; });
       return;
     }
@@ -305,13 +305,13 @@ export class KaesongCityScene extends Phaser.Scene {
       if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
       this.cutsceneActive = true; this.enterPrompt.setVisible(false);
       const intro = this.registry.get('KaesongQuizSeen') ? [] : [
-        '어사대장 Hyeon: Before any duel — the 어사대 of Kaesong tests the mind. This hall was a Confucian academy long before it examined trainers.',
+        '어사대장 Hyeon: Before any duel — the 어사대 of Songhyeon tests the mind. This hall was a Confucian academy long before it examined trainers.',
         'Hyeon: Answer three questions truly. A Champion should understand the world they battle in. Consider each one.'];
       this.registry.set('KaesongQuizSeen', true);
       this.dialog.show(intro, () => this.runQuiz(0, 0));
       return;
     }
-    this.enterPrompt.setText(tr('SPACE: take the Kaesong exam')).setVisible(true);
+    this.enterPrompt.setText(tr('SPACE: take the Songhyeon exam')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     this.dialog.show([
@@ -350,7 +350,7 @@ export class KaesongCityScene extends Phaser.Scene {
         this.registry.set('KaesongMissionDone', true);
         this.dialog.show([
           `어사대장 Hyeon: ${correct} of ${QUIZ.length}. A clear and ordered mind. The academy is satisfied.`,
-          'Hyeon: Wisdom before force — that is Kaesong\'s way. When you are ready, present yourself for the duel and the 마패.',
+          'Hyeon: Wisdom before force — that is Songhyeon\'s way. When you are ready, present yourself for the duel and the 마패.',
         ], () => { this.cutsceneActive = false; });
       } else {
         this.dialog.show([
@@ -405,7 +405,7 @@ export class KaesongCityScene extends Phaser.Scene {
         this.scene.start('PyeongyangCityScene');
       });
     }
-    // North → out onto Ryesong Valley, the river road up to Nampo.
+    // North → out onto Yeoul Valley, the river road up to Parangpo.
     if (this.py < 1.2 * TILE && this.px > 11.5 * TILE && this.px < 14 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

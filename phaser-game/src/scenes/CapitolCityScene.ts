@@ -19,8 +19,11 @@ const C = {
 type CTile = typeof C[keyof typeof C];
 
 const TILE  = 32;
-const CCOLS = 48;
-const CROWS = 72;
+// So-ol is the national capital: keep the original western core intact for old
+// save coordinates, then extend the city east and south with two new districts.
+// The footprint grows from 48×72 (3,456 tiles) to 64×84 (5,376 tiles).
+const CCOLS = 64;
+const CROWS = 84;
 
 const CITY_COLORS: Record<CTile, number> = {
   [C.ROAD]:     0x5a5a5a,
@@ -37,6 +40,24 @@ const CITY_COLORS: Record<CTile, number> = {
   [C.GRASS]:    0x55aa44,
 };
 const SOLID_C: Set<CTile> = new Set([C.BUILDING, C.TOWER, C.WATER, C.WALL]);
+
+interface CapitalLandmark {
+  label: string;
+  x: number; y: number; w: number; h: number;
+  model: string;
+  wallColor: number; roofColor: number;
+}
+
+/** Non-enterable civic monuments. Each footprint is solid in 2D and is also
+ *  published to the overworld mirror, which fits the named GLB to the plot. */
+const CAPITAL_LANDMARKS: CapitalLandmark[] = [
+  { label: 'Royal Archives',         x: 52, y: 4,  w: 9,  h: 10, model: 'hanok',       wallColor: 0xd9c39a, roofColor: 0x31584c },
+  { label: 'National Assembly Hall', x: 52, y: 20, w: 10, h: 12, model: 'league',      wallColor: 0xe3d5b8, roofColor: 0x8f2e2e },
+  { label: 'Onnuri National Museum', x: 52, y: 44, w: 10, h: 7,  model: 'contesthall', wallColor: 0xd8d1c5, roofColor: 0x4b6078 },
+  { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'shrine',      wallColor: 0xcaa574, roofColor: 0x314d3a },
+  { label: 'National Library',       x: 35, y: 72, w: 10, h: 7,  model: 'palace',      wallColor: 0xe0cfaa, roofColor: 0x315a70 },
+  { label: 'So-ol Central Station',  x: 52, y: 72, w: 9,  h: 7,  model: 'tower',       wallColor: 0xbfcbd5, roofColor: 0x334d70 },
+];
 
 function buildCityMap(): CTile[][] {
   const R = C.ROAD, SW = C.SIDEWALK, B = C.BUILDING, T = C.TOWER,
@@ -59,6 +80,9 @@ function buildCityMap(): CTile[][] {
 
   // ── Main N-S boulevard (cols 22-25) ──────────────────────────────────────
   fill(0, 22, CROWS, 26, R);
+  // A second ceremonial axis serves the expanded government quarter and its
+  // eastern bridge, so the capital reads as a broad metropolis.
+  fill(0, 47, CROWS, 51, R);
 
   // ── E-W cross roads ────────────────────────────────────────────────────────
   fill(16, 2, 18, CCOLS - 2, R);   // gym approach road
@@ -82,12 +106,19 @@ function buildCityMap(): CTile[][] {
   fill(0, 9, 18, 13, R);            // left N-S passage (rows 0-17, cols 9-12)
   for (let c = 22; c < 26; c++) { map[0][c] = TR; map[1][c] = TR; }  // close old central opening
 
+  // Royal archives garden (new eastern district, rows 2-15).
+  fill(2, 47, 16, CCOLS - 2, PK);
+
   // ── Tower district (rows 18-33) ──────────────────────────────────────────
   fill(18, 2, 33, CCOLS - 2, SW);
   fill(19, 31, 33, 44, T);          // Capitol Tower
 
   // Tower entrance gap
   for (let c = 36; c < 40; c++) map[32][c] = SW;
+
+  // The national assembly faces a ceremonial stone square opposite the old
+  // palace and modern Capitol Tower.
+  fill(18, 46, 34, CCOLS - 2, PL);
 
   // ── Ancient Palace (rows 18-30, cols 3-21) ───────────────────────────────
   fill(18, 3, 31, 21, WL);           // outer palace wall
@@ -98,6 +129,7 @@ function buildCityMap(): CTile[][] {
   fill(36, 2, 43, CCOLS - 2, W);
   // Bridges
   fill(36, 21, 43, 27, BR);     // main bridge
+  fill(36, 46, 43, 52, BR);     // government bridge
 
   // ── Commercial district (rows 43-53) ─────────────────────────────────────
   fill(43, 2, 53, CCOLS - 2, SW);
@@ -112,6 +144,9 @@ function buildCityMap(): CTile[][] {
   // Market row (west)
   fill(44, 15, 52, 21, B);
   for (let c = 17; c < 19; c++) map[51][c] = SW;  // market door
+
+  // Museum promenade on the expanded east bank.
+  fill(43, 46, 53, CCOLS - 2, PL);
 
   // ── Central plaza (rows 53-58) ────────────────────────────────────────────
   fill(53, 2, 58, CCOLS - 2, PL);
@@ -143,16 +178,24 @@ function buildCityMap(): CTile[][] {
 
   // ── Entry arch markers ────────────────────────────────────────────────────
   fill(69, 2, CROWS - 2, CCOLS - 2, SW);
+  // Southern cultural ward: shrine gardens to the west and a civic forecourt
+  // with the national library and central station to the east.
+  fill(71, 2, 81, 20, PK);
+  fill(71, 33, 81, CCOLS - 2, PL);
   for (let c = 22; c < 26; c++) map[70][c] = R;
 
   // Stamp roads back on top
   for (let r = 0; r < CROWS; r++) {
     for (let c = 22; c <= 25; c++) map[r][c] = R;
+    for (let c = 47; c <= 50; c++) map[r][c] = R;
   }
   fill(16, 2, 18, CCOLS - 2, R);
   fill(34, 2, 36, CCOLS - 2, R);
   fill(51, 2, 53, CCOLS - 2, R);
   fill(68, 2, 70, CCOLS - 2, R);
+  // Restore both bridge decks after stamping the boulevards through the river.
+  fill(36, 21, 43, 27, BR);
+  fill(36, 46, 43, 52, BR);
 
   // ── West trailhead: the central road runs through the tree border to the
   //    map's west edge — the dedicated path to Scholars' Road (post-8th badge).
@@ -164,6 +207,10 @@ function buildCityMap(): CTile[][] {
   // its south), never through them.
   fill(60, 26, 63, CCOLS, R);
   for (const c of [27, 31, 35, 39, 43]) map[59][c] = TR;   // tree-lined north kerb
+
+  // Landmark footprints are placed last so district paving cannot overwrite
+  // their solid collision area. None intersects an exit or boulevard.
+  for (const lm of CAPITAL_LANDMARKS) fill(lm.y, lm.x, lm.y + lm.h, lm.x + lm.w, B);
 
   void G; void T;
   return map;
@@ -214,7 +261,7 @@ export class CapitolCityScene extends Phaser.Scene {
   private locationText!: Phaser.GameObjects.Text;
 
   private px = 24 * TILE + 16;
-  private py = 67 * TILE + 16;   // start near south entrance (kept clear of the south-exit row)
+  private py = 80 * TILE + 16;   // start at the expanded south entrance
   private facing = 0; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -223,10 +270,30 @@ export class CapitolCityScene extends Phaser.Scene {
 
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
-  public buildingPlots = LOCATIONS.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
+  public buildingPlots = [...LOCATIONS, ...CAPITAL_LANDMARKS]
+    .map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
   /** Landmarks use their named GLBs; the residential district's apartment blocks
    *  still rise as procedural 3D buildings (keep the district's 3D design). */
   public onlyNamedBuildings = false;
+  /** Keep tall capital landmarks visible while allowing the camera to fade any
+   *  structure that moves between the player and the view. */
+  public clearSight3D = true;
+  /** Procedural 3D monuments complete the civic spaces between named GLBs. */
+  public propPlots = [
+    { x: 22.5, y: 80, kind: 'arch' as const, scale: 1.35 },
+    { x: 47.5, y: 16, kind: 'arch' as const, scale: 1.15 },
+    { x: 31.5, y: 55, kind: 'obelisk' as const, scale: 1.25 },
+    { x: 39.5, y: 55, kind: 'statue' as const, scale: 1.15 },
+    { x: 55.5, y: 55, kind: 'statue' as const, scale: 1.05 },
+    ...[20, 28, 46, 58, 74].flatMap(row => [46, 51].map(x => (
+      { x, y: row, kind: 'lantern' as const, scale: 0.9 }
+    ))),
+    ...[72, 76, 80].flatMap(row => [20, 27].map(x => (
+      { x, y: row, kind: 'streetlamp' as const, scale: 0.95 }
+    ))),
+    ...([[44, 63], [48, 64], [55, 63], [59, 65], [3, 75], [18, 75]] as [number, number][])
+      .map(([x, y]) => ({ x, y, kind: 'cherry' as const, scale: 0.95 })),
+  ];
   private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
   private eastArmed = false;    // east avenue → Han River Park
   private readonly SPEED = 120;
@@ -400,7 +467,7 @@ export class CapitolCityScene extends Phaser.Scene {
         learnLine,
         'Professor Song: The HM stays in your Bag — teach Fly to any Flying-type. Then open the Town Map, pick a city you\'ve visited, and Fly straight there.',
         'Professor Song: And there\'s something else. Word from beyond the northern border — the Northern League, and the eight 어사대 provinces that guard the road to it. They\'ve heard of you.',
-        'Professor Song: They say a coach runs from Waterfall City now, all the way up to Kaesong — first of the eight. If you mean to go north, that bus is how you\'ll get there. Go — see the region you saved, and the one beyond it.',
+        'Professor Song: They say a coach runs from Waterfall City now, all the way up to Songhyeon — first of the eight. If you mean to go north, that bus is how you\'ll get there. Go — see the region you saved, and the one beyond it.',
       ], () => {
         this.walkProfessor(prof, tag, stopY, startY, () => {
           prof.destroy(); tag.destroy();
@@ -725,6 +792,26 @@ export class CapitolCityScene extends Phaser.Scene {
         fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
       }).setOrigin(0.5, 1).setDepth(3);
     }
+
+    // Non-enterable civic landmarks still receive a clear 2D silhouette for
+    // fallback mode; in 3D these same plots are replaced by their named models.
+    for (const lm of CAPITAL_LANDMARKS) {
+      const x = lm.x * TILE, y = lm.y * TILE;
+      const w = lm.w * TILE, h = lm.h * TILE;
+      g.fillStyle(lm.wallColor); g.fillRoundedRect(x, y, w, h, 8);
+      g.lineStyle(3, 0x5a4528, 0.9); g.strokeRoundedRect(x, y, w, h, 8);
+      g.fillStyle(lm.roofColor);
+      g.fillTriangle(x - 5, y + 2, x + w / 2, y - TILE, x + w + 5, y + 2);
+      g.fillStyle(0xe7c96a, 0.9); g.fillRect(x + 8, y + 8, w - 16, 5);
+      g.fillStyle(0x8ec8e8, 0.75);
+      for (let wx = 12; wx < w - 12; wx += 24)
+        for (let wy = 22; wy < h - 12; wy += 22)
+          g.fillRect(x + wx, y + wy, 14, 12);
+      this.add.text((lm.x + lm.w / 2) * TILE, (lm.y - 1.25) * TILE, tr(lm.label), {
+        fontSize: '9px', color: '#ffe9a6', backgroundColor: '#182033cc',
+        padding: { x: 4, y: 2 },
+      }).setOrigin(0.5, 1).setDepth(4);
+    }
   }
 
   private addCityLabels() {
@@ -733,10 +820,15 @@ export class CapitolCityScene extends Phaser.Scene {
         fontSize: `${size}px`, color: '#222', backgroundColor: '#ffffff88', padding: { x: 3, y: 1 },
       }).setOrigin(0.5).setDepth(4);
 
-    lbl('Capitol City\n수도시', 24, 72 - 3, 10);
+    lbl('So-ol City\n소올 시티 · 온누리의 수도', 24, CROWS - 3, 10);
     lbl('Han River', 24, 39);
-    lbl('Central Plaza', 24, 55);
+    lbl('Grand Civic Plaza', 33, 55);
     lbl('Residential District', 38, 62);
+    lbl('Royal District', 55, 16);
+    lbl('Government Quarter', 48, 33);
+    lbl('Museum Promenade', 48, 50);
+    lbl('Memorial Gardens', 53, 66);
+    lbl('Cultural Ward', 24, 70);
   }
 
   // ── Player ────────────────────────────────────────────────────────────────
@@ -829,7 +921,15 @@ export class CapitolCityScene extends Phaser.Scene {
     this.checkNorthExit();
     this.checkEastExit();
     this.checkWestExit();
-    this.locationText.setText(`🏙 Capitol City${this.py < 20 * TILE ? ' — Gym District' : this.py < 40 * TILE ? ' — Tower Quarter' : this.py < 55 * TILE ? ' — Commercial' : ''}`);
+    const district = this.py >= 69 * TILE ? 'Cultural Ward'
+      : this.px >= 46 * TILE && this.py < 35 * TILE ? 'Government Quarter'
+        : this.px >= 46 * TILE && this.py < 54 * TILE ? 'Museum Promenade'
+          : this.py < 18 * TILE ? 'Gym District'
+            : this.py < 35 * TILE ? 'Royal District'
+              : this.py < 44 * TILE ? 'Han River'
+                : this.py < 58 * TILE ? 'Commercial District'
+                  : 'Grand Civic Plaza';
+    this.locationText.setText(`${tr('🏙 Capitol City')} — ${tr(district)}`);
   }
 
   private checkNorthExit() {

@@ -6,7 +6,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Sinuiju Ice Cave (신의주 얼음 동굴) ────────────────────────────────────────────
+// ── Binghagwan Ice Cave (빙하관 얼음 동굴) ────────────────────────────────────────────
 // 어사대장 Amrok's exam trial: a FIVE-stage ice cavern under the frozen Amrok. Every
 // chamber floor is sheer ice — step on it and you SLIDE until a boulder or wall stops
 // you. Each stage is a zig-zag slide puzzle (up · across · down · across · up), the
@@ -60,7 +60,7 @@ function buildMap(): Tile[][] {
   // so the way weaves: entrance col7 → col1 → col13 → col1 → col13 → col1 → heart col7.
   m[45][STAGES[0].entry] = T.SNOW;                                   // entrance → stage 1
   for (let i = 0; i < STAGES.length; i++) m[STAGES[i].top - 1][STAGES[i].exit] = T.SNOW; // stage i exit
-  m[49][SPAWN_COL] = T.EXIT;                                         // entrance floor → back to Sinuiju
+  m[49][SPAWN_COL] = T.EXIT;                                         // entrance floor → back to Binghagwan
 
   for (const s of STAGES) for (const [r, c] of s.rocks) m[r][c] = T.ROCK;
   return m;
@@ -108,7 +108,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
       this.cutscene = true;
       this.time.delayedCall(500, () => this.dialog.show([
         'The Ice-Bound Beartic is driven from the cavern. The groaning of the ice fades to a deep, settled quiet.',
-        '어사대장 Amrok will want to know the crossing is safe. Head back to Sinuiju.',
+        '어사대장 Amrok will want to know the crossing is safe. Head back to Binghagwan.',
       ], () => {
         this.registry.set('SinuijuCitySceneReturnX', 13 * 32 + 16);
         this.registry.set('SinuijuCitySceneReturnY', 12 * 32 + 16);
@@ -133,7 +133,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(SPAWN_COL * TILE + 16, 49 * TILE + 4, tr('↓ Sinuiju'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(SPAWN_COL * TILE + 16, 49 * TILE + 4, tr('↓ Binghagwan'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     STAGES.forEach((s, i) => this.add.text(s.entry === 1 ? 1.6 * TILE : 12.4 * TILE, (s.top + 2) * TILE, `STAGE ${i + 1}`, { fontSize: '8px', color: '#0a3a4a', fontStyle: 'bold', backgroundColor: '#cdeafacc', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(5));
     this.add.text(7.5 * TILE, 47 * TILE, tr('얼음길 — 미끄러진다!\n(ice slides you until a rock stops you)'), { fontSize: '8px', color: '#0a3a4a', align: 'center', backgroundColor: '#cdeafaee', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
     if (!this.beaten) this.add.text(BEAR_COL * TILE + 16, 0.5 * TILE, '❄ 얼음 동굴의 심장부 ❄', { fontSize: '9px', color: '#bfe8ff', fontStyle: 'bold', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
@@ -172,7 +172,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 440, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('❄ 신의주 얼음 동굴 — 5 stages to the heart'), {
+    this.add.text(this.scale.width / 2, 22, tr('❄ 빙하관 얼음 동굴 — 5 stages to the heart'), {
       fontSize: '13px', color: '#eaf6ff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD/Arrows: move  (slide back down the entry side to escape any stage)  M: menu'), {

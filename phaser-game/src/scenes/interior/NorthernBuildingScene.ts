@@ -15,7 +15,7 @@ interface NBuilding {
 
 export const NORTH_BUILDINGS: Record<string, NBuilding> = {
   'nampo-tavern': {
-    title: "남포 뱃사람 주막 · Nampo Sailors' Tavern", npc: 'Barkeep', color: 0x2f6f9a, female: false,
+    title: "파랑포 뱃사람 주막 · Parangpo Sailors' Tavern", npc: 'Barkeep', color: 0x2f6f9a, female: false,
     floor: 0xd8b884, wall: 0x5a3a2a, accent: 0x3a6a9a, heal: true,
     lines: ["Barkeep: Ahoy! In from the salt air, are ye? Sit by the fire — first bowl of clam broth's on the house.",
             'You and your team share a hot meal by the hearth. Everyone is rested and fully restored!'],
@@ -27,7 +27,7 @@ export const NORTH_BUILDINGS: Record<string, NBuilding> = {
             'You sip a sweet iced tea while your Pokémon nap in the sun. Everyone feels refreshed and fully healed!'],
   },
   'hamhung-bathhouse': {
-    title: '함흥 대중목욕탕 · Hamhung Bathhouse', npc: 'Attendant', color: 0x8a5a6a, female: true,
+    title: '강철도 대중목욕탕 · Gangcheoldo Bathhouse', npc: 'Attendant', color: 0x8a5a6a, female: true,
     floor: 0xcfe0e8, wall: 0x6a7a8a, accent: 0x88ccff, heal: true,
     lines: ['Attendant: 어서오세요! A steaming soak washes the forge-soot right off. Take your team in.',
             'You and your Pokémon steam away the day\'s aches. Everyone emerges glowing — fully restored!'],
@@ -45,7 +45,7 @@ export const NORTH_BUILDINGS: Record<string, NBuilding> = {
             'Trader: The bridge to the far bank is broken, but the trade never stops. Careful who you deal with here, Champion.'],
   },
   'samjiyon-lodge': {
-    title: '삼지연 고원 산장 · Samjiyon Highland Lodge', npc: 'Lodge Keeper', color: 0xaab0d0, female: true,
+    title: '삼호 고원 산장 · Samho Highland Lodge', npc: 'Lodge Keeper', color: 0xaab0d0, female: true,
     floor: 0xe8eef4, wall: 0x6a7590, accent: 0xaef0ff, heal: true,
     lines: ['Lodge Keeper: Come in from the cold! The larch fire\'s roaring and the tea is hot.',
             'You thaw out by the great stone hearth as snow drifts past the windows. Your team is warm and fully healed!'],

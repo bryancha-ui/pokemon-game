@@ -26,12 +26,12 @@ export interface EosaCity {
   intro: string[]; examLead: string; award: string[];
   mission?: EosaMission;      // a threat the Chief sends you to quell BEFORE the exam
   examBattle?: ExamBattle;    // pass the test by beating THIS opponent (e.g. a 노스단 officer) instead of the Chief
-  water?: EosaWater;          // a Surf-only sea (e.g. Nampo's West Sea, where the Gyarados lurks)
+  water?: EosaWater;          // a Surf-only sea (e.g. Parangpo's West Sea, where the Gyarados lurks)
   trainers?: EosaTrainer[];   // roadside trainers to battle (e.g. on the way to the shore)
   npcs?: EosaNpc[];           // ambient townsfolk who chat when talked to (fills out a town)
   size?: { cols: number; rows: number };   // enlarge the city beyond the 28×20 default
   landmarks?: EosaLandmark[]; // extra decorative structures (docks, lighthouse, monuments…)
-  buildingModels?: string[];  // named 3D models to cycle for this city's generic building landmarks (else free CC0 assets) — e.g. Sinuiju reuses the snowy Seorae models
+  buildingModels?: string[];  // named 3D models to cycle for this city's generic building landmarks (else free CC0 assets) — e.g. Binghagwan reuses the snowy Seorae models
   sideExit?: { col: number; scene: string; label: string; icon?: string; road?: boolean };   // a path down the south edge to another map (beach, mine…)
   accessRoads?: EosaAccessRoad[]; // authored spurs from the main street to remote landmarks
   prev?: Exit; next?: Exit;   // south / north neighbours on the circuit
@@ -150,7 +150,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       .map(l => {
         const kind = l.kind ?? 'building';
         // Cities can opt their generic buildings into a named-model pool (e.g.
-        // Sinuiju's snowy Seorae models); otherwise they fall back to free assets.
+        // Binghagwan's snowy Seorae models); otherwise they fall back to free assets.
         let model = MODEL[kind];
         if (!model && pool && (kind === 'building' || kind === 'monument' || kind === 'pavilion')) {
           model = pool[bi++ % pool.length];
@@ -159,7 +159,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
       });
     return [...std, ...marks];
   }
-  /** Rail landmarks (e.g. Sinuiju's line to the 미지의 대륙) become real 3D track —
+  /** Rail landmarks (e.g. Binghagwan's line to the 미지의 대륙) become real 3D track —
    *  gravel bed, sleepers and steel rails — laid along the landmark's span. */
   public get propPlots(): { x: number; y: number; kind: 'rail'; len: number }[] {
     return (this.cfg.landmarks ?? [])
@@ -447,7 +447,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     return true;
   }
 
-  // ── Sea, whirlpools & roadside trainers (config-driven; e.g. Nampo's West Sea) ──
+  // ── Sea, whirlpools & roadside trainers (config-driven; e.g. Parangpo's West Sea) ──
   private carveWater() {
     const w = this.cfg.water; if (!w) return;
     for (let r = w.r1; r < w.r2; r++) {

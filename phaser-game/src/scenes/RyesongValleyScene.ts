@@ -9,11 +9,11 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Ryesong Valley (예성강 들녘) ────────────────────────────────────────────────
-// The iconic river-plain road linking Kaesong (south) to the port of Nampo (north):
-// rice paddies behind earthen dikes, the Ryesong crossed by a stone-arch bridge,
+// ── Yeoul Valley (예성강 들녘) ────────────────────────────────────────────────
+// The iconic river-plain road linking Songhyeon (south) to the port of Parangpo (north):
+// rice paddies behind earthen dikes, the Yeoul crossed by a stone-arch bridge,
 // reed beds thick with wild Pokémon, orchard rows, and a roadside 장승 spirit-post.
-// Level band sits between the Kaesong and Nampo Chiefs (mid-60s).
+// Level band sits between the Songhyeon and Parangpo Chiefs (mid-60s).
 
 const T = { GRASS: 0, PATH: 1, TALLGRASS: 2, TREE: 3, DIKE: 4, ROCK: 5, WATER: 6, BRIDGE: 7 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -56,7 +56,7 @@ function buildMap(): Tile[][] {
   paddy(6, 2, 6, 6);   paddy(6, 16, 6, 6);
   paddy(40, 2, 6, 6);  paddy(40, 16, 6, 6);
 
-  // The Ryesong River cuts across the middle; a stone-arch bridge carries the road.
+  // The Yeoul River cuts across the middle; a stone-arch bridge carries the road.
   fill(25, 29, 0, COLS, T.WATER);
   fill(25, 29, 10, 14, T.BRIDGE);
   fill(24, 25, 9, 15, T.DIKE); fill(29, 30, 9, 15, T.DIKE);  // bridge approaches
@@ -88,7 +88,7 @@ export class RyesongValleyScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private dialog!: DialogBox;
   private px = 12 * TILE + 16;
-  private py = 52 * TILE + 16;   // default: enter from the south (Kaesong side)
+  private py = 52 * TILE + 16;   // default: enter from the south (Songhyeon side)
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
   private cycling = false;
@@ -106,13 +106,13 @@ export class RyesongValleyScene extends Phaser.Scene {
     },
     {
       key: 'rv-miyeon', name: 'Angler Miyeon', col: 16, row: 30, color: 0x2f7fb0, label: 'Angler',
-      line: "Best fishing on the whole Ryesong, right off this bridge. Care to wager a battle on who's got the bigger catch?",
+      line: "Best fishing on the whole Yeoul, right off this bridge. Care to wager a battle on who's got the bigger catch?",
       pokemon: JSON.stringify([{ id: 184, level: 63 }, { id: 340, level: 63 }, { id: 119, level: 64 }]),
       expPool: 2000,
     },
     {
       key: 'rv-jinho', name: 'Youngster Jinho', col: 12, row: 21, color: 0xcc7a3a, label: 'Youngster',
-      line: "Walked all the way from Kaesong! My team's tougher than it looks, mister!",
+      line: "Walked all the way from Songhyeon! My team's tougher than it looks, mister!",
       pokemon: JSON.stringify([{ id: 264, level: 61 }, { id: 508, level: 62 }]),
       expPool: 1600,
     },
@@ -184,10 +184,10 @@ export class RyesongValleyScene extends Phaser.Scene {
     jang.fillStyle(0x000000); jang.fillRect(-4, -30, 3, 3); jang.fillRect(1, -30, 3, 3); jang.fillRect(-3, -24, 6, 2);
     this.add.text(9 * TILE + 4, 30 * TILE - 20, '장승', { fontSize: '8px', color: '#ffe', backgroundColor: '#00000088', padding: { x: 2, y: 1 } }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(12 * TILE, 53.4 * TILE, tr('↓ Kaesong'), {
+    this.add.text(12 * TILE, 53.4 * TILE, tr('↓ Songhyeon'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Nampo'), {
+    this.add.text(12 * TILE, 0.7 * TILE, tr('↑ Parangpo'), {
       fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -231,7 +231,7 @@ export class RyesongValleyScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 420, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🌾 Ryesong Valley (예성강 들녘)'), {
+    this.add.text(this.scale.width / 2, 22, tr('🌾 Yeoul Valley (예성강 들녘)'), {
       fontSize: '14px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: talk  M: menu'), {
@@ -319,7 +319,7 @@ export class RyesongValleyScene extends Phaser.Scene {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     const nearCentre = this.px > 9 * TILE && this.px < 15 * TILE;
-    // South → back to Kaesong (arrive at its north road).
+    // South → back to Songhyeon (arrive at its north road).
     if (this.py > (ROWS - 1) * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -327,7 +327,7 @@ export class RyesongValleyScene extends Phaser.Scene {
         this.scene.start('KaesongCityScene');
       });
     }
-    // North → on to Nampo (arrive at its south road).
+    // North → on to Parangpo (arrive at its south road).
     if (this.py < 1 * TILE && nearCentre) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

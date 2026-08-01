@@ -490,7 +490,7 @@ export const POKEDEX: DexEntry[] = [
     spriteUrl: D + 'komodread.png', dist: 'Wild', where: 'Server ruins & sunbaked badlands' },
   { num: 133, key: 'noeryong', name: 'Noeryong', type1: 'electric', type2: 'dragon', ability: 'Lightning Rod',
     dexText: '내려치는 우뢰 — the Striking Thunder. A vast thunder-dragon ringed in storm-spines; the blazing star at its tail is a captured bolt it hurls down to split mountains.',
-    spriteUrl: D + 'noeryong.png', dist: 'Legendary', where: '천지 (Cheonji Lake) — Rangrim altar', legendary: true },
+    spriteUrl: D + 'noeryong.png', dist: 'Legendary', where: '천지 (Cheonji Lake) — Onseong altar', legendary: true },
   { num: 134, key: 'merrloween', name: 'Merrloween', type1: 'ghost', type2: 'fairy', ability: 'Cursed Body',
     dexText: 'Based on a candy necklace. Its body is breathtakingly sweet — but bite in and your soul is slowly drawn out, sealed as a grudge inside one of its little wrapped candies. It curses its prey with the power of resentment.',
     spriteUrl: D + 'merrloween.png', dist: 'Wild', where: 'Haunted candy shops & autumn lanes' },

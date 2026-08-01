@@ -9,9 +9,9 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Rangrim Range (낭림산맥) — a five-map mountain ─────────────────────────────────
-// Onnuri's Mt. Coronet, climbed as FIVE stacked, connected maps between Sinuiju
-// (foot) and Samjiyon (peak): rocky foothills → a pitch-dark lower cavern → the mystic
+// ── Onseong Range (온성산맥) — a five-map mountain ─────────────────────────────────
+// Onnuri's Mt. Coronet, climbed as FIVE stacked, connected maps between Binghagwan
+// (foot) and Samho (peak): rocky foothills → a pitch-dark lower cavern → the mystic
 // Altar Hall at its heart → a windswept snowfield → the summit. Each map's north edge
 // opens onto the next map's south edge, so the whole spine reads as one ascent.
 
@@ -251,7 +251,7 @@ export class RangrimBaseScene extends Phaser.Scene {
     // After the league, the altar leads to Sacred Peak (Hwanwoong)
     this.cutsceneActive = true;
     this.dialog.show([
-      '노스단 has sealed every pass up the Rangrim Mountains — but they never knew about this.',
+      '노스단 has sealed every pass up the Onseong Mountains — but they never knew about this.',
       'You lay your hand on the 고대 제단 (Ancient Altar). The stone hums with divine energy, and it responds to your presence.',
       'The hidden stair opens — a shortcut straight past the blockade to the Sacred Peak, where 환웅 (Hwanwoong) awaits...',
     ], () => {
@@ -412,10 +412,10 @@ function summit(): Tile[][] {
   return m;
 }
 
-// ── The five connected maps (south = Sinuiju foot, north = Samjiyon peak) ─────────
+// ── The five connected maps (south = Binghagwan foot, north = Samho peak) ─────────
 const FOOTHILLS: RgConfig = {
-  key: 'RangrimFoothillsScene', returnKey: 'rgFoot', title: '⛰ 낭림산 기슭 (Rangrim Foothills)', bgm: 'baekdupass',
-  southLabel: '↓ Sinuiju', northLabel: '↑ 하부 동굴 (Lower Cavern)',
+  key: 'RangrimFoothillsScene', returnKey: 'rgFoot', title: '⛰ 온성산 기슭 (Onseong Foothills)', bgm: 'baekdupass',
+  southLabel: '↓ Binghagwan', northLabel: '↑ 하부 동굴 (Lower Cavern)',
   encTiles: [T.TALLGRASS], enc: [
     { id: 75, weight: 14, minLevel: 73, maxLevel: 74, isCustom: false, catchRate: 120 },
     { id: 67, weight: 12, minLevel: 73, maxLevel: 74, isCustom: false, catchRate: 90 },
@@ -425,7 +425,7 @@ const FOOTHILLS: RgConfig = {
     { id: 359, weight: 4, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 60 },
   ],
   trainers: [
-    { key: 'rg-daljae', name: 'Hiker Daljae', col: 6, row: 13, color: 0x8a6a3a, label: 'Hiker', line: "Forty years I've climbed the Rangrim spine. The mountain keeps its counsel — and so do my Pokémon!", pokemon: team([75, 73], [42, 73], [76, 74]), expPool: 2600 },
+    { key: 'rg-daljae', name: 'Hiker Daljae', col: 6, row: 13, color: 0x8a6a3a, label: 'Hiker', line: "Forty years I've climbed the Onseong spine. The mountain keeps its counsel — and so do my Pokémon!", pokemon: team([75, 73], [42, 73], [76, 74]), expPool: 2600 },
     { key: 'rg-boksun', name: 'Camper Boksun', col: 16, row: 18, color: 0x6a8a3a, label: 'Camper', line: "Base camp's just here. The wild things get bolder the higher you climb — better toughen up now!", pokemon: team([217, 73], [67, 74]), expPool: 2400 },
   ],
   prev: rgExit('SinuijuCityScene', 'SinuijuCityScene', { x: 13.5 * 32, y: 2 * 32 + 16 }),
@@ -434,7 +434,7 @@ const FOOTHILLS: RgConfig = {
   decorate: (s) => s.label('▲ 동굴 입구 (cave mouth)', MIDCOL, 4),
 };
 const CAVERN: RgConfig = {
-  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 낭림 하부 동굴 (Lower Cavern)', bgm: 'baekdupass', darkCave: true,
+  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 온성 하부 동굴 (Lower Cavern)', bgm: 'baekdupass', darkCave: true,
   southLabel: '↓ 기슭 (Foothills)', northLabel: '↑ 제단의 방 (Altar Hall)',
   encTiles: [T.CAVE], enc: [
     { id: 42, weight: 15, minLevel: 73, maxLevel: 75, isCustom: false, catchRate: 120 },
@@ -455,7 +455,7 @@ const CAVERN: RgConfig = {
   decorate: (s) => { const wf = s.add.graphics().setDepth(6); wf.fillStyle(0xffffff, 0.5); wf.fillEllipse(3.5 * 32, 19.5 * 32, 24, 10); s.label('폭포', 4, 20, '#eaffff'); },
 };
 const ALTAR: RgConfig = {
-  key: 'RangrimAltarScene', returnKey: 'rgAltar', title: '⛰ 낭림 제단의 방 (Altar Hall)', bgm: 'sacredpeak', darkCave: true,
+  key: 'RangrimAltarScene', returnKey: 'rgAltar', title: '⛰ 온성 제단의 방 (Altar Hall)', bgm: 'sacredpeak', darkCave: true,
   southLabel: '↓ 하부 동굴 (Cavern)', northLabel: '↑ 설원 능선 (Snow Ridge)',
   encTiles: [T.CAVE], enc: [
     { id: 35, weight: 14, minLevel: 74, maxLevel: 75, isCustom: false, catchRate: 120 },
@@ -500,7 +500,7 @@ const ALTAR: RgConfig = {
   },
 };
 const SNOWFIELD: RgConfig = {
-  key: 'RangrimSnowfieldScene', returnKey: 'rgSnow', title: '⛰ 낭림 설원 능선 (Snow Ridge)', bgm: 'baekdupass',
+  key: 'RangrimSnowfieldScene', returnKey: 'rgSnow', title: '⛰ 온성 설원 능선 (Snow Ridge)', bgm: 'baekdupass',
   southLabel: '↓ 제단의 방 (Altar Hall)', northLabel: '↑ 정상 (Summit)',
   encTiles: [T.SNOW], enc: [
     { id: 461, weight: 13, minLevel: 74, maxLevel: 76, isCustom: false, catchRate: 90 },
@@ -520,8 +520,8 @@ const SNOWFIELD: RgConfig = {
   decorate: (s) => s.label('❄ 능선 (windswept ridge)', MIDCOL, 24, '#eaf6ff'),
 };
 const SUMMIT: RgConfig = {
-  key: 'RangrimSummitScene', returnKey: 'rgPeak', title: '⛰ 낭림산 정상 (Rangrim Summit)', bgm: 'sacredpeak',
-  southLabel: '↓ 설원 능선 (Snow Ridge)', northLabel: '↑ Samjiyon',
+  key: 'RangrimSummitScene', returnKey: 'rgPeak', title: '⛰ 온성산 정상 (Onseong Summit)', bgm: 'sacredpeak',
+  southLabel: '↓ 설원 능선 (Snow Ridge)', northLabel: '↑ Samho',
   encTiles: [T.SNOW], enc: [
     { id: 461, weight: 12, minLevel: 75, maxLevel: 77, isCustom: false, catchRate: 90 },
     { id: 362, weight: 11, minLevel: 75, maxLevel: 77, isCustom: false, catchRate: 90 },
@@ -531,7 +531,7 @@ const SUMMIT: RgConfig = {
     { id: 359, weight: 7, minLevel: 76, maxLevel: 77, isCustom: false, catchRate: 60 },
   ],
   trainers: [
-    { key: 'rg-hyeol', name: '노스단 Scout Hyeol', col: 11, row: 6, color: 0x24242e, label: '노스단\nScout', line: "So the Inspectorate's dog reaches the very peak. Beyond lies Samjiyon — and 노스단's road to the sacred mountain. You go no further!", pokemon: team([430, 75], [452, 76], [461, 76]), expPool: 2900 },
+    { key: 'rg-hyeol', name: '노스단 Scout Hyeol', col: 11, row: 6, color: 0x24242e, label: '노스단\nScout', line: "So the Inspectorate's dog reaches the very peak. Beyond lies Samho — and 노스단's road to the sacred mountain. You go no further!", pokemon: team([430, 75], [452, 76], [461, 76]), expPool: 2900 },
   ],
   prev: rgExit('RangrimSnowfieldScene', 'rgSnow', NORTH_END),
   next: rgExit('SamjiyonCityScene', 'SamjiyonCityScene', { x: 13.5 * 32, y: 17 * 32 + 16 }),

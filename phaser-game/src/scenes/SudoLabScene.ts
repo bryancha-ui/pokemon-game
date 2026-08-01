@@ -80,10 +80,10 @@ export class SudoLabScene extends Phaser.Scene {
         'The Northern League throws a party in your honour — the whole city out in the streets, cheering the Champion who united north and south.',
         'Rival: I never thought anyone would beat Taewang. But it\'s you — so of course you did.',
         '📟 Then, mid-celebration, your Pokédex screams an alarm. Prof. Song\'s face drains of colour.',
-        'Prof. Song: It\'s 노스단. They\'re moving on the Rangrim Mountains — RIGHT NOW — racing to reach 환웅 (Hwanwoong), the Sovereign Who Descended, before anyone can stop them.',
+        'Prof. Song: It\'s 노스단. They\'re moving on the Onseong Mountains — RIGHT NOW — racing to reach 환웅 (Hwanwoong), the Sovereign Who Descended, before anyone can stop them.',
         'Prof. Song: They\'ve sealed the whole range behind their lines. But there is another way in — the 고대 제단 (Ancient Altar) opens a hidden stair straight to the Sacred Peak.',
         'Rival: The party can wait. Go — we\'ll hold things here. Beat them to the top, Champion!',
-        '🎉 The music fades behind you as you race for the Rangrim Mountains...',
+        '🎉 The music fades behind you as you race for the Onseong Mountains...',
       ], () => {
         this.busy = false;
         this.cameras.main.fadeOut(500, 0, 0, 0, () => {

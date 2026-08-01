@@ -9,7 +9,7 @@ import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
 // ── Fogbound Manor (안개저택) ─────────────────────────────────────────────────────
-// The abandoned manor on the fog road at the edge of Chongjin, reached from town.
+// The abandoned manor on the fog road at the edge of Muyeonhang, reached from town.
 // Dark halls thick with drifting mist and guttering candles, haunted by ghost
 // Pokémon — and deep inside, the Fog-Wraith Gengar that Chief Mukyeong sends you
 // to face. Beating it clears the way to the 노스단 officer's exam back in town.
@@ -154,7 +154,7 @@ export class FogboundManorScene extends Phaser.Scene {
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
-    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Chongjin'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Muyeonhang'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private spawnThreat() {
@@ -376,7 +376,7 @@ export class FogboundManorScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // Manor door (north edge, centre) → back down the fog road to Chongjin.
+    // Manor door (north edge, centre) → back down the fog road to Muyeonhang.
     if (this.py < 1.5 * TILE && this.px > 8 * TILE && this.px < 14 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

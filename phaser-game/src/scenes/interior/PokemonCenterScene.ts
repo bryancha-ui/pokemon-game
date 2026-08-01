@@ -9,7 +9,7 @@ export class PokemonCenterScene extends BaseInteriorScene {
   constructor() { super({ key: 'PokemonCenterScene' }); }
 
   create() {
-    // This Pokémon Center is shared by several overworld scenes (Waterfall, Kaesong…);
+    // This Pokémon Center is shared by several overworld scenes (Waterfall, Songhyeon…);
     // honour whoever sent us here so the south exit returns to the right city.
     const ret = this.registry.get('pcReturnScene');
     this.returnSceneKey = (typeof ret === 'string' && ret) ? ret : 'WorldMapScene';

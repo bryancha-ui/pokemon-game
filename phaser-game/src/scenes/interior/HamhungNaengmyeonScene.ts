@@ -4,7 +4,7 @@ import { PartySystem } from '../../systems/PartySystem';
 import { playJingle } from '../../systems/Music';
 import { tr } from '../../systems/i18n';
 
-// ── 함흥냉면 (Hamhung Naengmyeon restaurant) ─────────────────────────────────────
+// ── 강철도냉면 (Gangcheoldo Naengmyeon restaurant) ─────────────────────────────────────
 // A little noodle house off the steel-city square. Order a bowl of the famous
 // chewy sweet-potato-starch cold noodles (₩700) — a hearty meal fully restores
 // the whole party, a cheap and cheerful alternative to the Pokémon Center.
@@ -17,7 +17,7 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
   constructor() { super({ key: 'HamhungNaengmyeonScene' }); }
 
   create() {
-    this.returnSceneKey = 'HamhungCityScene';   // exit back into Hamhung, at the restaurant door
+    this.returnSceneKey = 'HamhungCityScene';   // exit back into Gangcheoldo, at the restaurant door
     super.create();
   }
 
@@ -30,7 +30,7 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
     for (let r = 3; r < this.ROWS; r++) { const p = this.tile(0, r); g.lineBetween(p.x, p.y, p.x + this.COLS * 32, p.y); }
 
     // Sign
-    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, tr('🍜  함흥냉면  ·  HAMHUNG NAENGMYEON  🍜'), {
+    this.add.text(this.scale.width / 2, this.tile(0, 0).y + 16, tr('🍜  강철도냉면  ·  HAMHUNG NAENGMYEON  🍜'), {
       fontSize: '13px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(10);
 
@@ -43,7 +43,7 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
     this.add.text(this.tile(11, 2).x, this.tile(11, 2).y + 6, '♨', { fontSize: '12px' });
     // menu board
     this.drawRect(g, 6, 0, 4, 1, 0x2a1a12, 0x000000);
-    this.add.text(this.tile(8, 0).x, this.tile(8, 0).y + 16, `함흥냉면  ${formatMoney(BOWL_COST)}`, { fontSize: '9px', color: '#ffe44e' }).setOrigin(0.5).setDepth(10);
+    this.add.text(this.tile(8, 0).x, this.tile(8, 0).y + 16, `강철도냉면  ${formatMoney(BOWL_COST)}`, { fontSize: '9px', color: '#ffe44e' }).setOrigin(0.5).setDepth(10);
 
     // ── Dining tables (leave the centre aisle clear) ──
     for (const [c, r] of [[2, 6], [12, 6], [2, 9], [12, 9]] as [number, number][]) {
@@ -81,8 +81,8 @@ export class HamhungNaengmyeonScene extends BaseInteriorScene {
 
   protected onInteract(_npc: NPC): void {
     this.dialog.show([
-      '사장님: 어서 오세요! Welcome to the finest 함흥냉면 house in the city!',
-      `사장님: A bowl of our famous 함흥냉면 — chewy sweet-potato noodles in a fiery cold broth. ${formatMoney(BOWL_COST)} a bowl. Care for one?`,
+      '사장님: 어서 오세요! Welcome to the finest 강철도냉면 house in the city!',
+      `사장님: A bowl of our famous 강철도냉면 — chewy sweet-potato noodles in a fiery cold broth. ${formatMoney(BOWL_COST)} a bowl. Care for one?`,
     ], () => {
       this.dialog.showChoice(
         () => this.order(),

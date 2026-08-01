@@ -8,7 +8,7 @@ import { PartySystem } from '../systems/PartySystem';
 import { mapaeCount, awardMapae } from '../data/Mapae';
 import { markTrainerPortrait } from '../data/BattlePortraits';
 
-// ── POST-GAME I — Pyeongseong, the Northern Capital ──────────────────────────────
+// ── POST-GAME I — Gwanmunseong, the Northern Capital ──────────────────────────────
 // A stern, conservative, GRAND capital: wide ceremonial avenues, colossal grey-granite
 // towers, a great obelisk and a bronze statue, formal banners on the building faces.
 // An old and proud city that prizes order and decorum — uniformed City Wardens keep a
@@ -61,13 +61,13 @@ const PYEONGSEONG_CHIEF = {
   expPool: 12000,
   intro: [
     'Supreme Gwang: You have come far, southern Champion. Seven 마패 adorn your belt — each a testament to your worth.',
-    'Supreme Gwang: But Pyeongseong demands more. The north demands perfection. Only those who can defeat the Supreme Commander may claim the final 마패.',
+    'Supreme Gwang: But Gwanmunseong demands more. The north demands perfection. Only those who can defeat the Supreme Commander may claim the final 마패.',
     'Supreme Gwang: Your journey ends here — either in triumph, or in defeat. Show me your true power!',
   ],
   defeat: [
     'Supreme Gwang: ...Incredible. I have not met a trainer of your caliber in decades.',
     'Supreme Gwang: You have mastered every trial the north could devise. The final 마패 is yours.',
-    '🐎 You received the Pyeongseong 마패 — the eighth and final tablet!',
+    '🐎 You received the Gwanmunseong 마패 — the eighth and final tablet!',
     'Supreme Gwang: With all eight 마패 in your possession, the Northern League awaits. Go forth and claim your destiny.',
   ],
 };
@@ -152,7 +152,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
   private playArrival() {
     this.cutsceneActive = true;
     this.dialog.show([
-      'You enter Pyeongseong, the northern capital — a vast, disciplined city of grey-granite towers and broad ceremonial avenues under a cold, clear sky. A great bronze figure presides over the central plaza.',
+      'You enter Gwanmunseong, the northern capital — a vast, disciplined city of grey-granite towers and broad ceremonial avenues under a cold, clear sky. A great bronze figure presides over the central plaza.',
       'Uniformed City Wardens stand at their posts, still and formal, and incline their heads as you pass.',
       'City Warden Cheol: Southern Champion. You are expected. This is an old and proud capital — here, everything keeps its order, and guests keep their decorum.',
       'Warden Cheol: Supreme Commander Gwang awaits in the palace grounds. He holds the final 마패 — defeat him, and the Northern League lies beyond.',
@@ -236,7 +236,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     p.fillStyle(0xd8b44a); p.fillRect(px - 5, pBase - 70, 10, 10);            // palace spire
     this.add.text(px, pBase + 16, tr('The Palace'), { fontSize: '9px', color: '#ffe88a', backgroundColor: '#00000099', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(4);
 
-    this.add.text(15.5 * TILE, 4.4 * TILE, tr('평성 · PYEONGSEONG'), {
+    this.add.text(15.5 * TILE, 4.4 * TILE, tr('관문성 · PYEONGSEONG'), {
       fontSize: '14px', color: '#ffe88a', backgroundColor: '#000000aa', padding: { x: 8, y: 3 },
     }).setOrigin(0.5).setDepth(5);
   }
@@ -308,7 +308,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
-    // DEV: preview the 어사대 circuit template (Kaesong). Temporary until the circuit is wired.
+    // DEV: preview the 어사대 circuit template (Songhyeon). Temporary until the circuit is wired.
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.K).on('down', () => {
       if (this.cutsceneActive) return;
       this.cutsceneActive = true;
@@ -318,7 +318,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 460, 32, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🏙 Pyeongseong — the Northern Capital'), {
+    this.add.text(this.scale.width / 2, 22, tr('🏙 Gwanmunseong — the Northern Capital'), {
       fontSize: '13px', color: '#fff', fontStyle: 'bold',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 40, '', {
@@ -383,7 +383,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
         const n = mapaeCount(this.registry);
         this.dialog.show([
           `Supreme Gwang: You have ${n} of the 7 regional 마패. Return when you have mastered all seven regional trials.`,
-          'Supreme Gwang: Only then will you be worthy of challenging the Supreme Commander of Pyeongseong.',
+          'Supreme Gwang: Only then will you be worthy of challenging the Supreme Commander of Gwanmunseong.',
         ], () => { this.cutsceneActive = false; });
       }
       return;
@@ -443,8 +443,8 @@ export class PyeongyangCityScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (this.py > (ROWS - 1) * TILE) {
-      // South road off Pyeongseong (평성) descends through the capital checkpoint toward
-      // Wonsan (원산) — NOT back down to the southern Capitol.
+      // South road off Gwanmunseong (관문성) descends through the capital checkpoint toward
+      // Haesol (해솔) — NOT back down to the southern Capitol.
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
         this.registry.set('pyeongseongCheckpointReturnX', 7.5 * 32);

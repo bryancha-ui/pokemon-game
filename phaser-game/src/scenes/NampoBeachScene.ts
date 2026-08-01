@@ -8,8 +8,8 @@ import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 
-// ── Nampo Beach (남포 해변) ─────────────────────────────────────────────────────
-// The West-Sea shore reached from Nampo city. Surf out across the bay — dodging
+// ── Parangpo Beach (파랑포 해변) ─────────────────────────────────────────────────────
+// The West-Sea shore reached from Parangpo city. Surf out across the bay — dodging
 // whirlpools that its 부하 (underlings) churn up as they wander around the ocean —
 // to confront the rampaging Gyarados battering the barrage. Drift into a whirlpool
 // and a weak underling drags you into a battle, and you're swept back to the sand.
@@ -121,7 +121,7 @@ export class NampoBeachScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
     this.add.text(COLS * TILE / 2, 0.6 * TILE, tr('⛴ West-Sea Barrage'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000088', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(10 * TILE, 20.6 * TILE, tr('↓ Nampo'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(10 * TILE, 20.6 * TILE, tr('↓ Parangpo'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawWhirlpools() {

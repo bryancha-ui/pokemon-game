@@ -8,8 +8,8 @@ import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
 import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemon';
 
-// ── Hamhung Ore Mine (함흥 광산) ─────────────────────────────────────────────────
-// The pit that feeds Hamhung's furnaces, reached by the paved pit road at the south
+// ── Gangcheoldo Ore Mine (강철도 광산) ─────────────────────────────────────────────────
+// The pit that feeds Gangcheoldo's furnaces, reached by the paved pit road at the south
 // edge of town. Rock galleries, ore veins, molten runoff and minecart rails — and
 // deep in the tunnels, the berserk Steelix that Chief Cheolju sends you to subdue.
 
@@ -44,7 +44,7 @@ function buildMap(): Tile[][] {
   // rock walls around the gallery
   fill(0, 2, 0, COLS, T.WALL); fill(ROWS - 2, ROWS, 0, COLS, T.WALL);
   fill(0, ROWS, 0, 2, T.WALL); fill(0, ROWS, COLS - 2, COLS, T.WALL);
-  fill(0, 2, 9, 13, T.FLOOR);   // mouth of the mine (entrance from Hamhung)
+  fill(0, 2, 9, 13, T.FLOOR);   // mouth of the mine (entrance from Gangcheoldo)
   // minecart rails running down the central gallery to the Steelix
   for (let r = 2; r < 18; r++) { m[r][10] = T.TRACK; m[r][11] = T.TRACK; }
   // rock pillars & ore veins off to the sides
@@ -130,7 +130,7 @@ export class HamhungMineScene extends Phaser.Scene {
     if (this.textures.exists(key)) this.textures.remove(key);
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
-    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Hamhung'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(11 * TILE, 0.6 * TILE, tr('↑ Gangcheoldo'), { fontSize: '9px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private spawnThreat() {
@@ -174,7 +174,7 @@ export class HamhungMineScene extends Phaser.Scene {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', { fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 } }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
     this.add.rectangle(this.scale.width / 2, 22, 360, 30, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('⛏ Hamhung Ore Mine (함흥 광산)'), { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, 22, tr('⛏ Gangcheoldo Ore Mine (강철도 광산)'), { fontSize: '13px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD move  SPACE act  M menu   ·   Subdue the Steelix in the deep gallery'), { fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
 
@@ -279,7 +279,7 @@ export class HamhungMineScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // Mine mouth (north edge, centre) → back up the pit road to Hamhung.
+    // Mine mouth (north edge, centre) → back up the pit road to Gangcheoldo.
     if (this.py < 1.5 * TILE && this.px > 8 * TILE && this.px < 14 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

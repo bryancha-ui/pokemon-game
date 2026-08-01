@@ -6,11 +6,11 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { mapaeCount } from '../data/Mapae';
 
-// ── 평성 관문 (Pyeongseong Checkpoint) ────────────────────────────────────────────
-// The capital's outer gate on the road up from Wonsan. Royal wardens inspect every
+// ── 관문성 관문 (Gwanmunseong Checkpoint) ────────────────────────────────────────────
+// The capital's outer gate on the road up from Haesol. Royal wardens inspect every
 // traveller's 마패 (the eight inspectorate tablets). Only a bearer of the seven
-// regional 마패 is passed north into Pyeongseong; the eighth is earned from Supreme Gwang.
-// South returns to Wonsan.
+// regional 마패 is passed north into Gwanmunseong; the eighth is earned from Supreme Gwang.
+// South returns to Haesol.
 
 const T = { SNOW: 0, ROCK: 1, WALL: 2, GATE: 3, PAVE: 4 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -19,7 +19,7 @@ const COLORS: Record<Tile, number> = {
   [T.SNOW]: 0xd8dce6, [T.ROCK]: 0x3a3640, [T.WALL]: 0x4a4a52, [T.GATE]: 0x2a2a30, [T.PAVE]: 0xb9b0c4,
 };
 const SOLID = new Set<Tile>([T.ROCK, T.WALL]);
-const REQUIRED_MAPAE = 7;   // the seven regional 마패 (the eighth is earned from Supreme Gwang in Pyeongseong)
+const REQUIRED_MAPAE = 7;   // the seven regional 마패 (the eighth is earned from Supreme Gwang in Gwanmunseong)
 
 function buildMap(): Tile[][] {
   const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.SNOW) as Tile[]);
@@ -29,7 +29,7 @@ function buildMap(): Tile[][] {
   };
   fill(0, ROWS, 0, 2, T.ROCK); fill(0, ROWS, COLS - 2, COLS, T.ROCK);   // side cliffs
   fill(0, 3, 0, COLS, T.WALL);                                          // north rampart
-  fill(0, 3, 7, 9, T.GATE);                                            // the gate to Pyeongseong
+  fill(0, 3, 7, 9, T.GATE);                                            // the gate to Gwanmunseong
   fill(3, ROWS, 6, 10, T.PAVE);                                        // paved avenue up to the gate
   return m;
 }
@@ -94,8 +94,8 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
     g.generateTexture(key, COLS * TILE, ROWS * TILE); g.destroy();
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
 
-    this.add.text(7.5 * TILE, 0.6 * TILE, tr('↑ 평성 (Pyeongseong)'), { fontSize: '10px', color: '#ffe9c0', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
-    this.add.text(7.5 * TILE, (ROWS - 0.6) * TILE, tr('↓ 원산 (Wonsan)'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(7.5 * TILE, 0.6 * TILE, tr('↑ 관문성 (Gwanmunseong)'), { fontSize: '10px', color: '#ffe9c0', backgroundColor: '#00000088', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
+    this.add.text(7.5 * TILE, (ROWS - 0.6) * TILE, tr('↓ 해솔 (Haesol)'), { fontSize: '10px', color: '#fff', backgroundColor: '#3a5a8a99', padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5);
   }
 
   private drawWardens() {
@@ -132,7 +132,7 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.add.rectangle(this.scale.width / 2, 22, 400, 30, 0x000000, 0.6).setScrollFactor(0).setDepth(50);
-    this.add.text(this.scale.width / 2, 22, tr('🛡 평성 관문 (Pyeongseong Checkpoint)'), { fontSize: '13px', color: '#ffe9c0', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
+    this.add.text(this.scale.width / 2, 22, tr('🛡 관문성 관문 (Gwanmunseong Checkpoint)'), { fontSize: '13px', color: '#ffe9c0', fontStyle: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
     this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
@@ -181,16 +181,16 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
         this.cutsceneActive = true;
         this.dialog.show([
           `Royal Warden: ...Seven 마패. The regional inspectorate is satisfied, Champion.`,
-          'Royal Warden: The gate to Pyeongseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.',
+          'Royal Warden: The gate to Gwanmunseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.',
         ], () => { this.cutsceneActive = false; });
       }
-      return;   // gate is open; walking north through it triggers checkExit → Pyeongseong
+      return;   // gate is open; walking north through it triggers checkExit → Gwanmunseong
     }
     // Not enough 마패 — turn the player back.
     this.cutsceneActive = true;
     const n = mapaeCount(this.registry);
     this.dialog.show([
-      `Royal Warden: Halt. None pass into Pyeongseong without the inspectorate's 마패.`,
+      `Royal Warden: Halt. None pass into Gwanmunseong without the inspectorate's 마패.`,
       `Royal Warden: You bear ${n} of the ${REQUIRED_MAPAE} regional tablets. Complete the circuit and return.`,
     ], () => {
       this.py = 8 * TILE + 16;   // push clear of the gate so the warning doesn't re-fire
@@ -201,7 +201,7 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
     if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // North through the open gate → Pyeongseong (only reachable once the wardens clear you).
+    // North through the open gate → Gwanmunseong (only reachable once the wardens clear you).
     if (this.cleared && this.py < 1 * TILE && this.px > 6 * TILE && this.px < 10 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -211,7 +211,7 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
       });
       return;
     }
-    // South → back down to Wonsan.
+    // South → back down to Haesol.
     if (this.py > (ROWS - 1) * TILE && this.px > 5 * TILE && this.px < 11 * TILE) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {

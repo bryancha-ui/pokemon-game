@@ -228,7 +228,7 @@ export class WorldMapScene extends Phaser.Scene {
   /** The city's namesake waterfall at the head of the river (col 15) as a 3D
    *  cascading water curtain. */
   propPlots = [{ x: 15, y: 6, kind: 'waterfall' as const, len: 3 }];
-  /** Vehicles pinned to an exact tile for the 3D engine (the Kaesong bus). */
+  /** Vehicles pinned to an exact tile for the 3D engine (the Songhyeon bus). */
   vehiclePlots!: { x: number; y: number; model: string; rot?: number }[];
   private mapGraphics!: Phaser.GameObjects.Graphics;
   private enterPrompt!: Phaser.GameObjects.Text;
@@ -285,7 +285,7 @@ export class WorldMapScene extends Phaser.Scene {
     // Only those named landmarks should rise in 3D — the filler residential
     // blocks looked like stray red-brick boxes, so drop them from the 3D view.
     this.onlyNamedBuildings = true;
-    // Pin the express bus GLB to its stop (the coach that heads to Kaesong),
+    // Pin the express bus GLB to its stop (the coach that heads to Songhyeon),
     // once it's unlocked, instead of scattering buses on random roads.
     this.vehiclePlots = this.busUnlocked()
       ? [{ x: this.BUS_COL, y: this.BUS_ROW, model: 'bus', rot: Math.PI / 2 }]
@@ -575,10 +575,10 @@ export class WorldMapScene extends Phaser.Scene {
     this.checkTownExit();
   }
 
-  // ── Northern express bus → Kaesong (개성) ──────────────────────────────────
+  // ── Northern express bus → Songhyeon (송현) ──────────────────────────────────
   // Once Phase 1 is done and the North has opened up (the envoy's invitation, or the
   // Onnuri Champion beaten), an inter-regional coach runs from Waterfall City
-  // straight to Kaesong, the first of the eight 어사대 provinces — so the player can
+  // straight to Songhyeon, the first of the eight 어사대 provinces — so the player can
   // return to the northern circuit from the home hub without retracing the whole way.
   private busUnlocked() {
     return !!(this.registry.get('northInviteSeen') || this.registry.get('championDefeated') || this.registry.get('northLeagueDone'));
@@ -599,7 +599,7 @@ export class WorldMapScene extends Phaser.Scene {
     g.fillStyle(0x3a3f52); g.fillRect(x - 16, y - 2, 3, 26);
     g.fillStyle(0x2a6ab0); g.fillRoundedRect(x - 26, y - 8, 22, 12, 2);
     this.add.text(x - 15, y - 2, '🚏', { fontSize: '11px' }).setOrigin(0.5);
-    this.add.text(x + 30, y - 14, tr('🚌 Bus → Kaesong 개성'), {
+    this.add.text(x + 30, y - 14, tr('🚌 Bus → Songhyeon 송현'), {
       fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(7);
   }
@@ -608,13 +608,13 @@ export class WorldMapScene extends Phaser.Scene {
     if (!this.busUnlocked()) return;
     const bx = this.BUS_COL * 32 + 30, by = this.BUS_ROW * 32 + 12;
     if (Math.hypot(this.px - bx, this.py - by) > 32 * 1.8) return;
-    this.enterPrompt.setText(tr('SPACE — 🚌 Express Bus to Kaesong (개성)')).setVisible(true);
+    this.enterPrompt.setText(tr('SPACE — 🚌 Express Bus to Songhyeon (송현)')).setVisible(true);
     if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
       this.enterPrompt.setVisible(false);
       this.cutsceneActive = true;
       this.cutsceneDialog.show([
         '🚌 The northern express coach idles at the stop, engine rumbling.',
-        'Driver: Non-stop to Kaesong — first of the eight 어사대 provinces, up across the old border. Riding with me?',
+        'Driver: Non-stop to Songhyeon — first of the eight 어사대 provinces, up across the old border. Riding with me?',
       ], () => {
         this.cutsceneDialog.showChoice(
           () => this.rideBusToKaesong(),
@@ -640,7 +640,7 @@ export class WorldMapScene extends Phaser.Scene {
     bus.fillStyle(0x222222); bus.fillCircle(34, 18, 8); bus.fillCircle(126, 18, 8);
     bus.setPosition(-200, H * 0.8 - 6);
     this.tweens.add({ targets: bus, x: W + 240, duration: 3000, ease: 'Sine.easeIn' });
-    const cap = this.add.text(W / 2, H * 0.14, tr('🚌  The express coach rolls north across the old border to Kaesong…'), {
+    const cap = this.add.text(W / 2, H * 0.14, tr('🚌  The express coach rolls north across the old border to Songhyeon…'), {
       fontSize: '15px', color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5, align: 'center', wordWrap: { width: W * 0.8 },
     }).setOrigin(0.5);
     const root = this.add.container(0, 0, [g, bus, cap]).setScrollFactor(0).setDepth(200);

@@ -371,12 +371,12 @@ export class NorthernPlazaScene extends Phaser.Scene {
       this.dialog.show(['League Warden: Eight southern badges first, southerner. Come back a Champion.'], () => { this.cutsceneActive = false; });
       return;
     }
-    // Check for all 8 마패s including Pyeongseong
+    // Check for all 8 마패s including Gwanmunseong
     const currentMapaeCount = mapaeCount(this.registry);
     if (currentMapaeCount < 8) {
       this.dialog.show([
         'League Warden: Halt. The eight 어사대장 must vouch for you — in 마패.',
-        `League Warden: You hold ${currentMapaeCount} of 8 마패. Complete the inspectorate circuit, defeat Supreme Gwang in Pyeongseong, and return.`,
+        `League Warden: You hold ${currentMapaeCount} of 8 마패. Complete the inspectorate circuit, defeat Supreme Gwang in Gwanmunseong, and return.`,
       ], () => { this.cutsceneActive = false; });
       return;
     }

@@ -6,7 +6,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 
 // ── 천지 (Cheonji) — the hidden crater lake ─────────────────────────────────────────
-// A secret reached only through the Ancient Statue in the Rangrim 제단의 방. A vast
+// A secret reached only through the Ancient Statue in the Onseong 제단의 방. A vast
 // frozen caldera lake ringed in snow, peaceful under a gentle sky. A place of deep
 // contemplation where the sacred waters gather in eternal stillness. It returns to RangrimAltarScene.
 
