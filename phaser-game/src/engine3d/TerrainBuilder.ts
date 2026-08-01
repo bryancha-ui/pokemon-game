@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeGrassTufts, makeIceStatue, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
+  makeRocks, makeNosdanHQ, makeStoneLantern, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, toonRamp,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
@@ -748,6 +748,17 @@ export function buildTerrain(
   // city keeps looking like itself.
   const cityfreeDefs = freeBuildings ? propsFor('building').filter(d => d.tags?.includes('cityfree')) : [];
   for (const b of buildings) {
+    // The 노스단 approach names its original painted four-storey facade. Build
+    // that exact single structure procedurally instead of composing several
+    // unrelated generic landmark GLBs.
+    if (b.model === 'nosdan-hq') {
+      const holder = new THREE.Group();
+      holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+      holder.add(makeNosdanHQ(b.w, b.d));
+      group.add(holder);
+      blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+      continue;
+    }
     const def = b.model ? propById(b.model) : null;
     if (def) {
       const holder = new THREE.Group();

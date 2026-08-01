@@ -63,7 +63,8 @@ export class NorthernPlazaScene extends Phaser.Scene {
   private cutsceneActive = false;
   private spawnGuard = false;
   private rivalRunInStarted = false;
-  private readonly SPEED = 130;
+  private readonly SPEED = 130; private readonly RUN = 250;
+  private shiftKey?: Phaser.Input.Keyboard.Key;
 
   constructor() { super('NorthernPlazaScene'); }
 
@@ -173,10 +174,9 @@ export class NorthernPlazaScene extends Phaser.Scene {
     // label(NURSE.col, NURSE.row, -34, '✚ Center');
     // this.drawAttendant(nx, ny, 0xff7799);
 
+    // 2D kiosk removed for the Mart too (3D model present in buildingPlots) — it
+    // otherwise left a flat mart afterimage beside the Pokémon Center in 3D.
     const mx = MART.col * TILE + 16, my = MART.row * TILE + 16;
-    const mb = this.add.graphics().setDepth(4);
-    mb.fillStyle(0xe8e8ee); mb.fillRect(mx - 22, my - 30, 44, 22);
-    mb.fillStyle(0x2a6aca); mb.fillTriangle(mx - 26, my - 30, mx, my - 44, mx + 26, my - 30);
     label(MART.col, MART.row, -34, '🛒 Mart');
     this.drawAttendant(mx, my, 0x2a8a5a);
 
@@ -216,6 +216,7 @@ export class NorthernPlazaScene extends Phaser.Scene {
   private setupInput() {
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = { up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'), left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D') };
+    this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
@@ -248,7 +249,8 @@ export class NorthernPlazaScene extends Phaser.Scene {
     const moving = dx !== 0 || dy !== 0;
     if (moving) {
       const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = this.px + (dx / len) * this.SPEED * dt, ny = this.py + (dy / len) * this.SPEED * dt;
+      const spd = this.shiftKey?.isDown ? this.RUN : this.SPEED;   // hold Shift to run
+      const nx = this.px + (dx / len) * spd * dt, ny = this.py + (dy / len) * spd * dt;
       if (!this.collides(nx, this.py)) this.px = nx;
       if (!this.collides(this.px, ny)) this.py = ny;
       this.walkTimer += delta;

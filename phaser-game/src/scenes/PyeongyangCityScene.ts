@@ -343,7 +343,8 @@ export class PyeongyangCityScene extends Phaser.Scene {
     const moving = dx !== 0 || dy !== 0;
     if (moving) {
       const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = this.px + (dx / len) * this.SPEED * dt, ny = this.py + (dy / len) * this.SPEED * dt;
+      const spd = this.shiftKey?.isDown ? this.RUN : this.SPEED;   // hold Shift to run
+      const nx = this.px + (dx / len) * spd * dt, ny = this.py + (dy / len) * spd * dt;
       if (!this.collides(nx, this.py)) this.px = nx;
       if (!this.collides(this.px, ny)) this.py = ny;
       this.walkTimer += delta;

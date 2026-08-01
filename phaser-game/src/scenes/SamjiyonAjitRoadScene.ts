@@ -10,7 +10,7 @@ import { SaveManager } from '../utils/SaveManager';
 // ── 노스단 아지트 진입로 (Team North HQ Approach) ────────────────────────────────────
 // A separate mountain road climbing off Samjiyon's plateau. At its head — right at the
 // front of the road — looms the four-storey 노스단 아지트, banners snapping in the snow-wind,
-// grunts posted on the switchbacks. Walk to the gate to storm the tower within.
+// grunts posted on the switchbacks. Walk to the gate to storm the headquarters within.
 
 const T = { SNOW: 0, PATH: 1, PINE: 2, ROCK: 3, DRIFT: 4, GATE: 5, BUILDING: 6 } as const;
 type Tile = typeof T[keyof typeof T];
@@ -36,9 +36,8 @@ function buildMap(): Tile[][] {
   fill(25, 27, ROAD_LEFT, 23, T.PATH);
   fill(0, ROWS, 0, 2, T.ROCK);           // west cliff wall
   fill(0, ROWS, 26, COLS, T.ROCK);        // east cliff wall
-  // A full fortress compound: central keep, two palace-sized wings and the
-  // front curtain wall all share one collision silhouette.
-  fill(0, GATE_ROW + 1, 2, 26, T.BUILDING);
+  // The original 2D four-storey HQ remains one large, uninterrupted building.
+  fill(1, GATE_ROW, 6, 23, T.BUILDING);
   fill(GATE_ROW, GATE_ROW + 1, ROAD_LEFT, ROAD_RIGHT, T.PATH); // gate apron
   m[GATE_ROW][GATE_COL] = T.GATE;        // centred, walkable HQ door
   // snow drifts & pines flanking the road
@@ -51,13 +50,9 @@ function buildMap(): Tile[][] {
 interface Sentry { key: string; name: string; col: number; row: number; line: string; pokemon: string; expPool: number; }
 
 export class SamjiyonAjitRoadScene extends Phaser.Scene {
-  // Three separate authored GLBs form a real compound instead of stretching a
-  // single tower: a high central keep flanked by two palace-sized command wings.
-  public buildingPlots = [
-    { x: 9,  y: 0, w: 10, h: 12, model: 'tower' },
-    { x: 2,  y: 4, w: 7,  h: 8,  model: 'palace' },
-    { x: 19, y: 4, w: 7,  h: 8,  model: 'palace' },
-  ];
+  // One authoritative footprint converts the existing painted HQ facade into
+  // its matching purpose-built 3D structure.
+  public buildingPlots = [{ x: 6, y: 1, w: 17, h: 11, model: 'nosdan-hq' }];
   public onlyNamedBuildings = true;
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
@@ -147,52 +142,31 @@ export class SamjiyonAjitRoadScene extends Phaser.Scene {
   }
 
   private drawTower() {
-    // Grand fortress compound: two command wings, a six-storey central keep,
-    // corner watchtowers, a curtain wall and a ceremonial gatehouse.
+    // The original single four-storey HQ facade. Its dedicated 3D counterpart
+    // repeats these exact shapes, colours, windows, banners and central gate.
     const g = this.add.graphics().setDepth(3);
-    const bx = 2 * TILE, by = 0, bw = 24 * TILE, bh = 12 * TILE;
+    const bx = 6 * TILE, by = 1 * TILE, bw = 17 * TILE, bh = 11 * TILE;
     g.fillStyle(0x000000, 0.25); g.fillEllipse(bx + bw / 2, by + bh, bw * 0.8, 14);
-    // Side command wings.
-    g.fillStyle(0x242430, 1); g.fillRect(bx, by + 4 * TILE, 7 * TILE, 8 * TILE);
-    g.fillRect(bx + 17 * TILE, by + 4 * TILE, 7 * TILE, 8 * TILE);
-    g.fillStyle(0x343445, 1); g.fillRect(bx + 8, by + 4 * TILE + 7, 7 * TILE - 16, 8 * TILE - 14);
-    g.fillRect(bx + 17 * TILE + 8, by + 4 * TILE + 7, 7 * TILE - 16, 8 * TILE - 14);
-    // Raised central keep.
-    g.fillStyle(0x1c1c28, 1); g.fillRect(bx + 7 * TILE, by, 10 * TILE, 12 * TILE);
-    g.fillStyle(0x303040, 1); g.fillRect(bx + 7 * TILE + 9, by + 6, 10 * TILE - 18, 12 * TILE - 12);
-    // Curtain wall joins the whole facade and funnels into the gatehouse.
-    g.fillStyle(0x15151e, 1); g.fillRect(bx, by + 9.5 * TILE, bw, 2.5 * TILE);
-    g.fillStyle(0x292937, 1); g.fillRect((GATE_COL - 2) * TILE, by + 8.5 * TILE, 5 * TILE, 3.5 * TILE);
-    // roof battlements across wings and central keep
-    g.fillStyle(0x111119, 1);
-    for (let x = bx; x < bx + bw; x += TILE) {
-      const central = x >= bx + 7 * TILE && x < bx + 17 * TILE;
-      g.fillRect(x + 3, by + (central ? 0 : 4 * TILE - 8), TILE - 7, 9);
-    }
-    // six central floors, four floors in each wing, all with red-lit windows
+    g.fillStyle(0x22222e, 1); g.fillRect(bx, by, bw, bh);
+    g.fillStyle(0x303040, 1); g.fillRect(bx + 9, by + 6, bw - 18, bh - 12);
+    // Four storeys and three red-lit windows on each floor.
     g.fillStyle(0x14141c, 1);
-    for (let i = 1; i < 6; i++) g.fillRect(bx + 7 * TILE + 8, by + i * (bh / 6), 10 * TILE - 16, 3);
-    for (let i = 1; i < 4; i++) {
-      g.fillRect(bx + 6, by + 4 * TILE + i * (8 * TILE / 4), 7 * TILE - 12, 3);
-      g.fillRect(bx + 17 * TILE + 6, by + 4 * TILE + i * (8 * TILE / 4), 7 * TILE - 12, 3);
-    }
+    for (let i = 1; i < 4; i++) g.fillRect(bx + 8, by + i * (bh / 4), bw - 16, 3);
     g.fillStyle(0xff5a6a, 0.85);
-    for (let f = 0; f < 6; f++) for (let w = 0; w < 4; w++) g.fillRect(bx + 7.7 * TILE + w * 70, by + 13 + f * (bh / 6), 15, 10);
-    for (const wx of [bx + 0.8 * TILE, bx + 3 * TILE, bx + 5.2 * TILE, bx + 17.8 * TILE, bx + 20 * TILE, bx + 22.2 * TILE]) {
-      for (let f = 0; f < 3; f++) g.fillRect(wx, by + 4.6 * TILE + f * 53, 14, 10);
-    }
+    for (let f = 0; f < 4; f++) for (const w of [0.3, 0.5, 0.7])
+      g.fillRect(bx + bw * w - 10, by + 20 + f * (bh / 4), 20, 13);
     // gate
     g.fillStyle(0x5a1024, 1); g.fillRect(GATE_COL * TILE, GATE_ROW * TILE, TILE, TILE);
     g.fillStyle(0x8a1a34, 1); g.fillRect(GATE_COL * TILE + 4, GATE_ROW * TILE + 4, TILE - 8, TILE - 6);
 
-    // Crimson 노스단 banners
+    // Crimson 노스단 banners from the original image.
     const bn = this.add.graphics().setDepth(4);
-    for (const cx of [bx + 18, bx + bw - 28, (GATE_COL - 2) * TILE + 12, (GATE_COL + 2) * TILE + 4]) {
-      bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + (cx < bx + 2 * TILE || cx > bx + bw - 2 * TILE ? 4.3 * TILE : 8.7 * TILE), 12, 82);
-      bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 6, by + (cx < bx + 2 * TILE || cx > bx + bw - 2 * TILE ? 5.5 * TILE : 10 * TILE), 4);
+    for (const cx of [bx + 18, bx + bw - 30]) {
+      bn.fillStyle(0x8a1020, 1); bn.fillRect(cx, by + 12, 12, bh - 24);
+      bn.fillStyle(0xffd24a, 1); bn.fillCircle(cx + 6, by + bh / 2, 4);
     }
 
-    this.add.text(14 * TILE, 0.45 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '11px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 5, y: 3 } }).setOrigin(0.5).setDepth(6);
+    this.add.text(14.5 * TILE, 0.45 * TILE, tr('🏢 노스단 아지트 (Team North HQ)'), { fontSize: '11px', color: '#ff8aa0', fontStyle: 'bold', backgroundColor: '#000000cc', padding: { x: 5, y: 3 } }).setOrigin(0.5).setDepth(6);
     this.add.text(GATE_COL * TILE + TILE / 2, GATE_ROW * TILE + 40, tr('SPACE — Enter'), { fontSize: '9px', color: '#fff', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(6);
   }
 

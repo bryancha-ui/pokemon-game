@@ -213,6 +213,95 @@ export function mixColor(a: number, b: number, t: number): number {
 
 // ── Placed decorative props (single 3D objects pinned to a tile) ─────────────
 
+/** The single four-storey 노스단 headquarters from the original 2D facade.
+ *  It deliberately remains one uninterrupted building volume: dark inset
+ *  walls, four bands of red windows, a central crimson gate and the two long
+ *  faction banners are lifted directly from the painted version. */
+export function makeNosdanHQ(width: number, depth: number): THREE.Group {
+  const g = new THREE.Group();
+  const height = Math.max(5.2, Math.min(7.2, width * 0.36));
+  const frontZ = depth / 2;
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    toonMat(0x22222e),
+  );
+  body.position.y = height / 2;
+  g.add(body);
+
+  // Slightly raised front panel reproduces the lighter inset rectangle in the
+  // 2D building while giving the facade real depth.
+  const inset = new THREE.Mesh(
+    new THREE.BoxGeometry(width - 0.48, height - 0.38, 0.16),
+    toonMat(0x303040),
+  );
+  inset.position.set(0, height / 2 - 0.02, frontZ + 0.09);
+  g.add(inset);
+
+  // Four floors, separated by the same dark horizontal storey lines.
+  const floorH = height / 4;
+  for (let floor = 1; floor < 4; floor++) {
+    const band = new THREE.Mesh(
+      new THREE.BoxGeometry(width - 0.42, 0.1, 0.22),
+      toonMat(0x14141c),
+    );
+    band.position.set(0, floor * floorH, frontZ + 0.19);
+    g.add(band);
+  }
+
+  // Three red-lit windows on every floor, matching the original sprite.
+  const glow = new THREE.MeshBasicMaterial({ color: 0xff5a6a });
+  const windowW = Math.min(1.18, width * 0.075);
+  const windowH = Math.min(0.52, floorH * 0.38);
+  for (let floor = 0; floor < 4; floor++) {
+    const y = floor * floorH + floorH * 0.62;
+    for (const x of [-width * 0.2, 0, width * 0.2]) {
+      const win = new THREE.Mesh(new THREE.BoxGeometry(windowW, windowH, 0.12), glow);
+      win.position.set(x, y, frontZ + 0.23);
+      g.add(win);
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(windowW + 0.16, 0.08, 0.18), toonMat(0x161620));
+      sill.position.set(x, y - windowH / 2 - 0.07, frontZ + 0.24);
+      g.add(sill);
+    }
+  }
+
+  // Central entrance aligned with the map's single walkable gate tile.
+  const doorW = Math.min(2.0, width * 0.15);
+  const doorH = Math.min(2.1, height * 0.34);
+  const gate = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.22), toonMat(0x5a1024));
+  gate.position.set(0, doorH / 2, frontZ + 0.25);
+  g.add(gate);
+  const gateInset = new THREE.Mesh(new THREE.BoxGeometry(doorW - 0.26, doorH - 0.22, 0.1), toonMat(0x8a1a34));
+  gateInset.position.set(0, doorH / 2, frontZ + 0.39);
+  g.add(gateInset);
+
+  // The two crimson vertical banners and gold round emblems are the strongest
+  // identifying marks in the existing 2D art.
+  for (const x of [-width * 0.42, width * 0.42]) {
+    const bannerH = height - 0.58;
+    const banner = new THREE.Mesh(
+      new THREE.BoxGeometry(Math.max(0.36, width * 0.035), bannerH, 0.1),
+      toonMat(0x8a1020),
+    );
+    banner.position.set(x, height / 2, frontZ + 0.27);
+    g.add(banner);
+    const emblem = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 16), toonMat(0xffd24a));
+    emblem.rotation.x = Math.PI / 2;
+    emblem.position.set(x, height / 2, frontZ + 0.36);
+    g.add(emblem);
+  }
+
+  // One flat roof and parapet complete the single-building silhouette.
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(width + 0.32, 0.22, depth + 0.32), toonMat(0x111119));
+  roof.position.y = height + 0.11;
+  g.add(roof);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(width + 0.18, 0.18, depth + 0.18), toonMat(0x171720));
+  base.position.y = 0.09;
+  g.add(base);
+
+  return g;
+}
+
 /** Snow-dusted alpine pine: a trunk under three stacked needle tiers, each
  *  capped with a little snow cone — a true 3D version of the town's 2D pines. */
 export function makePineTree(): THREE.Group {
