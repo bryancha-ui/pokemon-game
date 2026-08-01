@@ -400,19 +400,20 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.fitSprite(this.playerSprite, 140);
     if (this.isBossThreat) this.addBossAura();
 
-    // Every named story trainer uses their authored portrait as a 3D character.
-    // The rival walks onto the stage; all other leaders/chiefs/Elite Four stand
-    // at the enemy Pokémon anchor and step aside for the send-out.
+    // Named story trainers normally use their authored portrait as a 3D
+    // character. Explicit 2D exceptions remain flat at the enemy anchor.
     const portrait = this.resolvePortrait();
     if (portrait && this.textures.exists(portrait.key)) {
       this.trainerPortrait = this.add.image(ENEMY_STAGE_X, ENEMY_STAGE_Y, portrait.key).setDepth(6).setAlpha(0);
-      const use2DRyeo = portrait.key === 'npc_ryeo' || this.trainerKey.includes('ryeo');
-      if (use2DRyeo) {
-        // Commander Ryeo keeps the original 2D battle portrait in every encounter.
+      const use2DTrainer = portrait.key === 'npc_ryeo' || this.trainerKey.includes('ryeo')
+        || this.trainerKey === 'baekdu-byeoksan';
+      if (use2DTrainer) {
+        // Commander Ryeo and Gym Leader Byeoksan keep their authored 2D battle
+        // portraits instead of being replaced by procedural 3D characters.
         this.trainerPortrait.setData('no3d', true);
-        if (this.isFirstRyeoBattle) {
+        if (this.isFirstRyeoBattle || this.trainerKey === 'baekdu-byeoksan') {
           // BattleMirror projects this flat portrait onto the same live 3D
-          // ground anchor used by Ryeo's lead Pokémon.
+          // ground anchor used by the opponent's lead Pokémon.
           this.trainerPortrait.setData('battleTrainer2DEnemyAnchor', true);
         }
       } else {
