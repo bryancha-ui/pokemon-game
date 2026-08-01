@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
-import { tr, typeName } from '../systems/i18n';
-import { STARTERS, TYPE_COLORS } from '../data/StarterData';
+import { tr, typeName, abilityName, t, pokeName, pokeNameEn } from '../systems/i18n';
+import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem, PartyEntry } from '../systems/PartySystem';
 import { displayMoves, buildFromEntry } from '../systems/PartyBattle';
 import { TM_MOVE_DATA } from '../data/TMs';
 import type { MoveData } from '../battle/Pokemon';
-import { t } from '../systems/i18n';
+import { caughtOriginForDexKey, dexEntry, dexKeyFor } from '../data/Pokedex';
+import { fetchPokemon, fetchPokemonSpeciesInfo, fetchPokemonAbilityInfo } from '../data/PokeAPI';
+import { genderForPokemon, genderSymbol } from '../data/PokemonGender';
 
 // Battle data for HM field moves, so teaching one on a full moveset can offer the
 // same "which move to forget?" picker that TMs use.
@@ -131,6 +133,7 @@ export class MenuScene extends Phaser.Scene {
     this.bagScroll = 0;
     this.contentContainer = this.add.container(0, 0);
     this.renderPokemonTab();
+    void this.hydratePartyMetadata();
   }
 
   update() {
@@ -189,7 +192,7 @@ export class MenuScene extends Phaser.Scene {
 
     // Hint
     this.contentContainer.add(this.add.text(cx, cy + 196,
-      tr('Tap a Pokémon to make it your lead (first in battle).'),
+      t('Tap a Pokémon for details. Use SET LEAD to change your first battler.', '포켓몬을 누르면 상세 정보를 볼 수 있습니다. 선두 변경 버튼으로 첫 포켓몬을 정하세요.'),
       { fontSize: '11px', color: '#8899bb' }).setOrigin(0.5));
 
     // Empty slots
@@ -207,24 +210,25 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private drawPartyCard(entry: PartyEntry, x: number, y: number, w: number, h: number, isLead: boolean, index = 0) {
-    // Background — gold border for lead Pokémon. Tapping a non-lead promotes it.
+    // The card opens a separate full status window. Lead selection remains a
+    // small, explicit button so opening details never silently reorders party.
     const bg = this.add.rectangle(x, y, w, h, 0x111133, 1)
-      .setStrokeStyle(isLead ? 2 : 1, isLead ? 0xffe44e : 0x3355aa);
+      .setStrokeStyle(isLead ? 2 : 1, isLead ? 0xffe44e : 0x3355aa)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => bg.setStrokeStyle(2, isLead ? 0xffe44e : 0x77aaff))
+      .on('pointerout',  () => bg.setStrokeStyle(isLead ? 2 : 1, isLead ? 0xffe44e : 0x3355aa))
+      .on('pointerdown', () => this.showPokemonDetails(index));
     this.contentContainer.add(bg);
-    if (!isLead) {
-      bg.setInteractive({ useHandCursor: true })
-        .on('pointerover', () => bg.setStrokeStyle(2, 0x77aaff))
-        .on('pointerout',  () => bg.setStrokeStyle(1, 0x3355aa))
-        .on('pointerdown', () => {
-          PartySystem.setLead(this.registry, index);
-          this.showToast(`${entry.name.toUpperCase()} is now your lead!`);
-          this.switchTab('pokemon');
-        });
-    }
     // Lead badge
     const tag = this.add.text(x + w / 2 - 8, y + h / 2 - 12,
-      isLead ? '★ LEAD' : 'set lead',
-      { fontSize: '9px', color: isLead ? '#ffe44e' : '#6688bb' }).setOrigin(1, 1);
+      isLead ? t('★ LEAD', '★ 선두') : t('SET LEAD', '선두 변경'),
+      { fontSize: '9px', color: isLead ? '#ffe44e' : '#aaccff',
+        backgroundColor: isLead ? undefined : '#243b66', padding: { x: 4, y: 3 } }).setOrigin(1, 1);
+    if (!isLead) tag.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+      PartySystem.setLead(this.registry, index);
+      this.showToast(t(`${this.partyName(entry)} is now your lead!`, `${this.partyName(entry)}을(를) 선두로 지정했습니다!`));
+      this.switchTab('pokemon');
+    });
     this.contentContainer.add(tag);
 
     const lx = x - w / 2 + 8;   // left edge
@@ -248,7 +252,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // Name + level
-    const name = this.add.text(lx + 72, y - 28, entry.name.toUpperCase(), {
+    const name = this.add.text(lx + 72, y - 28, this.partyName(entry), {
       fontSize: '15px', color: isLead ? '#ffe44e' : '#ffffff', fontStyle: 'bold',
     });
     const lv = this.add.text(x + w / 2 - 8, y - 28, `Lv.${entry.level}`,
@@ -260,7 +264,7 @@ export class MenuScene extends Phaser.Scene {
     types.forEach((t, ti) => {
       const pill = this.add.rectangle(lx + 80 + ti * 56, y - 6, 50, 14,
         TYPE_COLORS[t as keyof typeof TYPE_COLORS] ?? 0x334466, 1);
-      const tTxt = this.add.text(lx + 80 + ti * 56, y - 6, t.toUpperCase(),
+      const tTxt = this.add.text(lx + 80 + ti * 56, y - 6, typeName(t),
         { fontSize: '8px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
       this.contentContainer.add([pill, tTxt]);
     });
@@ -277,12 +281,182 @@ export class MenuScene extends Phaser.Scene {
 
     // Moves (compact) — computed from the current level/form so newly-learned
     // moves show up as the Pokémon grows, not just its capture-time moves.
-    const moveSummary = displayMoves(entry).slice(0, 2).join('  ·  ');
+    const moveSummary = displayMoves(entry).slice(0, 2).map(m => tr(m)).join('  ·  ');
     if (moveSummary) {
       const mt = this.add.text(lx + 72, y + 28, moveSummary,
         { fontSize: '10px', color: '#7788bb' });
       this.contentContainer.add(mt);
     }
+
+    // Six battle stats at the current level. These are the exact values used
+    // by physical/special damage and turn-order calculations.
+    const mon = buildFromEntry(entry);
+    const statLine = t(
+      `HP ${mon.maxHp}  Atk ${mon.atk}  Def ${mon.def}  SpA ${mon.spAtk}  SpD ${mon.spDef}  Spe ${mon.spd}`,
+      `체력 ${mon.maxHp}  공격 ${mon.atk}  방어 ${mon.def}  특공 ${mon.spAtk}  특방 ${mon.spDef}  스피드 ${mon.spd}`,
+    );
+    this.contentContainer.add(this.add.text(lx + 72, y + 40, statLine, {
+      fontSize: '7px', color: '#9fb6d8',
+    }));
+  }
+
+  private partyName(entry: PartyEntry): string {
+    const key = dexKeyFor(entry.spriteKey);
+    const korean = entry.nameKo ?? pokeName(key, pokeNameEn(entry.name));
+    const english = entry.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return t(english, korean);
+  }
+
+  /** Enrich old saves without requiring the player to recapture anything. The
+   * official Korean name lives on PokeAPI's species record, while battle data
+   * supplies the primary ability. Failures are harmless when playing offline. */
+  private async hydratePartyMetadata(): Promise<void> {
+    const party = PartySystem.get(this.registry);
+    let changed = false;
+    await Promise.all(party.map(async entry => {
+      const key = dexKeyFor(entry.spriteKey);
+      const local = dexEntry(key);
+      if (!entry.ability) {
+        const ability = findForm(entry.spriteKey)?.ability ?? local?.ability;
+        if (ability) { entry.ability = ability; changed = true; }
+      }
+      if (!entry.caughtAt || /^Evolve\b/i.test(entry.caughtAt)) {
+        const inferredOrigin = caughtOriginForDexKey(key);
+        if (inferredOrigin) { entry.caughtAt = inferredOrigin; changed = true; }
+      }
+
+      const officialId = key.match(/^api-(\d+)$/)?.[1];
+      if (!officialId) return;
+      if (!entry.ability) try {
+        const battle = await fetchPokemon(Number(officialId));
+        if (battle.ability) { entry.ability = battle.ability; changed = true; }
+      } catch { /* offline: retain the local dictionary / English fallback */ }
+      if (!entry.nameKo) try {
+        const species = await fetchPokemonSpeciesInfo(Number(officialId));
+        if (species.nameKo) { entry.nameKo = species.nameKo; changed = true; }
+      } catch { /* offline: retain the local dictionary / English fallback */ }
+
+      if (entry.ability && !entry.abilityKo) {
+        try {
+          const localized = await fetchPokemonAbilityInfo(entry.ability);
+          if (localized.nameKo) { entry.abilityKo = localized.nameKo; changed = true; }
+        } catch { /* local ability dictionary remains available offline */ }
+      }
+    }));
+
+    if (!changed) return;
+    PartySystem.set(this.registry, party);
+    if (this.scene.isActive() && this.tab === 'pokemon') this.switchTab('pokemon');
+  }
+
+  private showPokemonDetails(index: number) {
+    const entry = PartySystem.get(this.registry)[index];
+    if (!entry) return;
+    const mon = buildFromEntry(entry);
+    const key = dexKeyFor(entry.spriteKey);
+    const dex = dexEntry(key);
+    const cx = this.W / 2, cy = this.H / 2;
+    const overlay = this.add.container(0, 0).setDepth(100);
+
+    const dim = this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.78)
+      .setInteractive();
+    overlay.add(dim);
+    overlay.add(this.add.rectangle(cx, cy, 760, 560, 0x0d142b, 0.99)
+      .setStrokeStyle(3, 0x6f95d8));
+    overlay.add(this.add.text(cx, cy - 252, t('— POKÉMON STATUS —', '— 포켓몬 상태 —'), {
+      fontSize: '18px', color: '#ffe44e', fontStyle: 'bold',
+    }).setOrigin(0.5));
+
+    // Portrait and identity
+    if (this.textures.exists(entry.spriteKey)) {
+      const img = this.add.image(cx - 270, cy - 115, entry.spriteKey);
+      const src = this.textures.get(entry.spriteKey).getSourceImage();
+      const sourceDim = Math.max((src.width as number) || 1, (src.height as number) || 1);
+      img.setScale(150 / sourceDim);
+      overlay.add(img);
+    } else {
+      const color = TYPE_COLORS[entry.type1 as keyof typeof TYPE_COLORS] ?? 0x556688;
+      overlay.add(this.add.circle(cx - 270, cy - 115, 68, color, 0.55).setStrokeStyle(2, color));
+      overlay.add(this.add.text(cx - 270, cy - 115, '?', { fontSize: '42px', color: '#fff' }).setOrigin(0.5));
+    }
+
+    const gender = genderForPokemon({
+      name: entry.name, key: entry.spriteKey, gender: entry.gender,
+      id: Number(key.match(/^api-(\d+)$/)?.[1]) || undefined,
+    }, entry.breedingId ?? `party-${index}`);
+    const symbol = genderSymbol(gender);
+    const genderColor = gender === 'male' ? '#6fb5ff' : gender === 'female' ? '#ff91c8' : '#b8bfd0';
+    overlay.add(this.add.text(cx - 170, cy - 194, this.partyName(entry), {
+      fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
+    }));
+    overlay.add(this.add.text(cx + 102, cy - 190, symbol, { fontSize: '22px', color: genderColor, fontStyle: 'bold' }));
+    overlay.add(this.add.text(cx + 165, cy - 190, `Lv.${entry.level}`, { fontSize: '17px', color: '#ffe44e' }));
+
+    [entry.type1, entry.type2].filter(Boolean).forEach((type, i) => {
+      const x = cx - 137 + i * 95;
+      const typeKey = type as string;
+      overlay.add(this.add.rectangle(x, cy - 148, 82, 22,
+        TYPE_COLORS[typeKey as keyof typeof TYPE_COLORS] ?? 0x556688).setStrokeStyle(1, 0xffffff, 0.25));
+      overlay.add(this.add.text(x, cy - 148, typeName(typeKey), {
+        fontSize: '11px', color: '#fff', fontStyle: 'bold',
+      }).setOrigin(0.5));
+    });
+
+    const ability = entry.ability ?? findForm(entry.spriteKey)?.ability ?? dex?.ability ?? t('Unknown', '알 수 없음');
+    const storedOrigin = entry.caughtAt && !/^Evolve\b/i.test(entry.caughtAt) ? entry.caughtAt : undefined;
+    const origin = storedOrigin ?? caughtOriginForDexKey(key)
+      ?? (STARTERS.some(s => s.spriteKey === entry.spriteKey) ? "Prof. Song's Lab" : 'Unknown location');
+    const statusNames: Record<string, string> = {
+      none: t('Healthy', '정상'), psn: t('Poisoned', '독'), par: t('Paralyzed', '마비'),
+      brn: t('Burned', '화상'), frz: t('Frozen', '얼음'), slp: t('Asleep', '잠듦'),
+    };
+    const profileX = cx - 170;
+    overlay.add(this.add.text(profileX, cy - 108,
+      `${t('Ability', '특성')}: ${abilityName(ability, entry.abilityKo)}`, { fontSize: '14px', color: '#bcd3ff' }));
+    overlay.add(this.add.text(profileX, cy - 78,
+      `${t('Caught at', '잡은 위치')}: ${tr(origin)}`, { fontSize: '13px', color: '#aab8d0', wordWrap: { width: 455 } }));
+    overlay.add(this.add.text(profileX, cy - 48,
+      `${t('Condition', '상태')}: ${statusNames[entry.status ?? 'none'] ?? entry.status}`, { fontSize: '13px', color: '#aab8d0' }));
+
+    // Exact six battle stats used by damage and turn order.
+    overlay.add(this.add.text(cx - 340, cy + 8, t('BATTLE STATS', '능력치'), {
+      fontSize: '14px', color: '#ffe44e', fontStyle: 'bold',
+    }));
+    const stats = [
+      [t('HP', '체력'), `${mon.hp}/${mon.maxHp}`], [t('Attack', '공격'), mon.atk],
+      [t('Defense', '방어'), mon.def], [t('Sp. Atk', '특수공격'), mon.spAtk],
+      [t('Sp. Def', '특수방어'), mon.spDef], [t('Speed', '스피드'), mon.spd],
+    ];
+    stats.forEach(([label, value], i) => {
+      const col = i % 3, row = Math.floor(i / 3);
+      const x = cx - 340 + col * 120, y = cy + 39 + row * 36;
+      overlay.add(this.add.rectangle(x + 52, y, 108, 28, 0x172743).setStrokeStyle(1, 0x365782));
+      overlay.add(this.add.text(x + 7, y, `${label}\n${value}`, {
+        fontSize: '10px', color: '#dbe7ff', lineSpacing: 1,
+      }).setOrigin(0, 0.5));
+    });
+
+    // Complete current moveset with battle category, power, accuracy and PP.
+    overlay.add(this.add.text(cx + 40, cy + 8, t('MOVES', '기술'), {
+      fontSize: '14px', color: '#ffe44e', fontStyle: 'bold',
+    }));
+    mon.moves.forEach((move, i) => {
+      const m = move.data, y = cy + 36 + i * 47;
+      const category = m.category === 'physical' ? t('Physical', '물리')
+        : m.category === 'special' ? t('Special', '특수') : t('Status', '변화');
+      overlay.add(this.add.rectangle(cx + 183, y + 8, 294, 40, 0x172743).setStrokeStyle(1,
+        TYPE_COLORS[m.type as keyof typeof TYPE_COLORS] ?? 0x365782));
+      overlay.add(this.add.text(cx + 48, y - 3, tr(m.name), { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      overlay.add(this.add.text(cx + 48, y + 14,
+        `${typeName(m.type)} · ${category} · ${t('Power', '위력')} ${m.power || '—'} · ${t('Acc', '명중')} ${m.accuracy} · PP ${move.pp}/${m.pp}`,
+        { fontSize: '9px', color: '#aab8d0' }));
+    });
+
+    const close = this.add.text(cx, cy + 252, t('✕ CLOSE', '✕ 닫기'), {
+      fontSize: '14px', color: '#d4dded', backgroundColor: '#263b61', padding: { x: 16, y: 7 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    close.on('pointerdown', () => overlay.destroy(true));
+    overlay.add(close);
   }
 
   // ── Bag tab ───────────────────────────────────────────────────────────────
@@ -455,7 +629,7 @@ export class MenuScene extends Phaser.Scene {
       const y = cy - 140 + i * 48;
       const r = this.add.rectangle(cx, y, 400, 42, e.hp <= 0 ? 0x2a1414 : 0x14223a).setStrokeStyle(1, 0x3a5a8a).setInteractive({ useHandCursor: true });
       overlay.add(r);
-      overlay.add(this.add.text(cx - 180, y - 9, `${e.name}  Lv.${e.level}`, { fontSize: '14px', color: '#fff' }));
+      overlay.add(this.add.text(cx - 180, y - 9, `${this.partyName(e)}  Lv.${e.level}`, { fontSize: '14px', color: '#fff' }));
       overlay.add(this.add.text(cx - 180, y + 9, `HP ${e.hp}/${e.maxHp}  ${(e.status && e.status !== 'none') ? e.status.toUpperCase() : ''}`, { fontSize: '11px', color: '#9ab' }));
       r.on('pointerdown', () => {
         const res = useItemOnSlot(this.registry, itemKey, i);
@@ -490,7 +664,7 @@ export class MenuScene extends Phaser.Scene {
         .setStrokeStyle(1, usable ? 0x3a5a8a : 0x443355);
       if (usable) r.setInteractive({ useHandCursor: true });
       overlay.add(r);
-      overlay.add(this.add.text(cx - 180, y - 9, `${e.name}  Lv.${e.level}`, { fontSize: '14px', color: usable ? '#fff' : '#888' }));
+      overlay.add(this.add.text(cx - 180, y - 9, `${this.partyName(e)}  Lv.${e.level}`, { fontSize: '14px', color: usable ? '#fff' : '#888' }));
       const types = [e.type1, e.type2].filter(Boolean).join(' / ');
       const note  = knows ? `already knows ${move}` : eligible ? `can learn ${move}` : `can't learn ${move}`;
       overlay.add(this.add.text(cx - 180, y + 9, `${types}  ·  ${note}`, { fontSize: '11px', color: usable ? '#9ab' : '#776688' }));
@@ -523,7 +697,7 @@ export class MenuScene extends Phaser.Scene {
     if (!entry) return;
     const current = buildFromEntry(entry).moves.map(m => m.data);
     if (current.some(m => m.name.toLowerCase() === move.toLowerCase())) {
-      this.showToast(`${entry.name} already knows ${move}.`);
+      this.showToast(`${this.partyName(entry)} already knows ${move}.`);
       return;
     }
     if (current.length < 4) {
@@ -544,7 +718,7 @@ export class MenuScene extends Phaser.Scene {
     const overlay = this.add.container(0, 0).setDepth(60);
     overlay.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.6));
     overlay.add(this.add.rectangle(cx, cy, 480, 400, 0x10142a, 0.99).setStrokeStyle(2, 0x5577aa));
-    overlay.add(this.add.text(cx, cy - 168, `${entry.name} wants to learn ${move}.`, { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    overlay.add(this.add.text(cx, cy - 168, `${this.partyName(entry)} wants to learn ${move}.`, { fontSize: '15px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
     overlay.add(this.add.text(cx, cy - 144, tr('Which move should it forget?'), { fontSize: '12px', color: '#9ab' }).setOrigin(0.5));
 
     current.forEach((m, j) => {
@@ -565,7 +739,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     const cancel = this.add.text(cx, cy + 168, `✕ Don't learn ${move}`, { fontSize: '13px', color: '#c99' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    cancel.on('pointerdown', () => { overlay.destroy(true); this.showToast(`${entry.name} did not learn ${move}.`); });
+    cancel.on('pointerdown', () => { overlay.destroy(true); this.showToast(`${this.partyName(entry)} did not learn ${move}.`); });
     overlay.add(cancel);
   }
 
@@ -577,7 +751,7 @@ export class MenuScene extends Phaser.Scene {
     e.battleMoves = moves.slice(0, 4);
     e.moves = e.battleMoves.map(m => m.name);   // keep the display list in sync
     PartySystem.set(this.registry, party);
-    this.showToast(forgot ? `${e.name} forgot ${forgot} and learned ${learned}!` : `${e.name} learned ${learned}!`);
+    this.showToast(forgot ? `${this.partyName(e)} forgot ${forgot} and learned ${learned}!` : `${this.partyName(e)} learned ${learned}!`);
     this.switchTab('bag');
   }
 

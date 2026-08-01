@@ -52,6 +52,8 @@ interface Combatant {
   /** battle motion driver (clip playback or procedural) */
   anim: CreatureAnimator | null;
   fainted: boolean;
+  chargeLift: number;
+  chargeTarget: number;
   /** texture signature — rebuilt when the game swaps the sprite's texture
    *  (async PokeAPI art arriving, party switches). */
   texSig: string;
@@ -87,6 +89,12 @@ interface ScreenTargetRequest {
   heightRatio?: number;
 }
 
+interface ChargeFxRequest {
+  target: GO;
+  phase: 'charge' | 'release';
+  mode: 'air' | 'underground' | 'charge';
+}
+
 export class BattleMirror {
   readonly scene: Phaser.Scene;
   private stage: ThreeStage;
@@ -115,6 +123,7 @@ export class BattleMirror {
     moveType?: string; moveName?: string; power?: number;
   }) => void;
   private onScreenTarget: (d: ScreenTargetRequest) => void;
+  private onChargeFx: (d: ChargeFxRequest) => void;
 
   constructor(scene: Phaser.Scene, stage: ThreeStage, rig: CameraRig) {
     this.scene = scene;
@@ -127,8 +136,16 @@ export class BattleMirror {
     this.fx = new MoveFX3D(this.root);
     this.onMoveFx = (d) => this.handleMoveFx(d);
     this.onScreenTarget = (d) => this.projectCombatantToScreen(d);
+    this.onChargeFx = (d) => {
+      const cb = this.combatants.get(d.target);
+      if (!cb) return;
+      cb.chargeTarget = d.phase === 'release' ? 0
+        : d.mode === 'air' ? 2.8 : d.mode === 'underground' ? -0.65 : 0.75;
+      if (d.phase === 'charge') this.rig.focusOn(cb.holder.position, 0.65);
+    };
     scene.events.on('pk3d-movefx', this.onMoveFx);
     scene.events.on('pk3d-screen-target', this.onScreenTarget);
+    scene.events.on('pk3d-chargefx', this.onChargeFx);
     this.onAdded = (obj) => this.pendingObjects.add(obj as GO);
     scene.events.on('addedtoscene', this.onAdded);
     for (const obj of scene.children.list) this.consider(obj as GO);
@@ -139,6 +156,7 @@ export class BattleMirror {
     this.scene.events.off('addedtoscene', this.onAdded);
     this.scene.events.off('pk3d-movefx', this.onMoveFx);
     this.scene.events.off('pk3d-screen-target', this.onScreenTarget);
+    this.scene.events.off('pk3d-chargefx', this.onChargeFx);
     this.combatants.clear();
     for (const w of this.trainers) this.root.remove(w.group);
     this.trainers.length = 0;
@@ -182,13 +200,17 @@ export class BattleMirror {
     // Stronger moves swing harder; PokeAPI power tops out around 120.
     const powerScale = 0.7 + Math.min(1.2, (d.power ?? 60) / 100) * 0.6;
 
-    // The 3D model acts out the move; static models get a procedural routine,
-    // rigged models play their own attack clip.
-    atk.anim?.attack(category, dir, powerScale, () => {
-      tgt.anim?.hit(d.effectiveness > 1 ? 1.3 : 1);
-      this.rig.focusOn(tgt.holder.position, 0.7);
-      this.rig.addShake(d.effectiveness > 1 ? 0.7 : 0.45);
-    });
+    // Damaging moves act out an attack and impact. Utility moves instead hold
+    // on the affected Pokémon so a heal/rank aura never looks like self-damage.
+    if (category !== 'status') {
+      atk.anim?.attack(category, dir, powerScale, () => {
+        tgt.anim?.hit(d.effectiveness > 1 ? 1.3 : 1);
+        this.rig.focusOn(tgt.holder.position, 0.7);
+        this.rig.addShake(d.effectiveness > 1 ? 0.7 : 0.45);
+      });
+    } else {
+      this.rig.focusOn(atk.holder.position, 0.5);
+    }
 
     if (category === 'special') {
       this.fx.playSpecial(from, to, d.moveType ?? 'normal', d.moveName ?? 'Move', d.color, d.power ?? 60, d.effectiveness, () => {
@@ -364,6 +386,8 @@ export class BattleMirror {
       targetH: (side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)),
       anim: null,
       fainted: false,
+      chargeLift: 0,
+      chargeTarget: 0,
       texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
     });
     this.scene.cameras.main.ignore(im);
@@ -586,6 +610,10 @@ export class BattleMirror {
         if (cb.speed > 14) {
           this.rig.focusOn(cb.holder.position, Math.min(1, cb.speed / 60));
         }
+      } else {
+        // Generated models act inside their animator and otherwise remain at
+        // their arena anchor. Reset y before layering a charge-move lift below.
+        cb.holder.position.set(anchor.x, 0, anchor.z);
       }
 
       // Idle life: breathing + slight sway while standing.
@@ -623,6 +651,9 @@ export class BattleMirror {
         cb.inner.scale.set(cb.side === 'player' ? -sx : sx, sy, cb.scalePx);
         cb.inner.rotation.z = -((o.angle ?? 0) * Math.PI / 180);
       }
+
+      cb.chargeLift += (cb.chargeTarget - cb.chargeLift) * Math.min(1, dt * 8);
+      cb.holder.position.y += cb.chargeLift;
 
       // Opacity / tint flashes (send-out fade, hit flash, faint fade).
       const tint = o as { tintTopLeft?: number; isTinted?: boolean; tintFill?: boolean };

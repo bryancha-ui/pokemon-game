@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
-import { playMoveFX } from '../systems/BattleFX';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move } from '../battle/Pokemon';
@@ -10,7 +10,7 @@ import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
 import { customForm } from '../data/CustomBattle';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
-import { PartySystem, PartyEntry } from '../systems/PartySystem';
+import { PartySystem, PartyEntry, baseStatsFromData } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
@@ -20,6 +20,8 @@ import { DexTracker } from '../systems/DexTracker';
 import { ITEMS, Inventory, itemDef, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { drawBattleBall, playBallSendOut } from '../systems/BattleBallFX';
+import { genderedName, genderForPokemon } from '../data/PokemonGender';
+import { caughtLocationName } from '../data/PokemonOrigin';
 
 type WildState = 'loading' | 'intro' | 'playerAction' | 'playerMove' | 'bag' | 'busy' | 'catching' | 'over';
 
@@ -198,10 +200,34 @@ export class WildBattleScene extends Phaser.Scene {
 
   // ── HUDs ──────────────────────────────────────────────────────────────────
 
+  private wildGenderSeed(): string {
+    const wildId = this.registry.get('wildId') as string | number;
+    return `wild-${String(wildId)}-${this.wild.level}`;
+  }
+
+  private wildHudName(): string {
+    const wildId = this.registry.get('wildId') as string | number;
+    return genderedName(pokeNameEn(this.wild.name).toUpperCase(), {
+      name: this.wild.name,
+      key: typeof wildId === 'string' ? wildId : `wild-${wildId}`,
+      id: this.wild.data.id,
+    }, this.wildGenderSeed());
+  }
+
+  private playerHudName(): string {
+    const entry = PartySystem.get(this.registry)[this.activeSlot];
+    return genderedName(pokeNameEn(this.player.name).toUpperCase(), {
+      name: this.player.name,
+      key: entry?.spriteKey,
+      id: this.player.data.id,
+      gender: entry?.gender,
+    }, entry?.breedingId ?? `party-${this.activeSlot}`);
+  }
+
   private createHUDs() {
     // Wild HUD — top left
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.add.text(12, 24, pokeNameEn(this.wild.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.add.text(12, 24, this.wildHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.wildLvText = this.add.text(180, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' });
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.wildHpBar  = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -209,7 +235,7 @@ export class WildBattleScene extends Phaser.Scene {
 
     // Player HUD — right
     this.add.rectangle(1030, 545, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(922, 519, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(922, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(940, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -384,6 +410,12 @@ export class WildBattleScene extends Phaser.Scene {
   // ── Battle flow ───────────────────────────────────────────────────────────
 
   private playerAction() {
+    const pending = pendingMoveFor(this.player);
+    if (pending) {
+      this.hideAllPanels();
+      this.runTurn(pending);
+      return;
+    }
     this.state = 'playerAction';
     const balls = (this.registry.get('pokeballs') as number) ?? 0;
     this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?  🔴×${balls}`);
@@ -556,6 +588,14 @@ export class WildBattleScene extends Phaser.Scene {
       spriteUrl: this.wild.data.spriteUrl,
       isCustom:  isCust,
       moves:     this.wild.moves.map(m => m.data.name),
+      ability:   this.wild.data.ability,
+      caughtAt:  caughtLocationName((this.registry.get('wildReturnScene') as string | undefined)
+        ?? (this.registry.get('lastScene') as string | undefined)),
+      baseStats: baseStatsFromData(this.wild.data),
+      gender:    genderForPokemon(
+        { name: this.wild.name, key: sprKey, id: this.wild.data.id },
+        this.wildGenderSeed(),
+      ),
       exp:       0,
     };
 
@@ -636,8 +676,10 @@ export class WildBattleScene extends Phaser.Scene {
   private runTurn(playerMove: Move) {
     this.state = 'busy';
     // Turn order by Speed (ties broken randomly).
-    const playerFirst = this.player.spd > this.wild.spd
-      || (this.player.spd === this.wild.spd && Math.random() < 0.5);
+    const playerSpeed = this.player.battleStat('spd');
+    const wildSpeed = this.wild.battleStat('spd');
+    const playerFirst = playerSpeed > wildSpeed
+      || (playerSpeed === wildSpeed && Math.random() < 0.5);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction()));
     } else {
@@ -646,31 +688,29 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private doPlayerMove(playerMove: Move, onDone: () => void) {
-    this.player.useMove(playerMove);
-    persistMovePP(this.registry, this.activeSlot, this.player);   // remember PP spent this battle
-    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} used ${playerMove.data.name}!`, () => {
-      if (playerMove.data.power <= 0) { onDone(); return; }
-      const { critical, effectiveness } = this.wild.takeDamage(playerMove, this.player);
-      playMoveFX(this, this.playerSprite, this.wildSprite, playerMove.data, effectiveness, () => {});
-      this.animateHpBar('wild', () => {
-        let msg = '';
-        if (critical)             msg = 'A critical hit! ';
-        if (effectiveness > 1)    msg += 'Super effective!';
-        if (effectiveness < 1 && effectiveness > 0) msg += 'Not very effective...';
-        if (effectiveness === 0)  msg = 'It had no effect!';
-        const after = () => {
-          if (this.wild.isKO) {
-            this.typeDialog(`${pokeNameEn(this.wild.name).toUpperCase()} fainted!`, () => {
-              this.registry.set('wildOutcome', 'won');
-              const gained = Math.round(this.wild.level * 15 * expMultiplierFor(this.registry));
-              this.showExpAndLevelUp(gained, () => this.returnToRoute());
-            });
-            return;
-          }
-          onDone();
-        };
-        if (msg) this.typeDialog(msg, after); else after();
-      });
+    executeBattleMove({
+      scene: this,
+      user: this.player,
+      target: this.wild,
+      move: playerMove,
+      userSprite: this.playerSprite,
+      targetSprite: this.wildSprite,
+      userLabel: pokeNameEn(this.player.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('player', done),
+      animateTargetHp: done => this.animateHpBar('wild', done),
+      onPpUsed: () => persistMovePP(this.registry, this.activeSlot, this.player),
+      onComplete: () => {
+        if (this.wild.isKO) {
+          this.typeDialog(`${pokeNameEn(this.wild.name).toUpperCase()} fainted!`, () => {
+            this.registry.set('wildOutcome', 'won');
+            const gained = Math.round(this.wild.level * 15 * expMultiplierFor(this.registry));
+            this.showExpAndLevelUp(gained, () => this.returnToRoute());
+          });
+          return;
+        }
+        onDone();
+      },
     });
   }
 
@@ -679,24 +719,27 @@ export class WildBattleScene extends Phaser.Scene {
 
   private doWildMove(onDone: () => void) {
     const available = this.wild.moves.filter(m => m.pp > 0);
-    const move = available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0];
-    this.wild.useMove(move);
-
-    this.typeDialog(`Wild ${pokeNameEn(this.wild.name).toUpperCase()} used ${move.data.name}!`, () => {
-      if (move.data.power > 0) {
-        const { effectiveness } = this.player.takeDamage(move, this.wild);
-        playMoveFX(this, this.wildSprite, this.playerSprite, move.data, effectiveness, () => {});
-        this.animateHpBar('player', () => {
-          PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
-          if (this.player.isKO) {
-            this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
-          } else {
-            onDone();
-          }
-        });
-      } else {
-        onDone();
-      }
+    const move = pendingMoveFor(this.wild)
+      ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0]);
+    executeBattleMove({
+      scene: this,
+      user: this.wild,
+      target: this.player,
+      move,
+      userSprite: this.wildSprite,
+      targetSprite: this.playerSprite,
+      userLabel: `Wild ${pokeNameEn(this.wild.name).toUpperCase()}`,
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('wild', done),
+      animateTargetHp: done => this.animateHpBar('player', done),
+      onComplete: () => {
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        if (this.player.isKO) {
+          this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
+        } else {
+          onDone();
+        }
+      },
     });
   }
 
@@ -787,7 +830,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;
@@ -841,7 +884,7 @@ export class WildBattleScene extends Phaser.Scene {
     this.refreshMovePanel();
 
     // Update HUD
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;

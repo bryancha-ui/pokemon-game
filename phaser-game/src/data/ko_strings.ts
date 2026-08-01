@@ -236,6 +236,7 @@ export const KO_SPEAKERS: Record<string, string> = {
 };
 
 export const KO_STRINGS: Record<string, string> = {
+  'Pokémon Nursery': '포켓몬 키우미집',
   // ── Move names ──
   'Absorb': '흡수',
   'Aurora Beam': '오로라빔',

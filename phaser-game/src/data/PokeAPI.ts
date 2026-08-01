@@ -10,11 +10,23 @@ const BASE = 'https://pokeapi.co/api/v2';
 // round-trip. We cache results in memory (instant within a session) and mirror
 // them to localStorage (instant across reloads), so each species/move is fetched
 // from the network at most once, ever.
-const POKE_CACHE = 'pokeapi_pokemon_v2';   // v2: spriteUrl now prefers HOME 3D renders
-const MOVE_CACHE = 'pokeapi_move_v1';
+const POKE_CACHE = 'pokeapi_pokemon_v3';   // v3: includes the primary ability
+const MOVE_CACHE = 'pokeapi_move_v2';   // v2 includes healing/drain/stat/two-turn metadata
+const SPECIES_CACHE = 'pokeapi_species_v1';
+const ABILITY_CACHE = 'pokeapi_ability_v1';
 
 const pokeMem = new Map<string, PokemonData>();
 const moveMem = new Map<string, MoveData>();
+const speciesMem = new Map<string, PokemonSpeciesInfo>();
+const abilityMem = new Map<string, PokemonAbilityInfo>();
+
+export interface PokemonSpeciesInfo {
+  nameKo?: string;
+}
+
+export interface PokemonAbilityInfo {
+  nameKo?: string;
+}
 
 function loadDisk<T>(key: string): Record<string, T> {
   try { return JSON.parse(localStorage.getItem(key) ?? '{}') as Record<string, T>; }
@@ -26,6 +38,18 @@ function saveDisk<T>(key: string, id: string, val: T) {
     all[id] = val;
     localStorage.setItem(key, JSON.stringify(all));
   } catch { /* quota / private mode — memory cache still applies */ }
+}
+
+/** Synchronous lookup used when migrating an older caught Pokémon whose party
+ * entry predates persisted base stats. Encountered species are cached before
+ * they can be caught, so migration does not need a network request. */
+export function cachedPokemon(idOrName: number | string): PokemonData | undefined {
+  const id = String(idOrName).toLowerCase();
+  const mem = pokeMem.get(id);
+  if (mem) return mem;
+  const disk = loadDisk<PokemonData>(POKE_CACHE)[id];
+  if (disk) pokeMem.set(id, disk);
+  return disk;
 }
 
 export async function fetchPokemon(idOrName: number | string): Promise<PokemonData> {
@@ -46,6 +70,9 @@ export async function fetchPokemon(idOrName: number | string): Promise<PokemonDa
   const data: PokemonData = {
     id: json.id,
     name: json.name as string,
+    ability: (json.abilities as { is_hidden: boolean; ability: { name: string } }[] | undefined)
+      ?.find(a => !a.is_hidden)?.ability.name
+      ?? json.abilities?.[0]?.ability?.name,
     type1: json.types[0].type.name as PokemonType,
     type2: json.types[1]?.type.name as PokemonType | undefined,
     baseHp:    stat('hp'),
@@ -63,6 +90,47 @@ export async function fetchPokemon(idOrName: number | string): Promise<PokemonDa
   };
   pokeMem.set(id, data);
   saveDisk(POKE_CACHE, id, data);
+  return data;
+}
+
+/** Korean species name used by menus and the status screen. Kept separate from
+ * the battle-data request because PokeAPI exposes localized names on species. */
+export async function fetchPokemonSpeciesInfo(idOrName: number | string): Promise<PokemonSpeciesInfo> {
+  const id = String(idOrName).toLowerCase();
+  const mem = speciesMem.get(id);
+  if (mem) return mem;
+  const disk = loadDisk<PokemonSpeciesInfo>(SPECIES_CACHE)[id];
+  if (disk) { speciesMem.set(id, disk); return disk; }
+
+  const res = await fetch(`${BASE}/pokemon-species/${idOrName}`);
+  if (!res.ok) throw new Error(`PokeAPI: pokemon species "${idOrName}" not found`);
+  const json = await res.json();
+  const data: PokemonSpeciesInfo = {
+    nameKo: (json.names as { name: string; language: { name: string } }[] | undefined)
+      ?.find(n => n.language.name === 'ko')?.name,
+  };
+  speciesMem.set(id, data);
+  saveDisk(SPECIES_CACHE, id, data);
+  return data;
+}
+
+/** Localized display name for an official ability. */
+export async function fetchPokemonAbilityInfo(idOrName: number | string): Promise<PokemonAbilityInfo> {
+  const id = String(idOrName).toLowerCase();
+  const mem = abilityMem.get(id);
+  if (mem) return mem;
+  const disk = loadDisk<PokemonAbilityInfo>(ABILITY_CACHE)[id];
+  if (disk) { abilityMem.set(id, disk); return disk; }
+
+  const res = await fetch(`${BASE}/ability/${idOrName}`);
+  if (!res.ok) throw new Error(`PokeAPI: ability "${idOrName}" not found`);
+  const json = await res.json();
+  const data: PokemonAbilityInfo = {
+    nameKo: (json.names as { name: string; language: { name: string } }[] | undefined)
+      ?.find(n => n.language.name === 'ko')?.name,
+  };
+  abilityMem.set(id, data);
+  saveDisk(ABILITY_CACHE, id, data);
   return data;
 }
 
@@ -111,6 +179,20 @@ export async function fetchMove(idOrName: number | string): Promise<MoveData> {
     power:    (json.power as number) ?? 0,
     accuracy: (json.accuracy as number) ?? 100,
     pp:       json.pp as number,
+    healing:  Math.max(0, Number(json.meta?.healing ?? 0)),
+    drain:    Math.max(0, Number(json.meta?.drain ?? 0)),
+    statChanges: (json.stat_changes as { change: number; stat: { name: string } }[] ?? [])
+      .map(s => ({ stat: ({
+        attack: 'atk', defense: 'def', 'special-attack': 'spAtk',
+        'special-defense': 'spDef', speed: 'spd', accuracy: 'accuracy', evasion: 'evasion',
+      } as Record<string, import('../battle/Pokemon').BattleStat>)[s.stat.name], change: s.change }))
+      .filter((s): s is import('../battle/Pokemon').MoveStatChange => !!s.stat),
+    effectTarget: /user|users-field/.test(String(json.target?.name ?? ''))
+      || String(json.meta?.category?.name ?? '') === 'damage+raise' ? 'user' : 'target',
+    effectChance: Number(json.effect_chance ?? json.meta?.stat_chance ?? 100) || 100,
+    twoTurn: ({ fly: 'air', bounce: 'air', dig: 'underground', dive: 'underground',
+      'solar-beam': 'charge', 'solar-blade': 'charge', 'sky-attack': 'charge',
+      'phantom-force': 'charge', 'shadow-force': 'charge' } as Record<string, MoveData['twoTurn']>)[String(json.name).toLowerCase()],
   };
   moveMem.set(id, data);
   saveDisk(MOVE_CACHE, id, data);

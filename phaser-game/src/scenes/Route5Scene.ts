@@ -73,8 +73,13 @@ export class Route5Scene extends Phaser.Scene {
    *  real landmark: the Forest Shrine's exterior on its stone steps. */
   public onlyNamedBuildings = true;
   public buildingPlots = [{ x: 9, y: 20, w: 6, h: 3, model: 'shrine' }];
-  // Enable 3D grass tufts in the tall grass areas
+  // The authored tall-grass id overrides colour sampling so its dark painted
+  // blades can never be mistaken for trees.  Dense crossed tufts make each
+  // clearing read as real 3D grass and retain the existing walk-through rustle.
   public grass3D = true;
+  public grassTileIds3D = [T.TALLGRASS];
+  public grassDensity3D = 3;
+  public grassTone3D = 0x3f9f37;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;

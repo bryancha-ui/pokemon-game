@@ -46,6 +46,8 @@ import { Route2Scene } from './scenes/Route2Scene';
 import { PineNeedleTownScene } from './scenes/PineNeedleTownScene';
 import { PineNeedlePCScene } from './scenes/PineNeedlePCScene';
 import { PineNeedleStudioScene } from './scenes/PineNeedleStudioScene';
+import { NurseryScene } from './scenes/NurseryScene';
+import { NurseryManageScene } from './scenes/NurseryManageScene';
 import { PokedexScene } from './scenes/PokedexScene';
 import { ShopScene } from './scenes/ShopScene';
 import { BoxScene } from './scenes/BoxScene';
@@ -139,6 +141,7 @@ import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
 import { setupMobileShell } from './systems/TouchControls';
 import { initI18n } from './systems/i18n';
 import { PokemonFxPlugin } from './systems/PokemonFx';
+import { BreedingTrackerPlugin } from './systems/BreedingTracker';
 import { bootstrap3D } from './engine3d';
 
 // On touch devices, split the page DS-style (game on top, control deck below) and
@@ -151,7 +154,7 @@ const game = new Phaser.Game({
   height: 720,
   backgroundColor: '#000000',
   parent: shell.parent,
-  scene: [TitleScene, WorldMapScene, BattleScene, PlayerHomeScene, PokemonCenterScene, RivalHomeScene, StarterSelectScene, RivalBattleScene, MenuScene, RouteScene, WildBattleScene, SeoulScene, TrainerBattleScene, CapitolCityScene, CapitolTowerScene, CapitolGymScene, GymLeaderBattleScene, CapitolPCScene, CapitolPalaceScene, CapitolMarketScene, EvolutionScene, Route2Scene, PineNeedleTownScene, PineNeedlePCScene, PineNeedleStudioScene, PokedexScene, ShopScene, BoxScene, BaekduPassScene, BaekduCityScene, BaekduPCScene, BaekduGymScene, Route3Scene, GeumgangCityScene, GeumgangPCScene, GeumgangGymScene, Route4Scene, HaeanCityScene, HaeanPCScene, HaeanGymScene, SudoLabScene, Route5Scene, ForestCityScene, ForestPCScene, ForestGymScene, ForestShrineScene, FerryScene, JejuPortScene, JejuCityScene, JejuVentsPortScene, JejuPCScene, JejuVentScene, Route6Scene, SunriseCityScene, SunrisePCScene, SunriseGymScene, SunriseCliff1Scene, SunriseCliff2Scene, SunriseCliff3Scene, BaekduCheckpointScene, BaekduSummitScene, ScholarsRoadScene, LeaguePlazaScene, PokemonLeagueScene, RegionMapScene, NorthernColiseumScene, NorthernPlazaScene, PyeongyangCityScene, NorthernReachesScene, SacredPeakScene, DolmoeCityScene, DolmoeGymScene, DolmoeRuinsScene, DolmoePCScene, DolmoeMineScene, SeoraePassScene, OceanScene, MartScene, DeptStoreScene, SeoraeTownScene, SeoraePCScene, SeoraeBuildingScene, SeoraeGymScene, GenderSelectScene, IntroScene, HaenyeoHotSpringScene, HallasanGardensScene, HarborTavernScene, JejuLibraryScene, JejuMarketScene, BeachPavilionScene, SanbangsanShrineScene, CheonjiyeonWaterfallScene, KaesongCityScene, HanRiverParkScene, BikeShopScene, ConvenienceStoreScene, NampoCityScene, WonsanCityScene, HamhungCityScene, ChongjinCityScene, SinuijuCityScene, SamjiyonCityScene, RyesongValleyScene, PokemonLabScene, NampoBeachScene, AhobiryongPassScene, WonsanBeachScene, SijungCoastScene, HamhungMineScene, ChilboHighlandsScene, KaemaPlateauScene, RangrimFoothillsScene, RangrimCavernScene, RangrimAltarScene, RangrimSnowfieldScene, RangrimSummitScene, SamjiyonAjitRoadScene, NosdanHideoutScene, CheonjiScene, PyeongseongCheckpointScene, SinuijuIceCaveScene, FogboundManorScene, HamhungNaengmyeonScene, NorthernBuildingScene],
+  scene: [TitleScene, WorldMapScene, BattleScene, PlayerHomeScene, PokemonCenterScene, RivalHomeScene, StarterSelectScene, RivalBattleScene, MenuScene, RouteScene, WildBattleScene, SeoulScene, TrainerBattleScene, CapitolCityScene, CapitolTowerScene, CapitolGymScene, GymLeaderBattleScene, CapitolPCScene, CapitolPalaceScene, CapitolMarketScene, EvolutionScene, Route2Scene, PineNeedleTownScene, PineNeedlePCScene, PineNeedleStudioScene, NurseryScene, NurseryManageScene, PokedexScene, ShopScene, BoxScene, BaekduPassScene, BaekduCityScene, BaekduPCScene, BaekduGymScene, Route3Scene, GeumgangCityScene, GeumgangPCScene, GeumgangGymScene, Route4Scene, HaeanCityScene, HaeanPCScene, HaeanGymScene, SudoLabScene, Route5Scene, ForestCityScene, ForestPCScene, ForestGymScene, ForestShrineScene, FerryScene, JejuPortScene, JejuCityScene, JejuVentsPortScene, JejuPCScene, JejuVentScene, Route6Scene, SunriseCityScene, SunrisePCScene, SunriseGymScene, SunriseCliff1Scene, SunriseCliff2Scene, SunriseCliff3Scene, BaekduCheckpointScene, BaekduSummitScene, ScholarsRoadScene, LeaguePlazaScene, PokemonLeagueScene, RegionMapScene, NorthernColiseumScene, NorthernPlazaScene, PyeongyangCityScene, NorthernReachesScene, SacredPeakScene, DolmoeCityScene, DolmoeGymScene, DolmoeRuinsScene, DolmoePCScene, DolmoeMineScene, SeoraePassScene, OceanScene, MartScene, DeptStoreScene, SeoraeTownScene, SeoraePCScene, SeoraeBuildingScene, SeoraeGymScene, GenderSelectScene, IntroScene, HaenyeoHotSpringScene, HallasanGardensScene, HarborTavernScene, JejuLibraryScene, JejuMarketScene, BeachPavilionScene, SanbangsanShrineScene, CheonjiyeonWaterfallScene, KaesongCityScene, HanRiverParkScene, BikeShopScene, ConvenienceStoreScene, NampoCityScene, WonsanCityScene, HamhungCityScene, ChongjinCityScene, SinuijuCityScene, SamjiyonCityScene, RyesongValleyScene, PokemonLabScene, NampoBeachScene, AhobiryongPassScene, WonsanBeachScene, SijungCoastScene, HamhungMineScene, ChilboHighlandsScene, KaemaPlateauScene, RangrimFoothillsScene, RangrimCavernScene, RangrimAltarScene, RangrimSnowfieldScene, RangrimSummitScene, SamjiyonAjitRoadScene, NosdanHideoutScene, CheonjiScene, PyeongseongCheckpointScene, SinuijuIceCaveScene, FogboundManorScene, HamhungNaengmyeonScene, NorthernBuildingScene],
   // CORS-enabled loads let the 3D layer read pixels of CDN-hosted art
   // (PokeAPI HOME renders) to extrude battler meshes. Visual pipeline only.
   loader: { crossOrigin: 'anonymous' },
@@ -165,7 +168,10 @@ const game = new Phaser.Game({
   },
   // Global "Pokémon-like" post-FX (colour grade + bloom + vignette) on every scene.
   plugins: {
-    scene: [{ key: 'PokemonFx', plugin: PokemonFxPlugin, mapping: 'pokemonFx', start: true }],
+    scene: [
+      { key: 'PokemonFx', plugin: PokemonFxPlugin, mapping: 'pokemonFx', start: true },
+      { key: 'BreedingTracker', plugin: BreedingTrackerPlugin, mapping: 'breedingTracker', start: true },
+    ],
   },
   fps: { target: 60, min: 30 },
   scale: {

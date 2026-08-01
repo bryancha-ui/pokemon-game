@@ -55,7 +55,9 @@ const NAMPO: EosaCity = {
 const WONSAN: EosaCity = {
   key: 'WonsanCityScene', name: 'Haesol (해솔)', mapaeKey: 'wonsan', bgm: 'wonsan',
   chiefKey: 'eosa-wonsan', chiefName: '어사대장 Haegang',
-  ground: 0x6a9a4a, accent: 0xf0c040, hallRoof: 0xd8873a, robe: 0xaa5533,
+  // Haesol is a beach capital, so its open lots use pale sand-stone paving
+  // instead of the former saturated green ground that became grass in 3D.
+  ground: 0xcbbfa8, accent: 0xf0c040, hallRoof: 0xd8873a, robe: 0xaa5533,
   team: [{ id: 297, level: 69 }, { id: 237, level: 69 }, { id: 534, level: 70 }, { id: 475, level: 70 }, { id: 448, level: 71 }],
   expPool: 4100,
   intro: ['Haesol (해솔) — sunlight off Kalma Beach, the blue shoulder of Mt. Kumgang on the horizon, sand still warm from dawn training.',

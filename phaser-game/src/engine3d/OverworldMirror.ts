@@ -222,6 +222,9 @@ export class OverworldMirror {
       propPlots?: import('./TerrainBuilder').PropPlot[];
       clearSight3D?: boolean;
       grass3D?: boolean;
+      grassTileIds3D?: number[];
+      grassDensity3D?: number;
+      grassTone3D?: number;
     };
     const known = sc.buildingPlots ?? [];
     const t = buildTerrain(
@@ -230,6 +233,7 @@ export class OverworldMirror {
       sc.onlyNamedBuildings ?? isWildFieldScene(this.scene.scene.key), sc.vehiclePlots ?? [],
       sc.caveFloorHint ?? false, sc.noVehicles ?? false, sc.freeBuildings ?? false,
       sc.propPlots ?? [], sc.clearSight3D ?? false, sc.grass3D ?? false,
+      sc.grassTileIds3D ?? [], sc.grassDensity3D ?? 1.45, sc.grassTone3D ?? 0x49b23a,
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;

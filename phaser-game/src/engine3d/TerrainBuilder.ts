@@ -278,6 +278,14 @@ export function buildTerrain(
   clearSight3D = false,
   // Enable 3D grass tufts in grass areas (set by scenes that want more detailed foliage)
   grass3D = false,
+  // Some maps publish the exact tile ids that represent tall grass.  Those ids
+  // take priority over colour sampling, which can otherwise mistake the dark
+  // painted blades for trees.
+  grassTileIds3D: number[] = [],
+  // Average number of crossed-plane tufts placed in each grass tile.  The
+  // legacy behaviour was one tuft plus a 45% chance of a second.
+  grassDensity3D = 1.45,
+  grassTone3D = 0x49b23a,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -370,6 +378,18 @@ export function buildTerrain(
       const i = r * cols + c;
       const [rr, gg, bb] = cellColors[i];
       cells[i] = classify(rgbToHsl(rr, gg, bb), snowy, cellVar[i], classifyCavey, interior, grass3D);
+    }
+  }
+
+  // Authored grass tiles are definitive.  In particular, Route 5 paints dark
+  // blades over a green base; averaging that artwork used to put it below the
+  // foliage threshold and grow a tree directly on top of the clearing.
+  if (tileMap && grassTileIds3D.length > 0) {
+    const grassIds = new Set(grassTileIds3D);
+    for (let r = 0; r < Math.min(rows, tileMap.length); r++) {
+      for (let c = 0; c < Math.min(cols, tileMap[r]?.length ?? 0); c++) {
+        if (grassIds.has(tileMap[r][c])) cells[r * cols + c] = 'grass';
+      }
     }
   }
 
@@ -624,9 +644,11 @@ export function buildTerrain(
   }
 
   const trees: InstancedProp = snowy ? makePines(nTree + 8) : makeTrees(nTree + 8);
+  const safeGrassDensity = Math.max(0, Math.min(6, grassDensity3D));
+  const grassCapacity = Math.ceil(nGrass * safeGrassDensity) + 8;
   const grass = snowy
-    ? makeGrassTufts(nGrass * 2 + 8, 0x5f8769, true)
-    : makeGrassTufts(nGrass * 2 + 8);
+    ? makeGrassTufts(grassCapacity, 0x5f8769, true)
+    : makeGrassTufts(grassCapacity, grassTone3D);
   const flowers = makeFlowers(nFlower * 2 + 8);
   const rocks = makeRocks(nRock + 8);
   const walls = new WallBuilder();
@@ -671,8 +693,13 @@ export function buildTerrain(
           break;
         case 'grass':
           if (interior) break;
-          grass.place(cx + (rnd() - 0.5) * 0.5, cz + (rnd() - 0.5) * 0.5, 0.8 + rnd() * 0.5, rnd() * Math.PI);
-          if (rnd() > 0.55) grass.place(cx + (rnd() - 0.5) * 0.6, cz + (rnd() - 0.5) * 0.6, 0.7 + rnd() * 0.4, rnd() * Math.PI);
+          {
+            const whole = Math.floor(safeGrassDensity);
+            const count = whole + (rnd() < safeGrassDensity - whole ? 1 : 0);
+            for (let i = 0; i < count; i++) {
+              grass.place(cx + (rnd() - 0.5) * 0.72, cz + (rnd() - 0.5) * 0.72, 0.72 + rnd() * 0.45, rnd() * Math.PI);
+            }
+          }
           break;
         case 'flower':
           if (interior) break;

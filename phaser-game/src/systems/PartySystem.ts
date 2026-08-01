@@ -1,6 +1,26 @@
 import Phaser from 'phaser';
 import { STARTERS, findForm } from '../data/StarterData';
 import { customForm } from '../data/CustomBattle';
+import { DISGUIJAR_DATA } from '../data/CustomPokemon';
+import { cachedPokemon } from '../data/PokeAPI';
+import type { PokemonData } from '../battle/Pokemon';
+import { genderForPokemon } from '../data/PokemonGender';
+
+export interface PartyBaseStats {
+  hp: number;
+  atk: number;
+  def: number;
+  spAtk: number;
+  spDef: number;
+  spd: number;
+}
+
+export function baseStatsFromData(data: PokemonData): PartyBaseStats {
+  return {
+    hp: data.baseHp, atk: data.baseAtk, def: data.baseDef,
+    spAtk: data.baseSpAtk, spDef: data.baseSpDef, spd: data.baseSpd,
+  };
+}
 
 export interface PartyEntry {
   name:     string;
@@ -18,16 +38,66 @@ export interface PartyEntry {
   evoReady?: boolean;   // set on an actual level-up; evolution only triggers when this is true
   exp?:     number;   // per-slot EXP tracking
   status?:  string;   // 'none' | 'psn' | 'par' | 'brn' | 'frz' | 'slp'
+  /** Species base stats, persisted so captures retain their battle identity. */
+  baseStats?: PartyBaseStats;
+  /** Stable daycare identity and sex. Added lazily for old saves. */
+  breedingId?: string;
+  gender?: 'male' | 'female' | 'genderless';
+  /** Localized/profile metadata shown on the separate status screen. */
+  ability?: string;
+  abilityKo?: string;
+  nameKo?: string;
+  caughtAt?: string;
 }
 
 const KEY = 'party';
 
 /** Recompute maxHp for an entry from its form's base HP (matches Pokemon formula). */
 export function recomputeMaxHp(entry: PartyEntry): number {
-  const baseHp = findForm(entry.spriteKey)?.data.baseHp
+  const baseHp = entry.baseStats?.hp
+    ?? (entry.spriteKey === 'disguijar' ? DISGUIJAR_DATA.baseHp : undefined)
+    ?? findForm(entry.spriteKey)?.data.baseHp
     ?? customForm(entry.spriteKey)?.data.baseHp
     ?? 50;
   return Math.floor((baseHp * entry.level) / 25) + entry.level + 10;
+}
+
+function dataForEntry(entry: PartyEntry): PokemonData | undefined {
+  if (entry.spriteKey === 'disguijar') return DISGUIJAR_DATA;
+  const local = findForm(entry.spriteKey)?.data ?? customForm(entry.spriteKey)?.data;
+  if (local) return local;
+  const id = entry.spriteKey.match(/(?:wild-|api-|te-)?(\d+)$/)?.[1];
+  return id ? cachedPokemon(id) : undefined;
+}
+
+/** Add missing stats to old saves and normalize invalid values. */
+function ensureBaseStats(entry: PartyEntry): boolean {
+  const current = entry.baseStats;
+  if (current && [current.hp, current.atk, current.def, current.spAtk, current.spDef, current.spd]
+    .every(v => Number.isFinite(v) && v > 0)) return false;
+  const data = dataForEntry(entry);
+  if (data) {
+    entry.baseStats = baseStatsFromData(data);
+  } else {
+    // Last-resort migration if an older save's browser API cache was cleared.
+    const hp = Math.max(10, Math.round((entry.maxHp - entry.level - 10) * 25 / Math.max(1, entry.level)));
+    entry.baseStats = { hp, atk: 55, def: 55, spAtk: 55, spDef: 55, spd: 55 };
+  }
+  return true;
+}
+
+function ensureAllBaseStats(entries: PartyEntry[]): boolean {
+  let changed = false;
+  for (const entry of entries) {
+    changed = ensureBaseStats(entry) || changed;
+    if (!entry.gender) {
+      const id = Number(entry.spriteKey.match(/(?:wild-|api-|te-)?(\d+)$/)?.[1]) || undefined;
+      entry.gender = genderForPokemon({ name: entry.name, key: entry.spriteKey, id },
+        entry.breedingId ?? entry.spriteUrl ?? entry.spriteKey);
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 export const PartySystem = {
@@ -35,10 +105,15 @@ export const PartySystem = {
   get(registry: Phaser.Data.DataManager): PartyEntry[] {
     const raw = registry.get(KEY) as string | undefined;
     if (!raw) return [];
-    try { return JSON.parse(raw) as PartyEntry[]; } catch { return []; }
+    try {
+      const party = JSON.parse(raw) as PartyEntry[];
+      if (ensureAllBaseStats(party)) registry.set(KEY, JSON.stringify(party));
+      return party;
+    } catch { return []; }
   },
 
   set(registry: Phaser.Data.DataManager, party: PartyEntry[]): void {
+    ensureAllBaseStats(party);
     registry.set(KEY, JSON.stringify(party));
   },
 
@@ -63,6 +138,9 @@ export const PartySystem = {
       spriteUrl: `assets/${key}.jpg`,
       isCustom: true,
       moves: def?.startingMoves.map(m => m.name) ?? [],
+      ability: def?.ability,
+      caughtAt: "Prof. Song's Lab",
+      baseStats: def ? baseStatsFromData(def.data) : { hp: baseHp, atk: 45, def: 45, spAtk: 45, spDef: 45, spd: 45 },
       exp: 0,
     };
     this.set(registry, [entry]);
@@ -86,9 +164,14 @@ export const PartySystem = {
   getBox(registry: Phaser.Data.DataManager): PartyEntry[] {
     const raw = registry.get('box') as string | undefined;
     if (!raw) return [];
-    try { return JSON.parse(raw) as PartyEntry[]; } catch { return []; }
+    try {
+      const box = JSON.parse(raw) as PartyEntry[];
+      if (ensureAllBaseStats(box)) registry.set('box', JSON.stringify(box));
+      return box;
+    } catch { return []; }
   },
   setBox(registry: Phaser.Data.DataManager, box: PartyEntry[]): void {
+    ensureAllBaseStats(box);
     registry.set('box', JSON.stringify(box));
   },
   boxAdd(registry: Phaser.Data.DataManager, entry: PartyEntry): void {

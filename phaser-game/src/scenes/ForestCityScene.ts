@@ -6,7 +6,7 @@ import { hasBike, BIKE_SPEED } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
-import { PartySystem, recomputeMaxHp, PartyEntry } from '../systems/PartySystem';
+import { PartySystem, baseStatsFromData, recomputeMaxHp, PartyEntry } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { customForm } from '../data/CustomBattle';
 
@@ -154,6 +154,9 @@ export class ForestCityScene extends Phaser.Scene {
       spriteKey: 'nabihalmang', spriteUrl: cf?.data.spriteUrl ?? 'assets/dex/nabihalmang.jpg',
       isCustom: true,
       moves: (cf?.moves ?? []).map(m => m.name).slice(0, 4),
+      ability: 'Shed Skin',
+      caughtAt: 'Jeju Volcanic Vent',
+      baseStats: cf ? baseStatsFromData(cf.data) : { hp: 106, atk: 106, def: 106, spAtk: 110, spDef: 106, spd: 100 },
       exp: 0,
     };
     entry.maxHp = recomputeMaxHp(entry); entry.hp = entry.maxHp;

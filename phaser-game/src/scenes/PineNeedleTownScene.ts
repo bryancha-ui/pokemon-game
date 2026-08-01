@@ -23,6 +23,7 @@ interface Building { label: string; scene: string; x: number; y: number; w: numb
 const BUILDINGS: Building[] = [
   { label: 'Pokémon Center & Gallery', scene: 'PineNeedlePCScene', x: 4, y: 6, w: 6, h: 5, doorCol: 6, doorRow: 10, roof: 0xcc2244 },
   { label: "Artist's Studio", scene: 'PineNeedleStudioScene', x: 20, y: 6, w: 5, h: 5, doorCol: 22, doorRow: 10, roof: 0x3a5a8a },
+  { label: 'Pokémon Nursery', scene: 'NurseryScene', x: 2, y: 17, w: 7, h: 5, doorCol: 5, doorRow: 21, roof: 0x4f8b58 },
 ];
 
 function buildMap(): Tile[][] {
@@ -38,9 +39,13 @@ function buildMap(): Tile[][] {
     fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING);
     m[b.doorRow][b.doorCol] = T.PATH;
   }
-  // Decorative pond + trees
-  fill(18, 22, 4, 9, T.POND);
-  for (const [r, c] of [[3,3],[3,26],[8,12],[8,18],[20,24],[22,20],[5,11],[5,19]] as [number,number][]) m[r][c] = T.TREE;
+  // Nursery access lane: it leaves the plaza, bends around the east wall and
+  // reaches the wide south-facing entrance without cutting through the house.
+  fill(15, 23, 9, 11, T.PATH);
+  fill(22, 23, 5, 11, T.PATH);
+  // The old southwest pond moves east to make a real building lot.
+  fill(19, 23, 25, 29, T.POND);
+  for (const [r, c] of [[3,3],[3,26],[8,12],[8,18],[20,23],[23,21],[5,11],[5,19]] as [number,number][]) m[r][c] = T.TREE;
   // Stone lanterns flanking the plaza
   m[11][8] = T.LANTERN; m[11][21] = T.LANTERN;
   // Paper-lantern fence near food stall
@@ -50,9 +55,9 @@ function buildMap(): Tile[][] {
 
 export class PineNeedleTownScene extends Phaser.Scene {
   private map!: Tile[][];
-  // 3D: Pokémon Center reuses the shared model; the Artist's Studio (the right
-  // house) gets its own generated house GLB. Only these named plots rise.
-  public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'pinehouse'][i] }));
+  // 3D: Pokémon Center reuses the shared model; the studio and nursery reuse
+  // the village's generated hanok-style house GLB. Only these named plots rise.
+  public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'pinehouse', 'pinehouse'][i] }));
   public onlyNamedBuildings = true;
   // The 떡볶이 (tteokbokki) street stall as a 3D vendor stand.
   public propPlots = [{ x: 21, y: 17, kind: 'stall' as const }];

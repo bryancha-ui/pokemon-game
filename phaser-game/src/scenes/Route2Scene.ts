@@ -44,6 +44,7 @@ const R2_ENCOUNTERS: EncounterEntry[] = [
   { id: 16,  weight: 12, minLevel: 13, maxLevel: 16, isCustom: false, catchRate: 255 }, // Pidgey
   { id: 161, weight: 8,  minLevel: 13, maxLevel: 16, isCustom: false, catchRate: 255 }, // Sentret
   { id: 163, weight: 6,  minLevel: 14, maxLevel: 16, isCustom: false, catchRate: 200 }, // Hoothoot
+  { id: 132, weight: 3,  minLevel: 14, maxLevel: 16, isCustom: false, catchRate: 35 },  // Ditto (rare, near the nursery)
 ];
 
 function buildMap(): Tile[][] {

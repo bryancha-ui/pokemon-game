@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { dexEntry, POKEDEX } from '../data/Pokedex';
 import { KO_STRINGS, KO_TYPES, KO_SPEAKERS } from '../data/ko_strings';
+import { KO_ABILITIES } from '../data/ko_abilities';
 
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
 export const POKE_KR: Record<string, string> = {
@@ -164,6 +165,7 @@ export const POKE_KR: Record<string, string> = {
   'api-147': '미뇽',
   'api-148': '신뇽',
   'api-149': '망나뇽',
+  'api-132': '메타몽',
 };
 
 // ── Localization ─────────────────────────────────────────────────────────────
@@ -358,6 +360,21 @@ export function tr(en: string): string {
 export function typeName(type: string): string {
   if (currentLang === 'ko') return KO_TYPES[type?.toLowerCase?.()] ?? type;
   return type ? type.charAt(0).toUpperCase() + type.slice(1) : type;
+}
+
+/** Localize both official and Onnuri-original ability names. `localizedKo` is
+ * supplied for official abilities hydrated from PokeAPI; the local dictionary
+ * keeps custom abilities and offline play fully translated. */
+export function abilityName(ability: string, localizedKo?: string): string {
+  if (!ability) return currentLang === 'ko' ? '알 수 없음' : 'Unknown';
+  const humanize = (value: string) => value.trim().replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  if (currentLang !== 'ko') return ability.split('/').map(humanize).join(' / ');
+  if (localizedKo) return localizedKo;
+  return ability.split('/').map(part => {
+    const normalized = part.trim().replace(/[-_]+/g, ' ').toLowerCase();
+    return KO_ABILITIES[normalized] ?? humanize(part);
+  }).join(' / ');
 }
 
 /** A Pokémon's display name in the current language (Korean from the dictionary). */

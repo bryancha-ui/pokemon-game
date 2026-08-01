@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
-import { playMoveFX } from '../systems/BattleFX';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move, MoveData } from '../battle/Pokemon';
@@ -25,6 +25,7 @@ import { Inventory, formatMoney, ITEMS, useItemOnSlot, itemDef } from '../system
 import { tmForMove } from '../data/TMs';
 import { SaveManager } from '../utils/SaveManager';
 import { playBallSendOut } from '../systems/BattleBallFX';
+import { genderedName } from '../data/PokemonGender';
 
 // ── Enemy movesets ──────────────────────────────────────────────────────────
 // PokéAPI enemies previously fought with only Tackle + Growl. Give every enemy a
@@ -349,16 +350,36 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   // ── HUDs ──────────────────────────────────────────────────────────────────
 
+  private playerHudName(): string {
+    const entry = PartySystem.get(this.registry)[this.activeSlot];
+    return genderedName(pokeNameEn(this.player.name).toUpperCase(), {
+      name: this.player.name,
+      key: entry?.spriteKey,
+      id: this.player.data.id,
+      gender: entry?.gender,
+    }, entry?.breedingId ?? `party-${this.activeSlot}`);
+  }
+
+  private enemyHudName(): string {
+    const spec = this.enemyQueue[this.enemyIdx];
+    const key = spec?.custom ?? (spec ? `wild-${spec.id}` : undefined);
+    return genderedName(pokeNameEn(this.enemy.name).toUpperCase(), {
+      name: this.enemy.name,
+      key,
+      id: this.enemy.data.id,
+    }, `${this.trainerKey}-${this.enemyIdx}`);
+  }
+
   private createHUDs() {
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.enemyNameText = this.add.text(12, 24, pokeNameEn(this.enemy.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.enemyNameText = this.add.text(12, 24, this.enemyHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.enemyLvText  = this.add.text(180, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' });
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
     this.add.rectangle(1030, 545, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(922, 519, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.playerNameText = this.add.text(922, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
     this.playerHpBar  = this.add.rectangle(940, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
@@ -609,6 +630,12 @@ export class TrainerBattleScene extends Phaser.Scene {
   // ── Battle flow ───────────────────────────────────────────────────────────
 
   private playerAction() {
+    const pending = pendingMoveFor(this.player);
+    if (pending) {
+      this.hideAllPanels();
+      this.runTurn(pending);
+      return;
+    }
     this.state = 'playerAction';
     this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`);
     this.showActionPanel();
@@ -633,8 +660,10 @@ export class TrainerBattleScene extends Phaser.Scene {
   private runTurn(playerMove: Move) {
     this.state = 'busy';
     // Turn order is decided by Speed (ties broken randomly).
-    const playerFirst = this.player.spd > this.enemy.spd
-      || (this.player.spd === this.enemy.spd && Math.random() < 0.5);
+    const playerSpeed = this.player.battleStat('spd');
+    const enemySpeed = this.enemy.battleStat('spd');
+    const playerFirst = playerSpeed > enemySpeed
+      || (playerSpeed === enemySpeed && Math.random() < 0.5);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction()));
     } else {
@@ -644,22 +673,25 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   /** Resolve the player's move; on a KO, hand off to afterEnemyKO instead of continuing. */
   private doPlayerMove(playerMove: Move, onDone: () => void) {
-    this.player.useMove(playerMove);
-    persistMovePP(this.registry, this.activeSlot, this.player);   // PP persists across battles
-    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} used ${playerMove.data.name}!`, () => {
-      if (playerMove.data.power <= 0) { onDone(); return; }
-      const { critical, effectiveness } = this.enemy.takeDamage(playerMove, this.player);
-      playMoveFX(this, this.playerSprite, this.enemySprite, playerMove.data, effectiveness, () => {});
-      this.animateHpBar('enemy', () => {
-        const msg = critical ? 'A critical hit!' :
-          effectiveness > 1 ? 'Super effective!' :
-          effectiveness < 1 && effectiveness > 0 ? 'Not very effective...' : '';
-        const after = () => {
-          if (this.enemy.isKO) { this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} fainted!`, () => this.afterEnemyKO()); return; }
-          onDone();
-        };
-        if (msg) this.typeDialog(msg, after); else after();
-      });
+    executeBattleMove({
+      scene: this,
+      user: this.player,
+      target: this.enemy,
+      move: playerMove,
+      userSprite: this.playerSprite,
+      targetSprite: this.enemySprite,
+      userLabel: pokeNameEn(this.player.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('player', done),
+      animateTargetHp: done => this.animateHpBar('enemy', done),
+      onPpUsed: () => persistMovePP(this.registry, this.activeSlot, this.player),
+      onComplete: () => {
+        if (this.enemy.isKO) {
+          this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} fainted!`, () => this.afterEnemyKO());
+          return;
+        }
+        onDone();
+      },
     });
   }
 
@@ -690,26 +722,27 @@ export class TrainerBattleScene extends Phaser.Scene {
   /** Resolve the enemy's move; on a KO, hand off to sendNextOrLose instead of continuing. */
   private doEnemyMove(onDone: () => void) {
     const moves = this.enemy.moves.filter(m => m.pp > 0);
-    const move  = this.pickEnemyMove(moves.length ? moves : this.enemy.moves);
-    this.enemy.useMove(move);
-
-    this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} used ${move.data.name}!`, () => {
-      if (move.data.power > 0) {
-        const { effectiveness } = this.player.takeDamage(move, this.enemy);
-        playMoveFX(this, this.enemySprite, this.playerSprite, move.data, effectiveness, () => {});
-        this.animateHpBar('player', () => {
-          PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
-          if (this.player.isKO) {
-            this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => {
-              this.sendNextOrLose();
-            });
-          } else {
-            onDone();
-          }
-        });
-      } else {
-        onDone();
-      }
+    const move = pendingMoveFor(this.enemy)
+      ?? this.pickEnemyMove(moves.length ? moves : this.enemy.moves);
+    executeBattleMove({
+      scene: this,
+      user: this.enemy,
+      target: this.player,
+      move,
+      userSprite: this.enemySprite,
+      targetSprite: this.playerSprite,
+      userLabel: pokeNameEn(this.enemy.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('enemy', done),
+      animateTargetHp: done => this.animateHpBar('player', done),
+      onComplete: () => {
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        if (this.player.isKO) {
+          this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.sendNextOrLose());
+        } else {
+          onDone();
+        }
+      },
     });
   }
 
@@ -726,7 +759,7 @@ export class TrainerBattleScene extends Phaser.Scene {
           this.enemySprite.setTexture(this.textures.exists(teKey) ? teKey : 'vipour');
           this.fitSprite(this.enemySprite, this.enemySpriteSize());   // re-scale: custom sprites differ in size (bosses loom larger)
           this.animateHpBar('enemy', () => {});
-          this.enemyNameText?.setText(pokeNameEn(this.enemy.name).toUpperCase());
+          this.enemyNameText?.setText(this.enemyHudName());
           this.enemyLvText.setText(`Lv.${this.enemy.level}`);
           this.enemyHpBar.width  = HP_W;
           this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
@@ -949,7 +982,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.width = HP_W;
     this.animateHpBar('player', () => {});
@@ -975,7 +1008,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.player = buildFromEntry(entry);
     this.refreshMovePanel();
 
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.width = HP_W;
     this.animateHpBar('player', () => {});
@@ -1038,7 +1071,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.refreshMovePanel();
 
     // Update HUD
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
     this.playerHpBar.width     = HP_W;

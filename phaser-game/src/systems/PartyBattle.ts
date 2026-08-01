@@ -12,17 +12,20 @@ import { customForm } from '../data/CustomBattle';
 import { mergeLearnset } from '../data/Learnsets';
 import { TM_MOVE_DATA } from '../data/TMs';
 
-/** Fold any taught TM moves stored on the entry into the computed battle moveset,
- *  so a TM the player taught actually shows up (and works) in battle. Damaging TMs
- *  replace the current weakest move; status TMs (0 power) aren't simulated here so
- *  they're left out of the battle slots. */
+const TAUGHT_MOVE_DATA: Record<string, MoveData> = {
+  ...TM_MOVE_DATA,
+  fly: { name: 'Fly', type: 'flying', category: 'physical', power: 90, accuracy: 95, pp: 15 },
+};
+
+/** Fold taught TM/HM moves into the real battle set. Status moves are first-class
+ *  battle actions now, and Fly retains its two-turn behavior through MoveEffects. */
 function foldTaughtMoves(moves: MoveData[], entry: PartyEntry): MoveData[] {
   // A player-curated moveset (from choosing which move to forget for a TM) wins outright.
   if (entry.battleMoves && entry.battleMoves.length) return entry.battleMoves.slice(0, 4);
   const have = new Set(moves.map(m => m.name.toLowerCase()));
   const taught = (entry.moves ?? [])
-    .map(n => TM_MOVE_DATA[n.toLowerCase()])
-    .filter((m): m is MoveData => !!m && m.power > 0 && !have.has(m.name.toLowerCase()));
+    .map(n => TAUGHT_MOVE_DATA[n.toLowerCase()])
+    .filter((m): m is MoveData => !!m && !have.has(m.name.toLowerCase()));
   if (taught.length === 0) return moves;
   const result = [...moves];
   for (const tm of taught) {
@@ -128,16 +131,20 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
     return p;
   }
 
-  // PokéAPI caught Pokémon — approximate base stats from stored maxHp
-  const approxBase = Math.max(10,
-    Math.round((entry.maxHp - entry.level - 10) * 25 / Math.max(1, entry.level)));
+  // PokéAPI caught Pokémon — use all six persisted species stats. Older saves
+  // are hydrated by PartySystem from the PokéAPI cache before reaching here.
+  const stats = entry.baseStats ?? {
+    hp: Math.max(10, Math.round((entry.maxHp - entry.level - 10) * 25 / Math.max(1, entry.level))),
+    atk: 55, def: 55, spAtk: 55, spDef: 55, spd: 55,
+  };
   const data: PokemonData = {
     id:          0,
     name:        entry.name,
     type1:       (entry.type1 as PokemonType) || 'normal',
     type2:       entry.type2 as PokemonType | undefined,
-    baseHp:      approxBase,
-    baseAtk:     55, baseDef: 55, baseSpAtk: 55, baseSpDef: 55, baseSpd: 55,
+    baseHp:      stats.hp,
+    baseAtk:     stats.atk, baseDef: stats.def,
+    baseSpAtk:   stats.spAtk, baseSpDef: stats.spDef, baseSpd: stats.spd,
     spriteUrl:   entry.spriteUrl,
   };
   const moves = foldTaughtMoves(mergeLearnset(movesForEntry(entry), entry.spriteKey, data.type1, data.type2, entry.level), entry);

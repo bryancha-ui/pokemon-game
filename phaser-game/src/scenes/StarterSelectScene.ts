@@ -3,7 +3,7 @@ import { STARTERS, StarterDef, TYPE_COLORS } from '../data/StarterData';
 import { PartySystem } from '../systems/PartySystem';
 import { DexTracker } from '../systems/DexTracker';
 import { rivalTrainerName } from '../data/CharacterSprite';
-import { t, tr, pokeNameEn } from '../systems/i18n';
+import { t, tr, pokeNameEn, abilityName } from '../systems/i18n';
 
 export class StarterSelectScene extends Phaser.Scene {
   private selectedIdx = 0;
@@ -176,7 +176,7 @@ export class StarterSelectScene extends Phaser.Scene {
     });
 
     // Ability
-    const abil = this.add.text(0, 80, `${t('Ability', '특성')}: ${s.ability}`, {
+    const abil = this.add.text(0, 80, `${t('Ability', '특성')}: ${abilityName(s.ability)}`, {
       fontSize: '10px', color: '#555555',
     }).setOrigin(0.5);
     c.add(abil);

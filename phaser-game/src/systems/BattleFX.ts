@@ -65,6 +65,108 @@ export function playMoveFX(
   }
 }
 
+function projectedPoint(scene: Phaser.Scene, target: Phaser.GameObjects.Image, heightRatio = 0.55) {
+  const p = { target, x: target.x, y: target.y, heightRatio };
+  scene.events.emit('pk3d-screen-target', p);
+  return p;
+}
+
+/** Healing and rank-change animation shared by every battle scene. */
+export function playStatusFX(
+  scene: Phaser.Scene,
+  affected: Phaser.GameObjects.Image,
+  move: MoveData,
+  kind: 'heal' | 'stat-up' | 'stat-down' | 'guard',
+  onComplete: () => void,
+): void {
+  const color = kind === 'heal' ? 0x61e883
+    : kind === 'stat-up' ? 0xffd95a
+      : kind === 'stat-down' ? 0x9b75d6 : 0x86d9ff;
+  const p = projectedPoint(scene, affected);
+  // Reuse the 3D status aura around the affected combatant.
+  scene.events.emit('pk3d-movefx', {
+    attacker: affected, target: affected, color, category: 'status',
+    moveType: move.type, moveName: move.name, power: 0, effectiveness: 1,
+  });
+  const symbol = kind === 'heal' ? '+' : kind === 'stat-down' ? '▼' : kind === 'guard' ? '◆' : '▲';
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2;
+    const glyph = scene.add.text(p.x + Math.cos(a) * 24, p.y + 18, symbol, {
+      fontSize: kind === 'heal' ? '20px' : '16px', color: `#${color.toString(16).padStart(6, '0')}`,
+      fontStyle: 'bold', stroke: '#102018', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(30).setBlendMode(Phaser.BlendModes.ADD);
+    scene.tweens.add({
+      targets: glyph,
+      x: p.x + Math.cos(a) * (36 + (i % 3) * 8),
+      y: p.y - 55 - (i % 3) * 14,
+      alpha: 0,
+      duration: 520 + (i % 3) * 80,
+      onComplete: () => glyph.destroy(),
+    });
+  }
+  affected.setTint(color);
+  scene.time.delayedCall(180, () => affected.clearTint());
+  scene.time.delayedCall(650, onComplete);
+}
+
+/** Energy travelling back from the damaged target to the draining user. */
+export function playDrainFX(
+  scene: Phaser.Scene,
+  target: Phaser.GameObjects.Image,
+  user: Phaser.GameObjects.Image,
+  move: MoveData,
+  onComplete: () => void,
+): void {
+  const from = projectedPoint(scene, target);
+  const to = projectedPoint(scene, user);
+  const color = move.type === 'fairy' ? 0xff9edb : 0x72e879;
+  for (let i = 0; i < 8; i++) {
+    const mote = scene.add.circle(from.x, from.y, 4 + (i % 2), color, 0.9)
+      .setDepth(30).setBlendMode(Phaser.BlendModes.ADD).setScale(0.4);
+    scene.tweens.add({
+      targets: mote,
+      x: to.x, y: to.y,
+      scale: 1.15,
+      alpha: 0.15,
+      delay: i * 45,
+      duration: 360,
+      ease: 'Sine.easeInOut',
+      onComplete: () => mote.destroy(),
+    });
+  }
+  scene.time.delayedCall(720, onComplete);
+}
+
+/** First/second phase of Fly, Dig and other charge moves. */
+export function playChargeFX(
+  scene: Phaser.Scene,
+  user: Phaser.GameObjects.Image,
+  move: MoveData,
+  phase: 'charge' | 'release',
+  mode: 'air' | 'underground' | 'charge',
+  onComplete: () => void,
+): void {
+  const engine3D = (window as unknown as { __pk3d?: { isRendering(scene: Phaser.Scene): boolean } }).__pk3d;
+  const using3D = !!engine3D?.isRendering(scene);
+  scene.events.emit('pk3d-chargefx', { target: user, phase, mode, moveName: move.name });
+  if (using3D) {
+    scene.time.delayedCall(phase === 'charge' ? 480 : 300, onComplete);
+    return;
+  }
+  const stored = Number(user.getData('battleChargeOriginY'));
+  const originY = Number.isFinite(stored) ? stored : user.y;
+  if (!Number.isFinite(stored)) user.setData('battleChargeOriginY', originY);
+  const targetY = mode === 'air' ? originY - 150 : mode === 'underground' ? originY + 75 : originY - 45;
+  scene.tweens.add({
+    targets: user,
+    y: phase === 'charge' ? targetY : originY,
+    alpha: phase === 'charge' ? 0.18 : 1,
+    duration: phase === 'charge' ? 430 : 260,
+    ease: phase === 'charge' ? 'Sine.easeOut' : 'Sine.easeIn',
+    onComplete,
+  });
+}
+
 function flashTarget(scene: Phaser.Scene, target: Phaser.GameObjects.Image, color: number, particles = true): void {
   target.setTint(color);
   scene.time.delayedCall(100, () => target.clearTint());

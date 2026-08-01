@@ -3,6 +3,8 @@ import { tr, pokeNameEn} from '../systems/i18n';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
+import { genderedName } from '../data/PokemonGender';
 
 type BattleState = 'loading' | 'start' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 
@@ -64,9 +66,19 @@ export class BattleScene extends Phaser.Scene {
   private startBattle() {
     this.hideAllPanels();
     this.typeDialog(`A wild ${this.enemyPokemon.name} appeared!`, () => {
-      this.state = 'playerAction';
-      this.showActionPanel();
+      this.playerAction();
     });
+  }
+
+  private playerAction() {
+    const pending = pendingMoveFor(this.playerPokemon);
+    if (pending) {
+      this.hideAllPanels();
+      this.runTurn(pending);
+      return;
+    }
+    this.state = 'playerAction';
+    this.showActionPanel();
   }
 
   private onFight() {
@@ -90,32 +102,61 @@ export class BattleScene extends Phaser.Scene {
 
   private runTurn(playerMove: Move) {
     this.state = 'busy';
-    this.playerPokemon.useMove(playerMove);
+    const playerSpeed = this.playerPokemon.battleStat('spd');
+    const enemySpeed = this.enemyPokemon.battleStat('spd');
+    const playerFirst = playerSpeed > enemySpeed
+      || (playerSpeed === enemySpeed && Math.random() < 0.5);
+    if (playerFirst) {
+      this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction()));
+    } else {
+      this.doEnemyMove(() => this.doPlayerMove(playerMove, () => this.playerAction()));
+    }
+  }
 
-    this.typeDialog(`${this.playerPokemon.name} used ${playerMove.data.name}!`, () => {
-      const dmg = this.enemyPokemon.takeDamage(playerMove, this.playerPokemon);
-      this.animateHpBar('enemy', () => {
+  private doPlayerMove(playerMove: Move, onDone: () => void) {
+    executeBattleMove({
+      scene: this,
+      user: this.playerPokemon,
+      target: this.enemyPokemon,
+      move: playerMove,
+      userSprite: this._playerSprite,
+      targetSprite: this._enemySprite,
+      userLabel: pokeNameEn(this.playerPokemon.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('player', done),
+      animateTargetHp: done => this.animateHpBar('enemy', done),
+      onComplete: () => {
         if (this.enemyPokemon.isKO) {
           this.typeDialog(`${this.enemyPokemon.name} fainted! You win!`, () => { this.state = 'over'; });
           return;
         }
+        onDone();
+      },
+    });
+  }
 
-        const enemyMove = this.enemyPokemon.moves[
-          Math.floor(Math.random() * this.enemyPokemon.moves.length)
-        ];
-        this.enemyPokemon.useMove(enemyMove);
-        this.typeDialog(`${this.enemyPokemon.name} used ${enemyMove.data.name}!`, () => {
-          this.playerPokemon.takeDamage(enemyMove, this.enemyPokemon);
-          this.animateHpBar('player', () => {
-            if (this.playerPokemon.isKO) {
-              this.typeDialog(`${this.playerPokemon.name} fainted! You lose!`, () => { this.state = 'over'; });
-              return;
-            }
-            this.state = 'playerAction';
-            this.showActionPanel();
-          });
-        });
-      });
+  private doEnemyMove(onDone: () => void) {
+    const available = this.enemyPokemon.moves.filter(m => m.pp > 0);
+    const enemyMove = pendingMoveFor(this.enemyPokemon)
+      ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.enemyPokemon.moves[0]);
+    executeBattleMove({
+      scene: this,
+      user: this.enemyPokemon,
+      target: this.playerPokemon,
+      move: enemyMove,
+      userSprite: this._enemySprite,
+      targetSprite: this._playerSprite,
+      userLabel: pokeNameEn(this.enemyPokemon.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHpBar('enemy', done),
+      animateTargetHp: done => this.animateHpBar('player', done),
+      onComplete: () => {
+        if (this.playerPokemon.isKO) {
+          this.typeDialog(`${this.playerPokemon.name} fainted! You lose!`, () => { this.state = 'over'; });
+          return;
+        }
+        onDone();
+      },
     });
   }
 
@@ -136,14 +177,14 @@ export class BattleScene extends Phaser.Scene {
 
     // Enemy HUD (top-left)
     this.add.rectangle(140, 60, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
-    this._enemyNameText = this.add.text(20, 32, `${pokeNameEn(e.name).toUpperCase()}  Lv.${this.enemyPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this._enemyNameText = this.add.text(20, 32, `${genderedName(pokeNameEn(e.name).toUpperCase(), e, 'demo-enemy')}  Lv.${this.enemyPokemon.level}`, { fontSize: '14px', color: '#fff' });
     this.add.rectangle(140, 72, 220, 12, 0x444444);
     this.enemyHpBar    = this.add.rectangle(30, 72, 220, 12, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText   = this.add.text(20, 82, `${e.hp}/${e.maxHp}`, { fontSize: '12px', color: '#aaa' });
 
     // Player HUD (bottom-right)
     this.add.rectangle(640, 320, 260, 70, 0x222244).setStrokeStyle(1, 0xffffff);
-    this._playerNameText = this.add.text(516, 292, `${pokeNameEn(p.name).toUpperCase()}  Lv.${this.playerPokemon.level}`, { fontSize: '14px', color: '#fff' });
+    this._playerNameText = this.add.text(516, 292, `${genderedName(pokeNameEn(p.name).toUpperCase(), p, 'demo-player')}  Lv.${this.playerPokemon.level}`, { fontSize: '14px', color: '#fff' });
     this.add.rectangle(640, 332, 220, 12, 0x444444);
     this.playerHpBar    = this.add.rectangle(530, 332, 220, 12, 0x44cc44).setOrigin(0, 0.5);
     this.playerHpText   = this.add.text(516, 342, `${p.hp}/${p.maxHp}`, { fontSize: '12px', color: '#aaa' });

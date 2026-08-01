@@ -528,6 +528,7 @@ export const POKEDEX: DexEntry[] = [
   { num: 109, key: 'api-95',  name: 'Onix',      type1: 'rock', type2: 'ground', dexText: 'A giant rock serpent that tunnels underground.',     spriteUrl: api(95),  dist: 'Wild', where: 'Caves' },
   { num: 110, key: 'api-161', name: 'Sentret',   type1: 'normal',              dexText: 'It stands on its tail to watch for danger.',          spriteUrl: api(161), dist: 'Wild', where: 'Route 2' },
   { num: 111, key: 'api-163', name: 'Hoothoot',  type1: 'normal', type2: 'flying', dexText: 'It keeps perfect time, hooting on the hour.',        spriteUrl: api(163), dist: 'Wild', where: 'Route 2' },
+  { num: 142, key: 'api-132', name: 'Ditto',     type1: 'normal', ability: 'Limber', dexText: 'It rearranges its cells to copy the form of another Pokémon.', spriteUrl: api(132), dist: 'Wild', where: 'Route 2 (rare)' },
   { num: 112, key: 'api-198', name: 'Murkrow',   type1: 'dark', type2: 'flying', dexText: 'A mischievous night bird drawn to shiny things.',     spriteUrl: api(198), dist: 'Gym', where: 'Capitol Gym' },
   { num: 113, key: 'api-197', name: 'Umbreon',   type1: 'dark',                dexText: 'Its rings glow in moonlight. A loyal night-walker.',  spriteUrl: api(197), dist: 'Gym', where: 'Capitol Gym' },
   { num: 114, key: 'api-246', name: 'Larvitar',  type1: 'rock', type2: 'ground', dexText: 'Born deep underground, it eats its way to the surface.', spriteUrl: api(246), dist: 'Wild', where: 'Route 1 / Caves' },
@@ -557,4 +558,30 @@ export function dexKeyFor(idOrSpriteKey: string | number): string {
   if (s.startsWith('te-'))   return `api-${s.slice(3)}`;
   if (s.startsWith('gym-'))  return `api-${s.slice(4)}`;
   return s; // custom key already
+}
+
+/** Resolve the habitat/original acquisition location for a caught Pokémon.
+ * Evolved Pokédex entries store instructions such as "Evolve Ssangdungori" in
+ * `where`; that is useful as an evolution hint but must never be presented as
+ * the place where the individual Pokémon was caught. */
+export function caughtOriginForDexKey(idOrSpriteKey: string | number): string | undefined {
+  const first = dexEntry(dexKeyFor(idOrSpriteKey));
+  if (!first) return undefined;
+  let current: DexEntry = first;
+  const visited = new Set<string>();
+
+  while (!visited.has(current.key)) {
+    visited.add(current.key);
+    const currentKey = current.key;
+    const parentByLink: DexEntry | undefined = POKEDEX.find(entry => entry.evolvesTo === currentKey);
+    const hintedName: string | undefined = current.where.match(/^Evolve\s+(.+?)(?:\s*\(.*\))?$/i)?.[1]?.trim().toLowerCase();
+    const parentByHint: DexEntry | undefined = hintedName
+      ? POKEDEX.find(entry => entry.name.toLowerCase() === hintedName)
+      : undefined;
+    const parent: DexEntry | undefined = parentByLink ?? parentByHint;
+    if (!parent) break;
+    current = parent;
+  }
+
+  return /^Evolve\b/i.test(current.where) ? undefined : current.where;
 }

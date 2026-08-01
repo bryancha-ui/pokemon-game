@@ -11,15 +11,21 @@ import { EncounterEntry, pickEncounter, randomLevel } from '../data/CustomPokemo
 
 // ── Kalma Beach (갈마 해변) ──────────────────────────────────────────────────────
 // Haesol's famous East-Sea bathing beach, reached by the paved shore road out of
-// town: golden sand and dune grass, the Songdowon pines, a lighthouse and beach
+// town: golden sand and low dunes, the Songdowon pines, a lighthouse and beach
 // umbrellas — and, at the water's edge, the last of Chief Haegang's three disciples.
 
-const T = { SAND: 0, GRASS: 1, SEA: 2, PINE: 3, ROCK: 4 } as const;
+const T = { SAND: 0, DUNE: 1, SEA: 2, PINE: 3, ROCK: 4, BOARDWALK: 5, WET_SAND: 6 } as const;
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 22, ROWS = 18;
-const COLORS: Record<Tile, number> = { [T.SAND]: 0xe4d6a8, [T.GRASS]: 0x4a8a3a, [T.SEA]: 0x2f78b4, [T.PINE]: 0x1c4a2a, [T.ROCK]: 0x6f6658 };
+const COLORS: Record<Tile, number> = {
+  [T.SAND]: 0xe7d7a9, [T.DUNE]: 0xd4c49d, [T.SEA]: 0x2f78b4,
+  [T.PINE]: 0x1c4a2a, [T.ROCK]: 0x6f6658, [T.BOARDWALK]: 0xb88752,
+  [T.WET_SAND]: 0xb9a77f,
+};
 const SOLID = new Set<Tile>([T.SEA, T.PINE, T.ROCK]);
-const ENCOUNTER = new Set<Tile>([T.GRASS]);
+// Beach Pokémon now appear naturally on the open sand instead of requiring a
+// patch of tall grass in the middle of a bathing beach.
+const ENCOUNTER = new Set<Tile>([T.SAND, T.DUNE, T.WET_SAND]);
 
 // Beach & shallows wild Pokémon.
 const KB_ENCOUNTERS: EncounterEntry[] = [
@@ -38,11 +44,16 @@ function buildMap(): Tile[][] {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) m[r][c] = t;
   };
-  fill(13, ROWS, 0, COLS, T.SEA);                 // the East Sea at the foot of the beach
-  // dune-grass patches (wild-encounter zones)
-  fill(4, 8, 2, 6, T.GRASS);
-  fill(3, 6, 9, 14, T.GRASS);
-  fill(6, 10, 16, 20, T.GRASS);
+  // A broad dry beach leads through darker wet sand to the East Sea.
+  fill(11, 13, 0, COLS, T.WET_SAND);
+  fill(13, ROWS, 0, COLS, T.SEA);
+  // Sandy dunes replace every former grass encounter patch.
+  fill(3, 6, 1, 6, T.DUNE);
+  fill(2, 5, 16, 21, T.DUNE);
+  fill(7, 10, 18, 21, T.DUNE);
+  // Timber promenade from Haesol, opening into a cross-beach boardwalk.
+  fill(0, 7, 10, 13, T.BOARDWALK);
+  fill(6, 8, 3, 19, T.BOARDWALK);
   // a small rock jetty reaching into the sea
   for (const [r, c] of [[12, 9], [12, 10], [13, 10]] as [number, number][]) m[r][c] = T.ROCK;
   // Songdowon pines along the flanks
@@ -115,8 +126,10 @@ export class WonsanBeachScene extends Phaser.Scene {
       const t = this.map[r][c]; const x = c * TILE, y = r * TILE;
       g.fillStyle(COLORS[t], 1); g.fillRect(x, y, TILE, TILE);
       if (t === T.SAND) { g.fillStyle(0xd6c48c, 0.7); g.fillRect(x + 6, y + 10, 4, 3); g.fillRect(x + 18, y + 20, 4, 3); }
-      if (t === T.GRASS) { g.fillStyle(0x2c6a22, 0.8); for (let i = 0; i < 3; i++) { g.fillRect(x + 5 + i * 8, y + 16, 2, 12); g.fillRect(x + 7 + i * 8, y + 12, 2, 16); } }
-      if (t === T.SEA) { g.fillStyle(0x66b0e0, 0.5); g.fillRect(x + 4, y + 8, 13, 3); g.fillRect(x + 13, y + 20, 11, 3); g.fillStyle(0xffffff, 0.3); g.fillRect(x + 2, y + 2, 10, 2); }
+      if (t === T.DUNE) { g.fillStyle(0xbeac83, 0.55); g.fillEllipse(x + 16, y + 22, 27, 11); g.fillStyle(0xeee0bb, 0.7); g.fillEllipse(x + 13, y + 18, 18, 5); }
+      if (t === T.WET_SAND) { g.fillStyle(0xd9ceb4, 0.28); g.fillRect(x + 2, y + 8, 20, 2); g.fillRect(x + 13, y + 23, 16, 2); }
+      if (t === T.BOARDWALK) { g.fillStyle(0x8f6138, 0.7); for (let i = 0; i < TILE; i += 8) g.fillRect(x, y + i, TILE, 2); g.fillStyle(0xe0b77b, 0.45); g.fillRect(x + 3, y + 3, 3, TILE - 6); }
+      if (t === T.SEA) { g.fillStyle(0x66b0e0, 0.5); g.fillRect(x + 4, y + 8, 13, 3); g.fillRect(x + 13, y + 20, 11, 3); g.fillStyle(0xffffff, 0.45); g.fillRect(x + 2, y + 2, 18, 2); }
       if (t === T.PINE) { g.fillStyle(0x123a1e); g.fillTriangle(x + 16, y + 1, x + 4, y + 20, x + 28, y + 20); g.fillStyle(0x1f5630); g.fillTriangle(x + 16, y + 8, x + 6, y + 26, x + 26, y + 26); g.fillStyle(0x4a3020); g.fillRect(x + 14, y + 26, 5, 5); }
       if (t === T.ROCK) { g.fillStyle(0x5a5044); g.fillTriangle(x + 16, y + 5, x + 3, y + 28, x + 29, y + 28); }
     }
@@ -224,7 +237,7 @@ export class WonsanBeachScene extends Phaser.Scene {
   private checkEncounter() {
     const col = Math.floor(this.px / TILE), row = Math.floor(this.py / TILE);
     const t = this.map[row]?.[col];
-    if (!t || !ENCOUNTER.has(t)) { this.steps = 0; return; }
+    if (t === undefined || !ENCOUNTER.has(t)) { this.steps = 0; return; }
     if (this.steps < this.nextEnc) return;
     if (Math.random() > 0.22) return;
     this.steps = 0; this.nextEnc = 8 + Math.floor(Math.random() * 8);

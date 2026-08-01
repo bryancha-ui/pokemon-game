@@ -16,13 +16,14 @@ import { markTrainerPortrait } from '../data/BattlePortraits';
 // mountain stream. The 어사대장 (Inspectorate Chief) tests the visiting southern Champion;
 // clearing the exam earns the Songhyeon 마패. Template for the other seven circuit cities.
 
-const T = { GROUND: 0, PATH: 1, BUILDING: 2, GRASS: 3, WATER: 4, BRIDGE: 5, TREE: 6, GINSENG: 7, FLOWER: 8, ROCK: 9 } as const;
+const T = { GROUND: 0, PATH: 1, BUILDING: 2, GRASS: 3, WATER: 4, BRIDGE: 5, TREE: 6, GINSENG: 7, FLOWER: 8, ROCK: 9, MOUNTAIN_PATH: 10 } as const;
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 34, ROWS = 24;
 const COLORS: Record<Tile, number> = {
   [T.GROUND]: 0x8a7a5a, [T.PATH]: 0xcabb9a, [T.BUILDING]: 0xe6dcc6, [T.GRASS]: 0x4c7a3c,
   [T.WATER]: 0x2f78b4, [T.BRIDGE]: 0x9a6e3a, [T.TREE]: 0x2c5a2c, [T.GINSENG]: 0x5a8a3a,
   [T.FLOWER]: 0x4c7a3c, [T.ROCK]: 0x6a625a,
+  [T.MOUNTAIN_PATH]: 0x789965,
 };
 const SOLID = new Set<Tile>([T.BUILDING, T.WATER, T.TREE, T.ROCK]);
 
@@ -56,7 +57,9 @@ function buildMap(): Tile[][] {
   // Streets
   fill(12, 14, 1, COLS - 1, T.PATH);   // main east-west road (over the bridge)
   fill(11, ROWS, 17, 19, T.PATH);      // south road to the plaza / exit
-  fill(0, 13, 12, 14, T.PATH);         // north road → Parangpo (the circuit continues)
+  // The Songak north passage is a mossy mountain lane.  Give it an explicit
+  // green ground tile so it cannot inherit the old blue-tinted road artwork.
+  fill(0, 13, 12, 14, T.MOUNTAIN_PATH);
 
   // Buildings
   for (const b of BUILDINGS) { fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING); set(b.doorRow, b.doorCol, T.PATH); }
@@ -159,6 +162,7 @@ export class KaesongCityScene extends Phaser.Scene {
       g.fillStyle(COLORS[t], 1); g.fillRect(x, y, TILE, TILE);
       if (t === T.GROUND) { g.fillStyle(0x9a8a6a, 0.4); g.fillRect(x+5, y+7, 5, 4); g.fillRect(x+20, y+18, 5, 4); }
       if (t === T.PATH) { g.fillStyle(0xb6a686, 0.5); g.fillRect(x+3, y+6, TILE-6, 3); }
+      if (t === T.MOUNTAIN_PATH) { g.fillStyle(0x9bb083, 0.45); g.fillRect(x+3, y+6, TILE-6, 3); g.fillStyle(0x526f43, 0.35); g.fillRect(x+7, y+20, 8, 3); }
       if (t === T.GRASS) { g.fillStyle(0x5f9a4a, 0.5); g.fillRect(x+5, y+8, 4, 6); }
       if (t === T.WATER) { g.fillStyle(0x66bbe6, 0.4); g.fillRect(x+4, y+9, 12, 3); g.fillRect(x+14, y+22, 10, 3); }
       if (t === T.BRIDGE) { g.fillStyle(0x7a5628); for (let i=0;i<TILE;i+=7) g.fillRect(x, y+i, TILE, 2); g.fillStyle(0x5a3e1c); g.fillRect(x+1, y, 3, TILE); g.fillRect(x+TILE-4, y, 3, TILE); }

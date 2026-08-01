@@ -13,10 +13,11 @@ import { ITEMS, Inventory, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
-import { playMoveFX } from '../systems/BattleFX';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { tr, pokeNameEn} from '../systems/i18n';
+import { genderedName } from '../data/PokemonGender';
 
 type State = 'intro' | 'playerAction' | 'playerMove' | 'busy' | 'over';
 const HP_W = 200;
@@ -195,6 +196,25 @@ export class GymLeaderBattleScene extends Phaser.Scene {
 
   // ── HUDs ──────────────────────────────────────────────────────────────────
 
+  private playerHudName(): string {
+    const entry = PartySystem.get(this.registry)[this.activeSlot];
+    return genderedName(pokeNameEn(this.player.name).toUpperCase(), {
+      name: this.player.name,
+      key: entry?.spriteKey,
+      id: this.player.data.id,
+      gender: entry?.gender,
+    }, entry?.breedingId ?? `party-${this.activeSlot}`);
+  }
+
+  private enemyHudName(): string {
+    const key = this.leaderSlot === 0 ? 'wild-197' : this.leaderSlot === 1 ? 'wild-198' : 'corrpanda';
+    return genderedName(pokeNameEn(this.enemy.name).toUpperCase(), {
+      name: this.enemy.name,
+      key,
+      id: this.enemy.data.id,
+    }, `jin-${this.leaderSlot}`);
+  }
+
   private createHUDs() {
     const track = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
       this.hudGroup.push(o);
@@ -202,14 +222,14 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       return o;
     };
     track(this.add.rectangle(130, 52, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
-    this.enemyNameText = track(this.add.text(14, 24, pokeNameEn(this.enemy.name).toUpperCase(), { fontSize: '14px', color: '#cc88ff', fontStyle: 'bold' }));
+    this.enemyNameText = track(this.add.text(14, 24, this.enemyHudName(), { fontSize: '14px', color: '#cc88ff', fontStyle: 'bold' }));
     this.enemyLvText  = track(this.add.text(200, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }));
     track(this.add.rectangle(130, 52, HP_W + 8, 12, 0x333355));
     this.enemyHpBar   = track(this.add.rectangle(30, 52, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.enemyHpText  = track(this.add.text(14, 62, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     track(this.add.rectangle(this.W - 130, this.H - 175, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
-    this.playerNameText = track(this.add.text(this.W - 258, this.H - 203, pokeNameEn(this.player.name).toUpperCase(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
+    this.playerNameText = track(this.add.text(this.W - 258, this.H - 203, this.playerHudName(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(this.W - 12, this.H - 203, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(this.W - 130, this.H - 173, HP_W + 8, 12, 0x333355));
     this.playerHpBar  = track(this.add.rectangle(this.W - 258, this.H - 173, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
@@ -421,6 +441,12 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   // ── Battle flow ───────────────────────────────────────────────────────────
 
   private playerAction() {
+    const pending = pendingMoveFor(this.player);
+    if (pending) {
+      this.hideAllPanels();
+      this.runTurn(pending);
+      return;
+    }
     this.state = 'playerAction';
     this.typeDialog(`What will ${pokeNameEn(this.player.name).toUpperCase()} do?`);
     this.showActionPanel();
@@ -438,48 +464,73 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
     deckHideMoves();
     this.hideAllPanels();
+    this.runTurn(move);
+  }
+
+  private runTurn(move: Move) {
     this.state = 'busy';
-    this.player.useMove(move);
-    persistMovePP(this.registry, this.activeSlot, this.player);   // PP persists across battles
-    this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} used ${move.data.name}!`, () => {
-      if (move.data.power > 0) {
-        const { dmg, critical, effectiveness } = this.enemy.takeDamage(move, this.player);
-        void dmg;
-        playMoveFX(this, this.playerSprite, this.enemySprite, move.data, effectiveness, () => {});
-        this.animateHp('enemy', () => {
-          let msg = '';
-          if (critical)            msg = 'A critical hit!  ';
-          if (effectiveness > 1)   msg += "Super effective!";
-          if (effectiveness < 1 && effectiveness > 0) msg += "Not very effective...";
-          const cont = () => {
-            if (this.enemy.isKO) {
-              this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} fainted!`,
-                () => this.awardExp(this.enemy.level * 28, () => this.leaderSendNext()));
-              return;
-            }
-            this.enemyTurn();
-          };
-          if (msg) this.typeDialog(msg, cont); else cont();
-        });
-      } else { this.enemyTurn(); }
+    const playerSpeed = this.player.battleStat('spd');
+    const enemySpeed = this.enemy.battleStat('spd');
+    const playerFirst = playerSpeed > enemySpeed
+      || (playerSpeed === enemySpeed && Math.random() < 0.5);
+    if (playerFirst) {
+      this.doPlayerMove(move, () => this.doEnemyMove(() => this.playerAction()));
+    } else {
+      this.doEnemyMove(() => this.doPlayerMove(move, () => this.playerAction()));
+    }
+  }
+
+  private doPlayerMove(move: Move, onDone: () => void) {
+    executeBattleMove({
+      scene: this,
+      user: this.player,
+      target: this.enemy,
+      move,
+      userSprite: this.playerSprite,
+      targetSprite: this.enemySprite,
+      userLabel: pokeNameEn(this.player.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHp('player', done),
+      animateTargetHp: done => this.animateHp('enemy', done),
+      onPpUsed: () => persistMovePP(this.registry, this.activeSlot, this.player),
+      onComplete: () => {
+        if (this.enemy.isKO) {
+          this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} fainted!`,
+            () => this.awardExp(this.enemy.level * 28, () => this.leaderSendNext()));
+          return;
+        }
+        onDone();
+      },
     });
   }
 
   private enemyTurn() {
+    this.doEnemyMove(() => this.playerAction());
+  }
+
+  private doEnemyMove(onDone: () => void) {
     const avail = this.enemy.moves.filter(m => m.pp > 0);
-    const move  = avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0];
-    this.enemy.useMove(move);
-    this.typeDialog(`${pokeNameEn(this.enemy.name).toUpperCase()} used ${move.data.name}!`, () => {
-      if (move.data.power > 0) {
-        const { effectiveness } = this.player.takeDamage(move, this.enemy);
-        playMoveFX(this, this.enemySprite, this.playerSprite, move.data, effectiveness, () => {});
-        this.animateHp('player', () => {
-          PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
-          if (this.player.isKO) {
-            this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.playerFainted());
-          } else { this.playerAction(); }
-        });
-      } else { this.playerAction(); }
+    const move = pendingMoveFor(this.enemy)
+      ?? (avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0]);
+    executeBattleMove({
+      scene: this,
+      user: this.enemy,
+      target: this.player,
+      move,
+      userSprite: this.enemySprite,
+      targetSprite: this.playerSprite,
+      userLabel: pokeNameEn(this.enemy.name).toUpperCase(),
+      showDialog: (text, done) => this.typeDialog(text, done),
+      animateUserHp: done => this.animateHp('enemy', done),
+      animateTargetHp: done => this.animateHp('player', done),
+      onComplete: () => {
+        PartySystem.updateSlotHP(this.registry, this.activeSlot, this.player.hp);
+        if (this.player.isKO) {
+          this.typeDialog(`${pokeNameEn(this.player.name).toUpperCase()} fainted!`, () => this.playerFainted());
+        } else {
+          onDone();
+        }
+      },
     });
   }
 
@@ -488,7 +539,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     if (this.leaderSlot >= this.leaderTeam.length) { this.handleWin(); return; }
     this.enemy = this.leaderTeam[this.leaderSlot];
     this.updateEnemySprite();
-    this.enemyNameText.setText(pokeNameEn(this.enemy.name).toUpperCase());
+    this.enemyNameText.setText(this.enemyHudName());
     this.enemyLvText.setText(`Lv.${this.enemy.level}`);
     this.enemyHpBar.width = HP_W; this.enemyHpBar.fillColor = 0x44cc44;
     this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
@@ -647,7 +698,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   /** Snap the player HUD (name, level, HP bar/text) to the current this.player.
    *  Must be called after every switch so a fresh Pokémon's bar/name are correct. */
   private refreshPlayerHud() {
-    this.playerNameText.setText(pokeNameEn(this.player.name).toUpperCase());
+    this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     const r = this.player.hp / this.player.maxHp;
     this.playerHpBar.width = Math.max(0, r * HP_W);

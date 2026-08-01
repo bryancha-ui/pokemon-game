@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import { POKEDEX, POKEDEX_COUNT, DexEntry } from '../data/Pokedex';
+import { caughtOriginForDexKey, POKEDEX, POKEDEX_COUNT, DexEntry } from '../data/Pokedex';
 import { DexTracker } from '../systems/DexTracker';
 import { TYPE_COLORS } from '../data/StarterData';
-import { t, pokeName, typeName } from '../systems/i18n';
+import { t, pokeName, typeName, abilityName } from '../systems/i18n';
 
 const PER_PAGE = 12;     // 3 columns × 4 rows
 const COLS = 3;
@@ -208,8 +208,10 @@ export class PokedexScene extends Phaser.Scene {
       c.add(this.add.rectangle(tx + 32, cy - 150, 68, 20, TYPE_COLORS[t] ?? 0x666, 1));
       c.add(this.add.text(tx + 32, cy - 150, typeName(t).toUpperCase(), { fontSize: '11px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
     });
-    if (entry.ability) c.add(this.add.text(ix, cy - 118, t(`Ability: ${entry.ability}`, `특성: ${entry.ability}`), { fontSize: '14px', color: '#aaccff' }));
-    c.add(this.add.text(ix, cy - 92, t(`Found: ${entry.dist} — ${entry.where}`, `서식지: ${entry.dist} — ${entry.where}`), { fontSize: '13px', color: '#cccccc', wordWrap: { width: 360 } }));
+    if (entry.ability) c.add(this.add.text(ix, cy - 118,
+      `${t('Ability', '특성')}: ${abilityName(entry.ability)}`, { fontSize: '14px', color: '#aaccff' }));
+    const habitat = caughtOriginForDexKey(entry.key) ?? t('Unknown location', '알 수 없는 장소');
+    c.add(this.add.text(ix, cy - 92, t(`Found: ${entry.dist} — ${habitat}`, `서식지: ${entry.dist} — ${habitat}`), { fontSize: '13px', color: '#cccccc', wordWrap: { width: 360 } }));
     if (entry.evolvesTo) {
       const to = POKEDEX.find(e => e.key === entry.evolvesTo);
       c.add(this.add.text(ix, cy - 50, t(`Evolves into ${to?.name ?? '???'} at Lv. ${entry.evolvesAtLevel}`, `Lv. ${entry.evolvesAtLevel}에 ${to ? pokeName(to.key, to.name) : '???'}(으)로 진화`), {

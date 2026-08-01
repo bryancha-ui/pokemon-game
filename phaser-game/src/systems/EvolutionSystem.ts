@@ -6,7 +6,7 @@ import Phaser from 'phaser';
 import { EVOLUTIONS, findForm } from '../data/StarterData';
 import { POKEDEX, dexEntry, dexKeyFor } from '../data/Pokedex';
 import { customForm, isCustomKey } from '../data/CustomBattle';
-import { PartySystem, PartyEntry, recomputeMaxHp } from './PartySystem';
+import { PartySystem, PartyEntry, baseStatsFromData, recomputeMaxHp } from './PartySystem';
 import { syncEntryMoves } from './PartyBattle';
 
 // Combine starter evolutions with custom Pokédex evolution lines.
@@ -56,14 +56,20 @@ export function applyEvolution(registry: Phaser.Data.DataManager, pending: Pendi
   const cf   = customForm(pending.toKey);
   e.spriteKey = pending.toKey;
   e.name      = pending.toName;
+  // Localized name and ability are species-specific. Do not retain the
+  // pre-evolution profile; MenuScene will hydrate missing official metadata.
+  delete e.nameKo;
+  delete e.abilityKo;
   if (form) {
     e.spriteUrl = form.data.spriteUrl;
     e.type1 = form.data.type1;
     e.type2 = form.data.type2;
+    e.baseStats = baseStatsFromData(form.data);
   } else if (cf) {
     e.spriteUrl = cf.data.spriteUrl;
     e.type1 = cf.data.type1;
     e.type2 = cf.data.type2;
+    e.baseStats = baseStatsFromData(cf.data);
   } else {
     // Dex-only / PokéAPI Pokémon — resolve via the canonical dex key
     // (e.g. a party `wild-148` maps to the `api-148` dex entry).
@@ -71,6 +77,8 @@ export function applyEvolution(registry: Phaser.Data.DataManager, pending: Pendi
     e.spriteUrl = de?.spriteUrl ?? `assets/dex/${pending.toKey}.png`;
     if (de) { e.type1 = de.type1; if (de.type2) e.type2 = de.type2; }
   }
+  e.ability = form?.ability ?? cf?.data.ability
+    ?? dexEntry(pending.toKey)?.ability ?? dexEntry(dexKeyFor(pending.toKey))?.ability;
   // Moves learned on evolving — append, dedupe, keep the 4 most recent so the
   // newly-learned skills are always retained.
   if (pending.addMoves?.length) {
