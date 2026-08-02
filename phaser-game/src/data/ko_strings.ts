@@ -1126,6 +1126,7 @@ export const KO_STRINGS: Record<string, string> = {
   'I\'ve wintered on this ridge more times than I can count. The cold sharpens a team. Battle me.': '이 능선에서 셀 수 없을 만큼 겨울을 났지. 추위는 팀을 날카롭게 벼려. 나랑 배틀해.',
   'I carve these slopes at dawn before the wind picks up. Race you? No — battle you!': '바람이 거세지기 전 새벽에 이 비탈을 깎듯 활강하지. 경주할까? 아니 — 배틀하자!',
   '✈  ARROWS: choose city   ·   ENTER/SPACE or click: Fly   ·   ESC/M: close': '✈  화살표: 도시 선택   ·   ENTER/SPACE 또는 클릭: 비행   ·   ESC/M: 닫기',
+  'FLY': '공중날기',
   'Visit more cities to unlock them as Fly destinations.   ·   ESC/M: close': '더 많은 도시를 방문해 비행 목적지로 해금하자.   ·   ESC/M: 닫기',
   'Beat the Pokémon League to earn HM Fly and travel the region instantly.   ·   ESC/M: close': '포켓몬 리그를 이기면 비행 비술을 얻어 지역을 즉시 오갈 수 있어.   ·   ESC/M: 닫기',
   'It had no effect!': '효과가 없었다!',
@@ -2209,8 +2210,17 @@ export const KO_STRINGS: Record<string, string> = {
 
   // ── Gwanmunseong Checkpoint ──
   '🛡 관문성 관문 (Gwanmunseong Checkpoint)': '🛡 관문성 관문',
+  'Royal Warden: Halt. The road into Gwanmunseong is sealed until the seven regional trials are complete.':
+    '왕실 관리인: 멈춰라. 일곱 지방 시험을 모두 마칠 때까지 관문성으로 가는 길은 봉쇄되어 있다.',
   'Royal Warden: The gate to Gwanmunseong is open to you. Seek Supreme Gwang in the capital — he holds the final test.':
     '왕실 관리인: 관문성으로 가는 문이 네게 열렸다. 수도에서 최고위 광을 찾아라 — 그가 마지막 시험을 쥐고 있다.',
+
+  // ── Songhyeon capital-road closure ──
+  '🚧 Capital road closed': '🚧 평성 방면 도로 폐쇄',
+  'SPACE — Inspect closed road': 'SPACE — 폐쇄된 길 확인',
+  'The old direct road to Pyeongseong is closed.': '평성으로 바로 이어지던 옛길은 폐쇄되어 있다.',
+  'Entry to the capital is permitted only through the Gwanmunseong checkpoint after earning all seven regional 마패.':
+    '일곱 지방 마패를 모두 얻은 뒤 관문성 검문소를 통과해야만 평성에 들어갈 수 있다.',
 
   // ══ Onnuri League (Elite Four + Champion Hwangeum) ══
   '🏛 Onnuri Pokémon League': '🏛 온누리 포켓몬 리그',

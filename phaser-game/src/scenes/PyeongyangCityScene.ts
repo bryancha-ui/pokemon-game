@@ -5,7 +5,7 @@ import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
-import { mapaeCount, awardMapae } from '../data/Mapae';
+import { awardMapae, canEnterPyeongseong, regionalMapaeCount } from '../data/Mapae';
 import { markTrainerPortrait } from '../data/BattlePortraits';
 
 // ── POST-GAME I — Gwanmunseong, the Northern Capital ──────────────────────────────
@@ -107,9 +107,18 @@ export class PyeongyangCityScene extends Phaser.Scene {
   constructor() { super('PyeongyangCityScene'); }
 
   private get chiefDefeated() { return !!this.registry.get(`trainerDefeated_${PYEONGSEONG_CHIEF.key}`); }
-  private get hasAllMapae() { return mapaeCount(this.registry) >= 7; }
+  private get hasAllMapae() { return canEnterPyeongseong(this.registry); }
 
   create() {
+    // Final authority: no direct scene start, stale save position or Fly target
+    // may bypass the seven-tablet checkpoint rule.
+    if (!canEnterPyeongseong(this.registry)) {
+      this.registry.set('pyeongseongEntryDenied', true);
+      this.registry.set('pyeongseongCheckpointReturnX', 7.5 * TILE);
+      this.registry.set('pyeongseongCheckpointReturnY', 8 * TILE + 16);
+      this.scene.start('PyeongseongCheckpointScene');
+      return;
+    }
 
     playBgm(this, 'cheongun');
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
@@ -380,7 +389,7 @@ export class PyeongyangCityScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         this.enterPrompt.setVisible(false);
         this.cutsceneActive = true;
-        const n = mapaeCount(this.registry);
+        const n = regionalMapaeCount(this.registry);
         this.dialog.show([
           `Supreme Gwang: You have ${n} of the 7 regional 마패. Return when you have mastered all seven regional trials.`,
           'Supreme Gwang: Only then will you be worthy of challenging the Supreme Commander of Gwanmunseong.',

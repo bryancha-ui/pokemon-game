@@ -408,7 +408,7 @@ export class TitleScene extends Phaser.Scene {
             'SunriseCliff1Scene', 'SunriseCliff2Scene', 'SunriseCliff3Scene',
             'BaekduCheckpointScene', 'BaekduSummitScene',
             'ScholarsRoadScene', 'LeaguePlazaScene', 'PokemonLeagueScene',
-            'NorthernColiseumScene', 'NorthernPlazaScene', 'PyeongyangCityScene',
+            'NorthernColiseumScene', 'NorthernPlazaScene', 'PyeongseongCheckpointScene', 'PyeongyangCityScene',
             'NorthernReachesScene', 'SacredPeakScene',
             'DolmoeCityScene', 'DolmoeMineScene', 'SeoraeTownScene', 'SeoraePassScene',
             // Northern 어사대 circuit — cities, routes, beaches & the mine

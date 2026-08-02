@@ -19,6 +19,12 @@ export const MAPAE: MapaeDef[] = [
   { key: 'pyeongseong',city: 'Gwanmunseong',chief: '어사대장 Supreme Gwang' },  // capital, final certification / Supreme Commander
 ];
 
+/** The capital is the eighth/final trial, so its gate is unlocked by the seven
+ * regional tablets only. Keep this rule central so checkpoints, Fly and direct
+ * scene restores cannot disagree. */
+export const PYEONGSEONG_REQUIRED_MAPAE = 7;
+const REGIONAL_MAPAE_KEYS = MAPAE.filter(m => m.key !== 'pyeongseong').map(m => m.key);
+
 const flag = (key: string) => `mapae_${key}`;
 
 export function hasMapae(reg: Phaser.Data.DataManager, key: string): boolean {
@@ -38,6 +44,16 @@ export function mapaeCount(reg: Phaser.Data.DataManager): number {
   const calculated = MAPAE.reduce((n, m) => n + (reg.get(flag(m.key)) ? 1 : 0), 0);
   reg.set('mapaeCount', calculated);
   return calculated;
+}
+
+/** Count only the seven tablets earned before entering Gwanmunseong. */
+export function regionalMapaeCount(reg: Phaser.Data.DataManager): number {
+  return REGIONAL_MAPAE_KEYS.reduce((n, key) => n + (hasMapae(reg, key) ? 1 : 0), 0);
+}
+
+/** Authoritative entry condition for Pyeongseong/Gwanmunseong. */
+export function canEnterPyeongseong(reg: Phaser.Data.DataManager): boolean {
+  return regionalMapaeCount(reg) >= PYEONGSEONG_REQUIRED_MAPAE;
 }
 /** Eligible for the Northern League: all 8 마패 AND all 8 southern badges. */
 export function northernLeagueEligible(reg: Phaser.Data.DataManager): boolean {

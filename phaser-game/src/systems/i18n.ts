@@ -319,6 +319,7 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^Receptionist: (\d+) of the Elite Four down already — the whole region is talking about you\.$/, m => `안내원: 벌써 사천왕 중 ${m[1]}명 격파 — 온 지역이 네 이야기로 떠들썩해.`],
   [/^League Warden: You hold (\d+) of 8 마패\. Complete the inspectorate circuit, defeat Supreme Gwang in Gwanmunseong, and return\.$/, m => `리그 문지기: 너는 8개 중 ${m[1]}개의 마패를 지녔다. 어사대 순회를 마치고, 관문성에서 총수 광을 이기고 돌아와라.`],
   [/^Royal Warden: You bear (\d+) of the (\d+) regional tablets\. Complete the circuit and return\.$/, m => `왕실 관리인: 너는 ${m[2]}개 중 ${m[1]}개의 지방 석판을 지녔다. 순회를 마치고 돌아오라.`],
+  [/^Royal Warden: You bear (\d+) of the (\d+) regional tablets\. Complete the circuit and return through this checkpoint\.$/, m => `왕실 관리인: 너는 ${m[2]}개 중 ${m[1]}개의 지방 마패를 지녔다. 순회를 마치고 이 검문소로 돌아오라.`],
   [/^Supreme Gwang: You have (\d+) of the 7 regional 마패\. Return when you have mastered all seven regional trials\.$/, m => `총수 광: 너는 7개 중 ${m[1]}개의 지방 마패를 지녔다. 일곱 지방 시험을 모두 통달한 뒤에 돌아오라.`],
   // ── Starter select / badge scanner ──
   [/^Choose (.+)\?$/, m => `${P(m[1])}(으)로 정할까?`],

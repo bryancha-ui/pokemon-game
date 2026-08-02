@@ -61,6 +61,11 @@ function buildMap(): Tile[][] {
   // green ground tile so it cannot inherit the old blue-tinted road artwork.
   fill(0, 13, 12, 14, T.MOUNTAIN_PATH);
 
+  // Retire the obsolete direct Songhyeon → Pyeongseong warp. The capital is
+  // reached only through the guarded Gwanmunseong checkpoint after the seven
+  // regional 마패 have been earned.
+  fill(23, 24, 17, 19, T.ROCK);
+
   // Buildings
   for (const b of BUILDINGS) { fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING); set(b.doorRow, b.doorCol, T.PATH); }
 
@@ -202,8 +207,8 @@ export class KaesongCityScene extends Phaser.Scene {
     this.add.text(10 * TILE, 11.4 * TILE, tr('🌉 Seonjukgyo'), {
       fontSize: '8px', color: '#cfe8ff', backgroundColor: '#1a3a5a99', padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(5);
-    this.add.text(18 * TILE, 23.4 * TILE, tr('↓ Northern Circuit'), {
-      fontSize: '9px', color: '#eee', backgroundColor: '#00000099', padding: { x: 3, y: 2 },
+    this.add.text(18 * TILE, 22.7 * TILE, tr('🚧 Capital road closed'), {
+      fontSize: '9px', color: '#ffd98a', backgroundColor: '#321b1499', padding: { x: 3, y: 2 },
     }).setOrigin(0.5).setDepth(5);
   }
 
@@ -401,15 +406,21 @@ export class KaesongCityScene extends Phaser.Scene {
 
   private checkExit() {
     if (this.cutsceneActive || this.spawnGuard) return;
-    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
-    // South → back to Pyeongyang (circuit entry).
-    if (this.py > (ROWS - 1) * TILE && this.px > 16 * TILE && this.px < 20 * TILE) {
-      this.cutsceneActive = true;
-      this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-        this.registry.set('pyeongyangReturnX', 11.5 * 32); this.registry.set('pyeongyangReturnY', 25 * 32);
-        this.scene.start('PyeongyangCityScene');
-      });
+    // The former south-edge capital shortcut is now a solid closure. Explain
+    // the canonical route when the player examines it; never warp from here.
+    if (this.py > 22 * TILE && this.px > 16 * TILE && this.px < 20 * TILE) {
+      this.enterPrompt.setText(tr('SPACE — Inspect closed road')).setVisible(true);
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        this.cutsceneActive = true;
+        this.enterPrompt.setVisible(false);
+        this.dialog.show([
+          'The old direct road to Pyeongseong is closed.',
+          'Entry to the capital is permitted only through the Gwanmunseong checkpoint after earning all seven regional 마패.',
+        ], () => { this.cutsceneActive = false; });
+      }
+      return;
     }
+    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.4 * TILE) return;
     // North → out onto Yeoul Valley, the river road up to Parangpo.
     if (this.py < 1.2 * TILE && this.px > 11.5 * TILE && this.px < 14 * TILE) {
       this.cutsceneActive = true;

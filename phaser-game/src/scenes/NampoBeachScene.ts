@@ -78,7 +78,9 @@ export class NampoBeachScene extends Phaser.Scene {
 
   private get missionTaken() { return !!this.registry.get('NampoCitySceneMissionTaken'); }
   private get gyaradosDone() { return !!this.registry.get('trainerDefeated_' + THREAT_KEY); }
-  private canSurf() { return !!this.registry.get('haeanGymDefeated') || PartySystem.anyKnows(this.registry, 'Surf'); }
+  // Owning the Haean badge/TM only unlocks Surf teaching; a current party
+  // member must actually know the move before the player can enter the bay.
+  private canSurf() { return PartySystem.anyKnows(this.registry, 'Surf'); }
   private tileAt(x: number, y: number): Tile | undefined { return this.map[Math.floor(y / TILE)]?.[Math.floor(x / TILE)]; }
   private get onWater() { return this.tileAt(this.px, this.py) === T.WATER; }
 
@@ -90,10 +92,13 @@ export class NampoBeachScene extends Phaser.Scene {
     const ry = this.registry.get('NampoBeachSceneReturnY') as number | undefined;
     if (rx !== undefined) { this.px = rx; this.py = ry as number; } else { this.px = 10 * TILE + 16; this.py = 19 * TILE + 16; }
     this.registry.remove('NampoBeachSceneReturnX'); this.registry.remove('NampoBeachSceneReturnY');
+    this.map = buildMap();
+    // Old saves or battle return data may place the player directly on water.
+    // Never preserve that bypass after the Surf-knowing party member is gone.
+    if (!this.canSurf() && this.onWater) { this.px = SHORE.x; this.py = SHORE.y; }
     this.spawnPx = this.px; this.spawnPy = this.py;
     this.spawnGuard = true; this.time.delayedCall(500, () => { this.spawnGuard = false; });
 
-    this.map = buildMap();
     this.drawMap();
     this.drawWhirlpools();
     this.drawTrainers();

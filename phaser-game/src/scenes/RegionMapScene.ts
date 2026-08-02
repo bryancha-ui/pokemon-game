@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { REGION_NODES, RegionNode, nodeForScene, visitedNodeIds, FLY_MOVE } from '../data/RegionMap';
 import { PartySystem } from '../systems/PartySystem';
+import { canEnterPyeongseong } from '../data/Mapae';
 
 // ── Region map (Town Map) ──────────────────────────────────────────────────────
 // A full-screen, view-anywhere map of the Onnuri region. Shows every place, a
@@ -26,6 +27,7 @@ export class RegionMapScene extends Phaser.Scene {
   private visited = new Set<string>();
   private selectorRing?: Phaser.GameObjects.Arc;
   private pendingNode?: RegionNode;
+  private flying = false;
   private keys!: Record<'esc' | 'm' | 'left' | 'right' | 'up' | 'down' | 'enter' | 'space', Phaser.Input.Keyboard.Key>;
 
   // On-screen rect of the fitted region-map image (nodes are plotted within it).
@@ -55,6 +57,9 @@ export class RegionMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.flying = false;
+    this.confirmOverlay = undefined;
+    this.pendingNode = undefined;
     this.scene.bringToTop();
     this.cameras.main.fadeIn(150);
 
@@ -80,7 +85,11 @@ export class RegionMapScene extends Phaser.Scene {
 
     this.canFly = !!this.registry.get('hasFlyHM') && PartySystem.anyKnows(this.registry, FLY_MOVE);
     this.flyable = this.canFly
-      ? REGION_NODES.filter(n => n.fly && this.visited.has(n.id) && n.id !== currentNode?.id && (n.region !== 'north' || this.northUnlocked))
+      ? REGION_NODES.filter(n => n.fly
+        && this.visited.has(n.id)
+        && n.id !== currentNode?.id
+        && (n.region !== 'north' || this.northUnlocked)
+        && (n.id !== 'pyeongyang' || canEnterPyeongseong(this.registry)))
       : [];
 
     // ── Backdrop + panel ──────────────────────────────────────────────────────
@@ -115,6 +124,14 @@ export class RegionMapScene extends Phaser.Scene {
       enter: kb.addKey(K.ENTER), space: kb.addKey(K.SPACE),
     };
     if (this.canFly && this.flyable.length > 0) this.createSelector();
+
+    // Phaser's city dots are only 18 logical pixels wide, which becomes just a
+    // few physical pixels on a FIT-scaled phone canvas. Resolve taps against the
+    // nearest eligible city with a thumb-sized radius instead.
+    this.input.on('pointerdown', this.handleMapTap, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off('pointerdown', this.handleMapTap, this);
+    });
   }
 
   update() {
@@ -145,7 +162,7 @@ export class RegionMapScene extends Phaser.Scene {
       const isCity    = n.kind === 'city';
       const isCurrent = !!current && n.id === current.id;
       const visited   = this.visited.has(n.id) || isCurrent;
-      const flyTarget = this.canFly && n.fly && visited && !isCurrent;
+      const flyTarget = this.flyable.includes(n);
       const r = isCity ? 9 : 5;
 
       // Marker — unvisited places are dimmed so the map still shows the whole region.
@@ -216,6 +233,23 @@ export class RegionMapScene extends Phaser.Scene {
     this.setSelector(this.flySel + dir);
   }
 
+  private handleMapTap(pointer: Phaser.Input.Pointer) {
+    if (this.confirmOverlay || this.flying || !this.canFly || this.flyable.length === 0) return;
+    // Ignore header/footer taps and only resolve destinations within the map.
+    if (pointer.x < this.mx - 44 || pointer.x > this.mx + this.mw + 44
+      || pointer.y < this.my - 44 || pointer.y > this.my + this.mh + 44) return;
+    let nearest: RegionNode | undefined;
+    let nearestDist = Infinity;
+    for (const node of this.flyable) {
+      const dist = Math.hypot(pointer.x - this.px(node), pointer.y - this.py(node));
+      if (dist < nearestDist) { nearest = node; nearestDist = dist; }
+    }
+    // A 96-logical-pixel radius remains comfortably thumb-sized even when the
+    // 1280-wide canvas is heavily FIT-scaled into the mobile game pane. Nearest-
+    // node selection still disambiguates crowded northern cities.
+    if (nearest && nearestDist <= 96) this.askFly(nearest);
+  }
+
   // ── Confirm + warp ──────────────────────────────────────────────────────────
   private askFly(node: RegionNode) {
     if (this.confirmOverlay) return;
@@ -225,19 +259,33 @@ export class RegionMapScene extends Phaser.Scene {
 
     const c = this.add.container(0, 0).setDepth(100);
     c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55));
-    c.add(this.add.rectangle(W / 2, H / 2, 460, 200, 0x0d1830, 0.99).setStrokeStyle(2, 0x5599dd));
-    c.add(this.add.text(W / 2, H / 2 - 58, tr('✈  FLY'), { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
-    c.add(this.add.text(W / 2, H / 2 - 18, `Fly to ${node.name}?\n${node.kr}`, {
+    c.add(this.add.rectangle(W / 2, H / 2, 540, 280, 0x0d1830, 0.99).setStrokeStyle(2, 0x5599dd));
+    c.add(this.add.text(W / 2, H / 2 - 75, tr('✈  FLY'), { fontSize: '18px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5));
+    c.add(this.add.text(W / 2, H / 2 - 34, `Fly to ${node.name}?\n${node.kr}`, {
       fontSize: '15px', color: '#ffffff', align: 'center', lineSpacing: 6,
     }).setOrigin(0.5));
 
-    const flyBtn = this.add.text(W / 2 - 90, H / 2 + 52, tr('  FLY  '), {
-      fontSize: '15px', color: '#0d1830', backgroundColor: '#ffe44e', fontStyle: 'bold', padding: { x: 14, y: 7 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.doFly(node));
-    const cancelBtn = this.add.text(W / 2 + 90, H / 2 + 52, tr(' CANCEL '), {
-      fontSize: '15px', color: '#ffffff', backgroundColor: '#33445a', padding: { x: 14, y: 7 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.dismissConfirm());
-    c.add([flyBtn, cancelBtn]);
+    const actionButton = (x: number, label: string, color: number, textColor: string, action: () => void) => {
+      const hit = this.add.rectangle(x, H / 2 + 74, 250, 120, color)
+        .setStrokeStyle(2, 0x8fb6df).setInteractive({ useHandCursor: true })
+        .on('pointerdown', (
+          _pointer: Phaser.Input.Pointer,
+          _localX: number,
+          _localY: number,
+          event: Phaser.Types.Input.EventData,
+        ) => {
+          // Keep this same touch from falling through to the map-wide nearest-
+          // city handler after CANCEL destroys the confirmation overlay.
+          event.stopPropagation();
+          action();
+        });
+      const text = this.add.text(x, H / 2 + 74, tr(label), {
+        fontSize: '15px', color: textColor, fontStyle: 'bold',
+      }).setOrigin(0.5);
+      c.add([hit, text]);
+    };
+    actionButton(W / 2 - 135, 'FLY', 0xffe44e, '#0d1830', () => this.doFly(node));
+    actionButton(W / 2 + 135, 'CANCEL', 0x33445a, '#ffffff', () => this.dismissConfirm());
     this.confirmOverlay = c;
   }
 
@@ -248,6 +296,12 @@ export class RegionMapScene extends Phaser.Scene {
   }
 
   private doFly(node: RegionNode) {
+    if (this.flying) return;
+    if (node.id === 'pyeongyang' && !canEnterPyeongseong(this.registry)) {
+      this.dismissConfirm();
+      return;
+    }
+    this.flying = true;
     // Clear the destination's spawn keys so it lands at its own default entrance.
     if (node.returnKey) {
       this.registry.remove(`${node.returnKey}ReturnX`);

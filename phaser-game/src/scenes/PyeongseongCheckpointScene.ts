@@ -4,7 +4,7 @@ import { playBgm } from '../systems/Music';
 import { drawTrainerBody, playerDesign } from '../data/CharacterSprite';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
-import { mapaeCount } from '../data/Mapae';
+import { canEnterPyeongseong, PYEONGSEONG_REQUIRED_MAPAE, regionalMapaeCount } from '../data/Mapae';
 
 // ── 관문성 관문 (Gwanmunseong Checkpoint) ────────────────────────────────────────────
 // The capital's outer gate on the road up from Haesol. Royal wardens inspect every
@@ -19,8 +19,6 @@ const COLORS: Record<Tile, number> = {
   [T.SNOW]: 0xd8dce6, [T.ROCK]: 0x3a3640, [T.WALL]: 0x4a4a52, [T.GATE]: 0x2a2a30, [T.PAVE]: 0xb9b0c4,
 };
 const SOLID = new Set<Tile>([T.ROCK, T.WALL]);
-const REQUIRED_MAPAE = 7;   // the seven regional 마패 (the eighth is earned from Supreme Gwang in Gwanmunseong)
-
 function buildMap(): Tile[][] {
   const m: Tile[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(T.SNOW) as Tile[]);
   const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
@@ -51,7 +49,7 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
 
   constructor() { super('PyeongseongCheckpointScene'); }
 
-  private get cleared() { return mapaeCount(this.registry) >= REQUIRED_MAPAE; }
+  private get cleared() { return canEnterPyeongseong(this.registry); }
 
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
@@ -76,6 +74,20 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
     this.createUI();
     this.cameras.main.fadeIn(400);
     SaveManager.save(this.registry, this.px, this.py, 'PyeongseongCheckpointScene');
+
+    // Direct scene restores/Fly targets are validated in the capital too. If
+    // one redirects here, explain why instead of silently relocating the user.
+    if (this.registry.get('pyeongseongEntryDenied')) {
+      this.registry.remove('pyeongseongEntryDenied');
+      this.time.delayedCall(250, () => {
+        this.cutsceneActive = true;
+        const n = regionalMapaeCount(this.registry);
+        this.dialog.show([
+          'Royal Warden: Halt. The road into Gwanmunseong is sealed until the seven regional trials are complete.',
+          `Royal Warden: You bear ${n} of the ${PYEONGSEONG_REQUIRED_MAPAE} regional tablets. Complete the circuit and return through this checkpoint.`,
+        ], () => { this.cutsceneActive = false; });
+      });
+    }
   }
 
   private drawMap() {
@@ -188,10 +200,10 @@ export class PyeongseongCheckpointScene extends Phaser.Scene {
     }
     // Not enough 마패 — turn the player back.
     this.cutsceneActive = true;
-    const n = mapaeCount(this.registry);
+    const n = regionalMapaeCount(this.registry);
     this.dialog.show([
       `Royal Warden: Halt. None pass into Gwanmunseong without the inspectorate's 마패.`,
-      `Royal Warden: You bear ${n} of the ${REQUIRED_MAPAE} regional tablets. Complete the circuit and return.`,
+      `Royal Warden: You bear ${n} of the ${PYEONGSEONG_REQUIRED_MAPAE} regional tablets. Complete the circuit and return.`,
     ], () => {
       this.py = 8 * TILE + 16;   // push clear of the gate so the warning doesn't re-fire
       this.cutsceneActive = false;
