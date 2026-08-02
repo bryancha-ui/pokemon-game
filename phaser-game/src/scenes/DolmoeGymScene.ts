@@ -17,6 +17,10 @@ interface GymTrainer {
 const IT = 36;
 
 export class DolmoeGymScene extends Phaser.Scene {
+  // The quarry is an indoor battle puzzle. Its dark granite floor used to be
+  // classified as rows of tall outdoor cliff tiles, hiding the player.
+  public interior3D = true;
+  public clearSight3D = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;

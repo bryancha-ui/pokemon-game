@@ -32,6 +32,9 @@ const RUINS = { col: 2, row: 18 };   // cave-mouth in the west cliff → 고인�
 
 export class DolmoeCityScene extends Phaser.Scene {
   private map!: Tile[][];
+  // Keep the authored buildings and pottery, but suppress colour-inferred rock
+  // mountains that otherwise grow through and cover the small onggi props.
+  public clearSight3D = true;
   // Quarry gym, Pokémon Center and mart reuse the shared models; the moth-
   // grandmother (나비할망) statue gets its own generated model on the plaza.
   public buildingPlots = [

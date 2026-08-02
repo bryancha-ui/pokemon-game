@@ -159,6 +159,30 @@ export function buildFromEntry(entry: PartyEntry): Pokemon {
   return p;
 }
 
+/** Ensure a party member's current species texture exists before a switch-in.
+ *  Old saves can retain a pre-evolution `.jpg` URL even after the key changes;
+ *  prefer the canonical form/custom URL so the gameplay switch and visible
+ *  sprite always change together on the first selection. */
+export async function ensurePartyTexture(scene: Phaser.Scene, entry: PartyEntry): Promise<boolean> {
+  const key = entry.spriteKey;
+  if (scene.textures.exists(key)) return true;
+  const url = findForm(key)?.data.spriteUrl ?? customForm(key)?.data.spriteUrl ?? entry.spriteUrl;
+  if (!url) return false;
+
+  scene.load.image(key, url);
+  await new Promise<void>(resolve => {
+    const finish = () => {
+      scene.load.off('complete', finish);
+      scene.load.off('loaderror', finish);
+      resolve();
+    };
+    scene.load.once('complete', finish);
+    scene.load.once('loaderror', finish);
+    scene.load.start();
+  });
+  return scene.textures.exists(key);
+}
+
 /** Apply the entry's saved remaining-PP to a freshly built Pokémon so PP carries
  *  across battles (a fresh build otherwise starts every move at full PP). */
 function restorePP(p: Pokemon, entry: PartyEntry): void {

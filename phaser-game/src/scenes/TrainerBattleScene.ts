@@ -14,7 +14,7 @@ import { PartySystem } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
+import { buildFromEntry, ensurePartyTexture, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
@@ -168,8 +168,12 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.totalExp    = (this.registry.get('trainerExpPool')  as number) ?? 30;
     // Which scene to return to after the battle (route or gym)
     this._returnScene = (this.registry.get('trainerReturnScene') as string) ?? 'RouteScene';
-    const raw = (this.registry.get('trainerPokemon') as string) ?? '[]';
-    this.enemyQueue  = (JSON.parse(raw) as { id: number; level: number; custom?: string }[])
+    const raw = this.registry.get('trainerPokemon') ?? '[]';
+    let decodedTeam: unknown = [];
+    try { decodedTeam = typeof raw === 'string' ? JSON.parse(raw) : raw; }
+    catch (error) { console.error('[TrainerBattle] Invalid trainer roster.', error); }
+    this.enemyQueue = (Array.isArray(decodedTeam) ? decodedTeam : []) as { id: number; level: number; custom?: string }[];
+    this.enemyQueue = this.enemyQueue
       // Guard: ordinary trainers never field a box-legendary — swap any for a strong
       // non-legendary. (Custom species are untouched.)
       .map(e => e.custom ? e : { ...e, id: deLegendify(e.id) });
@@ -996,7 +1000,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
   /** Swap in a chosen party member WITHOUT spending the turn (the enemy already
    *  used its turn fainting). Mirrors voluntarySwitch but ends at playerAction(). */
-  private freeSwitch(slotIdx: number) {
+  private async freeSwitch(slotIdx: number) {
     this.state = 'busy';
     persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
@@ -1016,13 +1020,20 @@ export class TrainerBattleScene extends Phaser.Scene {
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
       this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
     }
+    if (!this.textures.exists(entry.spriteKey)) await ensurePartyTexture(this, entry);
+    if (this.textures.exists(entry.spriteKey) && this.playerSprite.texture.key !== entry.spriteKey) {
+      this.playerSprite.setTexture(entry.spriteKey);
+      const tex = this.textures.get(entry.spriteKey).getSourceImage();
+      const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
+    }
     playBallSendOut(this, this.playerSprite, {
       side: 'player', targetX: 180, targetY: 260,
       onComplete: () => this.typeDialog(`Go, ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
     });
   }
 
-  private voluntarySwitch(slotIdx: number) {
+  private async voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
     persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
@@ -1038,6 +1049,13 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.animateHpBar('player', () => {});
 
     if (this.textures.exists(entry.spriteKey)) {
+      this.playerSprite.setTexture(entry.spriteKey);
+      const tex = this.textures.get(entry.spriteKey).getSourceImage();
+      const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
+    }
+    if (!this.textures.exists(entry.spriteKey)) await ensurePartyTexture(this, entry);
+    if (this.textures.exists(entry.spriteKey) && this.playerSprite.texture.key !== entry.spriteKey) {
       this.playerSprite.setTexture(entry.spriteKey);
       const tex = this.textures.get(entry.spriteKey).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
@@ -1088,7 +1106,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   /** Bring in the player-chosen Pokémon after a faint, then resume the player's turn. */
-  private sendInChosen(nextIdx: number) {
+  private async sendInChosen(nextIdx: number) {
     if (!this.awaitingForcedSwitch) return;
     this.awaitingForcedSwitch = false;
     this.state = 'busy';
@@ -1107,6 +1125,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     // Swap sprite
     const key = entry.spriteKey;
+    await ensurePartyTexture(this, entry);
     if (this.textures.exists(key)) {
       this.playerSprite.setTexture(key);
       const tex = this.textures.get(key).getSourceImage();

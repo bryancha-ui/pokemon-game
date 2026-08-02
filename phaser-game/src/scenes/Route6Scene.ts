@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
-import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
+import { drawTrainerBody, drawRiderBody, drawNpcBody, playerDesign } from '../data/CharacterSprite';
+import { markTrainerPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -282,12 +283,52 @@ export class Route6Scene extends Phaser.Scene {
     if (this.py > 28 * TILE) return;
     this.registry.set('ryeoWarningSeen', true);
     this.cutsceneActive = true;
+    this.facing = 1;
+    this.drawChar();
+
+    // Ryeo is a real overworld character so OverworldMirror replaces this 2D
+    // fallback with her named npc_ryeo model and derives walk/facing animation
+    // from the tweened world position.
+    const startX = 12 * TILE + 16, startY = 26 * TILE + 16;
+    const ryeo = this.add.graphics().setDepth(19).setPosition(startX, startY);
+    this.drawRyeoWalker(ryeo, 0);
+    markTrainerPortrait(ryeo, 'nosdan-ryeo-cliff');
+    ryeo.setData('characterGender3D', 'girl');
+    ryeo.setData('characterLookAt3D', { x: this.px, y: this.py });
+    const label = this.add.text(startX, startY - 28, speakerName('Commander Ryeo'), {
+      fontSize: '8px', color: '#ff9fbd', backgroundColor: '#000000aa', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5).setDepth(20);
+
     this.dialog.show([
       'Commander Ryeo stands at the shrine gate, silhouetted against the rising sun.',
       "Commander Ryeo: You freed the Grandmother. You've cost us our backup plan.",
       "Commander Ryeo: But Cheonji remains. I'll see you at the top — and I cannot guarantee your safety.",
-      "(She walks on toward the Sunrise Cliffs without another word.)",
-    ], () => { this.cutsceneActive = false; });
+    ], () => {
+      ryeo.setData('characterLookAt3D', null);
+      let frame = 0;
+      const walkFrames = this.time.addEvent({
+        delay: 150, loop: true,
+        callback: () => { frame ^= 1; this.drawRyeoWalker(ryeo, frame); },
+      });
+      const endY = 18 * TILE + 16;
+      this.tweens.add({ targets: label, y: endY - 28, duration: 2500, ease: 'Sine.easeInOut' });
+      this.tweens.add({
+        targets: ryeo, y: endY, duration: 2500, ease: 'Sine.easeInOut',
+        onComplete: () => {
+          walkFrames.destroy();
+          ryeo.destroy();
+          label.destroy();
+          this.cutsceneActive = false;
+        },
+      });
+    });
+  }
+
+  private drawRyeoWalker(g: Phaser.GameObjects.Graphics, frame: number) {
+    drawNpcBody(g, 0x20242d, { hair: 0x93969c, skin: 0xf0c8a0, frame });
+    g.fillStyle(0x9e2731, 1); g.fillRect(-8, -9, 16, 1);  // commander's red shoulder trim
+    g.fillStyle(0x9e2731, 1); g.fillRect(-1, -7, 2, 8);   // coat placket
+    g.fillStyle(0x9e2731, 1); g.fillCircle(-4, -3, 1.4);  // insignia
   }
 
   /** At the sandy east shore, facing the sea with Surf earned, ride out onto the ocean. */

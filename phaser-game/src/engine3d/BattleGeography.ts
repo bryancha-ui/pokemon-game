@@ -379,6 +379,30 @@ function addVolcanicVents(root: THREE.Group, theme: OutdoorBattleTheme): void {
   root.add(light);
 }
 
+/** A readable mine wall behind cave battles. Previously the 2D backdrop was
+ *  correctly hidden for 3D mode, but the cave arena only had a dark floor and
+ *  edge rocks, leaving the camera pointed into near-black fog. */
+function addCaveBackdrop(root: THREE.Group, theme: OutdoorBattleTheme): void {
+  for (let i = 0; i < 9; i++) {
+    const x = -8 + i * 2;
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.55 + (i % 3) * 0.22, 0), toonMat(i % 2 ? theme.rim : theme.rock));
+    rock.scale.set(1.05, 1.45 + (i % 2) * 0.28, 0.72);
+    rock.position.set(x, 1.65 + (i % 2) * 0.25, -9.1 - (i % 2) * 0.25);
+    rock.rotation.set(i * 0.11, i * 0.37, i % 2 ? 0.08 : -0.06);
+    root.add(rock);
+  }
+  for (const [x, scale] of [[-6.6, 1.1], [-2.4, 0.75], [2.1, 0.95], [6.4, 1.2]] as const) {
+    const stalactite = new THREE.Mesh(new THREE.ConeGeometry(0.42 * scale, 2.3 * scale, 7), toonMat(theme.rim));
+    stalactite.rotation.z = Math.PI;
+    stalactite.position.set(x, 4.25, -8.45);
+    root.add(stalactite);
+    addCrystal(root, x + 0.55, -8.0, theme.accent, 0.48 * scale);
+  }
+  const glow = new THREE.PointLight(theme.accent, 2.0, 17, 2);
+  glow.position.set(0, 3.2, -6.5);
+  root.add(glow);
+}
+
 function addScenery(root: THREE.Group, theme: OutdoorBattleTheme): void {
   const trees = theme.geography === 'snow' || theme.geography === 'snowForest' || theme.geography === 'coldPlateau'
     ? makePines(34, theme.tree)
@@ -457,6 +481,7 @@ export function buildGeographicBattleArena(root: THREE.Group, chosen?: OutdoorBa
     for (const [x, z] of [[-7.6, -5.7], [6.6, -6.7], [8.1, 2.8]] as const) addCrystal(root, x, z, theme.accent, 0.55);
   }
   if (theme.geography === 'volcano') addVolcanicVents(root, theme);
+  if (theme.geography === 'cave') addCaveBackdrop(root, theme);
   if (theme.geography === 'ruins') addDolmens(root, theme);
   if (theme.geography === 'haunted') addHauntedBackdrop(root, theme);
   if (theme.geography === 'ferry') addFerryRails(root);

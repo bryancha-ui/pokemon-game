@@ -14,7 +14,7 @@ import { PartySystem, PartyEntry, baseStatsFromData } from '../systems/PartySyst
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { awardBenchExp } from '../systems/BattleExp';
-import { buildFromEntry, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
+import { buildFromEntry, ensurePartyTexture, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
 import { DexTracker } from '../systems/DexTracker';
 import { ITEMS, Inventory, itemDef, itemName, useItemOnSlot } from '../systems/Items';
@@ -833,7 +833,7 @@ export class WildBattleScene extends Phaser.Scene {
     );
   }
 
-  private voluntarySwitch(slotIdx: number) {
+  private async voluntarySwitch(slotIdx: number) {
     this.state = 'busy';
     persistSwitchOut(this.registry, this.activeSlot, this.player);
     this.activeSlot = slotIdx;
@@ -850,6 +850,13 @@ export class WildBattleScene extends Phaser.Scene {
     this.playerHpText.setText(`${this.player.hp}/${this.player.maxHp}`);
 
     if (this.textures.exists(entry.spriteKey)) {
+      this.playerSprite.setTexture(entry.spriteKey);
+      const tex = this.textures.get(entry.spriteKey).getSourceImage();
+      const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      this.playerSprite.setScale((140 * spriteScale(entry.spriteKey)) / dim);
+    }
+    if (!this.textures.exists(entry.spriteKey)) await ensurePartyTexture(this, entry);
+    if (this.textures.exists(entry.spriteKey) && this.playerSprite.texture.key !== entry.spriteKey) {
       this.playerSprite.setTexture(entry.spriteKey);
       const tex = this.textures.get(entry.spriteKey).getSourceImage();
       const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
@@ -890,7 +897,7 @@ export class WildBattleScene extends Phaser.Scene {
     openSwitchPanel(this, this.activeSlot, () => {}, (idx) => this.sendInChosen(idx), false);
   }
 
-  private sendInChosen(nextIdx: number) {
+  private async sendInChosen(nextIdx: number) {
     if (!this.awaitingForcedSwitch) return;
     this.awaitingForcedSwitch = false;
     this.state = 'busy';
@@ -909,6 +916,7 @@ export class WildBattleScene extends Phaser.Scene {
 
     // Swap sprite
     const key = nextEntry.spriteKey;
+    await ensurePartyTexture(this, nextEntry);
     if (this.textures.exists(key)) {
       this.playerSprite.setTexture(key);
       const tex2 = this.textures.get(key).getSourceImage();
