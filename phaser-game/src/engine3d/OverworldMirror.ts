@@ -4,6 +4,8 @@ import { CameraRig } from './CameraRig';
 import { buildCharacterModel, buildPlayerModel, CharacterProfile, PlayerModel } from './CharacterModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
+import { generateNabihalmangAppearance, type GeneratedCreatureAnimation } from './GeneratedCreatureAnimation';
+import { getModel, hasModel, primeManifest } from './GlbModels';
 import { makeBlobShadow } from './Props';
 import { getProp, propFailed, type PropDef } from './PropModels';
 import { buildTerrain, PX, TerrainResult } from './TerrainBuilder';
@@ -45,6 +47,11 @@ interface Tracked {
   character?: PlayerModel;
   characterLast?: { x: number; z: number };
   characterPhase?: number;
+  /** Optional true-3D creature model for a tagged overworld Image. */
+  creatureKey?: string;
+  creature?: THREE.Group;
+  creatureBaseScale?: number;
+  creatureAnimation?: GeneratedCreatureAnimation;
 }
 
 interface InteriorModel3D {
@@ -117,12 +124,14 @@ export class OverworldMirror {
     this.stage = stage;
     this.rig = rig;
     this.root = stage.resetWorld();
+    primeManifest();
     this.onAdded = (obj) => { if (this.built) this.pendingObjects.add(obj as GO); };
     scene.events.on('addedtoscene', this.onAdded);
   }
 
   destroy(): void {
     this.scene.events.off('addedtoscene', this.onAdded);
+    for (const t of this.tracked.values()) t.creatureAnimation?.dispose();
     this.tracked.clear();
     this.mapGraphics.clear();
     this.mapImages.clear();
@@ -662,11 +671,14 @@ export class OverworldMirror {
     this.root.add(holder);
     // Image origin is its center by default; feet = origin + displayHeight/2.
     const footY = (im.displayOriginY ?? (im.height ?? 0) / 2);
+    const creatureKey = im.getData?.('creatureModel3DKey') as string | undefined;
     this.tracked.set(im, {
       obj: im, mesh: holder, mats, shadow, kind: 'image', hash: 0,
       footY, halfW, baseColor: new THREE.Color(0xffffff), phase: Math.random() * Math.PI * 2,
       aspect: relief.pxWidth / Math.max(1, relief.pxHeight),
       texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
+      creatureKey,
+      creatureBaseScale: Math.max(0.0001, Math.abs(im.scaleX ?? 1)),
     });
     this.hideFrom2D(im);
   }
@@ -836,6 +848,33 @@ export class OverworldMirror {
       }
 
       const inner = t.mesh.children[0] as THREE.Mesh | undefined;
+
+      // Tagged legendary/creature Images use their generated GLB in the
+      // overworld too. Keep the authored relief visible while the manifest or
+      // model loads, then replace it without changing the Phaser object that
+      // still owns cutscene position, alpha, scale and lifetime.
+      if (t.kind === 'image' && t.creatureKey && !t.creature && hasModel(t.creatureKey)) {
+        const loaded = getModel(t.creatureKey);
+        if (loaded) {
+          t.creature = loaded.group;
+          t.mesh.add(t.creature);
+          if (o.getData?.('creatureAnimation3D') === 'nabihalmang-appearance') {
+            t.creatureAnimation = generateNabihalmangAppearance(t.creature);
+          }
+          if (inner) inner.visible = false;
+        }
+      }
+      if (t.creature) {
+        const authoredHeight = Number(o.getData?.('creatureHeight3D'));
+        const height = Number.isFinite(authoredHeight) && authoredHeight > 0 ? authoredHeight : 1.8;
+        const scaleRatio = Math.abs(o.scaleX ?? 1) / Math.max(0.0001, t.creatureBaseScale ?? 1);
+        const breathe = 1 + Math.sin(this.time * 2.0 + t.phase) * 0.018;
+        t.creature.scale.setScalar(height * scaleRatio * breathe);
+        // A cutscene may create the actor hidden before its entrance cue. Do
+        // not consume the generated intro while the owning Phaser image is
+        // still at alpha 0.
+        if (t.mesh.visible) t.creatureAnimation?.update(dt);
+      }
       if (inner) {
         const sx = Math.abs(o.scaleX ?? 1), sy = Math.abs(o.scaleY ?? 1);
         if (t.kind === 'image') inner.scale.set(sx / PX, sy / PX, ((sx + sy) / 2) / PX);
@@ -895,7 +934,11 @@ export class OverworldMirror {
     }
     for (const d of dead) {
       const t = this.tracked.get(d);
-      if (t) { this.root.remove(t.mesh); this.tracked.delete(d); }
+      if (t) {
+        t.creatureAnimation?.dispose();
+        this.root.remove(t.mesh);
+        this.tracked.delete(d);
+      }
     }
 
     // The follow target might be untracked (e.g. a Container player) — derive from raw coords.
@@ -995,7 +1038,13 @@ export class OverworldMirror {
     const moving = speed > 0.4;
     this.heroWalkPhase += (moving ? Math.min(16, 6 + speed * 1.6) : 2.2) * dt;
     this.hero.setWalk(this.heroWalkPhase, moving, dt);
-    this.hero.face(dx, dz, dt);
+    const lookAt = t.obj.getData?.('characterLookAt3D') as { x?: number; y?: number } | undefined;
+    if (!moving && typeof lookAt?.x === 'number' && typeof lookAt.y === 'number'
+      && Number.isFinite(lookAt.x) && Number.isFinite(lookAt.y)) {
+      this.hero.face((lookAt.x / PX) - p.x, (lookAt.y / PX) - p.z, dt);
+    } else {
+      this.hero.face(dx, dz, dt);
+    }
   }
 
   /** Restore all Phaser-side visibility (leaving 3D mode). */

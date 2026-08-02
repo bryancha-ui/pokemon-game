@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { vanishesAfterDefeat } from '../data/Villains';
 import { drawTrainerBody, drawNpcBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
-import { markRivalPortrait } from '../data/BattlePortraits';
+import { markRivalPortrait, markTrainerPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { playBgm } from '../systems/Music';
@@ -191,6 +191,7 @@ export class JejuVentScene extends Phaser.Scene {
         this.registry.set('ryeoDefeatScene', true);
         this.time.delayedCall(300, () => {
           this.cutsceneActive = true;
+          const visual = this.buildRyeoConfrontation();
           this.dialog.show([
             "Commander Ryeo staggers backward, her Pokémon recalled. She looks at the towering moth beside you — at the glow of her wings — and something breaks in her expression.",
             "Commander Ryeo: ...She looks at you like you're not a tool to be used. Like you matter. That's what I never understood about this region. That's what we tried to control.",
@@ -200,7 +201,7 @@ export class JejuVentScene extends Phaser.Scene {
             "나비할망's wings catch the dawn light. You've earned something rare — the choice of a legendary.",
             "Prof. Song: Reach the Onnuri League, prove yourself champion. Then the world opens up. The north has lessons too.",
             `${rivalTrainerName(this.registry)}: To the League, then. 나비할망 will make sure we get there in one piece.`,
-          ], () => { this.cutsceneActive = false; });
+          ], () => { visual.destroy(); this.cutsceneActive = false; });
         });
       }
     } else if (!this.registry.get('jejuClimbStarted')) {
@@ -534,7 +535,7 @@ export class JejuVentScene extends Phaser.Scene {
 
   /** Commander Ryeo — drawn in the player's own clean pixel style (drawNpcBody),
    *  in her plum 노스단 coat with magenta trim, a hair streak and a blood mark. */
-  private buildCommanderRyeo(bloodied = true): Phaser.GameObjects.Container {
+  private buildCommanderRyeo(bloodied = true): Phaser.GameObjects.Graphics {
     const g = this.add.graphics();
     drawNpcBody(g, 0x2a1a2c, { hair: 0x141018, skin: 0xf0c8a0 });   // base body, player style
     // Commander accents layered on top
@@ -543,55 +544,98 @@ export class JejuVentScene extends Phaser.Scene {
     g.fillStyle(0xaa3366, 1); g.fillCircle(-4, -3, 1.4);          // 노스단 emblem
     g.fillStyle(0xaa3366, 1); g.fillRect(3, -23, 3, 6);           // magenta hair streak
     if (bloodied) { g.fillStyle(0x9a1a1a, 0.9); g.fillRect(-5, -15, 1.5, 5); }  // blood streak on cheek
-    return this.add.container(0, 0, [g]);
+    markTrainerPortrait(g, 'jeju-ryeo-final');
+    g.setData('characterGender3D', 'girl');
+    return g;
   }
 
   /** Director Suri — the same player-style body, olive coat with gold trim. */
-  private buildDirectorSuri(): Phaser.GameObjects.Container {
+  private buildDirectorSuri(): Phaser.GameObjects.Graphics {
     const g = this.add.graphics();
     drawNpcBody(g, 0x33341f, { hair: 0x4a3a1a, skin: 0xf0c8a0 });
     g.fillStyle(0xccaa44, 1); g.fillRect(-8, -9, 16, 1);           // gold shoulder trim
     g.fillStyle(0xccaa44, 1); g.fillRect(-1, -7, 2, 8);           // coat placket
-    return this.add.container(0, 0, [g]);
+    markTrainerPortrait(g, 'suri-director');
+    g.setData('characterGender3D', 'girl');
+    return g;
+  }
+
+  /** Phaser image fallback backed by the generated true-3D 나비할망 GLB. */
+  private buildNabihalmangModel(x: number, footY: number, height3D: number): Phaser.GameObjects.Image {
+    const src = this.textures.get('nabihalmang').getSourceImage() as { width?: number; height?: number };
+    const displayH = height3D * TILE;
+    const img = this.add.image(x, footY - displayH / 2, 'nabihalmang').setDepth(19);
+    img.setScale(displayH / Math.max(1, src.height ?? 1));
+    img.setData('creatureModel3DKey', 'nabihalmang');
+    img.setData('creatureHeight3D', height3D);
+    img.setData('creatureAnimation3D', 'nabihalmang-appearance');
+    img.setData('facePlayer3D', true);
+    return img;
+  }
+
+  /** One 노스단 operative, guaranteed to become an opaque 3D humanoid. */
+  private buildSuriOperative(x: number, y: number): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics().setPosition(x, y).setDepth(19);
+    drawNpcBody(g, 0x16161c, { hair: 0x101014, skin: 0xe9bd92 });
+    g.setData('characterModel3DKey', 'generated_boy');
+    g.setData('characterGender3D', 'boy');
+    g.setData('characterProfile3D', {
+      hair: 0x101014, outfit: 0x16161c, secondary: 0x2d3038,
+      accent: 0x9e2731, outfitStyle: 'uniform', hairStyle: 'short',
+    });
+    return g;
   }
 
   /** Commander Ryeo stands next to the player on the map as an ordinary,
    *  player-sized 2D overworld sprite for the confrontation dialogue — no
    *  enlargement, no floating. Returns the objects so they can be destroyed. */
-  private buildRyeoConfrontation(): Phaser.GameObjects.Container {
+  private buildRyeoConfrontation(): { destroy: () => void } {
     // Turn the player to face Ryeo (she stands just above, to the north).
     this.facing = 1; this.drawChar();
 
     const rx = this.px, ry = this.py - 2 * TILE;            // Ryeo stands a couple tiles north
-    const ryeo = this.buildCommanderRyeo(true).setPosition(rx, ry);   // normal scale (1) = player size
+    const ryeo = this.buildCommanderRyeo(true).setPosition(rx, ry).setDepth(19);
+    ryeo.setData('characterLookAt3D', { x: this.px, y: this.py });
+    this.playerG.setData('characterLookAt3D', { x: rx, y: ry });
 
     const rLabel = this.add.text(rx, ry - 24, speakerName('Commander Ryeo'), {
       fontSize: '8px', color: '#ff99bb', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(20);
 
     // The rival stands beside you (to the west), also facing Ryeo — a normal 2D sprite.
     const rivalG = this.add.graphics().setPosition(this.px - TILE, this.py);
     drawTrainerBody(rivalG, 1, 0, rivalDesign(this.registry));   // facing up (back), like the player
     markRivalPortrait(rivalG, this.registry);
+    rivalG.setData('characterLookAt3D', { x: rx, y: ry });
+    rivalG.setDepth(19);
     // The rival's name is gender-based: 'Minhyuk' (male) / 'Soohyun' (female).
     const rivalName = rivalTrainerName(this.registry);
     const vLabel = this.add.text(this.px - TILE, this.py - 24, rivalName, {
       fontSize: '8px', color: '#9ad0ff', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(20);
 
     // Prof. Song stands to your east — a 2D overworld sprite in his lab coat.
     const songG = this.add.graphics().setPosition(this.px + TILE, this.py);
     drawNpcBody(songG, 0xe6e6ea, { hair: 0x4a4038 });                // white lab coat, greying hair
     songG.fillStyle(0x222222, 1); songG.fillRect(-6, -16, 12, 1);    // glasses bar
     songG.fillStyle(0x8a1a1a, 1); songG.fillRect(-1, -7, 2, 4);      // tie
+    markTrainerPortrait(songG, 'prof-song');
+    songG.setData('characterGender3D', 'boy');
+    songG.setData('characterLookAt3D', { x: rx, y: ry });
+    songG.setDepth(19);
     const gLabel = this.add.text(this.px + TILE, this.py - 24, speakerName('Prof. Song'), {
       fontSize: '8px', color: '#aef0c0', backgroundColor: '#000000aa', padding: { x: 2, y: 1 }, align: 'center',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(20);
 
-    // 나비할망 settles beside the player — a small guardian moth, tucked up by your side.
-    const nabi = this.buildNabihalmang().setPosition(this.px + TILE * 0.45, this.py - TILE * 0.75).setScale(0.28);
+    // 나비할망 settles beside the player as her generated GLB, not a flat
+    // hand-drawn container.
+    const nabi = this.buildNabihalmangModel(this.px + TILE * 0.55, this.py - TILE * 0.2, 1.8);
 
-    return this.add.container(0, 0, [ryeo, rLabel, rivalG, vLabel, songG, gLabel, nabi]).setDepth(19);
+    const objects: Phaser.GameObjects.GameObject[] = [ryeo, rLabel, rivalG, vLabel, songG, gLabel, nabi];
+    return { destroy: () => {
+      this.playerG.setData('characterLookAt3D', null);
+      for (const object of objects) object.destroy();
+    } };
   }
 
   /** The capture intro — 나비할망 breaks the restraint field as 노스단 recoils. */
@@ -599,47 +643,64 @@ export class JejuVentScene extends Phaser.Scene {
     if (this.nabiSceneShown) return onComplete();
     this.nabiSceneShown = true;
     const W = this.scale.width, H = this.scale.height;
+    const stageX = this.px, stageY = this.py - TILE * 0.45;
 
-    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0014, 0).setOrigin(0.5);
-    const embers = this.buildEmbers().setAlpha(0);
-    const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0).setOrigin(0.5);
+    // Atmosphere stays a 2D overlay; every actual person/creature below lives
+    // in world space so OverworldMirror can replace it with a true 3D model.
+    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0014, 0)
+      .setOrigin(0.5).setScrollFactor(0).setDepth(116);
+    const embers = this.buildEmbers().setAlpha(0).setScrollFactor(0).setDepth(117);
+    const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0)
+      .setOrigin(0.5).setScrollFactor(0).setDepth(121);
 
-    const nabi = this.buildNabihalmang();
-    nabi.setPosition(W / 2, H * 0.78).setScale(0.5).setAlpha(0);
+    const nabi = this.buildNabihalmangModel(stageX, stageY - TILE * 0.65, 3.2).setAlpha(0);
+    const ryeo = this.buildCommanderRyeo(false).setPosition(stageX - TILE * 2.8, stageY).setDepth(19).setAlpha(0);
+    const suri = this.buildDirectorSuri().setPosition(stageX + TILE * 2.8, stageY).setDepth(19).setAlpha(0);
+    const operativeL = this.buildSuriOperative(stageX - TILE * 4.0, stageY + TILE * 0.9).setAlpha(0);
+    const operativeR = this.buildSuriOperative(stageX + TILE * 4.0, stageY + TILE * 0.9).setAlpha(0);
+    const rival = this.add.graphics().setPosition(stageX - TILE * 1.15, stageY + TILE * 1.1).setDepth(19).setAlpha(0);
+    drawTrainerBody(rival, 1, 0, rivalDesign(this.registry));
+    markRivalPortrait(rival, this.registry);
 
-    const ryeo = this.buildCommanderRyeo(false);
-    ryeo.setPosition(W * 0.13, H * 0.68).setScale(3.6).setAlpha(0);
-    const suri = this.buildDirectorSuri();
-    suri.setPosition(W * 0.87, H * 0.68).setScale(3.6).setAlpha(0);
+    for (const human of [ryeo, suri, operativeL, operativeR, rival]) {
+      human.setData('characterLookAt3D', { x: stageX, y: stageY - TILE });
+    }
+    this.playerG.setData('characterLookAt3D', { x: stageX, y: stageY - TILE });
 
-    const label = this.add.text(W / 2, H * 0.30, '🦋 나비할망', {
+    const label = this.add.text(W / 2, H * 0.22, '🦋 나비할망', {
       fontSize: '18px', color: '#aee9ff', fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
-    }).setOrigin(0.5).setAlpha(0);
-    const rLabel = this.add.text(W * 0.13, H * 0.46, speakerName('Cmdr Ryeo'), {
+    }).setOrigin(0.5).setAlpha(0).setScrollFactor(0).setDepth(120);
+    const rLabel = this.add.text(stageX - TILE * 2.8, stageY - 28, speakerName('Cmdr Ryeo'), {
       fontSize: '9px', color: '#ff99bb', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setAlpha(0);
-    const sLabel = this.add.text(W * 0.87, H * 0.46, speakerName('Dir. Suri'), {
+    const sLabel = this.add.text(stageX + TILE * 2.8, stageY - 28, speakerName('Dir. Suri'), {
       fontSize: '9px', color: '#ffdd88', backgroundColor: '#00000099', padding: { x: 2, y: 1 }, align: 'center',
     }).setOrigin(0.5).setAlpha(0);
 
-    const root = this.cutsceneRoot([dim, embers, ryeo, suri, nabi, label, rLabel, sLabel, flash], 117);
+    const visuals: Phaser.GameObjects.GameObject[] = [dim, embers, flash, nabi, ryeo, suri, operativeL, operativeR, rival, label, rLabel, sLabel];
 
     // Entrance: gloom gathers, the villains appear, then the moth rises free
     this.tweens.add({ targets: dim, alpha: 0.6, duration: 800 });
     this.tweens.add({ targets: embers, alpha: 1, duration: 800, delay: 200 });
-    this.tweens.add({ targets: [ryeo, suri, rLabel, sLabel], alpha: 1, duration: 700, delay: 200 });
-    this.tweens.add({ targets: nabi, alpha: 1, scale: 1.8, y: H * 0.42, duration: 1500, delay: 500, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: [ryeo, suri, operativeL, operativeR, rival, rLabel, sLabel], alpha: 1, duration: 700, delay: 200 });
+    this.tweens.add({ targets: nabi, alpha: 1, y: `-=${TILE * 1.4}`, duration: 1500, delay: 500, ease: 'Cubic.Out' });
     this.tweens.add({ targets: label, alpha: 1, duration: 900, delay: 900 });
 
     // The restraint field SHATTERS — a bright flash + shockwave
     this.time.delayedCall(1900, () => {
       this.cameras.main.shake(320, 0.006);
       this.tweens.add({ targets: flash, alpha: 0.85, duration: 90, yoyo: true });
+      this.tweens.add({ targets: [ryeo, operativeL], x: `-=${TILE * 0.8}`, duration: 420, ease: 'Cubic.Out' });
+      this.tweens.add({ targets: [suri, operativeR], x: `+=${TILE * 0.8}`, duration: 420, ease: 'Cubic.Out' });
     });
 
     this.time.delayedCall(3000, () => {
-      this.tweens.add({ targets: root, alpha: 0, duration: 600 });
-      this.time.delayedCall(700, () => { root.destroy(); onComplete(); });
+      this.tweens.add({ targets: visuals, alpha: 0, duration: 600 });
+      this.time.delayedCall(700, () => {
+        this.playerG.setData('characterLookAt3D', null);
+        for (const visual of visuals) visual.destroy();
+        onComplete();
+      });
     });
   }
 }
