@@ -10,6 +10,7 @@ import { measureCommands } from './GraphicsRaster';
 import { getModel, hasModel, primeManifest } from './GlbModels';
 import { MoveFX3D } from './MoveFX3D';
 import { makeBlobShadow } from './Props';
+import { spriteScale } from '../data/SpriteScale';
 import { EnvProfile, ThreeStage } from './ThreeStage';
 
 // ── Battle mirror ────────────────────────────────────────────────────────────
@@ -75,7 +76,12 @@ const BATTLE_SIZE_OVERRIDES: Record<string, number> = {
 };
 
 function battleSizeOverride(textureKey: string): number {
-  return BATTLE_SIZE_OVERRIDES[textureKey] ?? 1;
+  const explicit = BATTLE_SIZE_OVERRIDES[textureKey];
+  if (explicit) return explicit;
+  // The relief/model pipeline deliberately clamps raw display-height influence
+  // to 1.15. Restore the remainder of the authored species multiplier so large
+  // Pokémon such as Garchomp and Tyranitar stay imposing in 3D as well as 2D.
+  return Math.max(1, spriteScale(textureKey) / 1.15);
 }
 
 // Battle trainers share their side's Pokémon anchor, then retire when the

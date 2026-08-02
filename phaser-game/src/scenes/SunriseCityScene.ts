@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { drawRiderBody, drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { BIKE_SPEED, hasBike, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -103,6 +104,8 @@ export class SunriseCityScene extends Phaser.Scene {
   private px = 19 * TILE + 16; private py = 24 * TILE + 16;
   private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private cutsceneActive = false;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
   private spawnPx = 0; private spawnPy = 0;   // exits lock until the player moves inward
   private readonly SPEED = 120; private readonly RUN = 250;
@@ -253,7 +256,7 @@ export class SunriseCityScene extends Phaser.Scene {
   // ── Player / camera / input ──────────────────────────────────────────────
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
   private drawChar() {
-    drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    (this.cycling ? drawRiderBody : drawTrainerBody)(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
     this.playerG.setPosition(this.px, this.py);
   }
   private setupCamera() {
@@ -268,6 +271,11 @@ export class SunriseCityScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
+      if (this.cutsceneActive || !hasBike(this.registry)) return;
+      this.cycling = !this.cycling;
+      this.drawChar();
+    });
   }
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
@@ -278,7 +286,7 @@ export class SunriseCityScene extends Phaser.Scene {
     this.enterPrompt = this.add.text(this.scale.width / 2, this.scale.height - 34, '', {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#00000099', padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setVisible(false);
-    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SPACE: enter/talk  M: menu'), {
+    this.add.text(this.scale.width / 2, this.scale.height - 8, tr('WASD: move  SHIFT: run  C: bike  SPACE: enter/talk  M: menu'), {
       fontSize: '10px', color: '#ccc', backgroundColor: '#00000088', padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(51);
   }
@@ -300,7 +308,7 @@ export class SunriseCityScene extends Phaser.Scene {
     if (this.cursors.down.isDown  || this.wasd.down.isDown)  { dy =  1; this.facing = 0; }
     const moving = dx !== 0 || dy !== 0;
     const running = moving && !!this.registry.get('hasRunningShoes') && this.shiftKey.isDown;
-    const speed = running ? this.RUN : this.SPEED;
+    const speed = this.cycling ? BIKE_SPEED : (running ? this.RUN : this.SPEED);
     if (moving) {
       const len = Math.sqrt(dx * dx + dy * dy);
       const nx = this.px + (dx / len) * speed * dt, ny = this.py + (dy / len) * speed * dt;

@@ -16,6 +16,10 @@ interface GymTrainer {
 const IT = 36;
 
 export class SunriseGymScene extends Phaser.Scene {
+  // This is an indoor observatory. Its dark blue dais used to be classified as
+  // a raised outdoor cliff, visually blocking the path to Leader Beonge.
+  public interior3D = true;
+  public clearSight3D = true;
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;

@@ -37,11 +37,39 @@ export const SPRITE_SCALE: Record<string, number> = {
   munklift:     1.35,
   onnujang:     1.35,
   pipetiger:     0.675, // 1.35 × 0.5 — halve Pipe Tiger's battle size
-  tyranitar:     1.35,
+  tyranitar:     1.45,
+  garchomp:      1.45,
   palmcockatoo: 2.2,   // large crest/body; clears the 3D size-bias floor visibly
+};
+
+/** PokéAPI species use different texture prefixes depending on whether they are
+ * wild, owned, or trainer-controlled. Keep physical size consistent across all
+ * of those forms instead of maintaining three aliases for every large species. */
+const NUMERIC_SPECIES_SCALE: Record<number, number> = {
+  95: 1.50,   // Onix
+  130: 1.50,  // Gyarados
+  143: 1.35,  // Snorlax
+  149: 1.30,  // Dragonite
+  208: 1.60,  // Steelix
+  248: 1.45,  // Tyranitar
+  306: 1.40,  // Aggron
+  321: 1.75,  // Wailord
+  373: 1.40,  // Salamence
+  376: 1.40,  // Metagross
+  384: 1.80,  // Rayquaza
+  445: 1.45,  // Garchomp
+  464: 1.40,  // Rhyperior
+  483: 1.60,  // Dialga
+  484: 1.55,  // Palkia
+  486: 1.60,  // Regigigas
+  646: 1.55,  // Kyurem
 };
 
 /** Display-size multiplier for a battle sprite key (default 1). */
 export function spriteScale(key: string | undefined): number {
-  return (key && SPRITE_SCALE[key]) || 1;
+  if (!key) return 1;
+  const authored = SPRITE_SCALE[key];
+  if (authored) return authored;
+  const numeric = key.match(/(?:^|[-_])(\d+)$/)?.[1];
+  return numeric ? (NUMERIC_SPECIES_SCALE[Number(numeric)] ?? 1) : 1;
 }

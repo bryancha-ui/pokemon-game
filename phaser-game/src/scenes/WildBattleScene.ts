@@ -615,12 +615,17 @@ export class WildBattleScene extends Phaser.Scene {
     DexTracker.markCaught(this.registry, this.registry.get('wildId') as string | number);
     const name = pokeNameEn(this.wild.name).toUpperCase();
     const captureExp = Math.round(this.wild.level * 12 * expMultiplierFor(this.registry));   // capture rewards EXP to all battlers too (northern boost applies)
-    const finish = () => this.showExpAndLevelUp(captureExp, () => this.returnToRoute());
+    // A full-party capture may replace a slot that participated in this battle.
+    // Let that battler finish receiving its capture EXP before the replacement is
+    // committed, otherwise showExpAndLevelUp would write the old battler's level
+    // into the freshly caught Pokémon now occupying the same numeric slot.
+    const finish = (afterExp: () => void = () => this.returnToRoute()) =>
+      this.showExpAndLevelUp(captureExp, afterExp);
 
     if (!PartySystem.isFull(this.registry)) {
       PartySystem.add(this.registry, entry);
       this.saveAfterCatch();
-      this.typeDialog(`✨ Gotcha! ${name} was caught!\nAdded to your party!`, finish);
+      this.typeDialog(`✨ Gotcha! ${name} was caught!\nAdded to your party!`, () => finish());
     } else {
       // Party is full — let the player swap a Pokémon in or send the new one to the PC.
       this.typeDialog(`✨ Gotcha! ${name} was caught!\nBut your party is full.`,
@@ -638,7 +643,7 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   /** Party-full choice: swap a party member (it goes to the PC) or box the newcomer. */
-  private promptFullParty(entry: PartyEntry, onDone: () => void) {
+  private promptFullParty(entry: PartyEntry, awardCaptureExp: (afterExp?: () => void) => void) {
     const cx = this.W / 2, cy = this.H / 2;
     const layer = this.add.container(0, 0).setDepth(60);
     layer.add(this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.62));
@@ -652,31 +657,43 @@ export class WildBattleScene extends Phaser.Scene {
       b.on('pointerdown', onClick);
       layer.add(b);
     };
-    btn(cx - 120, '↔  Swap a Pokémon', '#2a5a8a', () => { layer.destroy(true); this.swapForCaught(entry, onDone); });
+    btn(cx - 120, '↔  Swap a Pokémon', '#2a5a8a', () => { layer.destroy(true); this.swapForCaught(entry, awardCaptureExp); });
     btn(cx + 120, '📦  Send to PC', '#3a6a3a', () => {
       layer.destroy(true);
       PartySystem.boxAdd(this.registry, entry);
       this.saveAfterCatch();
-      this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} was sent to the PC.`, onDone);
+      this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} was sent to the PC.`, () => awardCaptureExp());
     });
   }
 
   /** Pick a party member to send to the PC; the caught Pokémon takes its place. */
-  private swapForCaught(entry: PartyEntry, onDone: () => void) {
+  private swapForCaught(entry: PartyEntry, awardCaptureExp: (afterExp?: () => void) => void) {
     openSwitchPanel(
       this, -1,
-      () => this.promptFullParty(entry, onDone),   // cancel → back to the choice
+      () => this.promptFullParty(entry, awardCaptureExp),   // cancel → back to the choice
       (idx) => {
-        const party = PartySystem.get(this.registry);
-        const out = party[idx];
-        party[idx] = entry;
-        PartySystem.set(this.registry, party);
-        // If the newcomer took the lead slot, re-point the legacy starter mirror at it,
-        // otherwise the old lead's level (in starterLevel) gets forced back onto it.
-        if (idx === 0) PartySystem.syncStarterFromLead(this.registry);
-        PartySystem.boxAdd(this.registry, out);
-        this.saveAfterCatch();
-        this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} joined the party!\n${out.name.toUpperCase()} was sent to the PC.`, onDone);
+        // Keep the selected Pokémon in its original slot until every participant's
+        // live battle state (level, EXP, HP and learned moves) has been persisted.
+        awardCaptureExp(() => {
+          const party = PartySystem.get(this.registry);
+          const out = party[idx];
+          if (!out) {
+            // Defensive fallback for malformed/externally edited saves: never
+            // discard the caught Pokémon just because the chosen slot vanished.
+            PartySystem.boxAdd(this.registry, entry);
+            this.saveAfterCatch();
+            this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} was sent to the PC.`, () => this.returnToRoute());
+            return;
+          }
+          party[idx] = entry;
+          PartySystem.set(this.registry, party);
+          // If the newcomer took the lead slot, re-point the legacy starter mirror at it,
+          // otherwise the old lead's level (in starterLevel) gets forced back onto it.
+          if (idx === 0) PartySystem.syncStarterFromLead(this.registry);
+          PartySystem.boxAdd(this.registry, out);
+          this.saveAfterCatch();
+          this.typeDialog(`${pokeNameEn(entry.name).toUpperCase()} joined the party!\n${out.name.toUpperCase()} was sent to the PC.`, () => this.returnToRoute());
+        });
       },
       true,          // allow cancel
       () => true,    // any of the 6 can be sent out
