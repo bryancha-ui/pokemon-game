@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
 import { buildBadgeScanner3D, type BadgeScannerModel3D } from './BadgeScanner3D';
 import { buildCharacterModel, buildPlayerModel, CharacterProfile, PlayerModel } from './CharacterModel';
+import { buildSurfMountModel, type SurfMountModel } from './SurfMountModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { generateNabihalmangAppearance, type GeneratedCreatureAnimation } from './GeneratedCreatureAnimation';
@@ -114,6 +115,7 @@ export class OverworldMirror {
   private onAdded: (obj: Phaser.GameObjects.GameObject) => void;
   // Full 3D protagonist (replaces the player's flat relief with an animated model).
   private hero: PlayerModel | null = null;
+  private surfMount: SurfMountModel | null = null;
   private heroWalkPhase = 0;
   private heroLast: { x: number; z: number } | null = null;
   private pendingInteriorModel: {
@@ -142,6 +144,11 @@ export class OverworldMirror {
     this.hiddenFrom2D.clear();
     this.pendingObjects.clear();
     this.pendingInteriorModel = null;
+    if (this.surfMount) {
+      this.surfMount.group.removeFromParent();
+      disposeDeep(this.surfMount.group);
+      this.surfMount = null;
+    }
   }
 
   /** The player object: the camera-follow target, or the scene's `playerG` field
@@ -805,7 +812,12 @@ export class OverworldMirror {
         this.hero.group.removeFromParent();
         disposeDeep(this.hero.group);
       }
+      if (this.surfMount) {
+        this.surfMount.group.removeFromParent();
+        disposeDeep(this.surfMount.group);
+      }
       this.hero = null;
+      this.surfMount = null;
       this.heroLast = null;
       this.heroWalkPhase = 0;
       this.playerObj = livePlayer;
@@ -1059,14 +1071,24 @@ export class OverworldMirror {
    *  drive its walk/cycling cycle plus facing from position deltas. */
   private updateHero(t: Tracked, dt: number): void {
     const riding = t.obj.getData?.('characterVehicle3D') === 'bike';
+    const surfing = t.obj.getData?.('characterSurfing3D') === true;
     if (!this.hero) {
       const design = this.scene.registry.get('playerGender') === 'girl' ? 'girl' : 'boy';
       this.hero = buildPlayerModel(design);
       t.mesh.add(this.hero.group);
     }
+    if (surfing && !this.surfMount) {
+      this.surfMount = buildSurfMountModel();
+      t.mesh.add(this.surfMount.group);
+    } else if (!surfing && this.surfMount) {
+      this.surfMount.group.removeFromParent();
+      disposeDeep(this.surfMount.group);
+      this.surfMount = null;
+    }
     const inner = t.mesh.children[0] as THREE.Mesh | undefined;
     this.hero.group.visible = true;
-    this.hero.setRiding?.(riding);
+    this.hero.setRiding?.(riding && !surfing);
+    this.hero.setSurfing?.(surfing);
     if (inner) inner.visible = false;
 
     const p = t.mesh.position;
@@ -1077,6 +1099,10 @@ export class OverworldMirror {
     const moving = speed > 0.4;
     this.heroWalkPhase += (moving ? Math.min(16, 6 + speed * 1.6) : 2.2) * dt;
     this.hero.setWalk(this.heroWalkPhase, moving, dt);
+    if (this.surfMount) {
+      this.surfMount.group.visible = surfing;
+      this.surfMount.update(this.time, moving, dt);
+    }
     const lookAt = t.obj.getData?.('characterLookAt3D') as { x?: number; y?: number } | undefined;
     if (!moving && typeof lookAt?.x === 'number' && typeof lookAt.y === 'number'
       && Number.isFinite(lookAt.x) && Number.isFinite(lookAt.y)) {

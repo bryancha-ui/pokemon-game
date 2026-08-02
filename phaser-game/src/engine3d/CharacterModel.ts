@@ -21,6 +21,8 @@ export interface PlayerModel {
   face(dx: number, dz: number, dt: number): void;
   /** Optional vehicle pose used by the protagonist's true-3D bicycle. */
   setRiding?(riding: boolean): void;
+  /** Water-mount pose: the hero sits on the Surf Pokémon instead of walking. */
+  setSurfing?(surfing: boolean): void;
 }
 
 function box(w: number, h: number, d: number, color: number): THREE.Mesh {
@@ -186,21 +188,22 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
   group.add(body, bike);
 
   // state
-  let yaw = 0, targetYaw = 0, restEase = 0, riding = false;
+  let yaw = 0, targetYaw = 0, restEase = 0, riding = false, surfing = false;
 
   return {
     group,
     setWalk(phase: number, moving: boolean, dt: number) {
       restEase = THREE.MathUtils.clamp(restEase + (moving ? dt * 8 : -dt * 6), 0, 1);
-      const swing = Math.sin(phase) * (riding ? 0.52 : 0.75) * restEase;
-      legL.rotation.x = riding ? 0.72 + swing : swing;
-      legR.rotation.x = riding ? 0.72 - swing : -swing;
-      armL.rotation.x = riding ? -0.72 : -swing * 0.8;
-      armR.rotation.x = riding ? -0.72 : swing * 0.8;
-      const bob = Math.abs(Math.sin(phase)) * (riding ? 0.012 : 0.035) * restEase;
+      const mounted = riding || surfing;
+      const swing = Math.sin(phase) * (mounted ? 0.18 : 0.75) * restEase;
+      legL.rotation.x = mounted ? 0.95 + swing : swing;
+      legR.rotation.x = mounted ? 0.95 - swing : -swing;
+      armL.rotation.x = mounted ? -0.58 : -swing * 0.8;
+      armR.rotation.x = mounted ? -0.58 : swing * 0.8;
+      const bob = Math.abs(Math.sin(phase)) * (mounted ? 0.018 : 0.035) * restEase;
       const breathe = moving ? 0 : Math.sin(phase * 0.35) * 0.008;
-      group.position.y = riding ? 0 : bob;
-      body.position.y = (riding ? 0.28 : 0) + (riding ? bob : 0);
+      group.position.y = mounted ? 0 : bob;
+      body.position.y = (mounted ? 0.28 : 0) + (mounted ? bob : 0);
       torso.scale.y = 1 + breathe;
       head.position.y = breathe * 0.5;
       if (riding && moving) for (const wheel of wheels) wheel.rotation.x -= dt * 9;
@@ -219,6 +222,11 @@ export function buildPlayerModel(design: 'boy' | 'girl'): PlayerModel {
       riding = on;
       bike.visible = on;
       if (!on) body.position.y = 0;
+    },
+    setSurfing(on: boolean) {
+      surfing = on;
+      if (on) bike.visible = false;
+      if (!on && !riding) body.position.y = 0;
     },
   };
 }

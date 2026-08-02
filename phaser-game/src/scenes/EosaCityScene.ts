@@ -292,11 +292,18 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const g = this.playerG, design = playerDesign(this.registry);
     if (this.onWater) {
       drawTrainerBody(g, this.facing, 0, design);   // sit still while surfing
-      g.fillStyle(0x1f6fae, 1); g.fillEllipse(0, 10, 32, 13);       // surf mount over the legs
-      g.fillStyle(0x53a6d8, 1); g.fillEllipse(0, 8, 26, 10);
-      g.fillStyle(0xcdeeff, 0.8); g.fillEllipse(-10, 12, 8, 3); g.fillEllipse(10, 13, 7, 3);
+      // 2D fallback mirrors the 3D mount: a seated rider with a visible
+      // water-Pokémon head/body and wake, rather than a person walking on water.
+      g.fillStyle(0x1f6fae, 1); g.fillEllipse(0, 11, 36, 15);
+      g.fillStyle(0x53a6d8, 1); g.fillEllipse(0, 8, 28, 11);
+      g.fillStyle(0x3a8fc0, 1); g.fillEllipse(0, -4, 13, 12);
+      g.fillStyle(0x79cbe5, 1); g.fillEllipse(0, -1, 9, 5);
+      g.fillStyle(0x101923, 1); g.fillRect(-4, -6, 2, 2); g.fillRect(2, -6, 2, 2);
+      g.fillStyle(0xcdeeff, 0.8); g.fillEllipse(-12, 13, 9, 3); g.fillEllipse(12, 14, 8, 3);
+      g.setData('characterSurfing3D', true);
     } else {
       (this.cycling ? drawRiderBody : drawTrainerBody)(g, this.facing, this.walkFrame, design);
+      g.setData('characterSurfing3D', false);
     }
     g.setPosition(this.px, this.py);
   }

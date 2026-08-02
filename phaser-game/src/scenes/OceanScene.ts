@@ -174,8 +174,12 @@ export class OceanScene extends Phaser.Scene {
     m.setPosition(this.px, this.py);
     m.fillStyle(0x1f5f9c, 1); m.fillEllipse(0, 12, 30, 14);
     m.fillStyle(0x5aa8dc, 1); m.fillEllipse(0, 10, 26, 10);
+    m.fillStyle(0x3a8fc0, 1); m.fillEllipse(0, -4, 13, 12);
+    m.fillStyle(0x79cbe5, 1); m.fillEllipse(0, -1, 9, 5);
+    m.fillStyle(0x101923, 1); m.fillRect(-4, -6, 2, 2); m.fillRect(2, -6, 2, 2);
     m.fillStyle(0xffffff, 0.85); m.fillEllipse(-10, 12, 8, 4); m.fillEllipse(11, 13, 7, 4);
     drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerG.setData('characterSurfing3D', true);
     this.playerG.setPosition(this.px, this.py - 4);
   }
   private setupCamera() {
