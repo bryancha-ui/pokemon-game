@@ -21,7 +21,10 @@ const COLORS: Record<Tile, number> = { [T.SAND]: 0xe4d6a8, [T.WATER]: 0x2f78b4, 
 const SOLID = new Set<Tile>([T.WALL, T.ROCK]);
 
 const THREAT_KEY = 'eosa-nampo-threat';
-const THREAT = { col: 10, row: 3 };          // the Gyarados, out by the barrage
+// Keep the boss in the open bay rather than against the northern barrage. This
+// gives the player a clear, reachable target and leaves room for its bobbing
+// animation without ever allowing the actor to drift outside the map.
+const THREAT = { col: 10, row: 6 };
 const OCEAN_CX = 10 * TILE + 16, OCEAN_CY = 10 * TILE + 16;   // whirlpools rotate about here
 const SHORE = { x: 10 * TILE + 16, y: 18 * TILE + 16 };       // swept back here on a whirlpool hit
 
@@ -145,6 +148,13 @@ export class NampoBeachScene extends Phaser.Scene {
     }
   }
 
+  private updateThreatPosition() {
+    if (!this.threatG || this.gyaradosDone) return;
+    const baseX = THREAT.col * TILE + 16;
+    const baseY = THREAT.row * TILE + 16;
+    this.threatG.setPosition(baseX, baseY + Math.sin(this.time.now / 520) * 5);
+  }
+
   private spawnThreat() {
     if (!this.missionTaken || this.gyaradosDone) return;
     const g = this.add.graphics();
@@ -157,7 +167,6 @@ export class NampoBeachScene extends Phaser.Scene {
     g.lineStyle(2, 0x000000, 1); g.beginPath(); g.moveTo(-10, -8); g.lineTo(-2, -5); g.moveTo(10, -8); g.lineTo(2, -5); g.strokePath();
     const label = this.add.text(0, -32, tr('⚠ Rampaging Gyarados (난동 갸라도스)'), { fontSize: '9px', color: '#ff7a7a', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const cont = this.add.container(THREAT.col * TILE + 16, THREAT.row * TILE + 16, [g, label]).setDepth(9);
-    this.tweens.add({ targets: cont, y: cont.y - 5, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.threatG = cont;
   }
 
@@ -211,6 +220,7 @@ export class NampoBeachScene extends Phaser.Scene {
       const wp = WHIRLS[i];
       this.whirlG[i]?.setPosition(OCEAN_CX + wp.r * TILE * Math.cos(wp.w * t + wp.phase), OCEAN_CY + wp.r * TILE * Math.sin(wp.w * t + wp.phase));
     }
+    this.updateThreatPosition();
 
     if (this.cutsceneActive) {
       if (this.dialog.isInChoice()) {
