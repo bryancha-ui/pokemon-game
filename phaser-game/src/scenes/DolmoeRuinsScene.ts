@@ -194,7 +194,11 @@ export class DolmoeRuinsScene extends Phaser.Scene {
 
   private drawGuardian() {
     if (!this.textures.exists('daejangseung')) return;
-    const img = this.add.image(this.digCol * IT, (this.digRow - 1.2) * IT, 'daejangseung').setDepth(9);
+    const img = this.add.image(this.digCol * IT, (this.digRow - 1.2) * IT, 'daejangseung')
+      .setDepth(9)
+      // A flat relief with a fixed world yaw can show its side/back as the
+      // camera moves. Keep the guardian's front turned toward the player.
+      .setData('facePlayer3D', true);
     const src = this.textures.get('daejangseung').getSourceImage();
     const dim = Math.max((src.width as number) || 1, (src.height as number) || 1);
     img.setScale((IT * 2.4) / dim);

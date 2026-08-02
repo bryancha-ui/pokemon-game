@@ -8,11 +8,15 @@ export class JejuPCScene extends PokemonCenterScene {
   }
   protected override exitToWorld() {
     this.cameras.main.fadeOut(400, 0, 0, 0, () => {
-      const returnScene = this.registry.get('pcReturnScene') as string | undefined ?? 'JejuCityScene';
+      // This shared island center has two valid entrances. Never trust a stale
+      // pcReturnScene from a mainland/waterfall center.
+      const requestedScene = this.registry.get('pcReturnScene') as string | undefined;
+      const returnScene = requestedScene === 'JejuPortScene' ? 'JejuPortScene' : 'JejuCityScene';
       const returnX = this.registry.get('pcReturnX') as number | undefined ?? 10 * 32 + 16;
-      const returnY = this.registry.get('pcReturnY') as number | undefined ?? 8 * 32 + 16;
-      this.registry.set('jejuCityReturnX', returnX);
-      this.registry.set('jejuCityReturnY', returnY);
+      const returnY = this.registry.get('pcReturnY') as number | undefined ?? 12 * 32 + 16;
+      const prefix = returnScene === 'JejuPortScene' ? 'jejuPort' : 'jejuCity';
+      this.registry.set(`${prefix}ReturnX`, returnX);
+      this.registry.set(`${prefix}ReturnY`, returnY);
       this.scene.start(returnScene);
     });
   }

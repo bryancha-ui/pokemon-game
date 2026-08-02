@@ -492,9 +492,18 @@ export class JejuCityScene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
           if (lm.type === 'mart') {
             this.scene.launch('ShopScene', { parentKey: 'JejuCityScene' });
+            // Match every other overlay mart: stop the city from consuming
+            // movement/menu input behind the shop while a purchase is made.
+            this.scene.pause();
+            return;
           } else {
             this.cutsceneActive = true;
             this.cameras.main.fadeOut(400, 0, 0, 0, () => {
+              if (lm.scene === 'JejuPCScene') {
+                this.registry.set('pcReturnScene', 'JejuCityScene');
+                this.registry.set('pcReturnX', doorX);
+                this.registry.set('pcReturnY', doorY + TILE);
+              }
               this.registry.set('interiorReturnScene', 'JejuCityScene');
               this.registry.set('interiorReturnX', this.px);
               this.registry.set('interiorReturnY', this.py);

@@ -65,6 +65,11 @@ export const PORTRAITS: Record<string, Portrait> = {
   'nosdan-sovereign':  P('npc_sovereign.png'),
   'nosdan-samjiyon-boss': P('npc_sovereign.png'),   // Sovereign Clemont — atop the Samho 아지트
   'prof-song':         P('npc_song.webp'),
+
+  // ── Named regular trainers with an existing class sprite ──
+  // "Snow" would otherwise classify Deok as a skier. Pin him to the worker
+  // artwork requested for his 2D battle intro.
+  'pass-deok': { key: 'trncls-worker', url: 'assets/trainers/worker.png' },
 };
 
 export function portraitFor(trainerKey: string): Portrait | undefined {
@@ -121,6 +126,7 @@ const PORTRAIT_SCALE: Record<string, number> = {
   npc_ryeo:     1.305,   // Commander Ryeo (Team Suri)
   npc_jito:     1.305,
   npc_gapcheol: 1.305,
+  'trncls-worker': 1.35, // Snow Worker Deok's 80px source needs more stage presence
 };
 
 export function fitPortrait(img: Phaser.GameObjects.Image, maxW = 200, maxH = 290): void {

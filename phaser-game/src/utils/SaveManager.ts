@@ -103,6 +103,7 @@ const TRANSIENT = new Set<string>([
   'wildId', 'wildLevel', 'wildCustom', 'wildCatchRate', 'wildReturnScene',
   'trainerName', 'trainerKey', 'trainerPokemon', 'trainerExpPool', 'trainerReturnScene',
   'trainerBadgeFlag', 'trainerBadgeName', 'trainerBadgeTM', 'trainerWinLine',
+  'bagFocusItem',
   '_teKey',
 ]);
 

@@ -255,8 +255,15 @@ export class JejuPortScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
         const b = near;
         if (b.scene === '__SHOP__') { this.registry.set('martReturnScene', this.scene.key); this.registry.set('jejuPortReturnX', b.doorCol * TILE + TILE / 2); this.registry.set('jejuPortReturnY', (b.y + b.h) * TILE + TILE / 2); this.cutsceneActive = true; this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start('MartScene')); return; }
-        this.registry.set('jejuPortReturnX', b.doorCol * TILE + TILE / 2);
-        this.registry.set('jejuPortReturnY', (b.y + b.h) * TILE + TILE / 2);
+        const returnX = b.doorCol * TILE + TILE / 2;
+        const returnY = (b.y + b.h) * TILE + TILE / 2;
+        this.registry.set('jejuPortReturnX', returnX);
+        this.registry.set('jejuPortReturnY', returnY);
+        if (b.scene === 'JejuPCScene') {
+          this.registry.set('pcReturnScene', 'JejuPortScene');
+          this.registry.set('pcReturnX', returnX);
+          this.registry.set('pcReturnY', returnY);
+        }
         this.cutsceneActive = true;
         this.cameras.main.fadeOut(400, 0, 0, 0, () => this.scene.start(b.scene));
       }

@@ -824,6 +824,17 @@ export class OverworldMirror {
       t.mesh.position.set(x, 0, z);
       t.mesh.visible = (o.visible !== false) && ((o.alpha ?? 1) > 0.02);
 
+      // Named flat guardians/props can request a live yaw toward the player.
+      // This preserves their authored front instead of leaving the relief at a
+      // fixed world angle while the player and camera move around it.
+      const facePlayer = (o as unknown as { getData?: (key: string) => unknown }).getData?.('facePlayer3D');
+      if (facePlayer && this.playerObj) {
+        const targetX = (this.playerObj.x ?? 0) / PX;
+        const targetZ = (this.playerObj.y ?? 0) / PX;
+        const dx = targetX - x, dz = targetZ - z;
+        if (Math.hypot(dx, dz) > 0.05) t.mesh.rotation.y = Math.atan2(dx, dz);
+      }
+
       const inner = t.mesh.children[0] as THREE.Mesh | undefined;
       if (inner) {
         const sx = Math.abs(o.scaleX ?? 1), sy = Math.abs(o.scaleY ?? 1);

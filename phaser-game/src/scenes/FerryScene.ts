@@ -14,7 +14,7 @@ type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 20, ROWS = 34;
 const COLORS: Record<Tile, number> = {
   [T.SEA]: 0x1d4e74, [T.DECK]: 0xb98a52, [T.RAIL]: 0x7a5a32, [T.CABIN]: 0xd8d2c4,
-  [T.CARGO]: 0x9a7a4a, [T.STORMGRASS]: 0x3f6a6a, [T.GANGWAY]: 0xc9b98f,
+  [T.CARGO]: 0x9a7a4a, [T.STORMGRASS]: 0x9b7448, [T.GANGWAY]: 0xc9b98f,
 };
 const SOLID = new Set<Tile>([T.SEA, T.RAIL, T.CABIN, T.CARGO]);
 const ENCOUNTER = new Set<Tile>([T.STORMGRASS]);
@@ -55,7 +55,9 @@ function buildMap(): Tile[][] {
 }
 
 export class FerryScene extends Phaser.Scene {
-  public grassTileIds3D = [T.STORMGRASS];
+  // STORMGRASS is only an internal encounter-zone marker. A ship deck must
+  // not sprout vegetation in the 3D terrain mirror.
+  public grassTileIds3D: number[] = [];
   private map!: Tile[][];
   /** A boat deck at sea, not a town — drop any building the terrain heuristics
    *  hallucinate from the deck/cabin shading. */
@@ -151,7 +153,15 @@ export class FerryScene extends Phaser.Scene {
       if (t === T.RAIL) { g.fillStyle(0x5a4222); g.fillRect(c*TILE+2, r*TILE+2, TILE-4, TILE-4); g.fillStyle(0xcaa874); g.fillRect(c*TILE+4, r*TILE+4, TILE-8, 4); }
       if (t === T.CABIN) { g.fillStyle(0x88ccff, 0.6); g.fillRect(c*TILE+6, r*TILE+8, TILE-12, 10); }
       if (t === T.CARGO) { g.fillStyle(0x6a4a28); g.fillRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); g.lineStyle(2, 0x3a2a18); g.strokeRect(c*TILE+3, r*TILE+3, TILE-6, TILE-6); }
-      if (t === T.STORMGRASS) { g.fillStyle(0x9fe0e0, 0.35); g.fillRect(c*TILE+4, r*TILE+6, TILE-8, 3); for (let i=0;i<3;i++) g.fillRect(c*TILE+6+i*8, r*TILE+16, 2, 10); }
+      if (t === T.STORMGRASS) {
+        // Wet, wind-lashed planks: the tile remains a wild-encounter zone but
+        // no longer depicts reeds/grass on the deck.
+        g.lineStyle(1, 0x6f5236, 0.55);
+        g.lineBetween(c*TILE, r*TILE+10, c*TILE+TILE, r*TILE+10);
+        g.lineBetween(c*TILE, r*TILE+22, c*TILE+TILE, r*TILE+22);
+        g.fillStyle(0xbfd9df, 0.18);
+        g.fillEllipse(c*TILE+17, r*TILE+17, 21, 7);
+      }
     }
     const key = '__ferryMap__';
     if (this.textures.exists(key)) this.textures.remove(key);

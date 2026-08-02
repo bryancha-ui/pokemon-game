@@ -66,6 +66,18 @@ const ANCHORS = {
   enemy:  [new THREE.Vector3(2.0, 0, -2.4), new THREE.Vector3(2.25, 0, -2.6)],
 };
 
+// A few species are intentionally much larger than the normalised battle
+// silhouette. The 2D fit already enlarges their sprite, but the 3D mirror
+// clamps source-image size so high-resolution art cannot become enormous.
+// Restore the authored stage presence after that safety clamp.
+const BATTLE_SIZE_OVERRIDES: Record<string, number> = {
+  palmcockatoo: 1.45,
+};
+
+function battleSizeOverride(textureKey: string): number {
+  return BATTLE_SIZE_OVERRIDES[textureKey] ?? 1;
+}
+
 // Battle trainers share their side's Pokémon anchor, then retire when the
 // portrait alpha fades for the send-out. Rival trainers walk in from behind.
 const TRAINER_START = {
@@ -370,12 +382,13 @@ export class BattleMirror {
     // HOME render both land near the same world height (fixes giant/small
     // battlers when art resolution varies wildly).
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
+    const speciesSize = battleSizeOverride(im.texture.key);
     // The enemy stands ~2× farther from the camera — bigger stage height. A
     // trainer pinned to the enemy anchor is sized to a full battler height
     // (NOT the small portrait-derived size) so it stands in the same spot AND
     // scale as the Pokémon it hands the anchor to — otherwise the little
     // portrait reads as a figure floating high at the far anchor.
-    const scale = (trainerAtEnemy ? 1.75 : (side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
+    const scale = ((trainerAtEnemy ? 1.75 : (side === 'enemy' ? 1.45 : 1.1) * sizeBias) * speciesSize) / relief.pxHeight;
     inner.scale.setScalar(scale);
 
     const holder = new THREE.Group();
@@ -402,7 +415,7 @@ export class BattleMirror {
       glb: null,
       // Generated models read smaller than flat art at equal height (they have
       // real depth), so give them extra presence — SwSh-scale battlers.
-      targetH: (side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)),
+      targetH: (side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)) * speciesSize,
       anim: null,
       fainted: false,
       chargeLift: 0,
@@ -431,9 +444,10 @@ export class BattleMirror {
     cb.mats[0].needsUpdate = true;
     const dh = im.displayHeight ?? 0;
     const sizeBias = Math.min(1.15, Math.max(0.85, dh / 220));
-    cb.scalePx = ((cb.side === 'enemy' ? 1.45 : 1.1) * sizeBias) / relief.pxHeight;
+    const speciesSize = battleSizeOverride(im.texture.key);
+    cb.scalePx = ((cb.side === 'enemy' ? 1.45 : 1.1) * sizeBias * speciesSize) / relief.pxHeight;
     cb.baseSX = null; cb.baseSY = null; cb.scaleStill = 0;   // re-settle on the new art
-    cb.targetH = (cb.side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220));
+    cb.targetH = (cb.side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)) * speciesSize;
     // A different creature key means a different generated model (or none).
     const nk = hasModel(im.texture.key) ? im.texture.key : null;
     if (cb.glb && nk !== cb.glbKey) {

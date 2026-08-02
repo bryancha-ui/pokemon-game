@@ -489,7 +489,7 @@ export class MenuScene extends Phaser.Scene {
     this.contentContainer.add(this.add.text(cx + 280, this.H / 2 - 210, `💰 ${formatMoney(Inventory.money(this.registry))}`,
       { fontSize: '15px', color: '#ffe44e' }).setOrigin(1, 0.5));
 
-    type Row = { name: string; desc: string; icon: string; count?: number; onClick?: () => void };
+    type Row = { key?: string; name: string; desc: string; icon: string; count?: number; onClick?: () => void };
     const rows: Row[] = [];
 
     // Town Map — always available; view the whole region and (post-League) Fly.
@@ -518,6 +518,7 @@ export class MenuScene extends Phaser.Scene {
     for (const def of ITEMS) {
       if (def.category !== 'hm' || (inv[def.key] ?? 0) <= 0) continue;
       rows.push({
+        key: def.key,
         name: itemName(def), icon: def.icon,
         desc: itemDescription(def) + (def.move ? t(' Tap to teach.', ' 눌러서 가르치기.') : ''),
         onClick: () => this.beginTeachHM(def.key),
@@ -529,6 +530,7 @@ export class MenuScene extends Phaser.Scene {
       const n = inv[def.key] ?? 0;
       if (n <= 0 || def.category === 'hm') continue;
       rows.push({
+        key: def.key,
         name: itemName(def), icon: def.icon, desc: itemDescription(def), count: n,
         onClick: (def.category === 'ball' || def.category === 'souvenir') ? undefined : () => this.beginUseItem(def.key),
       });
@@ -539,6 +541,12 @@ export class MenuScene extends Phaser.Scene {
     // Scrollable list — show a 7-row window; scroll with the wheel, ↑/↓ or the arrows.
     const VISIBLE = 7;
     this.bagMaxScroll = Math.max(0, rows.length - VISIBLE);
+    const focusKey = this.registry.get('bagFocusItem') as string | undefined;
+    if (focusKey) {
+      const focusIndex = rows.findIndex(row => row.key === focusKey);
+      if (focusIndex >= 0) this.bagScroll = Math.max(0, focusIndex - Math.floor(VISIBLE / 2));
+      this.registry.remove('bagFocusItem');
+    }
     this.bagScroll = Phaser.Math.Clamp(this.bagScroll, 0, this.bagMaxScroll);
     rows.slice(this.bagScroll, this.bagScroll + VISIBLE).forEach((item, i) => {
       const y = this.H / 2 - 178 + i * 50;

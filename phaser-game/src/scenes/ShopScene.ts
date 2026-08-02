@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { ITEMS, ItemDef, Inventory, formatMoney, itemDescription, itemName } from '../systems/Items';
 import { t, tr } from '../systems/i18n';
+import { SaveManager } from '../utils/SaveManager';
 
 /** Default stock sold in town marts. */
 const STOCK = ['potion', 'superpotion', 'hyperpotion', 'antidote', 'paralyzeheal', 'fullheal',
@@ -98,6 +99,15 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
     Inventory.add(this.registry, def.key, qty);
+    // Let the next Bag view reveal the latest purchase even when late-game TMs
+    // push consumables below its seven-row window.
+    this.registry.set('bagFocusItem', def.key);
+    // A shop transaction is durable game progress. Persist it immediately so
+    // closing/reloading before the next map transition cannot lose the item.
+    const scene = (this.registry.get('lastScene') as string | undefined) ?? this.parentKey;
+    const px = (this.registry.get('lastX') as number | undefined) ?? 0;
+    const py = (this.registry.get('lastY') as number | undefined) ?? 0;
+    SaveManager.save(this.registry, px, py, scene);
     const name = itemName(def);
     this.flash(t(`Bought ${qty}× ${name}!  (-${formatMoney(total)})`, `${name} ${qty}개 구매!  (-${formatMoney(total)})`), '#aaffaa');
     this.refresh();
