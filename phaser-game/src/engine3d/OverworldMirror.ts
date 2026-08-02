@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
+import { buildBadgeScanner3D, type BadgeScannerModel3D } from './BadgeScanner3D';
 import { buildCharacterModel, buildPlayerModel, CharacterProfile, PlayerModel } from './CharacterModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
@@ -32,7 +33,7 @@ interface Tracked {
   mesh: THREE.Object3D;
   mats: THREE.MeshBasicMaterial[] | null;
   shadow: THREE.Mesh | null;
-  kind: 'graphics' | 'character' | 'image' | 'text' | 'rect';
+  kind: 'graphics' | 'character' | 'image' | 'text' | 'rect' | 'badge-scanner';
   hash: number;
   /** px offset from object origin to art bottom (feet). */
   footY: number;
@@ -52,6 +53,9 @@ interface Tracked {
   creature?: THREE.Group;
   creatureBaseScale?: number;
   creatureAnimation?: GeneratedCreatureAnimation;
+  /** Authored interactive checkpoint that mirrors its Phaser gate state. */
+  badgeScanner?: BadgeScannerModel3D;
+  fixedWorld?: { x: number; z: number };
 }
 
 interface InteriorModel3D {
@@ -446,6 +450,11 @@ export class OverworldMirror {
     if ((obj as unknown as { getData?: (k: string) => unknown }).getData?.('no3d')) { this.hideFrom2D(obj); return; }
 
     if (obj instanceof Phaser.GameObjects.Graphics) {
+      const scanner = obj.getData?.('badgeScanner3D') as { x?: number; y?: number } | undefined;
+      if (typeof scanner?.x === 'number' && typeof scanner.y === 'number') {
+        this.adoptBadgeScanner(obj as GO & Phaser.GameObjects.Graphics, scanner.x, scanner.y);
+        return;
+      }
       if (this.mapGraphics.has(obj) || this.isMapPainting(obj)) {
         if (!this.mapGraphics.has(obj)) {
           this.mapGraphics.add(obj);
@@ -574,6 +583,28 @@ export class OverworldMirror {
       mesh.visible = false;
       holder.add(tracked.character.group);
     }
+  }
+
+  /** Replace the flat checkpoint drawing with a stateful, fully volumetric gate. */
+  private adoptBadgeScanner(g: GO & Phaser.GameObjects.Graphics, px: number, py: number): void {
+    const badgeScanner = buildBadgeScanner3D();
+    this.root.add(badgeScanner.group);
+    this.tracked.set(g, {
+      obj: g,
+      mesh: badgeScanner.group,
+      mats: null,
+      shadow: null,
+      kind: 'badge-scanner',
+      hash: 0,
+      footY: 0,
+      halfW: 2.3,
+      baseColor: new THREE.Color(0xffffff),
+      phase: 0,
+      aspect: 1,
+      badgeScanner,
+      fixedWorld: { x: px / PX, z: py / PX },
+    });
+    this.hideFrom2D(g);
   }
 
   /** Infer a safe procedural palette for legacy hand-drawn human Graphics. */
@@ -831,6 +862,14 @@ export class OverworldMirror {
     for (const t of this.tracked.values()) {
       const o = t.obj;
       if (!o.scene) { dead.push(o); continue; }
+      if (t.badgeScanner && t.fixedWorld) {
+        t.mesh.position.set(t.fixedWorld.x, 0, t.fixedWorld.z);
+        t.mesh.visible = (o.visible !== false) && ((o.alpha ?? 1) > 0.02);
+        t.badgeScanner.setClosed(Number(o.getData?.('badgeScannerClosed3D') ?? 1));
+        t.badgeScanner.setBadgeCount(Number(o.getData?.('badgeScannerBadges3D') ?? 0), Number(o.getData?.('badgeScannerTotal3D') ?? 8));
+        if (t.mesh.visible) t.badgeScanner.update(this.time);
+        continue;
+      }
       const x = (o.x ?? 0) / PX;
       const z = ((o.y ?? 0) + t.footY * ((o.scaleY ?? 1))) / PX;
       t.mesh.position.set(x, 0, z);

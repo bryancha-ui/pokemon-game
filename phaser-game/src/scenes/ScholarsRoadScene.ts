@@ -326,12 +326,18 @@ export class ScholarsRoadScene extends Phaser.Scene {
   /** A checkpoint arch across the path: sealed = red barrier, open = green & clear. */
   private drawBadgeGate() {
     this.gateGfx = this.add.graphics().setDepth(6);
+    // OverworldMirror replaces this fallback drawing with a true 3D scanner.
+    // Coordinates are pinned to the centre of the four collision tiles.
+    this.gateGfx.setData('badgeScanner3D', { x: 12 * TILE, y: 54 * TILE + TILE / 2 });
+    this.gateGfx.setData('badgeScannerTotal3D', BADGES.length);
     this.renderGate(this.registry.get('scholarsBadgeVerified') ? 0 : 1);
   }
 
   /** Redraw the gate at `closed` in [0=open, 1=sealed]. */
   private renderGate(closed: number) {
     const g = this.gateGfx; g.clear();
+    g.setData('badgeScannerClosed3D', Phaser.Math.Clamp(closed, 0, 1));
+    g.setData('badgeScannerBadges3D', BADGES.filter(b => !!this.registry.get(b.flag)).length);
     const x0 = 10 * TILE, x1 = 14 * TILE, y = 54 * TILE;
     const frame = lerpColor(0x3a9a3a, 0x9a3320, closed);   // green ↔ red
     const lamp  = lerpColor(0x9affa0, 0xff5a44, closed);
@@ -357,6 +363,7 @@ export class ScholarsRoadScene extends Phaser.Scene {
     this.tweens.addCounter({
       from: 1, to: 0, duration: 850, ease: 'Cubic.Out',
       onUpdate: t => this.renderGate(t.getValue() ?? 0),
+      onComplete: () => this.renderGate(0),
     });
   }
 
