@@ -36,7 +36,22 @@ interface ModelSpec {
 let manifest: Map<string, ModelSpec> | null = null;   // key → spec
 let manifestLoading = false;
 const models = new Map<string, LoadedModel | 'loading' | 'failed'>();
+const modelUse = new Map<string, number>();
+let useClock = 0;
 const loader = new GLTFLoader();
+
+/** The generated sculpture GLBs can exceed 40 MB / 700k vertices each. Two of
+ * those plus Phaser exceed the WebGL budget on iOS and many Android devices.
+ * Those devices retain the lightweight 3D relief instead of risking a lost
+ * context; authored/procedural maps remain fully 3D. */
+export function allowsHeavy3DAssets(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  if (nav.deviceMemory !== undefined && nav.deviceMemory <= 4) return false;
+  const ipadDesktopMode = /Macintosh/i.test(nav.userAgent) && nav.maxTouchPoints > 1;
+  if (ipadDesktopMode || /iPhone|iPad|iPod|Android|Mobile/i.test(nav.userAgent)) return false;
+  return true;
+}
 
 /** Phaser texture keys sometimes carry a battle prefix (e.g. "wild-foxgeist"). */
 export function normalizeKey(key: string): string {
@@ -66,7 +81,7 @@ export function primeManifest(): void {
 }
 
 export function hasModel(key: string): boolean {
-  return !!manifest && manifest.has(normalizeKey(key));
+  return allowsHeavy3DAssets() && !!manifest && manifest.has(normalizeKey(key));
 }
 
 /**
@@ -75,41 +90,53 @@ export function hasModel(key: string): boolean {
  */
 export function getModel(key: string): LoadedModel | null {
   const k = normalizeKey(key);
-  if (!manifest || !manifest.has(k)) return null;
+  if (!allowsHeavy3DAssets() || !manifest || !manifest.has(k)) return null;
   const spec = manifest.get(k)!;
   const entry = models.get(k);
   if (entry === 'loading' || entry === 'failed') return null;
-  if (entry) return cloneNormalized(entry);
+  if (entry) {
+    modelUse.set(k, ++useClock);
+    return cloneNormalized(entry);
+  }
 
   models.set(k, 'loading');
   const url = spec.url || `assets/models3d/${k}.glb`;
   loader.load(
     url,
     (gltf) => {
-      // Normalization (height→1, feet at y=0, centered) is baked onto an inner
-      // wrapper — NOT the root — because the root's position/rotation/scale are
-      // owned and overwritten every frame by CreatureAnimator. Baking it on the
-      // root would let the animator wipe it, leaving the model at its raw GLB
-      // scale and pivot (→ mis-sized and sunk into the ground).
-      const inner = new THREE.Group();
-      inner.add(gltf.scene);
-      // Per-model orientation fix (manifest rotX/Y/Z degrees) — for models the
-      // generator reconstructed lying down or facing the wrong way, applied
-      // BEFORE normalize so the height/centering measure the upright pose.
-      if (spec.rot) {
-        gltf.scene.rotation.set(
-          THREE.MathUtils.degToRad(spec.rot.x),
-          THREE.MathUtils.degToRad(spec.rot.y),
-          THREE.MathUtils.degToRad(spec.rot.z),
-        );
+      try {
+        // Normalization (height→1, feet at y=0, centered) is baked onto an inner
+        // wrapper — NOT the root — because the root's position/rotation/scale are
+        // owned and overwritten every frame by CreatureAnimator. Baking it on the
+        // root would let the animator wipe it, leaving the model at its raw GLB
+        // scale and pivot (→ mis-sized and sunk into the ground).
+        const inner = new THREE.Group();
+        inner.add(gltf.scene);
+        // Per-model orientation fix (manifest rotX/Y/Z degrees) — for models the
+        // generator reconstructed lying down or facing the wrong way, applied
+        // BEFORE normalize so the height/centering measure the upright pose.
+        if (spec.rot) {
+          gltf.scene.rotation.set(
+            THREE.MathUtils.degToRad(spec.rot.x),
+            THREE.MathUtils.degToRad(spec.rot.y),
+            THREE.MathUtils.degToRad(spec.rot.z),
+          );
+        }
+        // Never replace the visible relief with an empty/corrupt GLB. Empty
+        // scenes previously normalized to Infinity and made that Pokémon vanish.
+        if (!normalize(inner, spec.scale ?? 1) || !isRenderableModel(inner)) {
+          models.set(k, 'failed');
+          return;
+        }
+        const root = new THREE.Group();
+        root.add(inner);
+        models.set(k, { group: root, animations: gltf.animations ?? [] });
+        modelUse.set(k, ++useClock);
+        trimModelCache(k);
+      } catch (err) {
+        console.warn(`[engine3d] unusable creature model "${k}", retaining 2D relief:`, err);
+        models.set(k, 'failed');
       }
-      // Per-model size override (manifest `scale`, 1 = normal height). The
-      // animator later scales the root to targetH assuming height 1, so baking
-      // a <1 factor into the normalized height shrinks the model proportionally.
-      normalize(inner, spec.scale ?? 1);
-      const root = new THREE.Group();
-      root.add(inner);
-      models.set(k, { group: root, animations: gltf.animations ?? [] });
     },
     undefined,
     () => { models.set(k, 'failed'); },
@@ -119,18 +146,94 @@ export function getModel(key: string): LoadedModel | null {
 
 /** Scale so the model is `sizeScale` units tall (default 1) with feet on y=0,
  *  centered. A sizeScale < 1 renders the creature proportionally smaller. */
-function normalize(root: THREE.Group, sizeScale = 1): void {
+function normalize(root: THREE.Group, sizeScale = 1): boolean {
+  if (!isRenderableModel(root) || !Number.isFinite(sizeScale) || sizeScale <= 0) return false;
   const box = new THREE.Box3().setFromObject(root);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const s = sizeScale / Math.max(0.0001, size.y);
+  if (!Number.isFinite(size.y) || size.y < 0.0001) return false;
+  const s = sizeScale / size.y;
+  if (!Number.isFinite(s) || s <= 0) return false;
   root.scale.setScalar(s);
+  root.updateMatrixWorld(true);
   const box2 = new THREE.Box3().setFromObject(root);
+  if (box2.isEmpty() || !Number.isFinite(box2.min.y)) return false;
   const center = new THREE.Vector3();
   box2.getCenter(center);
+  if (![center.x, center.y, center.z].every(Number.isFinite)) return false;
   root.position.x -= center.x;
   root.position.z -= center.z;
   root.position.y -= box2.min.y;
+  root.updateMatrixWorld(true);
+  return isRenderableModel(root);
+}
+
+/** True only when a model has visible, non-empty mesh data and finite bounds. */
+export function isRenderableModel(root: THREE.Object3D): boolean {
+  let hasVisibleGeometry = false;
+  root.updateMatrixWorld(true);
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh || mesh.visible === false) return;
+    const position = mesh.geometry?.getAttribute?.('position');
+    if (!position || position.count < 3) return;
+    const mats = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as THREE.Material[];
+    if (!mats.some(m => m && m.visible !== false && m.opacity > 0.001)) return;
+    let parent: THREE.Object3D | null = mesh.parent;
+    while (parent && parent !== root) {
+      if (!parent.visible) return;
+      parent = parent.parent;
+    }
+    hasVisibleGeometry = true;
+  });
+  if (!hasVisibleGeometry) return false;
+  const box = new THREE.Box3().setFromObject(root);
+  if (box.isEmpty()) return false;
+  const size = box.getSize(new THREE.Vector3());
+  return [size.x, size.y, size.z].every(Number.isFinite)
+    && Math.max(size.x, size.y, size.z) > 0.0001
+    && Math.max(size.x, size.y, size.z) < 1_000_000;
+}
+
+/** Release only GPU allocations; CPU model data remains cached and can be
+ * re-uploaded without another network request if the species reappears. */
+export function releaseModelGpuResources(): void {
+  for (const entry of models.values()) {
+    if (entry === 'loading' || entry === 'failed') continue;
+    disposeModelGpu(entry.group);
+  }
+}
+
+function trimModelCache(except: string): void {
+  const max = allowsHeavy3DAssets() ? 6 : 2;
+  const loaded = [...models.entries()].filter(([, v]) => v !== 'loading' && v !== 'failed') as [string, LoadedModel][];
+  while (loaded.length > max) {
+    loaded.sort(([a], [b]) => (modelUse.get(a) ?? 0) - (modelUse.get(b) ?? 0));
+    const victimIndex = loaded.findIndex(([key]) => key !== except);
+    if (victimIndex < 0) break;
+    const [key, model] = loaded.splice(victimIndex, 1)[0];
+    disposeModelGpu(model.group);
+    models.delete(key);
+    modelUse.delete(key);
+  }
+}
+
+function disposeModelGpu(root: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (mesh.geometry) geometries.add(mesh.geometry);
+    const mats = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
+    for (const mat of mats) {
+      materials.add(mat);
+      for (const value of Object.values(mat)) if (value instanceof THREE.Texture) textures.add(value);
+    }
+  });
+  textures.forEach(t => t.dispose());
+  materials.forEach(m => m.dispose());
+  geometries.forEach(g => g.dispose());
 }
 
 function cloneNormalized(src: LoadedModel): LoadedModel {

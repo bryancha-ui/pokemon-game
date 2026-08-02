@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { allowsHeavy3DAssets, isRenderableModel } from './GlbModels';
 
 // ── Generated environment prop registry ──────────────────────────────────────
 // Buildings, vehicles and other scenery GLBs (generated from prompts / art) are
@@ -35,6 +36,8 @@ export interface PropDef {
 let props: PropDef[] | null = null;
 let loading = false;
 const cache = new Map<string, THREE.Group | 'loading' | 'failed'>();
+const propUse = new Map<string, number>();
+let propClock = 0;
 const loader = new GLTFLoader();
 const objLoader = new OBJLoader();
 const mtlLoader = new MTLLoader();
@@ -50,7 +53,7 @@ export function primeProps(): void {
 }
 
 export function propsFor(role: PropDef['role']): PropDef[] {
-  return (props ?? []).filter(p => p.role === role);
+  return (props ?? []).filter(p => p.role === role && propAllowed(p));
 }
 
 export function hasProps(role: PropDef['role']): boolean {
@@ -59,9 +62,11 @@ export function hasProps(role: PropDef['role']): boolean {
 
 /** Load (and cache) a prop, normalized to 1 unit tall with feet at y=0. */
 export function getProp(def: PropDef): THREE.Group | null {
+  if (!propAllowed(def)) return null;
   const hit = cache.get(def.id);
   if (hit === 'loading' || hit === 'failed') return null;
   if (hit) {
+    propUse.set(def.id, ++propClock);
     const c = hit.clone(true);
     c.traverse(o => { o.userData.sharedGeo = true; o.userData.sharedMat = true; });
     return c;
@@ -69,17 +74,27 @@ export function getProp(def: PropDef): THREE.Group | null {
   cache.set(def.id, 'loading');
   const url = def.url || `assets/models3d/${def.id}.glb`;
   const finish = (model: THREE.Object3D) => {
-    const root = new THREE.Group();
-    root.add(model);
-    const box = new THREE.Box3().setFromObject(root);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    root.scale.setScalar(1 / Math.max(0.0001, size.y));
-    const b2 = new THREE.Box3().setFromObject(root);
-    const c = new THREE.Vector3();
-    b2.getCenter(c);
-    root.position.x -= c.x; root.position.z -= c.z; root.position.y -= b2.min.y;
-    cache.set(def.id, root);
+    try {
+      const root = new THREE.Group();
+      root.add(model);
+      if (!isRenderableModel(root)) { fail(); return; }
+      const box = new THREE.Box3().setFromObject(root);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      if (!Number.isFinite(size.y) || size.y < 0.0001) { fail(); return; }
+      root.scale.setScalar(1 / size.y);
+      root.updateMatrixWorld(true);
+      const b2 = new THREE.Box3().setFromObject(root);
+      const c = new THREE.Vector3();
+      b2.getCenter(c);
+      if (b2.isEmpty() || ![c.x, c.y, c.z, b2.min.y].every(Number.isFinite)) { fail(); return; }
+      root.position.x -= c.x; root.position.z -= c.z; root.position.y -= b2.min.y;
+      root.updateMatrixWorld(true);
+      if (!isRenderableModel(root)) { fail(); return; }
+      cache.set(def.id, root);
+      propUse.set(def.id, ++propClock);
+      trimPropCache(def.id);
+    } catch { fail(); }
   };
   const fail = () => { cache.set(def.id, 'failed'); };
 
@@ -124,5 +139,49 @@ export function pickProp(list: PropDef[], seed: number): PropDef | null {
 /** Look up a specific prop by id — used to place a named building (a scene's
  *  Pokémon Center / lab / home) on its exact authored footprint. */
 export function propById(id: string): PropDef | null {
-  return (props ?? []).find(p => p.id === id) ?? null;
+  const found = (props ?? []).find(p => p.id === id) ?? null;
+  return found && propAllowed(found) ? found : null;
+}
+
+/** Drop cached prop GPU allocations between maps while retaining CPU data. */
+export function releasePropGpuResources(): void {
+  for (const entry of cache.values()) {
+    if (entry === 'loading' || entry === 'failed') continue;
+    disposePropGpu(entry);
+  }
+}
+
+function propAllowed(def: PropDef): boolean {
+  return allowsHeavy3DAssets() || !/^https?:/i.test(def.url ?? '');
+}
+
+function trimPropCache(except: string): void {
+  const loaded = [...cache.entries()].filter(([, v]) => v !== 'loading' && v !== 'failed') as [string, THREE.Group][];
+  while (loaded.length > 10) {
+    loaded.sort(([a], [b]) => (propUse.get(a) ?? 0) - (propUse.get(b) ?? 0));
+    const index = loaded.findIndex(([key]) => key !== except);
+    if (index < 0) break;
+    const [key, group] = loaded.splice(index, 1)[0];
+    disposePropGpu(group);
+    cache.delete(key);
+    propUse.delete(key);
+  }
+}
+
+function disposePropGpu(root: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (mesh.geometry) geometries.add(mesh.geometry);
+    const mats = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
+    for (const mat of mats) {
+      materials.add(mat);
+      for (const value of Object.values(mat)) if (value instanceof THREE.Texture) textures.add(value);
+    }
+  });
+  textures.forEach(t => t.dispose());
+  materials.forEach(m => m.dispose());
+  geometries.forEach(g => g.dispose());
 }

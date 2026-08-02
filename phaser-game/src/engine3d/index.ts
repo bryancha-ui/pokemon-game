@@ -32,6 +32,8 @@ class Engine3D {
   private mirrorScene: Phaser.Scene | null = null;
   private enabled: boolean;
   private failed = false;
+  private blockedScene: Phaser.Scene | null = null;
+  private mirrorApplied = false;
   private camPatched = new WeakSet<Phaser.Cameras.Scene2D.Camera>();
 
   constructor(game: Phaser.Game) {
@@ -57,7 +59,7 @@ class Engine3D {
   /** Visual systems use this to suppress their 2D fallback particles only
    *  while this exact scene is actively being mirrored in 3D. */
   isRendering(scene: Phaser.Scene): boolean {
-    return this.enabled && !!this.mirror && this.mirrorScene === scene;
+    return this.enabled && this.mirrorApplied && !!this.mirror && this.mirrorScene === scene;
   }
 
   toggle(): void {
@@ -65,12 +67,13 @@ class Engine3D {
     localStorage.setItem(STORE_KEY, this.enabled ? '1' : '0');
     if (!this.enabled) {
       this.mirror?.restore2D();
+      this.mirrorApplied = false;
       if (this.mirrorScene) this.setCamTransparent(this.mirrorScene, false);
       this.stage?.setVisible(false);
     } else {
-      this.mirror?.apply3D();
-      if (this.mirrorScene) this.setCamTransparent(this.mirrorScene, true);
-      if (this.mirror) this.stage?.setVisible(true);
+      // Activation happens in step() only after one successful Three.js frame.
+      // This prevents a black flash when the context was evicted while hidden.
+      this.blockedScene = null;
     }
   }
 
@@ -120,11 +123,15 @@ class Engine3D {
 
   private onSceneDown(sc: Phaser.Scene): void {
     if (this.mirrorScene === sc) {
+      this.mirror?.restore2D();
+      this.setCamTransparent(sc, false);
       this.mirror?.destroy();
       this.mirror = null;
       this.mirrorScene = null;
+      this.mirrorApplied = false;
       this.stage?.setVisible(false);
     }
+    if (this.blockedScene === sc) this.blockedScene = null;
   }
 
   private setCamTransparent(scene: Phaser.Scene, on: boolean): void {
@@ -133,8 +140,26 @@ class Engine3D {
   }
 
   private step(dt: number): void {
+    try {
+      this.stepSafe(dt);
+    } catch (err) {
+      this.fallbackTo2D(this.mirrorScene, err);
+    }
+  }
+
+  private stepSafe(dt: number): void {
     if (!this.enabled || this.failed) return;
     const pick = this.pickScene();
+
+    // A renderer/mirror failure disables 3D only for the affected scene. The
+    // complete Phaser view remains playable, and the next map/battle gets a
+    // fresh world instead of repeatedly throwing every animation frame.
+    if (pick?.scene === this.blockedScene) {
+      this.setCamTransparent(pick.scene, false);
+      this.stage?.setVisible(false);
+      return;
+    }
+    if (pick && this.blockedScene && pick.scene !== this.blockedScene) this.blockedScene = null;
 
     if (!pick) {
       // The mirrored scene may only be PAUSED (evolution overlay, menu, move
@@ -143,13 +168,26 @@ class Engine3D {
       // destroying it here is what snapped gym battles back to 2D mid-fight.
       const held = this.mirrorScene;
       if (this.mirror && this.stage && held && (held.scene.isPaused() || held.scene.isVisible())) {
-        this.stage.setVisible(true);
+        if (!this.stage.isHealthy()) throw new Error('Three.js WebGL context was lost');
         this.mirror.update(Math.min(dt, 0.1));   // idle animations keep breathing
-        this.stage.render();
+        if (!this.stage.render()) throw new Error('Three.js frame could not be rendered');
+        if (!this.mirrorApplied) {
+          this.mirror.apply3D();
+          this.mirrorApplied = true;
+        }
+        this.setCamTransparent(held, true);
+        this.stage.setVisible(true);
         return;
       }
       // Truly no 3D-able scene (title, menus…): hide the 3D canvas, full 2D.
-      if (this.mirror) { this.mirror.destroy(); this.mirror = null; this.mirrorScene = null; }
+      if (this.mirror) {
+        this.mirror.restore2D();
+        if (this.mirrorScene) this.setCamTransparent(this.mirrorScene, false);
+        this.mirror.destroy();
+        this.mirror = null;
+        this.mirrorScene = null;
+        this.mirrorApplied = false;
+      }
       this.stage?.setVisible(false);
       return;
     }
@@ -157,10 +195,17 @@ class Engine3D {
     if (!this.ensureStage()) return;
     const stage = this.stage!;
     stage.attachDom();
+    if (!stage.isHealthy()) throw new Error('Three.js WebGL context was lost');
 
     if (this.mirrorScene !== pick.scene) {
-      this.mirror?.destroy();
+      if (this.mirror && this.mirrorScene) {
+        this.mirror.restore2D();
+        this.setCamTransparent(this.mirrorScene, false);
+        this.mirror.destroy();
+      }
+      this.mirror = null;
       this.mirrorScene = pick.scene;
+      this.mirrorApplied = false;
       this.mirror = pick.kind === 'battle'
         ? new BattleMirror(pick.scene, stage, this.rig!)
         : new OverworldMirror(pick.scene, stage, this.rig!);
@@ -168,14 +213,46 @@ class Engine3D {
 
     // Overworld mirrors only "arm" once the camera-follow exists.
     if (this.mirror instanceof OverworldMirror && !this.mirror.tryBuild()) {
+      this.setCamTransparent(pick.scene, false);
       stage.setVisible(false);
       return;
     }
 
+    // Render off-screen first. Only after that succeeds may we hide Phaser's
+    // field/battlers and expose the Three canvas.
+    this.mirror!.update(Math.min(dt, 0.1));
+    if (!stage.render()) throw new Error('Three.js frame could not be rendered');
+    if (!this.mirrorApplied) {
+      this.mirror!.apply3D();
+      this.mirrorApplied = true;
+    }
     this.setCamTransparent(pick.scene, true);
     stage.setVisible(true);
-    this.mirror!.update(Math.min(dt, 0.1));
-    stage.render();
+  }
+
+  private fallbackTo2D(scene: Phaser.Scene | null, reason: unknown): void {
+    console.warn('[engine3d] 3D frame failed; keeping the scene playable in 2D:', reason);
+    const affected = scene ?? this.mirrorScene;
+    try { this.mirror?.restore2D(); } catch { /* best-effort visual recovery */ }
+    if (affected) {
+      this.setCamTransparent(affected, false);
+      // If a mirror constructor failed after camera.ignore(), it may not have
+      // reached this.mirror. Clear this camera's ignore bit for every display
+      // object so both Pokémon and the field are guaranteed to return.
+      const cam = affected.cameras?.main;
+      if (cam) {
+        for (const child of affected.children?.list ?? []) {
+          const obj = child as Phaser.GameObjects.GameObject & { cameraFilter?: number };
+          if (typeof obj.cameraFilter === 'number') obj.cameraFilter &= ~cam.id;
+        }
+      }
+      this.blockedScene = affected;
+    }
+    try { this.mirror?.destroy(); } catch { /* already falling back */ }
+    this.mirror = null;
+    this.mirrorScene = null;
+    this.mirrorApplied = false;
+    this.stage?.setVisible(false);
   }
 }
 

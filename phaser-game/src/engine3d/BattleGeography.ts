@@ -452,10 +452,12 @@ export function buildGeographicBattleArena(root: THREE.Group, chosen?: OutdoorBa
     addWaterSurround(root, theme);
   }
 
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(11, 48),
-    new THREE.MeshToonMaterial({ map: makeGroundTexture(theme), gradientMap: toonRamp() }),
-  );
+  const groundMat = new THREE.MeshToonMaterial({ map: makeGroundTexture(theme), gradientMap: toonRamp() });
+  // A small self-lit component guarantees that dark caves/mines still expose
+  // the authored ground even if a mobile GPU drops a dynamic light/shadow pass.
+  groundMat.emissive.set(theme.center);
+  groundMat.emissiveIntensity = theme.environment === 'cave' ? 0.22 : 0.06;
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(11, 48), groundMat);
   ground.rotation.x = -Math.PI / 2;
   root.add(ground);
 
@@ -481,7 +483,9 @@ export function buildGeographicBattleArena(root: THREE.Group, chosen?: OutdoorBa
     for (const [x, z] of [[-7.6, -5.7], [6.6, -6.7], [8.1, 2.8]] as const) addCrystal(root, x, z, theme.accent, 0.55);
   }
   if (theme.geography === 'volcano') addVolcanicVents(root, theme);
-  if (theme.geography === 'cave') addCaveBackdrop(root, theme);
+  if (theme.geography === 'cave' || theme.geography === 'iceCave' || theme.geography === 'volcano') {
+    addCaveBackdrop(root, theme);
+  }
   if (theme.geography === 'ruins') addDolmens(root, theme);
   if (theme.geography === 'haunted') addHauntedBackdrop(root, theme);
   if (theme.geography === 'ferry') addFerryRails(root);

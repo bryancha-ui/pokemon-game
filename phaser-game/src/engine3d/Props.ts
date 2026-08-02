@@ -49,6 +49,10 @@ export function makeBlobShadow(radius: number): THREE.Mesh {
     blobMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
   }
   const m = new THREE.Mesh(blobGeo, blobMat);
+  // Geometry/material (and its texture) are intentionally shared by every
+  // character. Scene cleanup must not dispose them out from under the next map.
+  m.userData.sharedGeo = true;
+  m.userData.sharedMat = true;
   m.rotation.x = -Math.PI / 2;
   m.scale.setScalar(radius);
   m.position.y = 0.02;

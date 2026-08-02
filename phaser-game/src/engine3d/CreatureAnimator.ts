@@ -127,6 +127,9 @@ export class CreatureAnimator {
   setBase(y: number): void { this.baseY = y; }
 
   update(dt: number, scale: number): void {
+    // A malformed model bound must never propagate NaN/Infinity into the scene
+    // graph: Three.js then culls the Pokémon even though the battle is healthy.
+    scale = Number.isFinite(scale) ? Math.max(0.001, Math.min(100, scale)) : 1;
     this.t += dt;
     this.clips?.mixer.update(dt);
 

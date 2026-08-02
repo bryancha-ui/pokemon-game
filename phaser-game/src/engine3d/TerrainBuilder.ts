@@ -917,6 +917,17 @@ export function buildTerrain(
       blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
       continue;
     }
+    // A named remote GLB may be intentionally disabled on a memory-constrained
+    // device (or absent from the registry). Preserve the building as a local
+    // procedural 3D extrusion instead of leaving an empty/black footprint.
+    if (b.model) {
+      const fallback = new THREE.Group();
+      fallback.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+      group.add(fallback);
+      extrudeBuilding(b, fallback, true);
+      blockers.push({ node: fallback, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+      continue;
+    }
     // Scene wants only its named landmarks in 3D — the footprint's flat art was
     // already erased above, so skipping it leaves clean ground, not a brick box.
     if (onlyNamedBuildings) continue;

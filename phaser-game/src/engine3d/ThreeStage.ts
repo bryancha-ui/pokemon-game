@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
+import { clearReliefCache } from './Extruder';
+import { allowsHeavy3DAssets, releaseModelGpuResources } from './GlbModels';
+import { releasePropGpuResources } from './PropModels';
 
 // ── Three.js stage ───────────────────────────────────────────────────────────
 // Owns the WebGL canvas (kept exactly underneath the Phaser canvas, which
@@ -48,18 +51,35 @@ export class ThreeStage {
   private readonly sunOffset = new THREE.Vector3(-11, 18, 10);
   private game: Phaser.Game;
   private rectTimer = 0;
+  private contextLost = false;
 
   constructor(game: Phaser.Game) {
     this.game = game;
     this.canvas = document.createElement('canvas');
     this.canvas.style.cssText = 'position:absolute;pointer-events:none;display:none;';
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
+    const highGpuBudget = allowsHeavy3DAssets();
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: highGpuBudget, alpha: false });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, highGpuBudget ? 2 : 1.25));
+
+    // A mobile browser is allowed to evict a WebGL context when GPU memory is
+    // tight.  Previously the transparent Phaser canvas remained enabled after
+    // that happened, so the user saw the page's black background and no
+    // battlers.  Keep an explicit health flag so Engine3D can atomically fall
+    // back to the complete 2D scene instead.
+    this.canvas.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault();
+      this.contextLost = true;
+    }, false);
+    this.canvas.addEventListener('webglcontextrestored', () => {
+      this.contextLost = false;
+      this.renderer.resetState();
+      this.preparedMeshes = new WeakSet<THREE.Mesh>();
+    }, false);
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 200);
@@ -71,7 +91,8 @@ export class ThreeStage {
     this.sun = new THREE.DirectionalLight(0xfff2d8, 1.6);
     this.sun.position.set(-6, 12, 5);
     this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(1536, 1536);
+    const shadowSize = highGpuBudget ? 1536 : 768;
+    this.sun.shadow.mapSize.set(shadowSize, shadowSize);
     this.sun.shadow.bias = -0.00035;
     this.sun.shadow.normalBias = 0.035;
     const shadowCam = this.sun.shadow.camera;
@@ -144,6 +165,14 @@ export class ThreeStage {
     const pc = this.game.canvas;
     if (!pc || !pc.parentElement) return;
     const rect = pc.getBoundingClientRect();
+    // iOS briefly reports a 0×0 canvas while rotating, restoring a tab or
+    // dismissing an overlay. Retain the last valid projection instead of
+    // replacing it with aspect=0, which renders a technically successful but
+    // completely black Three.js frame.
+    if (!Number.isFinite(rect.width) || !Number.isFinite(rect.height) || rect.width < 2 || rect.height < 2) {
+      this.rectTimer = 89; // retry on the next rendered frame
+      return;
+    }
     const host = pc.parentElement.getBoundingClientRect();
     this.canvas.style.left = `${rect.left - host.left + pc.parentElement.scrollLeft}px`;
     this.canvas.style.top = `${rect.top - host.top + pc.parentElement.scrollTop}px`;
@@ -181,17 +210,39 @@ export class ThreeStage {
     this.canvas.style.display = v ? 'block' : 'none';
   }
 
+  /** Whether it is safe to make the Phaser canvas transparent this frame. */
+  isHealthy(): boolean {
+    if (this.contextLost) return false;
+    try { return !this.renderer.getContext().isContextLost(); }
+    catch { return false; }
+  }
+
   /** Replace the world root with a fresh empty group (disposing the old content). */
   resetWorld(): THREE.Group {
     this.scene.remove(this.worldRoot);
     disposeDeep(this.worldRoot);
+    // Relief geometry/texture entries otherwise live for the entire browser
+    // session. Clearing only after the old root is detached is safe and keeps
+    // repeated route/battle transitions from exhausting mobile GPU memory.
+    clearReliefCache();
+    releaseModelGpuResources();
+    releasePropGpuResources();
     this.worldRoot = new THREE.Group();
     this.scene.add(this.worldRoot);
     this.preparedMeshes = new WeakSet<THREE.Mesh>();
     return this.worldRoot;
   }
 
-  render(): void {
+  render(): boolean {
+    if (!this.isHealthy()) return false;
+    const cameraValues = [
+      this.camera.position.x, this.camera.position.y, this.camera.position.z,
+      this.camera.quaternion.x, this.camera.quaternion.y, this.camera.quaternion.z, this.camera.quaternion.w,
+      this.camera.aspect, this.camera.near, this.camera.far,
+    ];
+    if (!cameraValues.every(Number.isFinite) || this.camera.aspect <= 0 || this.camera.near <= 0 || this.camera.far <= this.camera.near) {
+      return false;
+    }
     // Periodic safety re-sync (layout can shift without a resize event, e.g. fonts).
     if (++this.rectTimer >= 90) { this.rectTimer = 0; this.syncRect(); }
     this.sky.position.copy(this.camera.position);
@@ -206,6 +257,7 @@ export class ThreeStage {
     this.sun.target.updateMatrixWorld();
     if (this.rectTimer % 30 === 0) this.prepareWorldMeshes();
     this.renderer.render(this.scene, this.camera);
+    return this.isHealthy();
   }
 
   private prepareWorldMeshes(): void {
@@ -247,15 +299,29 @@ export class ThreeStage {
   }
 }
 
-/** Dispose geometries/materials created per-scene (cached relief assets are kept). */
+/** Dispose geometries, materials and their private textures created per scene. */
 export function disposeDeep(root: THREE.Object3D): void {
+  const disposedTextures = new Set<THREE.Texture>();
+  const disposedMaterials = new Set<THREE.Material>();
+  const disposeMaterial = (material: THREE.Material): void => {
+    if (disposedMaterials.has(material)) return;
+    disposedMaterials.add(material);
+    // Textures are separate GPU resources; Material.dispose() does not release
+    // them. gradientMap is the process-wide toon ramp and must remain shared.
+    for (const [key, value] of Object.entries(material)) {
+      if (key === 'gradientMap' || !(value instanceof THREE.Texture) || disposedTextures.has(value)) continue;
+      disposedTextures.add(value);
+      value.dispose();
+    }
+    material.dispose();
+  };
   root.traverse(o => {
     const mesh = o as THREE.Mesh;
     if (mesh.geometry && !(mesh.userData.sharedGeo)) mesh.geometry.dispose?.();
     const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
     if (mat && !mesh.userData.sharedMat) {
-      if (Array.isArray(mat)) mat.forEach(m => m.dispose?.());
-      else mat.dispose?.();
+      if (Array.isArray(mat)) mat.forEach(disposeMaterial);
+      else disposeMaterial(mat);
     }
   });
 }

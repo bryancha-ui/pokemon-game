@@ -7,7 +7,7 @@ import { buildCharacterModel, PlayerModel } from './CharacterModel';
 import { CreatureAnimator, MoveCategory } from './CreatureAnimator';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { measureCommands } from './GraphicsRaster';
-import { getModel, hasModel, primeManifest } from './GlbModels';
+import { getModel, hasModel, isRenderableModel, primeManifest } from './GlbModels';
 import { MoveFX3D } from './MoveFX3D';
 import { makeBlobShadow } from './Props';
 import { spriteScale } from '../data/SpriteScale';
@@ -49,6 +49,9 @@ interface Combatant {
   /** generated true-3D model (GLB) support */
   glbKey: string | null;
   glb: THREE.Group | null;
+  glbVerifyFrames: number;
+  glbHealthTimer: number;
+  rejectedGlbKey: string | null;
   targetH: number;
   /** battle motion driver (clip playback or procedural) */
   anim: CreatureAnimator | null;
@@ -58,6 +61,9 @@ interface Combatant {
   /** texture signature — rebuilt when the game swaps the sprite's texture
    *  (async PokeAPI art arriving, party switches). */
   texSig: string;
+  /** A readable Phaser sprite is kept on top if its 3D relief cannot be built. */
+  fallback2D: boolean;
+  fallbackRetry: number;
 }
 
 const ANCHORS = {
@@ -419,6 +425,9 @@ export class BattleMirror {
       phase: Math.random() * Math.PI * 2,
       glbKey: !trainerAtEnemy && hasModel(im.texture.key) ? im.texture.key : null,
       glb: null,
+      glbVerifyFrames: 0,
+      glbHealthTimer: 0,
+      rejectedGlbKey: null,
       // Generated models read smaller than flat art at equal height (they have
       // real depth), so give them extra presence — SwSh-scale battlers.
       targetH: (side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)) * speciesSize,
@@ -427,12 +436,14 @@ export class BattleMirror {
       chargeLift: 0,
       chargeTarget: 0,
       texSig: `${im.texture.key}:${im.frame?.name ?? 0}`,
+      fallback2D: false,
+      fallbackRetry: 0,
     });
     this.scene.cameras.main.ignore(im);
   }
 
   /** Rebuild a battler's relief + scale factors for its CURRENT texture. */
-  private refreshCombatant(cb: Combatant): void {
+  private refreshCombatant(cb: Combatant): boolean {
     const im = cb.obj;
     const src = this.frameCanvas(im);
     const has3D = hasModel(im.texture.key);
@@ -444,7 +455,10 @@ export class BattleMirror {
       `flat:img:${im.texture.key}:${im.frame?.name ?? 0}`,
       im.texture.getSourceImage() as HTMLImageElement,
     );
-    if (!relief) return;
+    if (!relief) {
+      this.use2DFallback(cb);
+      return false;
+    }
     cb.inner.geometry = relief.geometry;
     cb.mats[0].map = relief.texture;
     cb.mats[0].needsUpdate = true;
@@ -456,15 +470,43 @@ export class BattleMirror {
     cb.targetH = (cb.side === 'enemy' ? 1.8 : 1.45) * Math.min(1.25, Math.max(0.95, dh / 220)) * speciesSize;
     // A different creature key means a different generated model (or none).
     const nk = hasModel(im.texture.key) ? im.texture.key : null;
+    if (cb.rejectedGlbKey !== im.texture.key) cb.rejectedGlbKey = null;
     if (cb.glb && nk !== cb.glbKey) {
       cb.holder.remove(cb.glb);
       cb.glb = null;
       cb.anim = null;
       cb.inner.visible = true;
+      cb.glbVerifyFrames = 0;
+      cb.glbHealthTimer = 0;
     }
     cb.glbKey = nk;
     cb.fainted = false;
     cb.anim?.standUp();
+    cb.fallback2D = false;
+    cb.fallbackRetry = 0;
+    if (this.active3D) this.scene.cameras.main.ignore(im);
+    return true;
+  }
+
+  /** Keep the original Phaser battler visible if a runtime texture is not yet
+   * readable. This is preferable to stretching the old species or showing air. */
+  private use2DFallback(cb: Combatant): void {
+    cb.fallback2D = true;
+    cb.fallbackRetry = 0;
+    cb.holder.visible = false;
+    const cam = this.scene.cameras.main as Phaser.Cameras.Scene2D.Camera & { id: number };
+    (cb.obj as unknown as { cameraFilter: number }).cameraFilter &= ~cam.id;
+  }
+
+  private rejectGeneratedModel(cb: Combatant): void {
+    cb.rejectedGlbKey = cb.glbKey ?? cb.obj.texture.key;
+    if (cb.glb) cb.holder.remove(cb.glb);
+    cb.glb = null;
+    cb.glbKey = null;
+    cb.glbVerifyFrames = 0;
+    cb.glbHealthTimer = 0;
+    cb.anim = null;
+    cb.inner.visible = true;
   }
 
   private frameCanvas(im: Phaser.GameObjects.Image): HTMLCanvasElement | null {
@@ -610,26 +652,43 @@ export class BattleMirror {
         this.refreshCombatant(cb);
       }
 
+      // Async textures can be unreadable for one frame during a party switch.
+      // Retry without hiding the working Phaser sprite in the meantime.
+      if (cb.fallback2D) {
+        cb.fallbackRetry += dt;
+        if (cb.fallbackRetry >= 0.5) this.refreshCombatant(cb);
+        if (cb.fallback2D) continue;
+      }
+
       // The manifest loads asynchronously, so a creature adopted before it
       // arrived still resolves to its generated model once the list is in.
-      if (!cb.glbKey && !cb.glb && hasModel(cb.obj.texture.key)) cb.glbKey = cb.obj.texture.key;
+      if (!cb.glbKey && !cb.glb && cb.rejectedGlbKey !== cb.obj.texture.key && hasModel(cb.obj.texture.key)) {
+        cb.glbKey = cb.obj.texture.key;
+      }
 
       // Swap in the generated true-3D model once it finishes loading.
       if (cb.glbKey && !cb.glb) {
         const loaded = getModel(cb.glbKey);
-        if (loaded) {
+        if (loaded && isRenderableModel(loaded.group)) {
           const model = loaded.group;
           // Enemy Pokémon present their front to the battle camera. The old
           // fixed zero yaw only followed the world axis, so models such as
           // Cerrapin appeared side-on in the diagonal battle composition.
           model.rotation.y = cb.side === 'player' ? Math.PI : this.cameraFacingYaw(cb.holder);
           cb.glb = model;
-          cb.inner.visible = false;
           cb.holder.add(model);
           // Any clips inside the GLB drive the model; otherwise the animator
           // moves the whole mesh procedurally.
           cb.anim = new CreatureAnimator(model, loaded.animations);
           cb.anim.setFacing(model.rotation.y);
+          // Keep the known-good relief for the first animated frames. A GLB can
+          // contain a scale/visibility animation that only becomes invalid once
+          // its mixer starts, even though its static scene looked valid.
+          cb.glbVerifyFrames = 2;
+          cb.glbHealthTimer = 0;
+          cb.inner.visible = true;
+        } else if (loaded) {
+          this.rejectGeneratedModel(cb);
         }
       }
 
@@ -708,8 +767,18 @@ export class BattleMirror {
         }
         // The animator owns this model's transform (position/rotation/scale).
         cb.anim?.update(dt, cb.targetH * uniformRel);
-        cb.glb.visible = (o.alpha ?? 1) > 0.05;
-      } else {
+        cb.glbHealthTimer += dt;
+        if (cb.glbVerifyFrames > 0 || cb.glbHealthTimer >= 2) {
+          cb.glbHealthTimer = 0;
+          if (!isRenderableModel(cb.glb)) {
+            this.rejectGeneratedModel(cb);
+          } else if (cb.glbVerifyFrames > 0 && --cb.glbVerifyFrames === 0) {
+            cb.inner.visible = false;
+          }
+        }
+        if (cb.glb) cb.glb.visible = (o.alpha ?? 1) > 0.05;
+      }
+      if (!cb.glb) {
         const scale = uniformRel * cb.scalePx;
         cb.inner.scale.set(cb.side === 'player' ? -scale : scale, scale * idle, scale);
         cb.inner.rotation.z = -((o.angle ?? 0) * Math.PI / 180);
@@ -756,7 +825,9 @@ export class BattleMirror {
 
   apply3D(): void {
     this.active3D = true;
-    for (const cb of this.combatants.values()) this.scene.cameras.main.ignore(cb.obj);
+    for (const cb of this.combatants.values()) {
+      if (!cb.fallback2D) this.scene.cameras.main.ignore(cb.obj);
+    }
     for (const w of this.trainers) this.scene.cameras.main.ignore(w.obj);
     for (const b of this.hiddenBackdrops) this.scene.cameras.main.ignore(b);
   }
