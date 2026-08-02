@@ -29,8 +29,9 @@ export class MenuScene extends Phaser.Scene {
   private escKey!: Phaser.Input.Keyboard.Key;
   private upKey!: Phaser.Input.Keyboard.Key;
   private downKey!: Phaser.Input.Keyboard.Key;
-  private bagScroll = 0;       // first visible bag row
-  private bagMaxScroll = 0;    // clamp bound, set each bag render
+  private bagScroll = 0;       // first row of the current bag page
+  private bagMaxScroll = 0;    // first row of the final bag page
+  private readonly BAG_PAGE_SIZE = 7;
 
   private get W() { return this.scale.width; }
   private get H() { return this.scale.height; }
@@ -127,9 +128,11 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => this.closeMenu());
     this.upKey   = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
     this.downKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-    // Mouse-wheel scrolling for the bag list.
+    // Mouse-wheel paging for the bag list. Moving a whole page makes the
+    // behaviour predictable on trackpads and prevents items being stranded
+    // between overlapping seven-row windows.
     this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => {
-      if (this.tab === 'bag') this.scrollBag(dy > 0 ? 1 : -1);
+      if (this.tab === 'bag') this.scrollBag(dy > 0 ? this.BAG_PAGE_SIZE : -this.BAG_PAGE_SIZE);
     });
 
     this.bagScroll = 0;
@@ -141,8 +144,8 @@ export class MenuScene extends Phaser.Scene {
   update() {
     if (Phaser.Input.Keyboard.JustDown(this.escKey)) this.closeMenu();
     if (this.tab === 'bag') {
-      if (Phaser.Input.Keyboard.JustDown(this.downKey)) this.scrollBag(1);
-      if (Phaser.Input.Keyboard.JustDown(this.upKey))   this.scrollBag(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.downKey)) this.scrollBag(this.BAG_PAGE_SIZE);
+      if (Phaser.Input.Keyboard.JustDown(this.upKey))   this.scrollBag(-this.BAG_PAGE_SIZE);
     }
   }
 
@@ -538,13 +541,16 @@ export class MenuScene extends Phaser.Scene {
 
     if (hasShoes) rows.push({ name: 'Running Shoes', desc: 'Hold SHIFT to run fast.', icon: '👟' });
 
-    // Scrollable list — show a 7-row window; scroll with the wheel, ↑/↓ or the arrows.
-    const VISIBLE = 7;
-    this.bagMaxScroll = Math.max(0, rows.length - VISIBLE);
+    // Seven items per page. The previous one-row scrolling used a final
+    // overlapping window and tiny arrows, so mobile players reasonably read
+    // the first seven entries as the entire bag.
+    const VISIBLE = this.BAG_PAGE_SIZE;
+    const pageCount = Math.max(1, Math.ceil(rows.length / VISIBLE));
+    this.bagMaxScroll = (pageCount - 1) * VISIBLE;
     const focusKey = this.registry.get('bagFocusItem') as string | undefined;
     if (focusKey) {
       const focusIndex = rows.findIndex(row => row.key === focusKey);
-      if (focusIndex >= 0) this.bagScroll = Math.max(0, focusIndex - Math.floor(VISIBLE / 2));
+      if (focusIndex >= 0) this.bagScroll = Math.floor(focusIndex / VISIBLE) * VISIBLE;
       this.registry.remove('bagFocusItem');
     }
     this.bagScroll = Phaser.Math.Clamp(this.bagScroll, 0, this.bagMaxScroll);
@@ -566,27 +572,32 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
-    // Scroll affordances — clickable arrows + a count when the list overflows.
+    // Large page controls remain usable after the Phaser canvas is scaled down
+    // on an iPhone. Keyboard arrows and the mouse wheel call the same pager.
     if (this.bagMaxScroll > 0) {
-      const mkArrow = (glyph: string, y: number, dir: number, enabled: boolean) => {
-        const a = this.add.text(cx + 322, y, glyph, {
-          fontSize: '20px', color: enabled ? '#ffe44e' : '#445',
+      const controlsY = this.H / 2 + 194;
+      const mkPageButton = (x: number, label: string, delta: number, enabled: boolean) => {
+        const bg = this.add.rectangle(x, controlsY, 190, 38, enabled ? 0x315a9a : 0x1a2033, 1)
+          .setStrokeStyle(1, enabled ? 0x77aaff : 0x30384d);
+        const txt = this.add.text(x, controlsY, label, {
+          fontSize: '13px', color: enabled ? '#ffffff' : '#596174', fontStyle: 'bold',
         }).setOrigin(0.5);
-        if (enabled) a.setInteractive({ useHandCursor: true })
-          .on('pointerover', () => a.setColor('#ffffff'))
-          .on('pointerout',  () => a.setColor('#ffe44e'))
-          .on('pointerdown', () => this.scrollBag(dir));
-        this.contentContainer.add(a);
+        if (enabled) bg.setInteractive({ useHandCursor: true })
+          .on('pointerover', () => bg.setFillStyle(0x4474ba))
+          .on('pointerout', () => bg.setFillStyle(0x315a9a))
+          .on('pointerdown', () => this.scrollBag(delta));
+        this.contentContainer.add([bg, txt]);
       };
-      mkArrow('▲', this.H / 2 - 186, -1, this.bagScroll > 0);
-      mkArrow('▼', this.H / 2 + 168,  1, this.bagScroll < this.bagMaxScroll);
-      this.contentContainer.add(this.add.text(cx + 322, this.H / 2 - 12,
-        `${this.bagScroll + 1}-${Math.min(rows.length, this.bagScroll + VISIBLE)}\n/${rows.length}`,
-        { fontSize: '10px', color: '#8899bb', align: 'center' }).setOrigin(0.5));
+      mkPageButton(cx - 210, t('◀ PREVIOUS PAGE', '◀ 이전 페이지'), -VISIBLE, this.bagScroll > 0);
+      mkPageButton(cx + 210, t('NEXT PAGE ▶', '다음 페이지 ▶'), VISIBLE, this.bagScroll < this.bagMaxScroll);
+      const currentPage = Math.floor(this.bagScroll / VISIBLE) + 1;
+      this.contentContainer.add(this.add.text(cx, controlsY,
+        t(`${currentPage} / ${pageCount}\n${rows.length} entries`, `${currentPage} / ${pageCount}\n총 ${rows.length}개`),
+        { fontSize: '11px', color: '#aab8d0', align: 'center' }).setOrigin(0.5));
     }
   }
 
-  /** Move the bag window by `delta` rows and redraw (no-op off the bag tab). */
+  /** Move the bag by one page and redraw (no-op off the bag tab). */
   private scrollBag(delta: number) {
     if (this.tab !== 'bag') return;
     const next = Phaser.Math.Clamp(this.bagScroll + delta, 0, this.bagMaxScroll);
