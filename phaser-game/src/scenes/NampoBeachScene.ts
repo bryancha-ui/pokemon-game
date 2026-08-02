@@ -152,7 +152,10 @@ export class NampoBeachScene extends Phaser.Scene {
     if (!this.threatG || this.gyaradosDone) return;
     const baseX = THREAT.col * TILE + 16;
     const baseY = THREAT.row * TILE + 16;
-    this.threatG.setPosition(baseX, baseY + Math.sin(this.time.now / 520) * 5);
+    // The boss is an interaction target, not a roaming hazard. Re-assert the
+    // exact authored point every frame so no tween, scene resume or renderer
+    // synchronization can ever carry it away from the encounter location.
+    this.threatG.setPosition(baseX, baseY);
   }
 
   private spawnThreat() {
