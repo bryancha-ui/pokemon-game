@@ -46,12 +46,40 @@ const TYPE_COLORS: Record<string, string> = {
 
 interface DeckMove { data: { name: string; type: string; pp: number }; pp: number }
 
+export interface DeckBattleAction {
+  label: string;
+  onPick: () => void;
+  disabled?: boolean;
+  accent?: string;
+}
+
 const btnBase =
   'display:flex;align-items:center;justify-content:center;pointer-events:auto;' +
   'touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font-weight:700;' +
   '-webkit-touch-callout:none;' +
   'border:2px solid rgba(255,255,255,0.5);background:rgba(30,38,66,0.9);' +
   'box-shadow:0 2px 6px rgba(0,0,0,0.45);-webkit-tap-highlight-color:transparent;box-sizing:border-box;';
+
+/** One activation path shared by iOS Safari and Android browsers. Pointer
+ * events are primary; click/touch are guarded fallbacks and never double-fire. */
+function bindTap(el: HTMLElement, callback: () => void): void {
+  let lastActivation = -Infinity;
+  const activate = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const now = performance.now();
+    // A long press can delay Safari's follow-up click; keep a full second of
+    // dedupe so one finger contact can never become two battle commands.
+    if (now - lastActivation < 1000) return;
+    lastActivation = now;
+    callback();
+  };
+  el.addEventListener('pointerdown', activate);
+  el.addEventListener('click', activate);
+  if (!('PointerEvent' in window)) {
+    el.addEventListener('touchstart', activate, { passive: false });
+  }
+}
 
 /** Button that holds a key down while pressed (run). */
 function holdButton(label: string, css: string, code: number): HTMLElement {
@@ -73,8 +101,7 @@ function tapButton(label: string, css: string, code: number): HTMLElement {
   const b = document.createElement('div');
   b.style.cssText = btnBase + css;
   b.textContent = label;
-  b.addEventListener('pointerdown', (e: Event) => {
-    e.preventDefault();
+  bindTap(b, () => {
     b.style.background = 'rgba(90,120,200,0.95)';
     if (code === KEY.space) window.dispatchEvent(new Event(MOBILE_ACTION_EVENT));
     dispatchKey('keydown', code);
@@ -90,9 +117,10 @@ function tapButton(label: string, css: string, code: number): HTMLElement {
 
 let deckEl: HTMLElement | null = null;
 let controlLayer: HTMLElement | null = null;
+let battleActionLayer: HTMLElement | null = null;
 let moveLayer: HTMLElement | null = null;
 let partyLeadLayer: HTMLElement | null = null;
-let layerBeforeLeadPicker: 'control' | 'move' = 'control';
+let layerBeforeLeadPicker: 'control' | 'actions' | 'move' = 'control';
 let mobile = false;
 let releaseMovement: (() => void) | null = null;
 
@@ -279,9 +307,10 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
     'box-shadow:inset 0 3px 8px rgba(0,0,0,0.5);touch-action:none;';
 
   buildControlLayer();
+  buildBattleActionLayer();
   buildMoveLayer();
   buildPartyLeadLayer();
-  deckEl.append(controlLayer!, moveLayer!, partyLeadLayer!);
+  deckEl.append(controlLayer!, battleActionLayer!, moveLayer!, partyLeadLayer!);
   document.body.append(gamePane, deckEl);
 
   // ── Rotate-to-landscape hint ──────────────────────────────────────────────
@@ -341,6 +370,29 @@ function buildControlLayer(): void {
 
   layer.append(pad, a, b, menu, back, bike);
   controlLayer = layer;
+}
+
+/** Large direct battle commands. These call scene callbacks instead of
+ * synthesising keyboard events, which iOS can drop between Phaser frames. */
+function buildBattleActionLayer(): void {
+  const layer = document.createElement('div');
+  layer.style.cssText =
+    'position:absolute;inset:0;display:none;flex-direction:column;' +
+    'padding:calc(var(--u)*0.5);box-sizing:border-box;pointer-events:none;';
+  const title = document.createElement('div');
+  title.dataset.role = 'action-title';
+  title.textContent = t('BATTLE COMMAND', '배틀 명령');
+  title.style.cssText =
+    'color:#ffe44e;font-weight:900;font-size:clamp(12px,calc(var(--u)*0.8),20px);' +
+    'text-align:center;letter-spacing:1px;margin:clamp(1px,calc(var(--u)*0.12),4px) 0 ' +
+    'clamp(3px,calc(var(--u)*0.3),9px);flex:0 0 auto;';
+  const grid = document.createElement('div');
+  grid.className = '__actiongrid';
+  grid.style.cssText =
+    'flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;' +
+    'grid-template-rows:1fr 1fr;gap:calc(var(--u)*0.5);pointer-events:auto;';
+  layer.append(title, grid);
+  battleActionLayer = layer;
 }
 
 /** The battle move-select bar (2×2), shown only while a move choice is offered. */
@@ -414,10 +466,14 @@ export function deckShowLeadPicker(
   onPick: (index: number) => void,
   options: DeckLeadPickerOptions = {},
 ): boolean {
-  if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return false;
+  if (!mobile || !partyLeadLayer || !controlLayer || !battleActionLayer || !moveLayer) return false;
   releaseMovement?.();
   const alreadyOpen = partyLeadLayer.style.display === 'flex';
-  if (!alreadyOpen) layerBeforeLeadPicker = moveLayer.style.display === 'flex' ? 'move' : 'control';
+  if (!alreadyOpen) {
+    layerBeforeLeadPicker = moveLayer.style.display === 'flex'
+      ? 'move'
+      : battleActionLayer.style.display === 'flex' ? 'actions' : 'control';
+  }
 
   const title = partyLeadLayer.querySelector('[data-role="lead-title"]') as HTMLElement;
   const close = partyLeadLayer.querySelector('[data-role="lead-close"]') as HTMLElement;
@@ -447,9 +503,7 @@ export function deckShowLeadPicker(
       `margin-top:calc(var(--u)*0.18);font-size:clamp(9px,calc(var(--u)*0.52),15px);` +
       `color:${choice.isLead ? '#fff0a8' : disabled ? '#a9a9b5' : '#cbdcff'};`;
     cell.append(name, sub);
-    if (!disabled) cell.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    if (!disabled) bindTap(cell, () => {
       if (cell.dataset.picked === 'true') return;
       cell.dataset.picked = 'true';
       cell.style.pointerEvents = 'none';
@@ -460,6 +514,7 @@ export function deckShowLeadPicker(
   });
 
   controlLayer.style.display = 'none';
+  battleActionLayer.style.display = 'none';
   moveLayer.style.display = 'none';
   partyLeadLayer.style.display = 'flex';
   return true;
@@ -467,13 +522,67 @@ export function deckShowLeadPicker(
 
 /** Restore the lower screen that was visible before the menu lead picker. */
 export function deckHideLeadPicker(): void {
-  if (!mobile || !partyLeadLayer || !controlLayer || !moveLayer) return;
+  if (!mobile || !partyLeadLayer || !controlLayer || !battleActionLayer || !moveLayer) return;
   partyLeadLayer.style.display = 'none';
   if (layerBeforeLeadPicker === 'move') {
     moveLayer.style.display = 'flex';
+    battleActionLayer.style.display = 'none';
+    controlLayer.style.display = 'none';
+  } else if (layerBeforeLeadPicker === 'actions') {
+    moveLayer.style.display = 'none';
+    battleActionLayer.style.display = 'flex';
     controlLayer.style.display = 'none';
   } else {
     moveLayer.style.display = 'none';
+    battleActionLayer.style.display = 'none';
+    controlLayer.style.display = 'block';
+  }
+}
+
+/** Show direct battle commands on the lower screen. This is the reliable
+ * mobile entry point for Fight/Bag/Party/Run on both iOS and Android. */
+export function deckShowBattleActions(
+  actions: DeckBattleAction[],
+  title = t('WHAT WILL YOU DO?', '무엇을 할까?'),
+): boolean {
+  if (!mobile || !battleActionLayer || !controlLayer || !moveLayer || !partyLeadLayer) return false;
+  releaseMovement?.();
+  const titleEl = battleActionLayer.querySelector('[data-role="action-title"]') as HTMLElement;
+  titleEl.textContent = title;
+  const grid = battleActionLayer.querySelector('.__actiongrid') as HTMLElement;
+  grid.textContent = '';
+  actions.slice(0, 4).forEach((action) => {
+    const cell = document.createElement('div');
+    const disabled = !!action.disabled;
+    const accent = action.accent ?? '#668bc7';
+    cell.style.cssText = btnBase +
+      `min-width:0;min-height:0;border-radius:calc(var(--u)*0.5);border-color:${accent};` +
+      `background:${disabled ? 'rgba(42,44,55,0.9)' : 'rgba(25,43,78,0.96)'};` +
+      `opacity:${disabled ? 0.5 : 1};font-size:clamp(14px,calc(var(--u)*1.05),26px);` +
+      'line-height:1.05;text-align:center;padding:calc(var(--u)*0.3);overflow-wrap:anywhere;';
+    cell.textContent = tr(action.label);
+    if (!disabled) bindTap(cell, () => {
+      if (cell.dataset.picked === 'true') return;
+      cell.dataset.picked = 'true';
+      cell.style.pointerEvents = 'none';
+      cell.style.background = 'rgba(70,112,180,0.98)';
+      deckHideBattleActions();
+      action.onPick();
+    });
+    grid.append(cell);
+  });
+  controlLayer.style.display = 'none';
+  moveLayer.style.display = 'none';
+  partyLeadLayer.style.display = 'none';
+  battleActionLayer.style.display = 'flex';
+  return true;
+}
+
+/** Hide direct commands without disturbing an open move/party layer. */
+export function deckHideBattleActions(): void {
+  if (!mobile || !battleActionLayer || !controlLayer || !moveLayer || !partyLeadLayer) return;
+  battleActionLayer.style.display = 'none';
+  if (moveLayer.style.display !== 'flex' && partyLeadLayer.style.display !== 'flex') {
     controlLayer.style.display = 'block';
   }
 }
@@ -484,7 +593,7 @@ export function deckHideLeadPicker(): void {
  * scene can hide its on-canvas move panel and keep the top screen clean.
  */
 export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, onBack: () => void): boolean {
-  if (!mobile || !moveLayer || !controlLayer) return false;
+  if (!mobile || !moveLayer || !controlLayer || !battleActionLayer || !partyLeadLayer) return false;
   releaseMovement?.();
   const grid = moveLayer.querySelector('.__movegrid') as HTMLElement;
   grid.textContent = '';
@@ -503,22 +612,30 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
     cell.innerHTML =
       `<div style="font-weight:800;font-size:clamp(13px,calc(var(--u)*0.85),22px);line-height:1.05;word-break:break-word;overflow-wrap:anywhere">${tr(m.data.name).toUpperCase()}</div>` +
       `<div style="font-size:clamp(9px,calc(var(--u)*0.55),14px);margin-top:clamp(2px,calc(var(--u)*0.2),8px)"><span style="color:${col}">${m.data.type.toUpperCase()}</span><span style="color:#cbd3e6"> · PP ${m.pp}/${m.data.pp}</span></div>`;
-    cell.addEventListener('pointerdown', (e) => { e.preventDefault(); onPick(i); });
+    if (!dim) bindTap(cell, () => onPick(i));
     grid.append(cell);
   });
   const back = moveLayer.querySelector('[data-role="back"]') as HTMLElement;
-  back.onpointerdown = (e) => { e.preventDefault(); onBack(); };
+  back.onpointerdown = null;
+  back.onclick = null;
+  const replacement = back.cloneNode(true) as HTMLElement;
+  back.replaceWith(replacement);
+  bindTap(replacement, onBack);
 
   controlLayer.style.display = 'none';
+  battleActionLayer.style.display = 'none';
+  partyLeadLayer.style.display = 'none';
   moveLayer.style.display = 'flex';
   return true;
 }
 
 /** Hide the move bar and restore the movement/action controls. */
 export function deckHideMoves(): void {
-  if (!mobile || !moveLayer || !controlLayer) return;
+  if (!mobile || !moveLayer || !controlLayer || !battleActionLayer || !partyLeadLayer) return;
   moveLayer.style.display = 'none';
-  controlLayer.style.display = 'block';
+  if (battleActionLayer.style.display !== 'flex' && partyLeadLayer.style.display !== 'flex') {
+    controlLayer.style.display = 'block';
+  }
 }
 
 /** Back-compat shim: the old entry point. The shell is now built in setupMobileShell. */

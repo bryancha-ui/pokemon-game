@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { isSpeakerLabelText } from './i18n';
 
 // ── Screen-ratio-aware on-canvas font scaling ────────────────────────────────
 // The game renders at a fixed 1280×720 with Scale.FIT, so the canvas is shrunk to
@@ -66,12 +67,47 @@ function scaleStyle(style: unknown, factor: number): unknown {
   return out;
 }
 
+function compactSpeakerStyle(style: unknown): unknown {
+  const s = style as { fontSize?: unknown; padding?: number | PaddingObj } | undefined;
+  if (!s) return style;
+  return { ...s, fontSize: '7px', padding: { x: 2, y: 1 } };
+}
+
+/** Attach an exact speaker-name Text to the closest generated character. */
+function attachSpeakerLabel(scene: Phaser.Scene | undefined, value: unknown): void {
+  if (!scene || !(value instanceof Phaser.GameObjects.Text)) return;
+  const label = value;
+  label.setData('characterLabel3D', true);
+  const children = scene.children?.list ?? [];
+  let target: Phaser.GameObjects.GameObject | undefined;
+  let best = Infinity;
+  for (const child of children) {
+    if (child === label || !('x' in child) || !('y' in child)) continue;
+    const candidate = child as Phaser.GameObjects.GameObject & {
+      x: number; y: number; getData?: (key: string) => unknown;
+    };
+    if (!candidate.getData?.('characterModel3DKey') && !candidate.getData?.('battleTrainer2DAnchor')) continue;
+    const dx = Math.abs(candidate.x - label.x);
+    const dy = candidate.y - label.y;
+    if (dx > 40 || dy < -4 || dy > 72) continue;
+    const score = dx * 2 + Math.abs(dy - 28);
+    if (score < best) { best = score; target = candidate; }
+  }
+  if (!target || !('x' in target) || !('y' in target)) return;
+  const actor = target as Phaser.GameObjects.GameObject & { x: number; y: number };
+  label.setData('characterLabelTarget3D', actor);
+  // Character drawings have their head top at about footY - 23. Use the actual
+  // rendered label height so enlarged mobile fonts still leave a small gap.
+  label.setOrigin(0.5).setPosition(actor.x, actor.y - 25 - label.displayHeight / 2);
+}
+
 /** Install the screen-ratio font multiplier. MUST run before any scene creates
  *  text. `enabled` is normally true only on touch devices; the per-scene ratio
  *  keeps it a no-op on large displays even when enabled. */
 export function installFontScaling(enabled: boolean): void {
   ENABLED = enabled;
-  if (!enabled) return;
+  // Install the factory hook on every device: font multiplication remains a
+  // mobile-only concern, while compact character-name labels apply everywhere.
 
   const facProto = Phaser.GameObjects.GameObjectFactory.prototype as unknown as {
     text: (x: number, y: number, text: unknown, style: unknown) => unknown;
@@ -79,7 +115,11 @@ export function installFontScaling(enabled: boolean): void {
   };
   const origText = facProto.text;
   facProto.text = function (x: number, y: number, text: unknown, style: unknown) {
-    return origText.call(this, x, y, text, scaleStyle(style, fontScaleForScene(this.scene)));
+    const speakerLabel = isSpeakerLabelText(text);
+    const prepared = speakerLabel ? compactSpeakerStyle(style) : style;
+    const result = origText.call(this, x, y, text, scaleStyle(prepared, fontScaleForScene(this.scene)));
+    if (speakerLabel) attachSpeakerLabel(this.scene, result);
+    return result;
   };
 
   // this.make.text({ ... }) bypasses the factory — patch the creator too.

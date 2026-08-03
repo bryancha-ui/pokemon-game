@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
-import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
+import {
+  deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
+} from '../systems/TouchControls';
 import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
@@ -89,7 +91,7 @@ export class WildBattleScene extends Phaser.Scene {
       poongbaek: 'poongbaek', woosa: 'woosa', woonsa: 'woonsa',
     };
     pushBgm(this, LEGEND[wid] ?? 'wild');
-    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
+    this.events.once('shutdown', () => { popBgm(this); deckHideBattleActions(); deckHideMoves(); });
 
     this.drawBackground();
     this.createDialogBox();
@@ -786,9 +788,20 @@ export class WildBattleScene extends Phaser.Scene {
   private get px() { return (this.registry.get('routeReturnX') as number) ?? 0; }
   private get py() { return (this.registry.get('routeReturnY') as number) ?? 0; }
 
-  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private showActionPanel() {
+    deckHideMoves();
+    const onDeck = deckShowBattleActions([
+      { label: 'FIGHT', onPick: () => this.onFight(), accent: '#f08a78' },
+      { label: '🔴 BAG', onPick: () => this.onBag(), accent: '#d7b85c' },
+      { label: 'POKÉMON', onPick: () => this.onSwitchPokemon(), accent: '#72b9df' },
+      { label: 'RUN', onPick: () => this.onRun(), accent: '#86c985' },
+    ]);
+    this.actionPanel.setVisible(!onDeck);
+    this.movePanel.setVisible(false);
+    this.bagPanel.setVisible(false);
+  }
   private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); this.bagPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private hideAllPanels()   { deckHideBattleActions(); this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
 
   private animateHpBar(who: 'player' | 'wild', onDone: () => void) {

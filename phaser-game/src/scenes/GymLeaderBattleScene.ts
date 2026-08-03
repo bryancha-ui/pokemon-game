@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Pokemon, Move } from '../battle/Pokemon';
-import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
+import {
+  deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
+} from '../systems/TouchControls';
 import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { CORRPANDA_DATA, CORRPANDA_MOVES } from '../data/CustomPokemon';
@@ -77,7 +79,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.cameras.main.fadeIn(500);
     // Dark gym-leader battle theme; restore the ambient track when the fight ends.
     pushBgm(this, 'gymleader');
-    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
+    this.events.once('shutdown', () => { popBgm(this); deckHideBattleActions(); deckHideMoves(); });
     Inventory.ensureInit(this.registry);
     await this.buildTeams();
     this.drawBackground();
@@ -347,9 +349,19 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   }
 
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
-  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showActionPanel() {
+    deckHideMoves();
+    const onDeck = deckShowBattleActions([
+      { label: 'FIGHT', onPick: () => this.onFight(), accent: '#f08a78' },
+      { label: 'BAG', onPick: () => this.onBag(), accent: '#d7b85c' },
+      { label: 'POKÉMON', onPick: () => this.onSwitchPokemon(), accent: '#72b9df' },
+      { label: "CAN'T RUN", onPick: () => {}, disabled: true },
+    ]);
+    this.actionPanel.setVisible(!onDeck);
+    this.movePanel.setVisible(false);
+  }
   private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); if (this.bagPanel) this.bagPanel.setVisible(false); }
+  private hideAllPanels()   { deckHideBattleActions(); this.actionPanel.setVisible(false); this.movePanel.setVisible(false); if (this.bagPanel) this.bagPanel.setVisible(false); }
 
   // ── Bag (healing items only — no catching in a gym) ───────────────────────
   private onBag() {

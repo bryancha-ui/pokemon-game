@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle, TRACKS } from '../systems/Music';
-import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
+import {
+  deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
+} from '../systems/TouchControls';
 import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { Pokemon, Move } from '../battle/Pokemon';
@@ -79,7 +81,7 @@ export class RivalBattleScene extends Phaser.Scene {
     // Keep the ambient track playing through the rival's run-in + dialogue, and preload
     // the rival battle theme now so it can start the INSTANT the battle begins (revealBattle).
     if (!this.cache.audio.exists('rival') && TRACKS.rival) { this.load.audio('rival', TRACKS.rival); this.load.start(); }
-    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
+    this.events.once('shutdown', () => { popBgm(this); deckHideBattleActions(); deckHideMoves(); });
     this.buildPokemon();
     this.drawBackground();
     this.createHUDs();
@@ -694,9 +696,22 @@ export class RivalBattleScene extends Phaser.Scene {
   // ── UI helpers ────────────────────────────────────────────────────────────
 
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
-  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showActionPanel() {
+    deckHideMoves();
+    const onDeck = deckShowBattleActions([
+      { label: 'FIGHT', onPick: () => this.onFight(), accent: '#f08a78' },
+      {
+        label: 'BAG', accent: '#d7b85c',
+        onPick: () => this.typeDialog(`${this.rivalTName}: No items in a fair fight!`, () => this.playerAction()),
+      },
+      { label: 'POKÉMON', onPick: () => this.onSwitchPokemon(), accent: '#72b9df' },
+      { label: "CAN'T RUN", onPick: () => {}, disabled: true },
+    ]);
+    this.actionPanel.setVisible(!onDeck);
+    this.movePanel.setVisible(false);
+  }
   private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
+  private hideAllPanels()   { deckHideBattleActions(); this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
 
   private refreshMovePP() {
     this.player.moves.forEach((move, i) => {

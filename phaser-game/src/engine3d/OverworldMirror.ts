@@ -978,8 +978,14 @@ export class OverworldMirror {
         if (sig !== t.texSig) { t.texSig = sig; this.refreshImage(t, im); }
       }
       if (t.kind === 'text') {
-        // Billboard: face camera, hover above its anchor point.
-        t.mesh.position.set((o.x ?? 0) / PX, 1.6, (o.y ?? 0) / PX);
+        // Character nameplates share the actor's world point and hover above
+        // the head. Generic signs retain their authored ground anchor.
+        const labelTarget = o.getData?.('characterLabelTarget3D') as GO | undefined;
+        if (labelTarget?.scene) {
+          t.mesh.position.set((labelTarget.x ?? 0) / PX, 2.25, (labelTarget.y ?? 0) / PX);
+        } else {
+          t.mesh.position.set((o.x ?? 0) / PX, 1.6, (o.y ?? 0) / PX);
+        }
         t.mesh.quaternion.copy(this.stage.camera.quaternion);
       }
       if (o === followT) {

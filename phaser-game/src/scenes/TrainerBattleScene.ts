@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
-import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
+import {
+  deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
+} from '../systems/TouchControls';
 import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
@@ -213,7 +215,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     else if (k.startsWith('champion'))  track = 'champion';    // Champion Hwangeum
     else if (k.startsWith('e4-'))       track = 'elitefour';   // Onnuri League Elite Four
     pushBgm(this, track);
-    this.events.once('shutdown', () => { popBgm(this); deckHideMoves(); });
+    this.events.once('shutdown', () => { popBgm(this); deckHideBattleActions(); deckHideMoves(); });
 
     this.drawBackground();
     this.createDialogBox();
@@ -588,9 +590,20 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private refreshMovePanel() { this.movePanel.destroy(true); this.createMovePanel(); this.movePanel.setVisible(false); }
-  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private showActionPanel() {
+    deckHideMoves();
+    const onDeck = deckShowBattleActions([
+      { label: 'FIGHT', onPick: () => this.onFight(), accent: '#f08a78' },
+      { label: 'BAG', onPick: () => this.onBag(), accent: '#d7b85c' },
+      { label: 'POKÉMON', onPick: () => this.onSwitchPokemon(), accent: '#72b9df' },
+      { label: "CAN'T RUN", onPick: () => {}, disabled: true },
+    ]);
+    this.actionPanel.setVisible(!onDeck);
+    this.movePanel.setVisible(false);
+    this.bagPanel.setVisible(false);
+  }
   private showMovePanel()   { const onDeck = deckShowMoves(this.player.moves, i => this.onMoveSelected(this.player.moves[i]), () => this.playerAction()); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
+  private hideAllPanels()   { deckHideBattleActions(); this.actionPanel.setVisible(false); this.movePanel.setVisible(false); this.bagPanel.setVisible(false); }
 
   // ── Bag panel (heal / status / revive items — no balls in trainer battles) ──
   private createBagPanel() {

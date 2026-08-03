@@ -139,10 +139,12 @@ export function drawGymLeader(
   g.fillStyle(hair); g.fillRect(-7, -21, 14, 6);                    // hair
   g.fillStyle(0x000000); g.fillRect(-4, -14, 2, 2); g.fillRect(2, -14, 2, 2);    // eyes
   g.lineStyle(2, opts.accent, 0.8); g.strokeCircle(0, 0, 21);       // themed aura
-  scene.add.text(x, y - 30, opts.label, {
-    fontSize: '9px', color: opts.labelColor, fontStyle: 'bold',
-    backgroundColor: '#00000088', padding: { x: 4, y: 2 },
-  }).setOrigin(0.5).setDepth(10);
+  const label = scene.add.text(x, y - 30, opts.label, {
+    fontSize: '7px', color: opts.labelColor, fontStyle: 'bold',
+    backgroundColor: '#00000088', padding: { x: 2, y: 1 },
+  }).setOrigin(0.5).setDepth(10)
+    .setData('characterLabel3D', true)
+    .setData('characterLabelTarget3D', g);
   if (opts.trainerKey) markTrainerPortrait(g, opts.trainerKey);
   else markProceduralCharacter3D(g, {
     outfit: opts.body, hair, skin, footY: 17, outfitStyle: 'robe', hairStyle: 'short',

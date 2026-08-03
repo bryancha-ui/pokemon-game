@@ -295,10 +295,22 @@ const SPEAKER_LC: Record<string, string> = (() => {
   return map;
 })();
 
+// Exact strings returned by speakerName() are nameplates when passed directly
+// to Phaser Text. UiScale uses this to keep overworld labels compact without
+// shrinking the same name when it appears inside a longer dialogue sentence.
+const SPEAKER_LABEL_TEXTS = new Set<string>();
+
 /** Translate a trainer/NPC name to Korean (from KO_SPEAKERS), else return it. */
 export function speakerName(name: string): string {
-  if (currentLang !== 'ko' || typeof name !== 'string') return name;
-  return SPEAKER_LC[name.toLowerCase()] ?? name;
+  const result = currentLang !== 'ko' || typeof name !== 'string'
+    ? name
+    : SPEAKER_LC[name.toLowerCase()] ?? name;
+  if (typeof result === 'string') SPEAKER_LABEL_TEXTS.add(result);
+  return result;
+}
+
+export function isSpeakerLabelText(value: unknown): value is string {
+  return typeof value === 'string' && SPEAKER_LABEL_TEXTS.has(value);
 }
 
 // Dynamic battle lines embed a Pokémon's (English) name; translate the template and

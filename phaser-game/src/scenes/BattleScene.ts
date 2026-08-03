@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { Pokemon, Move } from '../battle/Pokemon';
-import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
+import {
+  deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
+} from '../systems/TouchControls';
 import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { genderedName } from '../data/PokemonGender';
@@ -33,6 +35,7 @@ export class BattleScene extends Phaser.Scene {
   constructor() { super('BattleScene'); }
 
   async create() {
+    this.events.once('shutdown', () => { deckHideBattleActions(); deckHideMoves(); });
     this.createBackground();
     this.dialogText = this.add.text(20, this.H - 90, tr('Loading...'), {
       fontSize: '18px', color: '#fff', wordWrap: { width: this.W * 0.6 - 40 }
@@ -251,9 +254,19 @@ export class BattleScene extends Phaser.Scene {
 
   // ── UI helpers ───────────────────────────────────────────────────────────
 
-  private showActionPanel() { deckHideMoves(); this.actionPanel.setVisible(true); this.movePanel.setVisible(false); }
+  private showActionPanel() {
+    deckHideMoves();
+    const onDeck = deckShowBattleActions([
+      { label: 'FIGHT', onPick: () => this.onFight(), accent: '#f08a78' },
+      { label: 'BAG', onPick: () => {}, disabled: true },
+      { label: 'POKÉMON', onPick: () => {}, disabled: true },
+      { label: 'RUN', onPick: () => this.onRun(), accent: '#86c985' },
+    ]);
+    this.actionPanel.setVisible(!onDeck);
+    this.movePanel.setVisible(false);
+  }
   private showMovePanel()   { const onDeck = deckShowMoves(this.playerPokemon.moves, i => this.onMoveSelected(this.playerPokemon.moves[i]), () => { this.state = 'playerAction'; this.showActionPanel(); }); this.movePanel.setVisible(!onDeck); this.actionPanel.setVisible(false); }
-  private hideAllPanels()   { this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
+  private hideAllPanels()   { deckHideBattleActions(); this.actionPanel.setVisible(false); this.movePanel.setVisible(false); }
 
   private animateHpBar(who: 'player' | 'enemy', onDone: () => void) {
     const pokemon = who === 'player' ? this.playerPokemon : this.enemyPokemon;
