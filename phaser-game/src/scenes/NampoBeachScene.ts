@@ -21,11 +21,10 @@ const COLORS: Record<Tile, number> = { [T.SAND]: 0xe4d6a8, [T.WATER]: 0x2f78b4, 
 const SOLID = new Set<Tile>([T.WALL, T.ROCK]);
 
 const THREAT_KEY = 'eosa-nampo-threat';
-// Keep the boss in the open bay rather than against the northern barrage. This
-// gives the player a clear, reachable target and leaves room for its bobbing
-// animation without ever allowing the actor to drift outside the map.
-const THREAT = { col: 10, row: 6 };
-const OCEAN_CX = 10 * TILE + 16, OCEAN_CY = 10 * TILE + 16;   // whirlpools rotate about here
+// Gyarados is the unmoving center of the challenge; only the whirlpools orbit.
+const THREAT = { col: 10, row: 10 };
+const OCEAN_CX = THREAT.col * TILE + 16, OCEAN_CY = THREAT.row * TILE + 16;
+const THREAT_RADIUS = 2 * TILE;
 const SHORE = { x: 10 * TILE + 16, y: 18 * TILE + 16 };       // swept back here on a whirlpool hit
 
 // Whirlpools orbiting the bay: two rings turning opposite ways.
@@ -153,8 +152,8 @@ export class NampoBeachScene extends Phaser.Scene {
     const baseX = THREAT.col * TILE + 16;
     const baseY = THREAT.row * TILE + 16;
     // The boss is an interaction target, not a roaming hazard. Re-assert the
-    // exact authored point every frame so no tween, scene resume or renderer
-    // synchronization can ever carry it away from the encounter location.
+    // exact center every frame so no tween, scene resume or renderer sync can
+    // ever carry it away. Only the whirlpool containers receive moving coords.
     this.threatG.setPosition(baseX, baseY);
   }
 
@@ -249,8 +248,10 @@ export class NampoBeachScene extends Phaser.Scene {
       this.walkTimer += delta; if (this.walkTimer > (running ? 100 : 180)) { this.walkFrame ^= 1; this.walkTimer = 0; }
     } else this.walkFrame = 0;
     this.drawChar();
-    if (this.checkWhirlpools()) return;
+    // The stationary boss owns its central interaction zone. Check it before
+    // the moving whirlpools so a hazard cannot steal the encounter input.
     if (this.checkThreat()) return;
+    if (this.checkWhirlpools()) return;
     if (this.checkTrainers()) return;
     this.checkExit();
   }
@@ -294,7 +295,7 @@ export class NampoBeachScene extends Phaser.Scene {
   private checkThreat(): boolean {
     if (!this.missionTaken || this.gyaradosDone) return false;
     const tx = THREAT.col * TILE + 16, ty = THREAT.row * TILE + 16;
-    if (Math.hypot(this.px - tx, this.py - ty) > TILE * 1.5) return false;
+    if (Math.hypot(this.px - tx, this.py - ty) > THREAT_RADIUS) return false;
     this.enterPrompt.setText(tr('SPACE — Confront the Gyarados')).setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
