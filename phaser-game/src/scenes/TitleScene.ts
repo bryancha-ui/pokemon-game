@@ -4,6 +4,7 @@ import { SaveManager } from '../utils/SaveManager';
 import { STARTERS } from '../data/StarterData';
 import { playBgm, stopBgm } from '../systems/Music';
 import { t, getLang, setLang } from '../systems/i18n';
+import { fontScaleForScene } from '../systems/UiScale';
 
 export class TitleScene extends Phaser.Scene {
   private selected = 0;
@@ -49,25 +50,38 @@ export class TitleScene extends Phaser.Scene {
     this.refreshSelection();
   }
 
-  /** Language selector at game start — flip between English and Korean. */
+  /** Language selector at game start — flip between English and Korean.
+   *  Laid out right-to-left from the screen edge with scale-aware gaps so the
+   *  enlarged mobile font can't make the buttons overlap each other, run off the
+   *  edge, or crowd the centred title. Font sizes are unchanged. */
   private drawLangToggle() {
     const lang = getLang();
-    this.add.text(this.W - 210, 26, t('Language', '언어'), {
-      fontSize: '14px', color: '#9aa8cc',
-    }).setOrigin(0, 0.5).setDepth(20);
-    const mk = (label: string, l: 'en' | 'ko', x: number) => {
+    const S = fontScaleForScene(this);
+    const y = 24;                                   // pinned to the very top, above the logo
+    const gap = Math.round(9 * S);
+    let rightX = this.W - Math.round(14 * S);
+
+    // Place `txt` with its RIGHT edge at the running cursor, then advance the cursor left.
+    const placeRight = (txt: Phaser.GameObjects.Text) => {
+      txt.setOrigin(1, 0.5).setPosition(rightX, y).setDepth(20);
+      rightX = Math.round(rightX - txt.displayWidth - gap);
+    };
+
+    const mk = (label: string, l: 'en' | 'ko') => {
       const on = lang === l;
-      const b = this.add.text(x, 26, label, {
+      const b = this.add.text(0, 0, label, {
         fontSize: '15px', fontStyle: on ? 'bold' : 'normal',
         color: on ? '#ffe44e' : '#8a8ab0',
         backgroundColor: on ? '#3a2a5a' : '#181828',
         padding: { x: 10, y: 5 },
-      }).setOrigin(0, 0.5).setDepth(20).setInteractive({ useHandCursor: true });
+      }).setInteractive({ useHandCursor: true });
       b.on('pointerdown', () => { if (getLang() !== l) { setLang(l); this.scene.restart(); } });
-      return b;
+      placeRight(b);
     };
-    mk('EN', 'en', this.W - 130);
-    mk('한국어', 'ko', this.W - 78);
+
+    mk('한국어', 'ko');                              // rightmost
+    mk('EN', 'en');
+    placeRight(this.add.text(0, 0, t('Language', '언어'), { fontSize: '14px', color: '#9aa8cc' }));
   }
 
   update() {
