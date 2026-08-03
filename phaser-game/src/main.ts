@@ -156,10 +156,10 @@ await SaveManager.bootstrapDurableStorage();
 // mount the game into the top pane so the controls never cover it. ?touch=1 forces it.
 const shell = setupMobileShell(new URLSearchParams(location.search).has('touch'));
 
-// Small phones scale the 1280×720 canvas way down, so double every on-canvas font
-// on touch devices to keep text/buttons legible and tappable. Must run before the
-// game (and its scenes) are created. Desktop is unaffected.
-installFontScaling(shell.mobile ? 2 : 1);
+// Touch devices enlarge on-canvas fonts/boxes in proportion to how far the
+// 1280×720 canvas is shrunk to fit the screen — big on tiny phones, ~1× (no
+// overlap) on large touchscreens. Must run before the game/scenes are created.
+installFontScaling(shell.mobile);
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

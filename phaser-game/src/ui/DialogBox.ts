@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
-import { fontScale } from '../systems/UiScale';
+import { fontScaleForScene } from '../systems/UiScale';
 
 export class DialogBox {
   private bg!: Phaser.GameObjects.Graphics;
@@ -30,16 +30,18 @@ export class DialogBox {
     // fully visible at the bottom of the screen (see applyZoomCompensation()).
     // Box + font are sized large so dialogue stays legible when the 16:9 canvas is
     // scaled down to fit a phone's narrow top pane.
-    // The global mobile font multiplier (fontScale) grows the text below (its
-    // fontSize is auto-scaled at creation), so the box, line spacing and the choice
-    // panel must grow with it or the doubled text would overflow / clip.
-    const S = fontScale();
+    // The global screen-ratio font multiplier (fontScaleForScene) grows the text
+    // below (its fontSize is auto-scaled at creation), so the box and the choice
+    // panel must grow with it or the enlarged text would overflow / clip.
+    const S = fontScaleForScene(scene);
     const boxH = Math.round(148 * S);
     const boxTop = H - boxH - 4;
     this.bg = this.makePanel(8, boxTop, W - 16, boxH, 18).setVisible(false);
 
+    // fontSize/lineSpacing are auto-scaled by the global hook; only the box geometry
+    // (which the hook can't see) needs the explicit S factor.
     this.msgText = scene.add.text(20, boxTop + Math.round(6 * S), '', {
-      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8 * S,
+      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8,
     }).setVisible(false);
 
     this.arrow = scene.add.text(W - Math.round(28 * S), H - Math.round(24 * S), '▼', { fontSize: '18px', color: '#ffe44e' })
