@@ -47,6 +47,15 @@ const NAMPO: EosaCity = {
     { col: 11, row: 18, color: 0x6a5a7a, label: 'Dock Boy', lines: ['Dock Boy: Wanna know a secret? If you Surf out past the quay, there\'s all kinds of Pokémon on the water!'] },
     { col: 7,  row: 21, color: 0x3a6a8a, label: 'Old Diver', lines: ['Old Diver: These waters go deep and cold. I\'ve pulled up things down there I don\'t talk about.'] },
   ],
+  // Seaside palms line the promenade and waterfront edges (avoiding landmark/NPC
+  // footprints) so the port reads as a warm West-Sea town in 3D.
+  trees: [
+    { col: 2, row: 23, kind: 'palm' }, { col: 5, row: 23, kind: 'palm' },
+    { col: 13, row: 23, kind: 'palm' }, { col: 16, row: 23, kind: 'palm' },
+    { col: 24, row: 23, kind: 'palm' }, { col: 33, row: 23, kind: 'palm' },
+    { col: 2, row: 10, kind: 'palm' }, { col: 2, row: 16, kind: 'palm' },
+    { col: 34, row: 10, kind: 'palm' }, { col: 34, row: 18, kind: 'palm' },
+  ],
   sideExit: { col: 4, scene: 'NampoBeachScene', label: 'Parangpo Beach', icon: '🏖' },
   prev: { scene: 'RyesongValleyScene', returnKey: 'ryesong', x: 12 * 32 + 16, y: 2 * 32 + 16 },
   next: { scene: 'AhobiryongPassScene', returnKey: 'ahobiryong', x: 11 * 32 + 16, y: 47 * 32 + 16 },

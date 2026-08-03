@@ -278,7 +278,11 @@ export function mixColor(a: number, b: number, t: number): number {
  * The Onnuri Pokémon League hall — a 3D reproduction of LeaguePlazaScene's painted
  * hanok palace (drawPalace): a stone woldae platform with a central stair, a dark
  * hall wall fronted by vermilion pillars, dancheong bands, gold-studded double
- * doors, a gilt signboard, and two sweeping green roof tiers with ridge chimi.
+ * doors, a gilt signboard, and a two-tier (중층) hip roof.
+ *
+ * It is deliberately built as ONE continuous vertical mass: the second tier is a
+ * real clerestory WALL sitting on the lower roof (not a free-floating roof), so the
+ * whole thing reads as a single grand hall rather than two stacked buildings.
  * Built to the plot's own width/depth; front (doors) faces +Z toward the courtyard.
  */
 export function makeHanokPalace(width: number, depth: number): THREE.Group {
@@ -289,6 +293,41 @@ export function makeHanokPalace(width: number, depth: number): THREE.Group {
   const bodyD = depth * 0.72;
   const frontZ = bodyD / 2;
 
+  // A frustum roof (truncated 4-sided pyramid) so the tier above has a flat top to
+  // sit on — the flat top is what ties the two tiers into one building.
+  const addRoof = (baseW: number, baseD: number, topRatio: number, h: number, yBottom: number, color: number, ridgeFrac = 0.5) => {
+    const roof = new THREE.Mesh(new THREE.CylinderGeometry(topRatio, 1, h, 4), toonMat(color));
+    roof.rotation.y = Math.PI / 4;
+    roof.scale.set(baseW / Math.SQRT2, 1, baseD / Math.SQRT2);
+    roof.position.y = yBottom + h / 2;
+    g.add(roof);
+    const topY = yBottom + h;
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(baseW * ridgeFrac, 0.24, 0.34), toonMat(RIDGE));
+    ridge.position.set(0, topY - 0.06, 0); g.add(ridge);
+    for (const rx of [-baseW * ridgeFrac / 2, baseW * ridgeFrac / 2]) {
+      const chimi = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.44, 0.36), toonMat(0x1a2a26));
+      chimi.position.set(rx, topY, 0); g.add(chimi);
+    }
+    return topY;
+  };
+  // A dark wall fronted by vermilion pillars + a dancheong band — the shared look of
+  // both storeys, so the clerestory clearly belongs to the same building.
+  const addStorey = (w: number, d: number, h: number, yBottom: number, nCol: number) => {
+    const fz = d / 2;
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), toonMat(RED_WALL));
+    wall.position.y = yBottom + h / 2; g.add(wall);
+    for (let i = 0; i <= nCol; i++) {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.42, h, 0.34), toonMat(PILLAR));
+      pillar.position.set(-w / 2 + (w * i) / nCol, yBottom + h / 2, fz + 0.02); g.add(pillar);
+    }
+    const bandPalette = [0x2b6ea8, 0x2f9c5a, 0xc7402f, 0xe0b24a];
+    const segW = (w + 0.4) / 4;
+    for (let s = 0; s < 4; s++) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(segW, 0.28, 0.12), toonMat(bandPalette[s]));
+      band.position.set(-((w + 0.4) / 2) + segW * (s + 0.5), yBottom + h - 0.18, fz + 0.14); g.add(band);
+    }
+  };
+
   // Stone platform (woldae) with a lower apron, the hall sits on top.
   const woldaeH = 0.6;
   const apron = new THREE.Mesh(new THREE.BoxGeometry(width + 1.6, 0.34, depth + 1.6), toonMat(STONE_DK));
@@ -298,32 +337,15 @@ export function makeHanokPalace(width: number, depth: number): THREE.Group {
   const platTop = 0.34 + woldaeH;
   // Central staircase down the front.
   for (let s = 0; s < 3; s++) {
-    const step = new THREE.Mesh(new THREE.BoxGeometry(2.6, platTop * (1 - s / 3), 0.5), toonMat(s % 2 ? STONE_DK : STONE));
     const h = platTop * (1 - s / 3);
+    const step = new THREE.Mesh(new THREE.BoxGeometry(2.6, h, 0.5), toonMat(s % 2 ? STONE_DK : STONE));
     step.position.set(0, h / 2, depth / 2 + 0.3 + s * 0.5); g.add(step);
   }
 
-  // Hall body — dark vermilion wall.
-  const body = new THREE.Mesh(new THREE.BoxGeometry(width, bodyH, bodyD), toonMat(RED_WALL));
-  body.position.y = platTop + bodyH / 2; g.add(body);
+  // First storey (the tall main hall).
+  addStorey(width, bodyD, bodyH, platTop, 8);
 
-  // Vermilion pillars across the front.
-  const nCol = 8;
-  for (let i = 0; i <= nCol; i++) {
-    const x = -width / 2 + (width * i) / nCol;
-    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.42, bodyH, 0.34), toonMat(PILLAR));
-    pillar.position.set(x, platTop + bodyH / 2, frontZ + 0.02); g.add(pillar);
-  }
-
-  // Dancheong band along the top of the wall (a strip of alternating colours).
-  const bandY = platTop + bodyH - 0.18;
-  for (const [seg, col] of [[0, 0x2b6ea8], [1, 0x2f9c5a], [2, 0xc7402f], [3, 0xe0b24a]] as [number, number][]) {
-    const segW = (width + 0.4) / 4;
-    const band = new THREE.Mesh(new THREE.BoxGeometry(segW, 0.28, 0.12), toonMat(col));
-    band.position.set(-((width + 0.4) / 2) + segW * (seg + 0.5), bandY, frontZ + 0.14); g.add(band);
-  }
-
-  // Gold-studded double doors at the centre front.
+  // Gold-studded double doors at the centre front of the first storey.
   const doorH = Math.min(2.2, bodyH * 0.62), doorW = 1.9;
   const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.2), toonMat(DOOR));
   door.position.set(0, platTop + doorH / 2, frontZ + 0.12); g.add(door);
@@ -334,31 +356,127 @@ export function makeHanokPalace(width: number, depth: number): THREE.Group {
     stud.position.set(sx, platTop + 0.35 + yy * (doorH - 0.5) / 3, frontZ + 0.23); g.add(stud);
   }
 
-  // Two sweeping roof tiers — flattened 4-sided pyramids stretched to the plot.
-  const makeRoof = (w: number, d: number, h: number, y: number, color: number) => {
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 4), toonMat(color));
-    roof.rotation.y = Math.PI / 4;
-    roof.scale.set(w / Math.SQRT2, h, d / Math.SQRT2);
-    roof.position.y = y + h / 2;
-    g.add(roof);
-    // Ridge beam + chimi end ornaments.
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, 0.22, 0.3), toonMat(RIDGE));
-    ridge.position.set(0, y + h - 0.1, 0); g.add(ridge);
-    for (const rx of [-w * 0.25, w * 0.25]) {
-      const chimi = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.4, 0.34), toonMat(0x1a2a26));
-      chimi.position.set(rx, y + h - 0.05, 0); g.add(chimi);
-    }
-  };
+  // Lower (skirt) roof — its flat top carries the clerestory.
   const eaveY = platTop + bodyH;
-  makeRoof(width + 2.4, depth + 1.6, 1.5, eaveY - 0.2, ROOF_LO);
-  makeRoof(width - 3.0, depth - 1.0, 1.2, eaveY + 1.2, ROOF_HI);
+  const loBaseW = width + 2.4, loBaseD = depth + 1.6, loTopRatio = 0.52, loH = 1.4;
+  const loTopY = addRoof(loBaseW, loBaseD, loTopRatio, loH, eaveY - 0.25, ROOF_LO, 0.5);
 
-  // Signboard (현판) hung under the lower eave.
+  // Second storey (clerestory) — sits ON the lower roof's flat top, tying the tiers
+  // together so the hall reads as a single building.
+  const clW = loBaseW * loTopRatio - 0.6, clD = loBaseD * loTopRatio - 0.4, clH = bodyH * 0.44;
+  addStorey(clW, clD, clH, loTopY - 0.1, 5);
+
+  // Upper (crowning) roof over the clerestory.
+  addRoof(clW + 1.8, clD + 1.4, 0.22, 1.4, loTopY - 0.1 + clH - 0.1, ROOF_HI, 0.42);
+
+  // Signboard (현판) hung on the first storey under the lower eave.
   const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 0.16), toonMat(GOLD));
-  boardFrame.position.set(0, eaveY + 0.35, frontZ + 0.2); g.add(boardFrame);
+  boardFrame.position.set(0, eaveY + 0.05, frontZ + 0.2); g.add(boardFrame);
   const boardFace = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.66, 0.1), toonMat(0x1b110a));
-  boardFace.position.set(0, eaveY + 0.35, frontZ + 0.29); g.add(boardFace);
+  boardFace.position.set(0, eaveY + 0.05, frontZ + 0.29); g.add(boardFace);
 
+  return g;
+}
+
+/**
+ * A coastal palm tree — a gently leaning tan trunk with segment rings and a crown
+ * of drooping green fronds (with a couple of coconuts). Toon-styled, feet at y=0.
+ * Suits seaside cities like Parangpo. Vary `seed` so a row of palms isn't identical.
+ */
+export function makePalmTree(seed = 0): THREE.Group {
+  const g = new THREE.Group();
+  const rnd = (n: number) => ((Math.sin(seed * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
+  const trunkH = 2.6 + rnd(1) * 0.9;
+  const lean = (rnd(2) - 0.5) * 0.5;
+  const trunkMat = toonMat(0xb08a4a);
+  const segs = 5;
+  for (let i = 0; i < segs; i++) {
+    const t = i / segs;
+    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.16 - t * 0.05, 0.2 - t * 0.05, trunkH / segs + 0.04, 8), trunkMat);
+    seg.position.set(lean * t * trunkH * 0.4, (i + 0.5) * (trunkH / segs), 0);
+    seg.rotation.z = -lean * 0.5;
+    g.add(seg);
+  }
+  const topX = lean * trunkH * 0.4, topY = trunkH;
+  // Coconuts clustered under the crown.
+  const nutMat = toonMat(0x5a3a1e);
+  for (const a of [0.3, -0.5, 1.4]) {
+    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), nutMat);
+    nut.position.set(topX + Math.cos(a) * 0.22, topY - 0.15, Math.sin(a) * 0.22);
+    g.add(nut);
+  }
+  // Crown of fronds — flattened, drooping blades radiating out.
+  const frondMat = toonMat(0x2f8a3f);
+  const nFronds = 7;
+  for (let i = 0; i < nFronds; i++) {
+    const a = (i / nFronds) * Math.PI * 2 + rnd(3) * 0.6;
+    const frond = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.5, 4), frondMat);
+    frond.position.set(topX + Math.cos(a) * 0.75, topY + 0.15, Math.sin(a) * 0.75);
+    frond.rotation.z = Math.PI / 2 - 0.5;   // lay it near-horizontal, drooping
+    frond.rotation.y = -a;
+    frond.scale.set(1, 1, 0.4);   // flatten into a blade
+    g.add(frond);
+  }
+  return g;
+}
+
+/** A hip roof (truncated wide pyramid) sized to a footprint, apex at the centre. */
+function hipRoof(w: number, d: number, h: number, yBottom: number, color: number): THREE.Mesh {
+  const roof = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 1, h, 4), toonMat(color));
+  roof.rotation.y = Math.PI / 4;
+  roof.scale.set(w / Math.SQRT2, 1, d / Math.SQRT2);
+  roof.position.y = yBottom + h / 2;
+  return roof;
+}
+
+/**
+ * Recognizable Pokémon Center — cream hall, red hip roof, white cross, glass front
+ * doors. Used as the everywhere-safe procedural building (e.g. the GLB is disabled
+ * on mobile to protect the GPU), so the Center is never an unmarked grey box.
+ * Front faces +Z toward the street.
+ */
+export function makePokemonCenter(width: number, depth: number): THREE.Group {
+  const g = new THREE.Group();
+  const h = Math.max(2.6, Math.min(3.8, Math.min(width, depth) * 0.7));
+  const frontZ = depth / 2;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(width, h, depth), toonMat(0xf4ead6));
+  body.position.y = h / 2; g.add(body);
+  g.add(hipRoof(width + 0.7, depth + 0.7, Math.min(1.5, width * 0.35), h, 0xcc2a3a));
+  // White cross on the facade.
+  const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.0, 0.14), toonMat(0xffffff));
+  crossV.position.set(0, h * 0.62, frontZ + 0.08); g.add(crossV);
+  const crossH = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.34, 0.14), toonMat(0xffffff));
+  crossH.position.set(0, h * 0.62, frontZ + 0.08); g.add(crossH);
+  // Glass doors + side windows.
+  const door = new THREE.Mesh(new THREE.BoxGeometry(Math.min(1.6, width * 0.28), h * 0.42, 0.12), toonMat(0x6b4a28));
+  door.position.set(0, h * 0.21, frontZ + 0.06); g.add(door);
+  for (const sx of [-width * 0.3, width * 0.3]) {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(width * 0.18, h * 0.24, 0.1), toonMat(0x88ccff));
+    win.position.set(sx, h * 0.5, frontZ + 0.06); g.add(win);
+  }
+  return g;
+}
+
+/**
+ * Recognizable Poké Mart — cream hall, blue hip roof, yellow signboard, glass doors.
+ * Everywhere-safe procedural counterpart to the Mart GLB. Front faces +Z.
+ */
+export function makePokeMart(width: number, depth: number): THREE.Group {
+  const g = new THREE.Group();
+  const h = Math.max(2.6, Math.min(3.8, Math.min(width, depth) * 0.7));
+  const frontZ = depth / 2;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(width, h, depth), toonMat(0xeae0cc));
+  body.position.y = h / 2; g.add(body);
+  g.add(hipRoof(width + 0.7, depth + 0.7, Math.min(1.5, width * 0.35), h, 0x2a6aaa));
+  // Yellow signboard band across the top of the facade.
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(width * 0.6, 0.5, 0.12), toonMat(0xffe44e));
+  sign.position.set(0, h * 0.78, frontZ + 0.08); g.add(sign);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(Math.min(1.6, width * 0.28), h * 0.42, 0.12), toonMat(0x6b4a28));
+  door.position.set(0, h * 0.21, frontZ + 0.06); g.add(door);
+  for (const sx of [-width * 0.3, width * 0.3]) {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(width * 0.18, h * 0.24, 0.1), toonMat(0x88ccff));
+    win.position.set(sx, h * 0.5, frontZ + 0.06); g.add(win);
+  }
   return g;
 }
 

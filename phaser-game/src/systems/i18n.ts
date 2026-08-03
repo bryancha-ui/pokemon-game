@@ -6,9 +6,8 @@ import { KO_ABILITIES } from '../data/ko_abilities';
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
 export const POKE_KR: Record<string, string> = {
   // Official Pokémon used by story trainers but not listed in the custom dex.
-  houndoom: '헬가', weavile: '포푸니라', sharpedo: '샤크니아',
-  // 우두머리 (boss) 어사대 mission threats — official species fought as wild bosses.
-  gyarados: '갸라도스', steelix: '강철톤', gengar: '팬텀', beartic: '툰베어',
+  // (Most borrowed official species are covered by OFFICIAL_POKE_KR below.)
+  houndoom: '헬가',
 
   bosongnun: '보송눈', snoqueen: '스노퀸', kkaakdang: '까악단',
   onnurian: '학동자', onnujang: '화투루미', thanatoat: '두루광',
@@ -210,30 +209,83 @@ export function t(en: string, ko?: string): string {
 
 /** Look up an English string in the Korean dictionary. Unmapped strings (and English
  *  mode) return the original unchanged, so callers can wrap freely without risk. */
-// Reverse index: a Pokémon's English display name (lower-cased) → its Korean name.
-// Battle UIs only have the English `data.name` (often upper-cased), so we match
-// case-insensitively and fall back to the original for species without a KO name.
+// Korean names for the OFFICIAL PokeAPI species the game fields (trainer teams and
+// wild encounters). PokeAPI's battle `name` is a lower-hyphen slug (e.g. "graveler",
+// "mr-mime", "farfetchd"), while these keys are the localized display names, so both
+// sides are normalized (strip non-alphanumerics) before matching. This makes every
+// borrowed official Pokémon read in Korean offline, without a per-species fetch.
+const OFFICIAL_POKE_KR: Record<string, string> = {
+  'Abomasnow': '눈설왕', 'Absol': '앱솔', 'Aggron': '보스로라', 'Altaria': '파비코리',
+  'Aurorus': '아마루르가', 'Azumarill': '마릴리', 'Banette': '다크펫', 'Basculegion': '대쓰여너',
+  'Bastiodon': '바리톱스', 'Beartic': '툰베어', 'Bellsprout': '모다피', 'Bibarel': '비버통',
+  'Bisharp': '절각참', 'Boldore': '암트르', 'Bouffalant': '버프론', 'Braviary': '워글',
+  'Bronzong': '동탁군', 'Bronzor': '동미러', 'Budew': '꼬몽울', 'Caterpie': '캐터피',
+  'Chimecho': '치렁', 'Clefairy': '삐삐', 'Cloyster': '파르셀', 'Conkeldurr': '노보청',
+  'Corsola': '코산호', 'Cryogonal': '프리지오', 'Cubchoo': '코고미', 'Delibird': '딜리버드',
+  'Ditto': '메타몽', 'Dragonair': '신뇽', 'Dragonite': '망나뇽', 'Drapion': '드래피온',
+  'Dratini': '미뇽', 'Drifblim': '둥실라이드', 'Drifloon': '흔들풍손', 'Drilbur': '두더류',
+  'Dugtrio': '닥트리오', 'Dusclops': '미라몽', 'Duskull': '해골몽', 'Empoleon': '엠페르트',
+  'Enamorus': '러브로스', 'Espeon': '에브이', 'Excadrill': '몰드류', 'Farfetch’d': '파오리',
+  'Flygon': '플라이곤', 'Froslass': '눈여아', 'Gallade': '엘레이드', 'Garchomp': '한카리아스',
+  'Gardevoir': '가디안', 'Gengar': '팬텀', 'Geodude': '꼬마돌', 'Gigalith': '기가이어스',
+  'Glaceon': '글레이시아', 'Glalie': '얼음귀신', 'Gligar': '글라이거', 'Gliscor': '글라이온',
+  'Golbat': '골뱃', 'Goldeen': '콘치', 'Golduck': '골덕', 'Golem': '딱구리',
+  'Goodra': '미끄래곤', 'Graveler': '데구리', 'Gyarados': '갸라도스', 'Hariyama': '하리뭉',
+  'Haunter': '고우스트', 'Hawlucha': '루차불', 'Haxorus': '액스라이즈', 'Hitmonlee': '시라소몬',
+  'Hitmontop': '카포에라', 'Honchkrow': '돈크로우', 'Hoothoot': '부우부', 'Houndoom': '헬가',
+  'Houndour': '델빌', 'Hydreigon': '삼삼드래', 'Jellicent': '탱탱겔', 'Kakuna': '딱충이',
+  'Kingdra': '킹드라', 'Krabby': '크랩', 'Krookodile': '악비아르', 'Lairon': '갱도라',
+  'Lanturn': '랜턴', 'Lapras': '라프라스', 'Larvitar': '애버라스', 'Latios': '라티오스',
+  'Liepard': '레파르다스', 'Linoone': '직구리', 'Lucario': '루카리오', 'Ludicolo': '로파파',
+  'Machamp': '괴력몬', 'Machoke': '근육몬', 'Machop': '알통몬', 'Magikarp': '잉어킹',
+  'Magmar': '마그마', 'Magnemite': '코일', 'Magneton': '레어코일', 'Magnezone': '자포코일',
+  'Mamoswine': '맘모꾸리', 'Mandibuzz': '버랜지나', 'Mankey': '망키', 'Mantine': '만타인',
+  'Mantyke': '타만타', 'Mareep': '메리프', 'Medicham': '요가램', 'Metagross': '메타그로스',
+  'Metapod': '단데기', 'Milotic': '밀로틱', 'Miltank': '밀탱크', 'Misdreavus': '무우마',
+  'Mismagius': '무우마직', 'Murkrow': '니로우', 'Noctowl': '야부엉', 'Octillery': '대포무노',
+  'Oddish': '뚜벅쵸', 'Onix': '롱스톤', 'Overqwil': '장침바루', 'Pelipper': '패리퍼',
+  'Pidgey': '구구', 'Piloswine': '메꾸리', 'Poliwrath': '강챙이', 'Poochyena': '포챠나',
+  'Primarina': '누리레느', 'Primeape': '성원숭', 'Quagsire': '누오', 'Quaquaval': '웨이니발',
+  'Quaxly': '꾸왁스', 'Quaxwell': '아꾸왁', 'Qwilfish': '침바루', 'Rattata': '꼬렛',
+  'Rayquaza': '레쿠쟈', 'Rhydon': '코뿌리', 'Rhyhorn': '뿔카노', 'Rhyperior': '거대코뿌리',
+  'Riolu': '리오르', 'Roselia': '로젤리아', 'Roserade': '로즈레이드', 'Rotom': '로토무',
+  'Sableye': '깜까미', 'Salamence': '보만다', 'Sandshrew': '모래두지', 'Sandslash': '고지',
+  'Sawsbuck': '바라철록', 'Scrafty': '곤율거니', 'Seaking': '왕콘치', 'Sentret': '꼬리선',
+  'Sharpedo': '샤크니아', 'Shellder': '셀러', 'Shuppet': '어둠대신', 'Skarmory': '무장조',
+  'Skeledirge': '라우드본', 'Skuntank': '스컹탱크', 'Slowbro': '야도란', 'Slugma': '마그마그',
+  'Sneasel': '포푸니', 'Sneasler': '포푸니크', 'Snorunt': '눈꼬마', 'Snover': '눈쓰개',
+  'Spearow': '깨비참', 'Stantler': '노라키', 'Staraptor': '찌르호크', 'Starmie': '아쿠스타',
+  'Staryu': '별가사리', 'Steelix': '강철톤', 'Stoutland': '바랜드', 'Sudowoodo': '꼬지모',
+  'Sunflora': '해루미', 'Swablu': '파비코', 'Swellow': '스왈로', 'Swinub': '꾸꾸리',
+  'Tangrowth': '덩쿠림보', 'Tauros': '켄타로스', 'Tentacool': '왕눈해', 'Tentacruel': '독파리',
+  'Torterra': '토대부기', 'Toxicroak': '독개굴', 'Tyranitar': '마기라스', 'Umbreon': '블래키',
+  'Ursaluna': '다투곰', 'Ursaring': '링곰', 'Vanilluxe': '배바닐라', 'Vibrava': '비브라바',
+  'Wailmer': '고래왕자', 'Weavile': '포푸니라', 'Weedle': '뿔충이', 'Whiscash': '메깅',
+  'Wingull': '갈모매', 'Woobat': '또르박쥐', 'Yanmega': '메가자리', 'Zubat': '주뱃',
+};
+
+/** Normalize a species name for matching: lower-case, drop spaces/punctuation so a
+ *  PokeAPI slug ("mr-mime") and a display name ("Mr. Mime") collapse to one key. */
+const normPoke = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Reverse index: a Pokémon's English name (any case/format) → its Korean name.
+// Battle UIs only have the English `data.name` (a slug, often upper-cased), so we
+// match on the normalized form and fall back to the original for unmapped species.
 const EN_TO_KR_POKE: Record<string, string> = (() => {
   const map: Record<string, string> = {};
   for (const e of POKEDEX) {
     const kr = POKE_KR[e.key];
-    if (kr) map[e.name.toLowerCase()] = kr;
+    if (kr) map[normPoke(e.name)] = kr;
   }
-  // PokeAPI-backed species do not have entries in the custom regional dex.
-  map.houndoom = POKE_KR.houndoom;
-  map.weavile = POKE_KR.weavile;
-  map.sharpedo = POKE_KR.sharpedo;
-  map.gyarados = POKE_KR.gyarados;
-  map.steelix = POKE_KR.steelix;
-  map.gengar = POKE_KR.gengar;
-  map.beartic = POKE_KR.beartic;
+  // Official PokeAPI-backed species (not in the custom regional dex).
+  for (const [en, kr] of Object.entries(OFFICIAL_POKE_KR)) map[normPoke(en)] = kr;
   return map;
 })();
 
-/** Translate a Pokémon's English display name (any case) to Korean, else return it. */
+/** Translate a Pokémon's English display name (any case/format) to Korean, else return it. */
 export function pokeNameEn(name: string): string {
   if (currentLang !== 'ko' || typeof name !== 'string') return name;
-  return EN_TO_KR_POKE[name.toLowerCase()] ?? name;
+  return EN_TO_KR_POKE[normPoke(name)] ?? name;
 }
 
 // Case-insensitive speaker lookup for trainer nameplates / battle intros.

@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeHanokPalace, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
+  makeRocks, makeHanokPalace, makeNosdanHQ, makePalmTree, makePokemonCenter, makePokeMart, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
   type StoreFixtureKind,
 } from './Props';
 
 /** A decorative procedural prop the scene pins to an exact tile. */
 export interface PropPlot {
   x: number; y: number;
-  kind: 'pine' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall' | 'waterfall' | StoreFixtureKind;
+  kind: 'pine' | 'palm' | 'lantern' | 'icestatue' | 'rail' | 'obelisk' | 'statue' | 'arch' | 'pot' | 'streetlamp' | 'minecart' | 'cherry' | 'stall' | 'waterfall' | StoreFixtureKind;
   scale?: number; rot?: number;
   len?: number;   // 'rail' span in tiles (laid along X, rotated by `rot`)
   w?: number; d?: number; color?: number; // authored interior-fixture footprint/theme
@@ -928,8 +928,19 @@ export function buildTerrain(
       continue;
     }
     // A named remote GLB may be intentionally disabled on a memory-constrained
-    // device (or absent from the registry). Preserve the building as a local
-    // procedural 3D extrusion instead of leaving an empty/black footprint.
+    // device (mobile) or absent from the registry. Pokémon Centers and Marts get a
+    // purpose-built procedural exterior so they stay recognizable (red-cross / blue
+    // sign) instead of collapsing to a generic grey box.
+    if (b.model === 'pokecenter' || b.model === 'mart') {
+      const holder = new THREE.Group();
+      holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+      holder.add(b.model === 'pokecenter' ? makePokemonCenter(b.w, b.d) : makePokeMart(b.w, b.d));
+      group.add(holder);
+      blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+      continue;
+    }
+    // Any other named remote GLB: preserve the building as a local procedural 3D
+    // extrusion instead of leaving an empty/black footprint.
     if (b.model) {
       const fallback = new THREE.Group();
       fallback.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
@@ -993,6 +1004,7 @@ export function buildTerrain(
     const storeFixture = p.kind.startsWith('store-');
     const obj = storeFixture ? makeStoreFixture(p.kind as StoreFixtureKind, p.w ?? 1, p.d ?? 1, p.color)
       : p.kind === 'pine' ? makePineTree()
+      : p.kind === 'palm' ? makePalmTree(p.x * 7 + p.y * 13)
       : p.kind === 'lantern' ? makeStoneLantern()
         : p.kind === 'rail' ? makeRailTrack(p.len ?? 4)
           : p.kind === 'obelisk' ? makeGrandObelisk()

@@ -29,6 +29,7 @@ export interface EosaCity {
   water?: EosaWater;          // a Surf-only sea (e.g. Parangpo's West Sea, where the Gyarados lurks)
   trainers?: EosaTrainer[];   // roadside trainers to battle (e.g. on the way to the shore)
   npcs?: EosaNpc[];           // ambient townsfolk who chat when talked to (fills out a town)
+  trees?: { col: number; row: number; kind?: 'palm' | 'pine' | 'cherry'; scale?: number }[]; // designed 3D trees (e.g. Parangpo's seaside palms)
   size?: { cols: number; rows: number };   // enlarge the city beyond the 28×20 default
   landmarks?: EosaLandmark[]; // extra decorative structures (docks, lighthouse, monuments…)
   buildingModels?: string[];  // named 3D models to cycle for this city's generic building landmarks (else free CC0 assets) — e.g. Binghagwan reuses the snowy Seorae models
@@ -161,10 +162,14 @@ export abstract class EosaCityScene extends Phaser.Scene {
   }
   /** Rail landmarks (e.g. Binghagwan's line to the 미지의 대륙) become real 3D track —
    *  gravel bed, sleepers and steel rails — laid along the landmark's span. */
-  public get propPlots(): { x: number; y: number; kind: 'rail'; len: number }[] {
-    return (this.cfg.landmarks ?? [])
+  public get propPlots(): ({ x: number; y: number; kind: 'rail'; len: number }
+    | { x: number; y: number; kind: 'palm' | 'pine' | 'cherry'; scale?: number })[] {
+    const rails = (this.cfg.landmarks ?? [])
       .filter(l => l.kind === 'rail' && l.w > 0)
       .map(l => ({ x: l.col + l.w / 2 - 0.5, y: l.row, kind: 'rail' as const, len: l.w }));
+    const trees = (this.cfg.trees ?? [])
+      .map(t => ({ x: t.col, y: t.row, kind: (t.kind ?? 'palm') as 'palm' | 'pine' | 'cherry', scale: t.scale }));
+    return [...rails, ...trees];
   }
   /** Landmark plots without a named model fall back to free CC0 city buildings. */
   public freeBuildings = true;
