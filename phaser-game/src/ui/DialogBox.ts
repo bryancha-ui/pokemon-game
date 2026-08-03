@@ -16,6 +16,7 @@ export class DialogBox {
   private charIdx = 0;
   private typeTimer?: Phaser.Time.TimerEvent;
   private arrowTween?: Phaser.Tweens.Tween;
+  private maxTextLines = 4;
 
   private inChoice = false;
   private choiceIdx = 0;
@@ -30,30 +31,34 @@ export class DialogBox {
     // fully visible at the bottom of the screen (see applyZoomCompensation()).
     // Box + font are sized large so dialogue stays legible when the 16:9 canvas is
     // scaled down to fit a phone's narrow top pane.
-    // The global screen-ratio font multiplier (fontScaleForScene) grows the text
-    // below (its fontSize is auto-scaled at creation), so the box and the choice
-    // panel must grow with it or the enlarged text would overflow / clip.
+    // The global screen-ratio font multiplier grows the text below. Keep the
+    // panels compact instead of multiplying their dimensions by the same amount:
+    // long enlarged lines are paginated in show() rather than widening the UI.
     const S = fontScaleForScene(scene);
-    const boxH = Math.round(148 * S);
-    const boxTop = H - boxH - 4;
-    this.bg = this.makePanel(8, boxTop, W - 16, boxH, 18).setVisible(false);
+    const boxX = Math.max(16, Math.round(W * 0.055));
+    const boxW = W - boxX * 2;
+    const boxH = Math.min(Math.round(148 + 68 * (S - 1)), Math.round(H * 0.3));
+    const boxTop = H - boxH - 12;
+    const textInset = Math.round(16 + 4 * (S - 1));
+    this.maxTextLines = Math.max(2, Math.floor((boxH - 24) / (30 * S)));
+    this.bg = this.makePanel(boxX, boxTop, boxW, boxH, 18).setVisible(false);
 
-    // fontSize/lineSpacing are auto-scaled by the global hook; only the box geometry
-    // (which the hook can't see) needs the explicit S factor.
-    this.msgText = scene.add.text(20, boxTop + Math.round(6 * S), '', {
-      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8,
+    this.msgText = scene.add.text(boxX + textInset, boxTop + Math.round(8 + 3 * (S - 1)), '', {
+      fontSize: '22px', color: '#ffffff',
+      wordWrap: { width: boxW - textInset * 2, useAdvancedWrap: true }, lineSpacing: 8,
     }).setVisible(false);
 
-    this.arrow = scene.add.text(W - Math.round(28 * S), H - Math.round(24 * S), '▼', { fontSize: '18px', color: '#ffe44e' })
+    this.arrow = scene.add.text(boxX + boxW - Math.round(22 + 6 * (S - 1)), H - 30, '▼', { fontSize: '18px', color: '#ffe44e' })
       .setVisible(false);
 
-    const chW = Math.round(150 * S), chH = Math.round(84 * S);
-    const chX = W - chW - 15, chY = boxTop - chH - 6;
+    const chW = Math.min(Math.round(150 * S), 210);
+    const chH = Math.min(Math.round(84 * S), 124);
+    const chX = boxX + boxW - chW, chY = boxTop - chH - 8;
     this.choiceBg = this.makePanel(chX, chY, chW, chH, 14).setVisible(false);
 
     this.choiceItems = [
-      scene.add.text(chX + Math.round(37 * S), chY + Math.round(14 * S), `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setVisible(false),
-      scene.add.text(chX + Math.round(37 * S), chY + Math.round(44 * S), `  ${tr('NO')}`,  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
+      scene.add.text(chX + chW / 2, chY + chH * 0.27, `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setOrigin(0.5).setVisible(false),
+      scene.add.text(chX + chW / 2, chY + chH * 0.73, `  ${tr('NO')}`,  { fontSize: '22px', color: '#aaaaaa' }).setOrigin(0.5).setVisible(false),
     ];
 
     this.root = scene.add.container(0, 0, [
@@ -97,7 +102,9 @@ export class DialogBox {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   show(lines: string[], onDone?: () => void) {
-    this.queue = lines.map(tr);   // auto-translate any line present in the KO dictionary
+    // Auto-translate first, then split only at the renderer's real wrap points.
+    // This keeps a larger font inside the same compact panel without clipping.
+    this.queue = lines.map(tr).flatMap(line => this.paginate(line));
     this.onDone = onDone;
     this.inChoice = false;
     this.bg.setVisible(true);
@@ -155,6 +162,16 @@ export class DialogBox {
   isInChoice() { return this.inChoice; }
 
   // ── Private ────────────────────────────────────────────────────────────────
+
+  private paginate(line: string): string[] {
+    const wrapped = this.msgText.getWrappedText(line);
+    if (wrapped.length <= this.maxTextLines) return [line];
+    const pages: string[] = [];
+    for (let i = 0; i < wrapped.length; i += this.maxTextLines) {
+      pages.push(wrapped.slice(i, i + this.maxTextLines).join('\n'));
+    }
+    return pages;
+  }
 
   private typeNext() {
     this.hideArrow();
