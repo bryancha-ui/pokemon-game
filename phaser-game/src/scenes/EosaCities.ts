@@ -116,7 +116,7 @@ const WONSAN: EosaCity = {
     { key: 'wonsan-disciple-1', name: 'Disciple Baekho', col: 5, row: 13, color: 0xcc7a3a, label: 'Disciple\n① Pier',
       line: 'Master Haegang sent you? Then you\'ll start with me — down here by the pier. Come on!',
       pokemon: JSON.stringify([{ id: 62, level: 67 }, { id: 297, level: 68 }]), expPool: 2000 },
-    { key: 'wonsan-disciple-2', name: 'Disciple Miru', col: 22, row: 6, color: 0xba5a3a, label: 'Disciple\n② Ground',
+    { key: 'wonsan-disciple-2', name: 'Disciple Miru', col: 22, row: 13, color: 0xba5a3a, label: 'Disciple\n② Ground',
       line: 'Still on your feet after Baekho? Good. The training ground is MY dojo. Show me your stance!',
       pokemon: JSON.stringify([{ id: 68, level: 68 }, { id: 447, level: 68 }]), expPool: 2100 },
     // Disciple ③ waits at the far end of the gauntlet — down at Kalma Beach (WonsanBeachScene).
