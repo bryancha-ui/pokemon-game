@@ -62,16 +62,30 @@ const btnBase =
 
 /** One activation path shared by iOS Safari and Android browsers. Pointer
  * events are primary; click/touch are guarded fallbacks and never double-fire. */
+// Time (ms) of the last pointerdown/touchstart that activated ANY deck button.
+// A `click` fires at the END of the same finger contact — and by then a button
+// tap may have swapped the deck to a new layer (FIGHT → the move buttons), so the
+// ghost click would land on whatever button is now under the finger and fire it
+// too. Suppressing clicks that trail a recent pointerdown fixes that. It's global
+// (shared across buttons) because the pointerdown and the ghost click hit
+// DIFFERENT elements. pointerdown still activates instantly, so taps stay snappy.
+let lastPointerActivation = -Infinity;
+
 function bindTap(el: HTMLElement, callback: () => void): void {
   let lastActivation = -Infinity;
   const activate = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
     const now = performance.now();
+    // Ghost-click guard: a click right after a pointerdown is the same tap. The
+    // pointerdown already handled it, so ignore the trailing click (which may have
+    // fallen on a just-swapped-in button).
+    if (e.type === 'click' && now - lastPointerActivation < 700) return;
     // A long press can delay Safari's follow-up click; keep a full second of
-    // dedupe so one finger contact can never become two battle commands.
+    // per-button dedupe so one finger contact can never become two of the SAME command.
     if (now - lastActivation < 1000) return;
     lastActivation = now;
+    if (e.type !== 'click') lastPointerActivation = now;
     callback();
   };
   el.addEventListener('pointerdown', activate);
