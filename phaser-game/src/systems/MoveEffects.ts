@@ -144,6 +144,16 @@ export function pendingMoveFor(mon: Pokemon): Move | undefined {
 
 export function isCharging(mon: Pokemon): boolean { return charging.has(mon); }
 
+/** True if using `move` now would BEGIN a two-turn move's charge (dig/fly/charge),
+ *  as opposed to releasing a charge already in progress. The battle flow uses this
+ *  to let the charging side act alone on the charge turn (the opponent waits), so a
+ *  2-turn move costs the foe only one action instead of a free extra hit. */
+export function willChargeThisTurn(mon: Pokemon, move: Move): boolean {
+  const key = moveKey(move.data.name);
+  if (charging.get(mon)?.key === key) return false;   // this is the release turn
+  return !!specFor(move.data).twoTurn;
+}
+
 function beginMove(mon: Pokemon, move: Move): { phase: 'normal' | 'charge' | 'release'; mode?: TwoTurnMode; consumePP: boolean } {
   const key = moveKey(move.data.name);
   const spec = specFor(move.data);

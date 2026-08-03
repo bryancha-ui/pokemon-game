@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle, TRACKS } from '../systems/Music';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
@@ -468,7 +468,13 @@ export class RivalBattleScene extends Phaser.Scene {
     const availableMoves = this.rival.moves.filter(m => m.pp > 0);
     const rivalMove = pendingMoveFor(this.rival) ?? (availableMoves.length > 0
       ? this.pickRivalMove(availableMoves) : this.rival.moves[0]);
-    const playerFirst = actsBefore(this.player, playerMove, this.rival, rivalMove);
+    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
+    // move resolves and the opponent acts once on the RELEASE turn.
+    if (willChargeThisTurn(this.player, playerMove)) {
+      this.doPlayerMove(playerMove, () => this.playerAction());
+      return;
+    }
+    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.rival, rivalMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doRivalMove(() => this.playerAction(), rivalMove));
     } else {

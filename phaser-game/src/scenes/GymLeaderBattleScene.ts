@@ -13,7 +13,7 @@ import { ITEMS, Inventory, itemName, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
-import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { tr, pokeNameEn} from '../systems/i18n';
@@ -483,7 +483,13 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const avail = this.enemy.moves.filter(m => m.pp > 0);
     const enemyMove = pendingMoveFor(this.enemy)
       ?? (avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0]);
-    const playerFirst = actsBefore(this.player, move, this.enemy, enemyMove);
+    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
+    // move resolves and the opponent acts once on the RELEASE turn.
+    if (willChargeThisTurn(this.player, move)) {
+      this.doPlayerMove(move, () => this.playerAction());
+      return;
+    }
+    const playerFirst = isCharging(this.player) || actsBefore(this.player, move, this.enemy, enemyMove);
     if (playerFirst) {
       this.doPlayerMove(move, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {

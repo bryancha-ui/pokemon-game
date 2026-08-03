@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { pushBgm, popBgm } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move } from '../battle/Pokemon';
@@ -711,7 +711,13 @@ export class WildBattleScene extends Phaser.Scene {
     const available = this.wild.moves.filter(m => m.pp > 0);
     const wildMove = pendingMoveFor(this.wild)
       ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0]);
-    const playerFirst = actsBefore(this.player, playerMove, this.wild, wildMove);
+    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
+    // move resolves and the opponent acts once on the RELEASE turn.
+    if (willChargeThisTurn(this.player, playerMove)) {
+      this.doPlayerMove(playerMove, () => this.playerAction());
+      return;
+    }
+    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.wild, wildMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction(), wildMove));
     } else {

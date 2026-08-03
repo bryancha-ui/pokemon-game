@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { expMultiplierFor } from '../data/NorthernRegion';
 import { deckShowMoves, deckHideMoves } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move, MoveData } from '../battle/Pokemon';
@@ -705,7 +705,16 @@ export class TrainerBattleScene extends Phaser.Scene {
     const enemyMoves = this.enemy.moves.filter(m => m.pp > 0);
     const enemyMove = pendingMoveFor(this.enemy)
       ?? this.pickEnemyMove(enemyMoves.length ? enemyMoves : this.enemy.moves);
-    const playerFirst = actsBefore(this.player, playerMove, this.enemy, enemyMove);
+    // A two-turn move's CHARGE turn (Dig/Fly/Solar Beam) is the charging side's
+    // ALONE — the opponent waits, so it isn't punished by a free extra hit. The move
+    // resolves and the opponent acts on the RELEASE turn (auto-run via playerAction).
+    if (willChargeThisTurn(this.player, playerMove)) {
+      this.doPlayerMove(playerMove, () => this.playerAction());
+      return;
+    }
+    // On the player's RELEASE turn the Pokémon emerges and strikes first, so the
+    // enemy then acts once against a now-surfaced target (it can land normally).
+    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.enemy, enemyMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {
