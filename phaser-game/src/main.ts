@@ -139,6 +139,7 @@ import { FogboundManorScene } from './scenes/FogboundManorScene';
 import { HamhungNaengmyeonScene } from './scenes/interior/HamhungNaengmyeonScene';
 import { NorthernBuildingScene } from './scenes/interior/NorthernBuildingScene';
 import { setupMobileShell } from './systems/TouchControls';
+import { installFontScaling } from './systems/UiScale';
 import { initI18n } from './systems/i18n';
 import { PokemonFxPlugin } from './systems/PokemonFx';
 import { BreedingTrackerPlugin } from './systems/BreedingTracker';
@@ -154,6 +155,11 @@ await SaveManager.bootstrapDurableStorage();
 // On touch devices, split the page DS-style (game on top, control deck below) and
 // mount the game into the top pane so the controls never cover it. ?touch=1 forces it.
 const shell = setupMobileShell(new URLSearchParams(location.search).has('touch'));
+
+// Small phones scale the 1280×720 canvas way down, so double every on-canvas font
+// on touch devices to keep text/buttons legible and tappable. Must run before the
+// game (and its scenes) are created. Desktop is unaffected.
+installFontScaling(shell.mobile ? 2 : 1);
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

@@ -115,7 +115,7 @@ const BUILDINGS: Bldg[] = [
 ];
 const CHIEF = { col: 13, row: 9 };   // stands in the 어사대 Hall doorway (door drawn at col 13, rows 8–9)
 
-function buildMap(cols: number, rows: number): Tile[][] {
+function buildMap(cols: number, rows: number, skipDefaultTrees = false): Tile[][] {
   const m: Tile[][] = Array.from({ length: rows }, () => Array(cols).fill(T.GROUND) as Tile[]);
   const fill = (r1: number, r2: number, c1: number, c2: number, t: Tile) => {
     for (let r = r1; r < r2; r++) for (let c = c1; c < c2; c++) if (r>=0&&r<rows&&c>=0&&c<cols) m[r][c] = t;
@@ -126,7 +126,10 @@ function buildMap(cols: number, rows: number): Tile[][] {
   for (const b of BUILDINGS) { fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING); set(b.y + b.h, b.doorCol, T.ROAD); }
   // themed accents + greenery
   for (const [r,c] of [[13,4],[14,7],[16,5],[13,22],[15,24],[17,21]] as [number,number][]) set(r, c, T.ACCENT);
-  for (const [r,c] of [[3,2],[3,25],[16,2],[16,25],[12,9],[12,18]] as [number,number][]) set(r, c, T.TREE);
+  // Cities that design their own 3D trees (cfg.trees, e.g. Parangpo's palms) skip
+  // these flat 2D tree tiles so they don't leave a painted blob on the 3D ground.
+  if (!skipDefaultTrees)
+    for (const [r,c] of [[3,2],[3,25],[16,2],[16,25],[12,9],[12,18]] as [number,number][]) set(r, c, T.TREE);
   for (const [r,c] of [[12,11],[12,16],[15,12],[15,16]] as [number,number][]) set(r, c, T.FLOWER);
   return m;
 }
@@ -209,7 +212,7 @@ export abstract class EosaCityScene extends Phaser.Scene {
     this.spawnPx = this.px; this.spawnPy = this.py;
     this.spawnGuard = true; this.time.delayedCall(500, () => { this.spawnGuard = false; });
 
-    this.map = buildMap(this.cols, this.rows);
+    this.map = buildMap(this.cols, this.rows, !!cfg.trees);
     this.carveWater();
     this.carveSidePath();
     this.applyLandmarkSolids();

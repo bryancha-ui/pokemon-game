@@ -3,6 +3,7 @@ import { tr } from '../systems/i18n';
 import { REGION_NODES, RegionNode, nodeForScene, visitedNodeIds, FLY_MOVE } from '../data/RegionMap';
 import { PartySystem } from '../systems/PartySystem';
 import { canEnterPyeongseong } from '../data/Mapae';
+import { stopBgm } from '../systems/Music';
 
 // ── Region map (Town Map) ──────────────────────────────────────────────────────
 // A full-screen, view-anywhere map of the Onnuri region. Shows every place, a
@@ -317,6 +318,12 @@ export class RegionMapScene extends Phaser.Scene {
         const k = s.scene.key;
         if (k !== 'RegionMapScene' && k !== node.scene) this.scene.stop(k);
       }
+      // Silence the departure area's BGM before the destination loads. Stopping the
+      // source scene does NOT stop its (global) sound, and a paused/orphaned scene can
+      // leave its track playing — e.g. the Pokémon League theme bleeding into Parangpo.
+      // stopBgm clears the manager's tracked track; stopAll also catches any orphan.
+      stopBgm(this);
+      this.game.sound.stopAll();
       this.scene.start(node.scene);   // shuts down this map scene, starts the destination
     });
   }

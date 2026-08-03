@@ -232,7 +232,9 @@ function updateUnit(): void {
   // The old height / 12 calculation reduced D-pad cells to about 30px on a
   // short 16:9 phone; the analog disc now keeps the whole drag range usable.
   // The complete layout is 17.5u wide and 9.4u tall, so it still cannot overflow.
-  const u = Math.max(6, Math.min(72, Math.min(r.width / 17.5, r.height / 9.4)));
+  // Larger thumb/button targets for small phones: a higher floor (so tiny screens
+  // still get chunky buttons) and a higher cap, keeping the 17.5u×9.4u layout.
+  const u = Math.max(9, Math.min(96, Math.min(r.width / 17.5, r.height / 9.4)));
   deckEl.style.setProperty('--u', u.toFixed(2) + 'px');
 }
 
@@ -272,7 +274,7 @@ export function setupMobileShell(force = false): { parent: HTMLElement | undefin
   // The control deck is a capped minority of the screen (always shorter than the
   // game pane), so the playfield stays dominant.
   deckEl.style.cssText =
-    'position:relative;flex:0 0 42vh;height:42vh;max-height:42vh;width:100vw;min-height:0;--u:24px;' +
+    'position:relative;flex:0 0 47vh;height:47vh;max-height:47vh;width:100vw;min-height:0;--u:24px;' +
     'background:linear-gradient(#141a2e,#0b0f1e);border-top:3px solid #33406a;' +
     'box-shadow:inset 0 3px 8px rgba(0,0,0,0.5);touch-action:none;';
 

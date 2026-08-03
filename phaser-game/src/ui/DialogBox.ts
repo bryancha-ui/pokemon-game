@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { tr } from '../systems/i18n';
+import { fontScale } from '../systems/UiScale';
 
 export class DialogBox {
   private bg!: Phaser.GameObjects.Graphics;
@@ -29,20 +30,28 @@ export class DialogBox {
     // fully visible at the bottom of the screen (see applyZoomCompensation()).
     // Box + font are sized large so dialogue stays legible when the 16:9 canvas is
     // scaled down to fit a phone's narrow top pane.
-    this.bg = this.makePanel(8, H - 152, W - 16, 148, 18).setVisible(false);
+    // The global mobile font multiplier (fontScale) grows the text below (its
+    // fontSize is auto-scaled at creation), so the box, line spacing and the choice
+    // panel must grow with it or the doubled text would overflow / clip.
+    const S = fontScale();
+    const boxH = Math.round(148 * S);
+    const boxTop = H - boxH - 4;
+    this.bg = this.makePanel(8, boxTop, W - 16, boxH, 18).setVisible(false);
 
-    this.msgText = scene.add.text(20, H - 146, '', {
-      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8,
+    this.msgText = scene.add.text(20, boxTop + Math.round(6 * S), '', {
+      fontSize: '22px', color: '#ffffff', wordWrap: { width: W - 40 }, lineSpacing: 8 * S,
     }).setVisible(false);
 
-    this.arrow = scene.add.text(W - 28, H - 24, '▼', { fontSize: '18px', color: '#ffe44e' })
+    this.arrow = scene.add.text(W - Math.round(28 * S), H - Math.round(24 * S), '▼', { fontSize: '18px', color: '#ffe44e' })
       .setVisible(false);
 
-    this.choiceBg = this.makePanel(W - 165, H - 238, 150, 84, 14).setVisible(false);
+    const chW = Math.round(150 * S), chH = Math.round(84 * S);
+    const chX = W - chW - 15, chY = boxTop - chH - 6;
+    this.choiceBg = this.makePanel(chX, chY, chW, chH, 14).setVisible(false);
 
     this.choiceItems = [
-      scene.add.text(W - 128, H - 224, `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setVisible(false),
-      scene.add.text(W - 128, H - 194, `  ${tr('NO')}`,  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
+      scene.add.text(chX + Math.round(37 * S), chY + Math.round(14 * S), `▶ ${tr('YES')}`, { fontSize: '22px', color: '#ffffff' }).setVisible(false),
+      scene.add.text(chX + Math.round(37 * S), chY + Math.round(44 * S), `  ${tr('NO')}`,  { fontSize: '22px', color: '#aaaaaa' }).setVisible(false),
     ];
 
     this.root = scene.add.container(0, 0, [
