@@ -15,7 +15,7 @@ export const KO_TYPES: Record<string, string> = {
 export const KO_SPEAKERS: Record<string, string> = {
   'Prof. Song': '송 박사', 'Professor Song': '송 박사', 'Prof. Kim': '김 박사',
   'Rival': '라이벌', 'Mom': '엄마', 'Nurse Joy': '조이 간호사', 'Mart Clerk': '마트 점원',
-  "Trainer's PC": '트레이너 PC', 'Ranger': '레인저', 'Ranger Sooyeon': '레인저 수연',
+  "Trainer's PC": '트레이너 PC', 'Ranger': '레인저', 'Ranger Sooyeon': '레인저 수연', 'Ranger Hyunwoo': '레인저 현우',
   'Byeoksan': '벽산', 'Leader Byeoksan': '관장 벽산', 'Champion Hwangeum': '챔피언 황금',
   'Taewang': '태왕', 'Sovereign Clemont': '군주 클레몽',
   '어사대장 Jinnok': '어사대장 진옥', '어사대장 Jito': '어사대장 지토',
@@ -2233,6 +2233,8 @@ export const KO_STRINGS: Record<string, string> = {
   'Let us see what your edge is made of.': '네 칼날이 무엇으로 벼려졌는지 보자.',
   'Rise to meet me — or be swept aside.': '일어서서 나와 맞서 — 아니면 휩쓸려 나가.',
   'Whether the vision holds is up to you. Come.': '환영이 버티는지는 네게 달렸어. 와라.',
+  'You made it. I watched your entire journey. The Jeju Summit — 나비할망 choosing you as her guardian. The tests, the battles, the growth.':
+    '해냈구나. 나는 네 여정을 전부 지켜봤어. 제주 정상 — 나비할망이 너를 수호자로 택하던 그 순간. 시련도, 배틀도, 성장도 전부.',
   "Eight gyms, one legendary moth, and you still climbed back up here. I became Champion three years ago and called it a fluke for a year. I don't take many battles seriously anymore.":
     '체육관 여덟 개, 전설의 나방 하나, 그런데도 넌 여기까지 다시 올라왔군. 나는 삼 년 전 챔피언이 됐고, 일 년은 그걸 요행이라 여겼지. 이젠 어지간한 배틀은 진지하게 임하지 않아.',
   "This one — I will. Show me everything you've become.": '이번만은 — 진지하게 임하겠다. 네가 되어온 모든 것을 보여봐.',

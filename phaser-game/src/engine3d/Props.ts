@@ -274,6 +274,94 @@ export function mixColor(a: number, b: number, t: number): number {
  *  It deliberately remains one uninterrupted building volume: dark inset
  *  walls, four bands of red windows, a central crimson gate and the two long
  *  faction banners are lifted directly from the painted version. */
+/**
+ * The Onnuri Pokémon League hall — a 3D reproduction of LeaguePlazaScene's painted
+ * hanok palace (drawPalace): a stone woldae platform with a central stair, a dark
+ * hall wall fronted by vermilion pillars, dancheong bands, gold-studded double
+ * doors, a gilt signboard, and two sweeping green roof tiers with ridge chimi.
+ * Built to the plot's own width/depth; front (doors) faces +Z toward the courtyard.
+ */
+export function makeHanokPalace(width: number, depth: number): THREE.Group {
+  const g = new THREE.Group();
+  const RED_WALL = 0x6e1f1a, PILLAR = 0xb23a2c, STONE = 0xd0c7b3, STONE_DK = 0xbcb29c;
+  const ROOF_LO = 0x33524a, ROOF_HI = 0x3a5e53, RIDGE = 0x223833, GOLD = 0xddb24a, DOOR = 0x241208;
+  const bodyH = Math.max(3.6, Math.min(5.4, width * 0.24));
+  const bodyD = depth * 0.72;
+  const frontZ = bodyD / 2;
+
+  // Stone platform (woldae) with a lower apron, the hall sits on top.
+  const woldaeH = 0.6;
+  const apron = new THREE.Mesh(new THREE.BoxGeometry(width + 1.6, 0.34, depth + 1.6), toonMat(STONE_DK));
+  apron.position.y = 0.17; g.add(apron);
+  const woldae = new THREE.Mesh(new THREE.BoxGeometry(width + 0.8, woldaeH, depth + 0.6), toonMat(STONE));
+  woldae.position.y = 0.34 + woldaeH / 2; g.add(woldae);
+  const platTop = 0.34 + woldaeH;
+  // Central staircase down the front.
+  for (let s = 0; s < 3; s++) {
+    const step = new THREE.Mesh(new THREE.BoxGeometry(2.6, platTop * (1 - s / 3), 0.5), toonMat(s % 2 ? STONE_DK : STONE));
+    const h = platTop * (1 - s / 3);
+    step.position.set(0, h / 2, depth / 2 + 0.3 + s * 0.5); g.add(step);
+  }
+
+  // Hall body — dark vermilion wall.
+  const body = new THREE.Mesh(new THREE.BoxGeometry(width, bodyH, bodyD), toonMat(RED_WALL));
+  body.position.y = platTop + bodyH / 2; g.add(body);
+
+  // Vermilion pillars across the front.
+  const nCol = 8;
+  for (let i = 0; i <= nCol; i++) {
+    const x = -width / 2 + (width * i) / nCol;
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.42, bodyH, 0.34), toonMat(PILLAR));
+    pillar.position.set(x, platTop + bodyH / 2, frontZ + 0.02); g.add(pillar);
+  }
+
+  // Dancheong band along the top of the wall (a strip of alternating colours).
+  const bandY = platTop + bodyH - 0.18;
+  for (const [seg, col] of [[0, 0x2b6ea8], [1, 0x2f9c5a], [2, 0xc7402f], [3, 0xe0b24a]] as [number, number][]) {
+    const segW = (width + 0.4) / 4;
+    const band = new THREE.Mesh(new THREE.BoxGeometry(segW, 0.28, 0.12), toonMat(col));
+    band.position.set(-((width + 0.4) / 2) + segW * (seg + 0.5), bandY, frontZ + 0.14); g.add(band);
+  }
+
+  // Gold-studded double doors at the centre front.
+  const doorH = Math.min(2.2, bodyH * 0.62), doorW = 1.9;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.2), toonMat(DOOR));
+  door.position.set(0, platTop + doorH / 2, frontZ + 0.12); g.add(door);
+  const studMat = toonMat(0xe0b24a);
+  for (let yy = 0; yy < 4; yy++) for (const sx of [-0.45, 0.45]) {
+    const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), studMat);
+    stud.rotation.x = Math.PI / 2;
+    stud.position.set(sx, platTop + 0.35 + yy * (doorH - 0.5) / 3, frontZ + 0.23); g.add(stud);
+  }
+
+  // Two sweeping roof tiers — flattened 4-sided pyramids stretched to the plot.
+  const makeRoof = (w: number, d: number, h: number, y: number, color: number) => {
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 4), toonMat(color));
+    roof.rotation.y = Math.PI / 4;
+    roof.scale.set(w / Math.SQRT2, h, d / Math.SQRT2);
+    roof.position.y = y + h / 2;
+    g.add(roof);
+    // Ridge beam + chimi end ornaments.
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, 0.22, 0.3), toonMat(RIDGE));
+    ridge.position.set(0, y + h - 0.1, 0); g.add(ridge);
+    for (const rx of [-w * 0.25, w * 0.25]) {
+      const chimi = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.4, 0.34), toonMat(0x1a2a26));
+      chimi.position.set(rx, y + h - 0.05, 0); g.add(chimi);
+    }
+  };
+  const eaveY = platTop + bodyH;
+  makeRoof(width + 2.4, depth + 1.6, 1.5, eaveY - 0.2, ROOF_LO);
+  makeRoof(width - 3.0, depth - 1.0, 1.2, eaveY + 1.2, ROOF_HI);
+
+  // Signboard (현판) hung under the lower eave.
+  const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 0.16), toonMat(GOLD));
+  boardFrame.position.set(0, eaveY + 0.35, frontZ + 0.2); g.add(boardFrame);
+  const boardFace = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.66, 0.1), toonMat(0x1b110a));
+  boardFace.position.set(0, eaveY + 0.35, frontZ + 0.29); g.add(boardFace);
+
+  return g;
+}
+
 export function makeNosdanHQ(width: number, depth: number): THREE.Group {
   const g = new THREE.Group();
   const height = Math.max(5.2, Math.min(7.2, width * 0.36));

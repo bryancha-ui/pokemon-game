@@ -234,6 +234,14 @@ export class TrainerBattleScene extends Phaser.Scene {
       await new Promise<void>(r => { this.load.once('complete', r); this.load.start(); });
     }
 
+    // Guarantee the lead's sprite texture is loaded before we build the battler.
+    // A party entry can lose its spriteUrl after an evolution/restore, which made
+    // preload() skip it (its guard requires a truthy spriteUrl) and left the
+    // Pokémon invisible in battle (e.g. an evolved 염흥왕/Pipetiger). ensurePartyTexture
+    // re-derives the URL from the species form.
+    const lead = PartySystem.get(this.registry)[this.activeSlot];
+    if (lead) await ensurePartyTexture(this, lead);
+
     this.createSprites();
     this.createHUDs();
     this.createActionPanel();
@@ -244,16 +252,21 @@ export class TrainerBattleScene extends Phaser.Scene {
     // Intro. Send the enemy out, then lead with the player.
     this.enemySprite.setAlpha(0);
     this.dialogText.setText('');   // clear the "Loading…" text so the portrait hold reads clean
+    const leadPlayer = () => playBallSendOut(this, this.playerSprite, {
+      side: 'player', targetX: 180, targetY: 260,
+      onComplete: () => this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
+    });
     const sendOut = () => {
       if (this.trainerPortrait) this.tweens.add({ targets: this.trainerPortrait, alpha: 0, duration: 300 });
+      // A 우두머리 is a WILD Pokémon — it does not emerge from a trainer's ball.
+      if (this.isWildBoss) {
+        this.revealWildBoss(() =>
+          this.typeDialog(`A wild ${pokeNameEn(this.enemy.name).toUpperCase()} appeared!`, leadPlayer));
+        return;
+      }
       playBallSendOut(this, this.enemySprite, {
         side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
-        onComplete: () => this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, () => {
-          playBallSendOut(this, this.playerSprite, {
-            side: 'player', targetX: 180, targetY: 260,
-            onComplete: () => this.typeDialog(`Go! ${pokeNameEn(this.player.name).toUpperCase()}!`, () => this.playerAction()),
-          });
-        }),
+        onComplete: () => this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}!`, leadPlayer),
       });
     };
     // Hold the trainer's portrait on screen for ~3s before the Pokémon come out. Rival
@@ -445,7 +458,26 @@ export class TrainerBattleScene extends Phaser.Scene {
   /** A 우두머리 (boss) — the 어사대 mission threats (Rampaging Gyarados, Fog-Wraith
    *  Gengar, Berserk Steelix…). They loom larger in battle than ordinary Pokémon. */
   private get isBossThreat() { return this.trainerKey.endsWith('-threat'); }
+  /** A boss that is a lone WILD Pokémon (the one-Pokémon 어사대 threats) — as opposed
+   *  to a multi-Pokémon human "threat" (e.g. Haegang's Disciples). Wild bosses do
+   *  not emerge from a Poké Ball. */
+  private get isWildBoss() { return this.isBossThreat && this.enemyQueue.length === 1; }
   private enemySpriteSize() { return this.isBossThreat ? 200 : 130; }
+
+  /** Reveal a wild 우두머리 with a menacing fade-in — no trainer, no Poké Ball. */
+  private revealWildBoss(onComplete: () => void) {
+    const s = this.enemySprite;
+    const baseSX = Math.abs(s.scaleX) || 1, baseSY = Math.abs(s.scaleY) || baseSX;
+    s.setPosition(ENEMY_STAGE_X, ENEMY_STAGE_Y).setVisible(true).setAlpha(0)
+      .setScale(baseSX * 0.7, baseSY * 0.7);
+    // Tell the 3D arena where to place the boss model (mirrors playBallSendOut).
+    this.events.emit('pk3d-screen-target',
+      { target: s, x: ENEMY_STAGE_X, y: ENEMY_STAGE_Y, heightRatio: 0.48 });
+    this.tweens.add({
+      targets: s, alpha: 1, scaleX: baseSX, scaleY: baseSY, duration: 560, ease: 'Back.easeOut',
+      onComplete: () => { s.setScale(baseSX, baseSY).setAlpha(1); onComplete(); },
+    });
+  }
 
   /** A 우두머리 boss is far hardier than a normal Pokémon — double its HP. */
   private buffBoss() {
@@ -459,11 +491,21 @@ export class TrainerBattleScene extends Phaser.Scene {
     const aura = this.add.graphics().setDepth(4);
     aura.fillStyle(0x8a1a3a, 0.32); aura.fillCircle(0, 0, 118);
     aura.fillStyle(0xd8324a, 0.22); aura.fillCircle(0, 0, 86);
-    aura.setPosition(this.enemySprite.x, this.enemySprite.y);
-    // follow the enemy sprite as it slides in, and pulse ominously
+    // Track the Pokémon's LIVE on-screen position. In the 3D arena the creature is
+    // rendered by the mirror at a screen anchor that differs from the flat 2D
+    // enemySprite (which sits at ENEMY_STAGE_X/Y); querying pk3d-screen-target
+    // keeps the aura wrapped around the actual Pokémon (falls back to the 2D sprite
+    // position in F3 2D mode, where the request is left untouched).
+    const anchorAura = () => {
+      const req = { target: this.enemySprite, x: this.enemySprite.x, y: this.enemySprite.y, heightRatio: 0.5 };
+      this.events.emit('pk3d-screen-target', req);
+      aura.setPosition(req.x, req.y);
+    };
+    anchorAura();
+    // follow the enemy as it appears, and pulse ominously
     this.enemySprite.on('destroy', () => aura.destroy());
     this.tweens.add({ targets: aura, scale: { from: 0.9, to: 1.08 }, alpha: { from: 0.9, to: 0.55 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-    this.time.addEvent({ delay: 16, loop: true, callback: () => { if (aura.active && this.enemySprite.active) aura.setPosition(this.enemySprite.x, this.enemySprite.y); } });
+    this.time.addEvent({ delay: 16, loop: true, callback: () => { if (aura.active && this.enemySprite.active) anchorAura(); } });
   }
 
   /** Scale an image so its largest dimension fits `size` px (works for any sprite). */

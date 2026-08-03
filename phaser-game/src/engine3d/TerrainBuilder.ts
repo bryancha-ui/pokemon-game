@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
+  makeRocks, makeHanokPalace, makeNosdanHQ, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
   type StoreFixtureKind,
 } from './Props';
 
@@ -901,6 +901,16 @@ export function buildTerrain(
       const holder = new THREE.Group();
       holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
       holder.add(makeNosdanHQ(b.w, b.d));
+      group.add(holder);
+      blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+      continue;
+    }
+    // The southern Onnuri League hall is reproduced from its painted 2D palace
+    // (LeaguePlazaScene.drawPalace) rather than a generic landmark GLB.
+    if (b.model === 'hanok-palace') {
+      const holder = new THREE.Group();
+      holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+      holder.add(makeHanokPalace(b.w, b.d));
       group.add(holder);
       blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
       continue;

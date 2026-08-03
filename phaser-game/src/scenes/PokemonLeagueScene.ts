@@ -489,10 +489,12 @@ export class PokemonLeagueScene extends Phaser.Scene {
     }
     const kids: Phaser.GameObjects.GameObject[] = [bg, stars];
 
-    // The dawn moth she now protects, small at the top.
+    // The dawn moth she now protects, small at the top. Kept high and compact so
+    // it never overlaps the centre Pokémon of the first party row (which shares the
+    // same x = W/2) — the player may also carry their own 나비할망.
     if (this.textures.exists('nabihalmang')) {
-      const moth = this.add.image(W / 2, H * 0.12, 'nabihalmang').setAlpha(0);
-      this.fitImg(moth, 120);
+      const moth = this.add.image(W / 2, H * 0.115, 'nabihalmang').setAlpha(0);
+      this.fitImg(moth, 84);
       this.tweens.add({ targets: moth, alpha: 1, duration: 1500 });
       kids.push(moth);
     }
@@ -505,7 +507,8 @@ export class PokemonLeagueScene extends Phaser.Scene {
     const party = PartySystem.get(this.registry);
     const cols = 3, cellW = 230, cellH = 170;
     const rowsN = Math.ceil(Math.max(party.length, 1) / cols);
-    const startY = H * 0.30 - (rowsN - 1) * cellH / 2;
+    // Clamp the grid's top so the first row always clears the moth above it.
+    const startY = Math.max(H * 0.36, H * 0.32 - (rowsN - 1) * cellH / 2);
     party.forEach((e, i) => {
       const col = i % cols, row = Math.floor(i / cols);
       const inRow = Math.min(party.length - row * cols, cols);

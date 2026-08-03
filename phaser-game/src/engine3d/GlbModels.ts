@@ -84,6 +84,14 @@ export function hasModel(key: string): boolean {
   return allowsHeavy3DAssets() && !!manifest && manifest.has(normalizeKey(key));
 }
 
+/** The model's baked Y-orientation fix (manifest rotY) in radians, or 0. Callers
+ *  that dynamically yaw a model (e.g. facePlayer3D) must subtract this so the
+ *  baked-in front, not the raw GLB front, is what ends up aimed at the target. */
+export function modelBaseYawRad(key: string): number {
+  const spec = manifest?.get(normalizeKey(key));
+  return spec?.rot ? THREE.MathUtils.degToRad(spec.rot.y) : 0;
+}
+
 /**
  * Get a normalized clone of the model for `key` (height 1, feet at y=0)
  * together with its animation clips, or null while it loads / when unavailable.

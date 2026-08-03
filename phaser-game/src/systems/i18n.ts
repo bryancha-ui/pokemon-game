@@ -6,7 +6,9 @@ import { KO_ABILITIES } from '../data/ko_abilities';
 // Korean names for the region's custom Pokémon, from public/assets/pokemon_dictionary.xlsx.
 export const POKE_KR: Record<string, string> = {
   // Official Pokémon used by story trainers but not listed in the custom dex.
-  houndoom: '헬가',
+  houndoom: '헬가', weavile: '포푸니라', sharpedo: '샤크니아',
+  // 우두머리 (boss) 어사대 mission threats — official species fought as wild bosses.
+  gyarados: '갸라도스', steelix: '강철톤', gengar: '팬텀', beartic: '툰베어',
 
   bosongnun: '보송눈', snoqueen: '스노퀸', kkaakdang: '까악단',
   onnurian: '학동자', onnujang: '화투루미', thanatoat: '두루광',
@@ -219,6 +221,12 @@ const EN_TO_KR_POKE: Record<string, string> = (() => {
   }
   // PokeAPI-backed species do not have entries in the custom regional dex.
   map.houndoom = POKE_KR.houndoom;
+  map.weavile = POKE_KR.weavile;
+  map.sharpedo = POKE_KR.sharpedo;
+  map.gyarados = POKE_KR.gyarados;
+  map.steelix = POKE_KR.steelix;
+  map.gengar = POKE_KR.gengar;
+  map.beartic = POKE_KR.beartic;
   return map;
 })();
 
@@ -260,6 +268,24 @@ const BATTLE_PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^(.+) sent out (.+)!$/, m => `${S(m[1])}가 ${P(m[2])}을 내보냈다!`],
   [/^✨ (.+) grew to Lv\. (\d+)!$/, m => `✨ ${P(m[1])}(은)는 Lv. ${m[2]}로 성장했다!`],
   [/^(.+) gained (\d+) EXP!$/, m => `${P(m[1])}(은)는 ${m[2]} 경험치를 얻었다!`],
+  [/^(.+) also gained (\d+) EXP!$/, m => `${P(m[1])}(도) ${m[2]} 경험치를 얻었다!`],
+  // ── Status conditions (inflicted / persistent turn effects) ──
+  [/^(.+) was paralyzed!$/,   m => `${P(m[1])}(은)는 마비되어 버렸다!`],
+  [/^(.+) was burned!$/,      m => `${P(m[1])}(은)는 화상을 입었다!`],
+  [/^(.+) was poisoned!$/,    m => `${P(m[1])}(은)는 독에 걸렸다!`],
+  [/^(.+) fell asleep!$/,     m => `${P(m[1])}(은)는 잠들어 버렸다!`],
+  [/^(.+) was frozen!$/,      m => `${P(m[1])}(은)는 얼어붙었다!`],
+  [/^(.+) was afflicted!$/,   m => `${P(m[1])}(은)는 상태이상에 걸렸다!`],
+  [/^(.+) is paralyzed! It can't move!$/, m => `${P(m[1])}(은)는 몸이 저려서 움직일 수 없다!`],
+  [/^(.+) is fast asleep\.$/, m => `${P(m[1])}(은)는 새근새근 잠들어 있다.`],
+  [/^(.+) is frozen solid!$/, m => `${P(m[1])}(은)는 꽁꽁 얼어붙었다!`],
+  [/^(.+) woke up!$/,         m => `${P(m[1])}(은)는 잠에서 깨어났다!`],
+  [/^(.+) thawed out!$/,      m => `${P(m[1])}의 얼음이 녹았다!`],
+  [/^(.+)'s Insomnia woke it up!$/, m => `${P(m[1])}의 불면 특성으로 잠에서 깨어났다!`],
+  [/^(.+)'s Limber cured its paralysis!$/, m => `${P(m[1])}의 유연 특성으로 마비가 나았다!`],
+  [/^(.+)'s Hydration cured its status condition!$/, m => `${P(m[1])}의 촉촉바디 특성으로 상태이상이 나았다!`],
+  [/^(.+)'s Shed Skin cured its status condition!$/, m => `${P(m[1])}의 탈피 특성으로 상태이상이 나았다!`],
+  [/^(.+)'s Natural Cure healed its status condition!$/, m => `${P(m[1])}의 자연회복 특성으로 상태이상이 나았다!`],
   // Evolution
   [/^What\? (.+) is evolving!$/,                       m => `어라? ${P(m[1])}의 모습이...!`],
   [/^Congratulations! Your ([\s\S]+?)\nevolved into (.+)!$/, m => `축하해! ${P(m[1])}가\n${P(m[2])}(으)로 진화했다!`],

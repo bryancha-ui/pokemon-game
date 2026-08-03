@@ -7,7 +7,7 @@ import { buildSurfMountModel, type SurfMountModel } from './SurfMountModel';
 import { buildFlatCard, buildRelief, reliefMaterials } from './Extruder';
 import { drawCommands, hashCommands, measureCommands, rasterizeGraphics } from './GraphicsRaster';
 import { generateNabihalmangAppearance, type GeneratedCreatureAnimation } from './GeneratedCreatureAnimation';
-import { getModel, hasModel, primeManifest } from './GlbModels';
+import { getModel, hasModel, modelBaseYawRad, primeManifest } from './GlbModels';
 import { makeBlobShadow } from './Props';
 import { getProp, propFailed, type PropDef } from './PropModels';
 import { buildTerrain, PX, TerrainResult } from './TerrainBuilder';
@@ -895,7 +895,11 @@ export class OverworldMirror {
         const targetX = (this.playerObj.x ?? 0) / PX;
         const targetZ = (this.playerObj.y ?? 0) / PX;
         const dx = targetX - x, dz = targetZ - z;
-        if (Math.hypot(dx, dz) > 0.05) t.mesh.rotation.y = Math.atan2(dx, dz);
+        // Once the GLB is attached, its manifest rotY is baked into the inner model,
+        // so subtract it here — otherwise the baked offset (e.g. daejangseung's 140°)
+        // stacks on the yaw and the model's front never actually meets the player.
+        const yawOffset = t.creature ? modelBaseYawRad(t.creatureKey ?? '') : 0;
+        if (Math.hypot(dx, dz) > 0.05) t.mesh.rotation.y = Math.atan2(dx, dz) - yawOffset;
       }
 
       const inner = t.mesh.children[0] as THREE.Mesh | undefined;

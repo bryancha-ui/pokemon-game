@@ -28,6 +28,7 @@ const LOOK: Record<string, ClassLook> = {
   diver:      { outfit: 0x1a5a7a },
   scientist:  { outfit: 0xdfe4ea },
   grunt:      { outfit: 0x2a2a34, hair: 0x101014 },
+  veteran:    { outfit: 0x556070, hair: 0x9a9a9a },
   generic:    { outfit: 0x5a6a8a },
 };
 
@@ -46,6 +47,7 @@ const RULES: [RegExp, string][] = [
   [/diver|잠수/i,                       'diver'],
   [/scientist|researcher|연구|박사/i,   'scientist'],
   [/노스단|grunt|admin|간부|sentry|soldier|officer|sovereign|troop/i, 'grunt'],
+  [/veteran|베테랑|노장|elder|어르신/i, 'veteran'],
 ];
 
 /** Classify a trainer into a reusable class from its display name. */
@@ -87,6 +89,7 @@ const CLASS_SPRITE: Record<string, string> = {
   farmer:     'ruinmaniac',
   scientist:  'scientist',
   grunt:      'galacticgrunt',
+  veteran:    'veteran',
   generic:    'youngster',
 };
 

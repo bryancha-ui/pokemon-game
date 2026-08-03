@@ -77,8 +77,13 @@ export class LeaguePlazaScene extends Phaser.Scene {
   /** The palace hall is the generated League building, centred on the entrance
    *  gap (DOOR.col 13) so its doorway lines up with where the player walks in.
    *  onlyNamedBuildings keeps everything else off. */
-  public buildingPlots = [{ x: 3, y: 4, w: 21, h: 7, model: 'league' }];
+  public buildingPlots = [{ x: 3, y: 4, w: 21, h: 7, model: 'hanok-palace' }];
   public onlyNamedBuildings = true;
+  /** Stone lanterns lining the ceremonial path, mirrored into 3D. Coordinates match
+   *  the T.LANTERN tiles placed in buildMap() ([row, col]); the builder centres each
+   *  prop on its tile. */
+  public propPlots = ([[14, 11], [14, 16], [19, 11], [19, 16], [24, 11], [24, 16]] as [number, number][])
+    .map(([r, c]) => ({ x: c, y: r, kind: 'lantern' as const, scale: 0.95 }));
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
