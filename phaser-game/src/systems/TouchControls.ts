@@ -70,6 +70,15 @@ const btnBase =
 // (shared across buttons) because the pointerdown and the ghost click hit
 // DIFFERENT elements. pointerdown still activates instantly, so taps stay snappy.
 let lastPointerActivation = -Infinity;
+// Time (ms) the deck last swapped which button set it shows (actions ⇄ moves ⇄
+// party). The finger contact that TRIGGERED the swap is still going, so its
+// trailing events (pointerup/click, or a stray pointerdown) would land on whatever
+// button just appeared under it and fire it too — the "FIGHT instantly picks a
+// move" / "wrong Pokémon swapped" bug. Ignoring ALL deck taps for a short window
+// after a swap blocks that ghost regardless of event type; a deliberate tap on the
+// new panel always comes later (human reaction time).
+let deckSwapAt = -Infinity;
+export function armDeckSwapGuard(): void { deckSwapAt = performance.now(); }
 
 function bindTap(el: HTMLElement, callback: () => void): void {
   let lastActivation = -Infinity;
@@ -77,10 +86,11 @@ function bindTap(el: HTMLElement, callback: () => void): void {
     e.preventDefault();
     e.stopPropagation();
     const now = performance.now();
-    // Ghost-click guard: a click right after a pointerdown is the same tap. The
-    // pointerdown already handled it, so ignore the trailing click (which may have
-    // fallen on a just-swapped-in button).
-    if (e.type === 'click' && now - lastPointerActivation < 700) return;
+    // Just-swapped-in-layer guard (blocks the ghost regardless of event type).
+    if (now - deckSwapAt < 350) return;
+    // Ghost-click guard: a click that trails a recent pointerdown is the same tap;
+    // the pointerdown already handled it (and may have swapped the panel), so drop it.
+    if (e.type === 'click' && now - lastPointerActivation < 1000) return;
     // A long press can delay Safari's follow-up click; keep a full second of
     // per-button dedupe so one finger contact can never become two of the SAME command.
     if (now - lastActivation < 1000) return;
@@ -531,6 +541,7 @@ export function deckShowLeadPicker(
   battleActionLayer.style.display = 'none';
   moveLayer.style.display = 'none';
   partyLeadLayer.style.display = 'flex';
+  armDeckSwapGuard();
   return true;
 }
 
@@ -540,11 +551,13 @@ export function deckHideLeadPicker(): void {
   partyLeadLayer.style.display = 'none';
   if (layerBeforeLeadPicker === 'move') {
     moveLayer.style.display = 'flex';
+    armDeckSwapGuard();
     battleActionLayer.style.display = 'none';
     controlLayer.style.display = 'none';
   } else if (layerBeforeLeadPicker === 'actions') {
     moveLayer.style.display = 'none';
     battleActionLayer.style.display = 'flex';
+    armDeckSwapGuard();
     controlLayer.style.display = 'none';
   } else {
     moveLayer.style.display = 'none';
@@ -589,6 +602,7 @@ export function deckShowBattleActions(
   moveLayer.style.display = 'none';
   partyLeadLayer.style.display = 'none';
   battleActionLayer.style.display = 'flex';
+  armDeckSwapGuard();
   return true;
 }
 
@@ -640,6 +654,7 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
   battleActionLayer.style.display = 'none';
   partyLeadLayer.style.display = 'none';
   moveLayer.style.display = 'flex';
+  armDeckSwapGuard();
   return true;
 }
 
