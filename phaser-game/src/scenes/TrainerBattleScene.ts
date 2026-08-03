@@ -398,7 +398,9 @@ export class TrainerBattleScene extends Phaser.Scene {
   private createHUDs() {
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.enemyNameText = this.add.text(12, 24, this.enemyHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
-    this.enemyLvText  = this.add.text(180, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' });
+    // Right-align inside the HUD box (right inner edge ≈ 225) so the enlarged
+    // mobile font grows leftward instead of spilling out of the box.
+    this.enemyLvText  = this.add.text(220, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
@@ -1046,16 +1048,18 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     const panel = this.add.container(this.W * 0.60, this.H - 120).setDepth(12);
     panel.add(this.add.rectangle(80, 60, 316, 120, 0x111133).setStrokeStyle(1, 0x5577aa));
-    const mk = (label: string, x: number, cb: () => void) => {
-      const t = this.add.text(x, 44, label, { fontSize: '20px', color: '#ffffff' })
+    // Stack the two options vertically — side-by-side labels collide once the mobile
+    // font scale enlarges them beyond the panel's half-width.
+    const mk = (label: string, y: number, cb: () => void) => {
+      const t = this.add.text(28, y, label, { fontSize: '20px', color: '#ffffff' })
         .setInteractive({ useHandCursor: true })
         .on('pointerover', () => t.setColor('#ffe44e'))
         .on('pointerout',  () => t.setColor('#ffffff'))
         .on('pointerdown', () => { panel.destroy(true); cb(); });
       panel.add(t);
     };
-    mk('▶ SWITCH', 28, () => this.openKOSwitch());
-    mk('  STAY IN', 178, () => this.playerAction());
+    mk('▶ SWITCH', 22, () => this.openKOSwitch());
+    mk('▶ STAY IN', 74, () => this.playerAction());
   }
 
   private openKOSwitch() {

@@ -238,7 +238,7 @@ export class WildBattleScene extends Phaser.Scene {
     // Wild HUD — top left
     this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.add.text(12, 24, this.wildHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
-    this.wildLvText = this.add.text(180, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' });
+    this.wildLvText = this.add.text(220, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.wildHpBar  = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.wildHpText = this.add.text(12, 60, `${this.wild.hp}/${this.wild.maxHp}`, { fontSize: '10px', color: '#aaa' });

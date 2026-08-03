@@ -229,7 +229,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     };
     track(this.add.rectangle(130, 52, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
     this.enemyNameText = track(this.add.text(14, 24, this.enemyHudName(), { fontSize: '14px', color: '#cc88ff', fontStyle: 'bold' }));
-    this.enemyLvText  = track(this.add.text(200, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }));
+    this.enemyLvText  = track(this.add.text(255, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(130, 52, HP_W + 8, 12, 0x333355));
     this.enemyHpBar   = track(this.add.rectangle(30, 52, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.enemyHpText  = track(this.add.text(14, 62, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '11px', color: '#aaa' }));

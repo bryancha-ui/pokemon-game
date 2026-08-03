@@ -187,7 +187,7 @@ export class RivalBattleScene extends Phaser.Scene {
     // Rival HUD — top left
     track(this.add.rectangle(130, 52, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
     this.rivalNameText = track(this.add.text(14, 24, this.rivalHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
-    this.rivalLvText = track(this.add.text(200, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }));
+    this.rivalLvText = track(this.add.text(249, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(130, 52, this.HP_BAR_W + 8, 12, 0x333355));
     this.rivalHpBar  = track(this.add.rectangle(30, 52, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.rivalHpText = track(this.add.text(14, 62, `${this.rival.hp}/${this.rival.maxHp}`, { fontSize: '11px', color: '#aaa' }));
