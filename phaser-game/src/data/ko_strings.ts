@@ -1031,6 +1031,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Which move should it forget?': '어떤 기술을 잊게 할까?',
   'WASD move  SHIFT run  SPACE act  M menu   ·   Surf out to the Gyarados, dodge the whirlpools!': 'WASD 이동  SHIFT 달리기  SPACE 행동  M 메뉴   ·   갸라도스에게 파도타기로 나가, 소용돌이를 피해!',
   'SPACE — Confront the Gyarados': 'SPACE — 갸라도스와 대면',
+  'A / TAP — Confront the Gyarados': 'A / 터치 — 갸라도스와 대면',
   'Seorak: First of the Northern Elite. My mountains have stood since before your peninsula had a name.': '설악: 북부 사천왕의 첫째다. 내 산들은 네 반도에 이름이 붙기도 전부터 서 있었지.',
   'Hanseol: The northern winter never ends. Neither does my patience.': '한설: 북쪽의 겨울은 끝나지 않아. 내 인내도 마찬가지고.',
   'Cheolgang: Fortress-forged discipline. My steel does not bend, and it does not tire.': '철강: 요새에서 벼려진 규율이지. 내 강철은 휘지 않고, 지치지도 않아.',

@@ -20,6 +20,10 @@ const KEY = {
   space: 32, shift: 16, m: 77, c: 67, esc: 27,
 } as const;
 
+/** Direct action bridge for scenes where an iOS synthetic key tap can fall
+ * entirely between two Phaser frames. Keyboard Space remains the main path. */
+export const MOBILE_ACTION_EVENT = 'pokemonkorea:mobile-action';
+
 export function isTouchDevice(): boolean {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
@@ -72,6 +76,7 @@ function tapButton(label: string, css: string, code: number): HTMLElement {
   b.addEventListener('pointerdown', (e: Event) => {
     e.preventDefault();
     b.style.background = 'rgba(90,120,200,0.95)';
+    if (code === KEY.space) window.dispatchEvent(new Event(MOBILE_ACTION_EVENT));
     dispatchKey('keydown', code);
     setTimeout(() => { dispatchKey('keyup', code); b.style.background = 'rgba(30,38,66,0.9)'; }, 140);
   });

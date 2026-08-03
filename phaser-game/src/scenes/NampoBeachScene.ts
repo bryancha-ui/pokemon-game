@@ -7,6 +7,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
 import { PartySystem } from '../systems/PartySystem';
 import { maybeLaunchEvolution } from '../systems/EvolutionSystem';
+import { isTouchDevice, MOBILE_ACTION_EVENT } from '../systems/TouchControls';
 
 // ── Parangpo Beach (파랑포 해변) ─────────────────────────────────────────────────────
 // The West-Sea shore reached from Parangpo city. Surf out across the bay — dodging
@@ -21,10 +22,16 @@ const COLORS: Record<Tile, number> = { [T.SAND]: 0xe4d6a8, [T.WATER]: 0x2f78b4, 
 const SOLID = new Set<Tile>([T.WALL, T.ROCK]);
 
 const THREAT_KEY = 'eosa-nampo-threat';
+const THREAT_TEXTURE = 'nampo-threat-gyarados';
+const THREAT_TEXTURE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/130.png';
+const THREAT_DISPLAY_H = 96;
 // Gyarados is the unmoving center of the challenge; only the whirlpools orbit.
 const THREAT = { col: 10, row: 10 };
 const OCEAN_CX = THREAT.col * TILE + 16, OCEAN_CY = THREAT.row * TILE + 16;
 const THREAT_RADIUS = 2 * TILE;
+// Contact starts the encounter in both renderers. Keeping this independent of
+// touch-device detection prevents desktop/PWA 3D sessions from missing it.
+const THREAT_CONTACT_RADIUS = 1.25 * TILE;
 const SHORE = { x: 10 * TILE + 16, y: 18 * TILE + 16 };       // swept back here on a whirlpool hit
 
 // Whirlpools orbiting the bay: two rings turning opposite ways.
@@ -62,7 +69,10 @@ export class NampoBeachScene extends Phaser.Scene {
   private spawnGuard = false; private spawnPx = 0; private spawnPy = 0;
   private readonly SPEED = 120; private readonly RUN = 250;
   private whirlG: Phaser.GameObjects.Container[] = [];
-  private threatG?: Phaser.GameObjects.Container;
+  private threatG?: Phaser.GameObjects.Image;
+  private threatLabel?: Phaser.GameObjects.Text;
+  private mobileActionAt = -Infinity;
+  private readonly onMobileAction = () => { this.mobileActionAt = performance.now(); };
 
   private readonly TRAINERS: Trainer[] = [
     { key: 'nampo-manho', name: 'Sailor Manho', col: 4, row: 18, color: 0x2f6f9a, label: 'Sailor',
@@ -78,6 +88,10 @@ export class NampoBeachScene extends Phaser.Scene {
 
   constructor() { super('NampoBeachScene'); }
 
+  preload() {
+    if (!this.textures.exists(THREAT_TEXTURE)) this.load.image(THREAT_TEXTURE, THREAT_TEXTURE_URL);
+  }
+
   private get missionTaken() { return !!this.registry.get('NampoCitySceneMissionTaken'); }
   private get gyaradosDone() { return !!this.registry.get('trainerDefeated_' + THREAT_KEY); }
   // Owning the Haean badge/TM only unlocks Surf teaching; a current party
@@ -88,6 +102,7 @@ export class NampoBeachScene extends Phaser.Scene {
 
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.whirlG = [];
+    this.mobileActionAt = -Infinity;
     playBgm(this, 'nampo');
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('NampoBeachSceneReturnX') as number | undefined;
@@ -154,22 +169,39 @@ export class NampoBeachScene extends Phaser.Scene {
     // The boss is an interaction target, not a roaming hazard. Re-assert the
     // exact center every frame so no tween, scene resume or renderer sync can
     // ever carry it away. Only the whirlpool containers receive moving coords.
-    this.threatG.setPosition(baseX, baseY);
+    this.threatG.setPosition(baseX, baseY - THREAT_DISPLAY_H / 2);
+    this.threatLabel?.setPosition(baseX, baseY - THREAT_DISPLAY_H - 4);
+  }
+
+  private ensureThreatTexture() {
+    if (this.textures.exists(THREAT_TEXTURE)) return;
+    const g = this.make.graphics({ x: 0, y: 0 });
+    g.fillStyle(0x2f5aa0, 1); g.fillEllipse(48, 54, 58, 50);
+    g.fillStyle(0x244a86, 1); g.fillEllipse(48, 62, 50, 36);
+    for (const x of [28, 48, 68]) g.fillTriangle(x - 7, 35, x + 7, 35, x, 14);
+    g.fillStyle(0xffe000, 1); g.fillCircle(38, 50, 5); g.fillCircle(58, 50, 5);
+    g.fillStyle(0x101018, 1); g.fillCircle(38, 50, 2.5); g.fillCircle(58, 50, 2.5);
+    g.generateTexture(THREAT_TEXTURE, 96, 96);
+    g.destroy();
   }
 
   private spawnThreat() {
     if (!this.missionTaken || this.gyaradosDone) return;
-    const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.25); g.fillEllipse(0, 15, 34, 9);
-    g.fillStyle(0x2f5aa0, 1); g.fillCircle(0, 0, 15);
-    g.fillStyle(0x244a86, 1); g.fillCircle(0, 5, 13);
-    for (let i = -1; i <= 1; i++) g.fillTriangle(i * 9 - 3, -12, i * 9 + 3, -12, i * 9, -23);
-    g.fillStyle(0xffe000, 1); g.fillCircle(-5, -3, 3.4); g.fillCircle(5, -3, 3.4);
-    g.fillStyle(0x000000, 1); g.fillCircle(-5, -2, 1.6); g.fillCircle(5, -2, 1.6);
-    g.lineStyle(2, 0x000000, 1); g.beginPath(); g.moveTo(-10, -8); g.lineTo(-2, -5); g.moveTo(10, -8); g.lineTo(2, -5); g.strokePath();
-    const label = this.add.text(0, -32, tr('⚠ Rampaging Gyarados (난동 갸라도스)'), { fontSize: '9px', color: '#ff7a7a', fontStyle: 'bold', backgroundColor: '#00000099', padding: { x: 3, y: 1 } }).setOrigin(0.5);
-    const cont = this.add.container(THREAT.col * TILE + 16, THREAT.row * TILE + 16, [g, label]).setDepth(9);
-    this.threatG = cont;
+    this.ensureThreatTexture();
+    const baseX = THREAT.col * TILE + 16, baseY = THREAT.row * TILE + 16;
+    const src = this.textures.get(THREAT_TEXTURE).getSourceImage() as { height?: number };
+    const img = this.add.image(baseX, baseY - THREAT_DISPLAY_H / 2, THREAT_TEXTURE)
+      .setDepth(9).setScale(THREAT_DISPLAY_H / Math.max(1, src.height ?? THREAT_DISPLAY_H))
+      .setData('creatureModel3DKey', 'api-130')
+      .setData('creatureHeight3D', 2.7)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.onMobileAction);
+    this.threatG = img;
+    this.threatLabel = this.add.text(baseX, baseY - THREAT_DISPLAY_H - 4,
+      tr('⚠ Rampaging Gyarados (난동 갸라도스)'), {
+        fontSize: '9px', color: '#ff7a7a', fontStyle: 'bold',
+        backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+      }).setOrigin(0.5).setDepth(10).setData('no3d', true);
   }
 
   private drawTrainers() {
@@ -208,6 +240,19 @@ export class NampoBeachScene extends Phaser.Scene {
     this.shiftKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => { if (!this.cutsceneActive) this.scene.launch('MenuScene'); });
+    window.addEventListener(MOBILE_ACTION_EVENT, this.onMobileAction);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener(MOBILE_ACTION_EVENT, this.onMobileAction);
+    });
+  }
+
+  private consumeActionPressed(): boolean {
+    const keyboard = Phaser.Input.Keyboard.JustDown(this.spaceKey);
+    // Keep the direct A-button action alive across several frames on iOS, where
+    // the synthetic keydown/keyup pair can otherwise be missed by Phaser.
+    const mobile = performance.now() - this.mobileActionAt <= 500;
+    if (mobile) this.mobileActionAt = -Infinity;
+    return keyboard || mobile;
   }
   private createUI() {
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
@@ -223,13 +268,14 @@ export class NampoBeachScene extends Phaser.Scene {
       this.whirlG[i]?.setPosition(OCEAN_CX + wp.r * TILE * Math.cos(wp.w * t + wp.phase), OCEAN_CY + wp.r * TILE * Math.sin(wp.w * t + wp.phase));
     }
     this.updateThreatPosition();
+    const actionPressed = this.consumeActionPressed();
 
     if (this.cutsceneActive) {
       if (this.dialog.isInChoice()) {
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this.dialog.navigateChoice(-1);
         if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) this.dialog.navigateChoice(1);
-        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.confirmChoice();
-      } else if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
+        if (actionPressed) this.dialog.confirmChoice();
+      } else if (actionPressed) this.dialog.advance();
       return;
     }
     const dt = delta / 1000; let dx = 0, dy = 0;
@@ -250,7 +296,7 @@ export class NampoBeachScene extends Phaser.Scene {
     this.drawChar();
     // The stationary boss owns its central interaction zone. Check it before
     // the moving whirlpools so a hazard cannot steal the encounter input.
-    if (this.checkThreat()) return;
+    if (this.checkThreat(actionPressed)) return;
     if (this.checkWhirlpools()) return;
     if (this.checkTrainers()) return;
     this.checkExit();
@@ -292,12 +338,16 @@ export class NampoBeachScene extends Phaser.Scene {
     return false;
   }
 
-  private checkThreat(): boolean {
+  private checkThreat(actionPressed: boolean): boolean {
     if (!this.missionTaken || this.gyaradosDone) return false;
     const tx = THREAT.col * TILE + 16, ty = THREAT.row * TILE + 16;
-    if (Math.hypot(this.px - tx, this.py - ty) > THREAT_RADIUS) return false;
-    this.enterPrompt.setText(tr('SPACE — Confront the Gyarados')).setVisible(true);
-    if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
+    const distance = Math.hypot(this.px - tx, this.py - ty);
+    if (distance > THREAT_RADIUS) return false;
+    this.enterPrompt.setText(tr(isTouchDevice()
+      ? 'A / TAP — Confront the Gyarados'
+      : 'SPACE — Confront the Gyarados')).setVisible(true);
+    const contact = distance <= THREAT_CONTACT_RADIUS;
+    if (!actionPressed && !contact) return true;
     this.cutsceneActive = true; this.enterPrompt.setVisible(false);
     this.dialog.show([
       'The Gyarados rears from the swell, sluice-water sheeting off its coils, and fixes its glare on you.',
