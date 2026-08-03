@@ -690,6 +690,11 @@ export class TrainerBattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
+    // Lock the turn IMMEDIATELY. A touch move-button can fire twice (touchstart +
+    // synthetic click, or a fast double-tap); without this, both calls pass the
+    // 'playerMove' guard and runTurn executes twice — the enemy attacks twice in
+    // one turn (e.g. 월식매 using Stone Edge twice).
+    this.state = 'busy';
     deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);

@@ -470,6 +470,9 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   private onMoveSelected(move: Move) {
     if (this.state !== 'playerMove') return;
     if (move.pp <= 0) { this.typeDialog('No PP left!', () => this.onFight()); return; }
+    // Lock the turn IMMEDIATELY so a double-fired touch tap can't run two turns
+    // (both calls would otherwise pass the 'playerMove' guard and act twice).
+    this.state = 'busy';
     deckHideMoves();
     this.hideAllPanels();
     this.runTurn(move);
