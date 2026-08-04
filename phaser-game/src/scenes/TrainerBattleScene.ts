@@ -15,6 +15,7 @@ import { customForm } from '../data/CustomBattle';
 import { PartySystem } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
+import { fontScaleForScene } from '../systems/UiScale';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, ensurePartyTexture, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { deLegendify } from '../data/Legendaries';
@@ -1046,20 +1047,32 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.hideAllPanels();
     this.typeDialog(`${this.trainerName} sent out ${pokeNameEn(this.enemy.name).toUpperCase()}.\nWill you switch your Pokémon?`);
 
-    const panel = this.add.container(this.W * 0.60, this.H - 120).setDepth(12);
-    panel.add(this.add.rectangle(80, 60, 316, 120, 0x111133).setStrokeStyle(1, 0x5577aa));
-    // Stack the two options vertically — side-by-side labels collide once the mobile
-    // font scale enlarges them beyond the panel's half-width.
-    const mk = (label: string, y: number, cb: () => void) => {
-      const t = this.add.text(28, y, label, { fontSize: '20px', color: '#ffffff' })
+    // Stacked vertically with scale-aware spacing, and the box is sized from those
+    // metrics so it fully contains both options at any (mobile-enlarged) font size.
+    const S = fontScaleForScene(this);
+    const lineH = Math.round(30 * S);          // room for one enlarged label
+    const padX = Math.round(24 * S), padY = Math.round(16 * S), gap = Math.round(22 * S);
+    const boxW = Math.round(210 * S);
+    const boxH = padY * 2 + lineH * 2 + gap;
+    // Centred in the play area (clear of the bottom dialog strip and the player HUD,
+    // which the enlarged mobile font would otherwise collide with).
+    const boxX = Math.round((this.W - boxW) / 2);
+    const boxY = Math.round(this.H * 0.30);
+
+    const panel = this.add.container(0, 0).setDepth(12);
+    panel.add(this.add.rectangle(boxX, boxY, boxW, boxH, 0x111133, 0.98)
+      .setOrigin(0, 0).setStrokeStyle(2, 0x5577aa));
+    const mk = (label: string, row: number, cb: () => void) => {
+      const t = this.add.text(boxX + padX, boxY + padY + row * (lineH + gap), label,
+        { fontSize: '20px', color: '#ffffff' })
         .setInteractive({ useHandCursor: true })
         .on('pointerover', () => t.setColor('#ffe44e'))
         .on('pointerout',  () => t.setColor('#ffffff'))
         .on('pointerdown', () => { panel.destroy(true); cb(); });
       panel.add(t);
     };
-    mk('▶ SWITCH', 22, () => this.openKOSwitch());
-    mk('▶ STAY IN', 74, () => this.playerAction());
+    mk('▶ SWITCH', 0, () => this.openKOSwitch());
+    mk('▶ STAY IN', 1, () => this.playerAction());
   }
 
   private openKOSwitch() {
