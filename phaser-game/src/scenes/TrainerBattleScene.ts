@@ -1054,10 +1054,13 @@ export class TrainerBattleScene extends Phaser.Scene {
     const padX = Math.round(24 * S), padY = Math.round(16 * S), gap = Math.round(22 * S);
     const boxW = Math.round(210 * S);
     const boxH = padY * 2 + lineH * 2 + gap;
-    // Centred in the play area (clear of the bottom dialog strip and the player HUD,
-    // which the enlarged mobile font would otherwise collide with).
-    const boxX = Math.round((this.W - boxW) / 2);
-    const boxY = Math.round(this.H * 0.30);
+    // Desktop: sit in the bottom-right action-console area (where FIGHT/BAG normally
+    // are), so the choice reads as part of the console. Mobile: the console lives on
+    // the deck, not the canvas, so centre the box in the play area instead (clear of
+    // the bottom dialog and the player HUD, which the enlarged font would collide with).
+    const consoleCx = this.W * 0.60 + 80, consoleCy = this.H - 120 + 60;
+    const boxX = S > 1 ? Math.round((this.W - boxW) / 2) : Math.round(consoleCx - boxW / 2);
+    const boxY = S > 1 ? Math.round(this.H * 0.30)       : Math.round(consoleCy - boxH / 2);
 
     const panel = this.add.container(0, 0).setDepth(12);
     panel.add(this.add.rectangle(boxX, boxY, boxW, boxH, 0x111133, 0.98)
