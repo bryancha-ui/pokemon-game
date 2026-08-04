@@ -158,7 +158,10 @@ export class FogboundManorScene extends Phaser.Scene {
   }
 
   private spawnThreat() {
-    if (!this.missionTaken || this.gengarDone) return;
+    // The Fog-Wraith always looms in the séance hall until beaten — reaching it no
+    // longer depends on the mission flag, so a player who wandered in early (or got
+    // stuck on the key puzzle) can still face it.
+    if (this.gengarDone) return;
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.3); g.fillEllipse(0, 15, 34, 9);
     g.fillStyle(0x5a3a7a, 1); g.fillCircle(0, 0, 15);                    // ghostly purple body
@@ -278,17 +281,21 @@ export class FogboundManorScene extends Phaser.Scene {
     if (this.vaultOpen) return false;
     const cx = (GATE_C1 + GATE_C2) / 2 * TILE, cy = GATE_ROW * TILE + 16;
     if (Math.hypot(this.px - cx, this.py - cy) > TILE * 1.6) return false;
-    if (!this.hasVaultKey) {
-      this.enterPrompt.setText('🔒 The séance-hall door is locked — the 보석함 key is somewhere in the manor').setVisible(true);
-      return true;
-    }
-    this.enterPrompt.setText('SPACE — Unlock the door with the 보석함 key').setVisible(true);
+    // The door opens with SPACE. Winning the 보석함 key from Medium Yeong is the
+    // intended route (and gives the key line), but it is no longer required — so a
+    // player who can't find/beat her isn't hard-blocked from the Fog-Wraith.
+    this.enterPrompt.setText(this.hasVaultKey
+      ? 'SPACE — Unlock the door with the 보석함 key'
+      : 'SPACE — Force the séance-hall door').setVisible(true);
     if (!Phaser.Input.Keyboard.JustDown(this.spaceKey)) return true;
     this.enterPrompt.setVisible(false); this.cutsceneActive = true;
     this.registry.set('manorVaultOpen', true);
     this.gateLock?.destroy();
-    this.dialog.show([
+    this.dialog.show(this.hasVaultKey ? [
       'The 보석함 key grinds in the ancient lock. With a groan, the séance-hall door swings inward.',
+      'A wave of cold fog rolls out — and deep within, something is grinning.',
+    ] : [
+      'You throw your shoulder against the ancient door. The rotten lock finally gives with a crack.',
       'A wave of cold fog rolls out — and deep within, something is grinning.',
     ], () => { this.cutsceneActive = false; });
     return true;
@@ -331,7 +338,7 @@ export class FogboundManorScene extends Phaser.Scene {
   }
 
   private checkThreat(): boolean {
-    if (!this.missionTaken || this.gengarDone) return false;
+    if (this.gengarDone) return false;
     const tx = THREAT.col * TILE + 16, ty = THREAT.row * TILE + 16;
     if (Math.hypot(this.px - tx, this.py - ty) > TILE * 1.5) return false;
     this.enterPrompt.setText(tr('SPACE — Face the Fog-Wraith')).setVisible(true);
