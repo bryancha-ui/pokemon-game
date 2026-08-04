@@ -62,23 +62,31 @@ const btnBase =
 
 /** One activation path shared by iOS Safari and Android browsers. Pointer
  * events are primary; click/touch are guarded fallbacks and never double-fire. */
-// Time (ms) of the last pointerdown/touchstart that activated ANY deck button.
-// A `click` fires at the END of the same finger contact — and by then a button
-// tap may have swapped the deck to a new layer (FIGHT → the move buttons), so the
-// ghost click would land on whatever button is now under the finger and fire it
-// too. Suppressing clicks that trail a recent pointerdown fixes that. It's global
-// (shared across buttons) because the pointerdown and the ghost click hit
-// DIFFERENT elements. pointerdown still activates instantly, so taps stay snappy.
-let lastPointerActivation = -Infinity;
-// Time (ms) the deck last swapped which button set it shows (actions ⇄ moves ⇄
-// party). The finger contact that TRIGGERED the swap is still going, so its
-// trailing events (pointerup/click, or a stray pointerdown) would land on whatever
-// button just appeared under it and fire it too — the "FIGHT instantly picks a
-// move" / "wrong Pokémon swapped" bug. Ignoring ALL deck taps for a short window
-// after a swap blocks that ghost regardless of event type; a deliberate tap on the
-// new panel always comes later (human reaction time).
-let deckSwapAt = -Infinity;
-export function armDeckSwapGuard(): void { deckSwapAt = performance.now(); }
+// A tap acts on `pointerdown` for snappiness, but a deck button may swap in a NEW
+// layer (FIGHT → the move buttons). The SAME finger's release then emits a `click`
+// that lands on whatever button is now under it and fires it too — "FIGHT instantly
+// picks a move" / "wrong Pokémon swapped". (That's why holding the finger down —
+// which never releases, so never clicks — worked, while a quick tap double-fired.)
+//
+// So: after a real pointer/touch activation, eat the ONE trailing ghost click at the
+// document CAPTURE phase, before it can reach any button. This is bulletproof (not a
+// timing window) and leaves pointerdown instant. Deck buttons stay armed only for
+// that single click; a genuine second tap is a fresh pointerdown.
+let swallowClickUntil = 0;
+let swallowArmed = false;
+function armGhostClickSwallow(): void {
+  swallowArmed = true;
+  swallowClickUntil = performance.now() + 900;   // safety expiry if no click ever comes
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    if (!swallowArmed) return;
+    swallowArmed = false;
+    if (performance.now() > swallowClickUntil) return;   // stale — let it through
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }, true);   // capture: runs before any target's own click handler
+}
 
 function bindTap(el: HTMLElement, callback: () => void): void {
   let lastActivation = -Infinity;
@@ -86,16 +94,12 @@ function bindTap(el: HTMLElement, callback: () => void): void {
     e.preventDefault();
     e.stopPropagation();
     const now = performance.now();
-    // Just-swapped-in-layer guard (blocks the ghost regardless of event type).
-    if (now - deckSwapAt < 350) return;
-    // Ghost-click guard: a click that trails a recent pointerdown is the same tap;
-    // the pointerdown already handled it (and may have swapped the panel), so drop it.
-    if (e.type === 'click' && now - lastPointerActivation < 1000) return;
-    // A long press can delay Safari's follow-up click; keep a full second of
-    // per-button dedupe so one finger contact can never become two of the SAME command.
-    if (now - lastActivation < 1000) return;
+    // Per-button debounce: one finger contact can't become two of the SAME command.
+    if (now - lastActivation < 400) return;
     lastActivation = now;
-    if (e.type !== 'click') lastPointerActivation = now;
+    // Real (pointer/touch) tap → swallow its trailing ghost click. A bare `click`
+    // (no-pointer fallback devices) IS the activation, so don't self-swallow.
+    if (e.type !== 'click') armGhostClickSwallow();
     callback();
   };
   el.addEventListener('pointerdown', activate);
@@ -541,7 +545,6 @@ export function deckShowLeadPicker(
   battleActionLayer.style.display = 'none';
   moveLayer.style.display = 'none';
   partyLeadLayer.style.display = 'flex';
-  armDeckSwapGuard();
   return true;
 }
 
@@ -551,13 +554,11 @@ export function deckHideLeadPicker(): void {
   partyLeadLayer.style.display = 'none';
   if (layerBeforeLeadPicker === 'move') {
     moveLayer.style.display = 'flex';
-    armDeckSwapGuard();
     battleActionLayer.style.display = 'none';
     controlLayer.style.display = 'none';
   } else if (layerBeforeLeadPicker === 'actions') {
     moveLayer.style.display = 'none';
     battleActionLayer.style.display = 'flex';
-    armDeckSwapGuard();
     controlLayer.style.display = 'none';
   } else {
     moveLayer.style.display = 'none';
@@ -602,7 +603,6 @@ export function deckShowBattleActions(
   moveLayer.style.display = 'none';
   partyLeadLayer.style.display = 'none';
   battleActionLayer.style.display = 'flex';
-  armDeckSwapGuard();
   return true;
 }
 
@@ -654,7 +654,6 @@ export function deckShowMoves(moves: DeckMove[], onPick: (i: number) => void, on
   battleActionLayer.style.display = 'none';
   partyLeadLayer.style.display = 'none';
   moveLayer.style.display = 'flex';
-  armDeckSwapGuard();
   return true;
 }
 
