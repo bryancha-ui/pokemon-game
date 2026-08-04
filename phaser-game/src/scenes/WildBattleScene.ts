@@ -4,7 +4,7 @@ import { expMultiplierFor } from '../data/NorthernRegion';
 import {
   deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
 } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move } from '../battle/Pokemon';
@@ -15,6 +15,7 @@ import { fetchPokemon, fetchMove } from '../data/PokeAPI';
 import { PartySystem, PartyEntry, baseStatsFromData } from '../systems/PartySystem';
 import { blackoutToCenter, blackoutMessage } from '../systems/Blackout';
 import { tr, pokeNameEn} from '../systems/i18n';
+import { fontScaleForScene } from '../systems/UiScale';
 import { awardBenchExp } from '../systems/BattleExp';
 import { buildFromEntry, ensurePartyTexture, persistMovePP, persistSwitchOut } from '../systems/PartyBattle';
 import { openSwitchPanel } from '../systems/SwitchPanel';
@@ -235,21 +236,23 @@ export class WildBattleScene extends Phaser.Scene {
   }
 
   private createHUDs() {
-    // Wild HUD — top left
-    this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
+    // Wild HUD — top left. Widen the name boxes on mobile so enlarged names fit
+    // (enemy grows right, player grows left with its name/HP). ex = 0 on desktop.
+    const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    this.add.rectangle(5 + (220 + ex) / 2, 50, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.add.text(12, 24, this.wildHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
-    this.wildLvText = this.add.text(220, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
+    this.wildLvText = this.add.text(220 + ex, 24, `Lv.${this.wild.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.wildHpBar  = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.wildHpText = this.add.text(12, 60, `${this.wild.hp}/${this.wild.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
     // Player HUD — right
-    this.add.rectangle(1030, 545, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(922, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.add.rectangle(1140 - (220 + ex) / 2, 545, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
+    this.playerNameText = this.add.text(922 - ex, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
-    this.playerHpBar  = this.add.rectangle(940, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
-    this.playerHpText = this.add.text(922, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
+    this.playerHpBar  = this.add.rectangle(940 - ex, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
+    this.playerHpText = this.add.text(922 - ex, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
   }
 
   // ── Sprites ───────────────────────────────────────────────────────────────
@@ -713,13 +716,9 @@ export class WildBattleScene extends Phaser.Scene {
     const available = this.wild.moves.filter(m => m.pp > 0);
     const wildMove = pendingMoveFor(this.wild)
       ?? (available.length ? available[Math.floor(Math.random() * available.length)] : this.wild.moves[0]);
-    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
-    // move resolves and the opponent acts once on the RELEASE turn.
-    if (willChargeThisTurn(this.player, playerMove)) {
-      this.doPlayerMove(playerMove, () => this.playerAction());
-      return;
-    }
-    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.wild, wildMove);
+    // Two-turn moves span two FULL turns — the opponent acts on both the charge and
+    // release turns (its charge-turn move misses a dug-in/airborne target).
+    const playerFirst = actsBefore(this.player, playerMove, this.wild, wildMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doWildMove(() => this.playerAction(), wildMove));
     } else {

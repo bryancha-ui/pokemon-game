@@ -4,7 +4,7 @@ import { expMultiplierFor } from '../data/NorthernRegion';
 import {
   deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
 } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { Pokemon, Move, MoveData } from '../battle/Pokemon';
@@ -397,21 +397,24 @@ export class TrainerBattleScene extends Phaser.Scene {
   }
 
   private createHUDs() {
-    this.add.rectangle(115, 50, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
+    // Widen the name boxes on mobile so the enlarged font isn't clipped: the enemy
+    // box grows rightward (its name is left-anchored) and the player box grows
+    // leftward with its left-anchored name/HP. Lv stays right-anchored. ex = 0 on
+    // desktop, so that layout is unchanged.
+    const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    this.add.rectangle(5 + (220 + ex) / 2, 50, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.enemyNameText = this.add.text(12, 24, this.enemyHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
-    // Right-align inside the HUD box (right inner edge ≈ 225) so the enlarged
-    // mobile font grows leftward instead of spilling out of the box.
-    this.enemyLvText  = this.add.text(220, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
+    this.enemyLvText  = this.add.text(220 + ex, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
     this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
-    this.add.rectangle(1030, 545, 220, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
-    this.playerNameText = this.add.text(922, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
+    this.add.rectangle(1140 - (220 + ex) / 2, 545, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
+    this.playerNameText = this.add.text(922 - ex, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
     this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
-    this.playerHpBar  = this.add.rectangle(940, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
-    this.playerHpText = this.add.text(922, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
+    this.playerHpBar  = this.add.rectangle(940 - ex, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
+    this.playerHpText = this.add.text(922 - ex, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
   }
 
   private createSprites() {
@@ -721,16 +724,11 @@ export class TrainerBattleScene extends Phaser.Scene {
     const enemyMoves = this.enemy.moves.filter(m => m.pp > 0);
     const enemyMove = pendingMoveFor(this.enemy)
       ?? this.pickEnemyMove(enemyMoves.length ? enemyMoves : this.enemy.moves);
-    // A two-turn move's CHARGE turn (Dig/Fly/Solar Beam) is the charging side's
-    // ALONE — the opponent waits, so it isn't punished by a free extra hit. The move
-    // resolves and the opponent acts on the RELEASE turn (auto-run via playerAction).
-    if (willChargeThisTurn(this.player, playerMove)) {
-      this.doPlayerMove(playerMove, () => this.playerAction());
-      return;
-    }
-    // On the player's RELEASE turn the Pokémon emerges and strikes first, so the
-    // enemy then acts once against a now-surfaced target (it can land normally).
-    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.enemy, enemyMove);
+    // Two-turn moves (Dig/Fly/Solar Beam) span two FULL turns — the opponent acts on
+    // BOTH the charge turn and the release turn (its charge-turn move simply misses a
+    // dug-in / airborne target via semi-invulnerability). The release auto-runs on the
+    // next turn from playerAction() via pendingMoveFor.
+    const playerFirst = actsBefore(this.player, playerMove, this.enemy, enemyMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {

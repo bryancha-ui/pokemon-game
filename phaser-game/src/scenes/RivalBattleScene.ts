@@ -3,7 +3,7 @@ import { pushBgm, popBgm, stopBgm, playJingle, TRACKS } from '../systems/Music';
 import {
   deckShowBattleActions, deckHideBattleActions, deckShowMoves, deckHideMoves,
 } from '../systems/TouchControls';
-import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
@@ -17,6 +17,7 @@ import { AVATAR_URL, playerAvatarKey, rivalAvatarKey } from '../data/PlayerAvata
 import { fitPortrait } from '../data/BattlePortraits';
 import { rivalTrainerName } from '../data/CharacterSprite';
 import { tr, pokeNameEn} from '../systems/i18n';
+import { fontScaleForScene } from '../systems/UiScale';
 import { genderedName } from '../data/PokemonGender';
 import { actsBefore } from '../systems/AbilitySystem';
 import { enemyLearnset, mergeLearnset } from '../data/Learnsets';
@@ -184,21 +185,24 @@ export class RivalBattleScene extends Phaser.Scene {
       return o;
     };
 
+    // Widen the name boxes on mobile so enlarged names fit (rival grows right,
+    // player grows left with its name/HP). ex = 0 on desktop → unchanged.
+    const ex = Math.round(150 * (fontScaleForScene(this) - 1));
     // Rival HUD — top left
-    track(this.add.rectangle(130, 52, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
+    track(this.add.rectangle(130 + ex / 2, 52, 248 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
     this.rivalNameText = track(this.add.text(14, 24, this.rivalHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
-    this.rivalLvText = track(this.add.text(249, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
+    this.rivalLvText = track(this.add.text(249 + ex, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(130, 52, this.HP_BAR_W + 8, 12, 0x333355));
     this.rivalHpBar  = track(this.add.rectangle(30, 52, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.rivalHpText = track(this.add.text(14, 62, `${this.rival.hp}/${this.rival.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     // Player HUD — bottom right
-    track(this.add.rectangle(1030, 545, 248, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
-    this.playerNameText = track(this.add.text(910, 517, this.playerHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
+    track(this.add.rectangle(1154 - (248 + ex) / 2, 545, 248 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
+    this.playerNameText = track(this.add.text(910 - ex, 517, this.playerHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(1090, 517, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(1030, 547, this.HP_BAR_W + 8, 12, 0x333355));
-    this.playerHpBar  = track(this.add.rectangle(930, 547, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
-    this.playerHpText = track(this.add.text(910, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
+    this.playerHpBar  = track(this.add.rectangle(930 - ex, 547, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    this.playerHpText = track(this.add.text(910 - ex, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     // Type badges
     this.drawTypeBadges(14, 76, this.player);
@@ -470,13 +474,9 @@ export class RivalBattleScene extends Phaser.Scene {
     const availableMoves = this.rival.moves.filter(m => m.pp > 0);
     const rivalMove = pendingMoveFor(this.rival) ?? (availableMoves.length > 0
       ? this.pickRivalMove(availableMoves) : this.rival.moves[0]);
-    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
-    // move resolves and the opponent acts once on the RELEASE turn.
-    if (willChargeThisTurn(this.player, playerMove)) {
-      this.doPlayerMove(playerMove, () => this.playerAction());
-      return;
-    }
-    const playerFirst = isCharging(this.player) || actsBefore(this.player, playerMove, this.rival, rivalMove);
+    // Two-turn moves span two FULL turns — the opponent acts on both the charge and
+    // release turns (its charge-turn move misses a dug-in/airborne target).
+    const playerFirst = actsBefore(this.player, playerMove, this.rival, rivalMove);
     if (playerFirst) {
       this.doPlayerMove(playerMove, () => this.doRivalMove(() => this.playerAction(), rivalMove));
     } else {

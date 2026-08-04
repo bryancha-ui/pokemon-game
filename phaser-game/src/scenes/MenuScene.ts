@@ -472,6 +472,7 @@ export class MenuScene extends Phaser.Scene {
     const mon = buildFromEntry(entry);
     const key = dexKeyFor(entry.spriteKey);
     const dex = dexEntry(key);
+    if (this.mobileMenu) { this.showPokemonDetailsMobile(entry, mon, key, dex, index); return; }
     const cx = this.W / 2, cy = this.H / 2;
     const overlay = this.add.container(0, 0).setDepth(100);
 
@@ -576,6 +577,107 @@ export class MenuScene extends Phaser.Scene {
     overlay.add(close);
   }
 
+  /** Mobile status screen: a full-screen, single-column layout laid out with a
+   *  MEASURED y-cursor (advances by each element's real, font-scaled height) so
+   *  the enlarged text never overlaps. Tapping the dim backdrop closes it. */
+  private showPokemonDetailsMobile(entry: PartyEntry, mon: ReturnType<typeof buildFromEntry>, key: string, dex: ReturnType<typeof dexEntry>, index: number) {
+    const cx = this.W / 2, cy = this.H / 2;
+    const modalW = this.W - 16, modalH = this.H - 8;
+    const left = cx - modalW / 2, top = cy - modalH / 2;
+    const padX = 26;
+    const overlay = this.add.container(0, 0).setDepth(100);
+    const dim = this.add.rectangle(cx, cy, this.W, this.H, 0x000000, 0.85).setInteractive();
+    dim.on('pointerdown', () => overlay.destroy(true));
+    overlay.add(dim);
+    overlay.add(this.add.rectangle(cx, cy, modalW, modalH, 0x0d142b, 0.99).setStrokeStyle(3, 0x6f95d8));
+
+    let y = top + 12;
+    const title = this.add.text(cx, y, t('— POKÉMON STATUS —', '— 포켓몬 상태 —'),
+      { fontSize: '16px', color: '#ffe44e', fontStyle: 'bold' }).setOrigin(0.5, 0);
+    overlay.add(title); y += title.height + 8;
+
+    // Portrait (left) + name / level / gender / types (right).
+    const portrait = Math.round(this.H * 0.15);
+    const pxc = left + padX + portrait / 2;
+    if (this.textures.exists(entry.spriteKey)) {
+      const img = this.add.image(pxc, y + portrait / 2, entry.spriteKey);
+      const src = this.textures.get(entry.spriteKey).getSourceImage();
+      const d = Math.max((src.width as number) || 1, (src.height as number) || 1);
+      img.setScale(portrait / d); overlay.add(img);
+    } else {
+      const col = TYPE_COLORS[entry.type1 as keyof typeof TYPE_COLORS] ?? 0x556688;
+      overlay.add(this.add.circle(pxc, y + portrait / 2, portrait / 2, col, 0.5).setStrokeStyle(2, col));
+    }
+    const ix = pxc + portrait / 2 + 18;
+    const gender = genderForPokemon({ name: entry.name, key: entry.spriteKey, gender: entry.gender,
+      id: Number(key.match(/^api-(\d+)$/)?.[1]) || undefined }, entry.breedingId ?? `party-${index}`);
+    const gcol = gender === 'male' ? '#6fb5ff' : gender === 'female' ? '#ff91c8' : '#b8bfd0';
+    const nameT = this.add.text(ix, y + 2, this.partyName(entry), { fontSize: '20px', color: '#fff', fontStyle: 'bold' });
+    overlay.add(nameT);
+    const lvT = this.add.text(ix, y + 6 + nameT.height, `Lv.${entry.level}`, { fontSize: '15px', color: '#ffe44e' });
+    overlay.add(lvT);
+    overlay.add(this.add.text(ix + lvT.width + 16, y + 6 + nameT.height, genderSymbol(gender),
+      { fontSize: '15px', color: gcol, fontStyle: 'bold' }));
+    const typeY = y + 10 + nameT.height + lvT.height;
+    [entry.type1, entry.type2].filter(Boolean).forEach((tp, i) => {
+      const tw = Math.round(this.W * 0.085), tk = tp as string;
+      const tx = ix + i * (tw + 14);
+      overlay.add(this.add.rectangle(tx + tw / 2, typeY + 16, tw, 30,
+        TYPE_COLORS[tk as keyof typeof TYPE_COLORS] ?? 0x556688).setStrokeStyle(1, 0xffffff, 0.25));
+      overlay.add(this.add.text(tx + tw / 2, typeY + 16, typeName(tk),
+        { fontSize: '11px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+    });
+    y = top + 12 + title.height + 8 + portrait + 12;
+
+    // Ability + condition (one wrapped line).
+    const ability = entry.ability ?? findForm(entry.spriteKey)?.ability ?? dex?.ability ?? t('Unknown', '알 수 없음');
+    const statusNames: Record<string, string> = {
+      none: t('Healthy', '정상'), psn: t('Poisoned', '독'), par: t('Paralyzed', '마비'),
+      brn: t('Burned', '화상'), frz: t('Frozen', '얼음'), slp: t('Asleep', '잠듦'),
+    };
+    const abilT = this.add.text(left + padX, y,
+      `${t('Ability', '특성')}: ${abilityName(ability, entry.abilityKo)}    ·    ${t('Condition', '상태')}: ${statusNames[entry.status ?? 'none'] ?? entry.status}`,
+      { fontSize: '13px', color: '#bcd3ff', wordWrap: { width: modalW - padX * 2 } });
+    overlay.add(abilT); y += abilT.height + 12;
+
+    // Six battle stats — 3 columns × 2 rows.
+    const sh = this.add.text(left + padX, y, t('BATTLE STATS', '능력치'), { fontSize: '14px', color: '#ffe44e', fontStyle: 'bold' });
+    overlay.add(sh); y += sh.height + 6;
+    const stats: [string, string | number][] = [
+      [t('HP', '체력'), `${mon.hp}/${mon.maxHp}`], [t('Atk', '공격'), mon.atk], [t('Def', '방어'), mon.def],
+      [t('SpA', '특공'), mon.spAtk], [t('SpD', '특방'), mon.spDef], [t('Spe', '스피드'), mon.spd],
+    ];
+    const scolW = Math.round((modalW - padX * 2) / 3), scellH = Math.round(this.H * 0.056);
+    stats.forEach(([label, value], i) => {
+      const c = i % 3, r = Math.floor(i / 3);
+      const sxx = left + padX + c * scolW, syy = y + r * (scellH + 8);
+      overlay.add(this.add.rectangle(sxx + scolW / 2 - 6, syy + scellH / 2, scolW - 12, scellH, 0x172743).setStrokeStyle(1, 0x365782));
+      overlay.add(this.add.text(sxx + 8, syy + scellH / 2, `${label} ${value}`, { fontSize: '12px', color: '#dbe7ff' }).setOrigin(0, 0.5));
+    });
+    y += 2 * (scellH + 8) + 10;
+
+    // Moves.
+    const mh = this.add.text(left + padX, y, t('MOVES', '기술'), { fontSize: '14px', color: '#ffe44e', fontStyle: 'bold' });
+    overlay.add(mh); y += mh.height + 6;
+    const mrowH = Math.round(this.H * 0.072);
+    mon.moves.forEach((move, i) => {
+      const m = move.data, my = y + i * (mrowH + 5);
+      const category = m.category === 'physical' ? t('Physical', '물리')
+        : m.category === 'special' ? t('Special', '특수') : t('Status', '변화');
+      overlay.add(this.add.rectangle(cx, my + mrowH / 2, modalW - padX * 2, mrowH, 0x172743)
+        .setStrokeStyle(1, TYPE_COLORS[m.type as keyof typeof TYPE_COLORS] ?? 0x365782));
+      overlay.add(this.add.text(left + padX + 12, my + Math.round(mrowH * 0.14), tr(m.name),
+        { fontSize: '13px', color: '#fff', fontStyle: 'bold' }));
+      overlay.add(this.add.text(left + padX + 12, my + Math.round(mrowH * 0.56),
+        `${typeName(m.type)} · ${category} · ${t('Pow', '위력')} ${m.power || '—'} · ${t('Acc', '명중')} ${m.accuracy} · PP ${move.pp}/${m.pp}`,
+        { fontSize: '9px', color: '#aab8d0' }));
+    });
+
+    const close = this.add.text(cx, top + modalH - 4, t('✕ TAP OUTSIDE / CLOSE', '✕ 바깥을 눌러 닫기'),
+      { fontSize: '12px', color: '#aab8d0' }).setOrigin(0.5, 1);
+    overlay.add(close);
+  }
+
   // ── Bag tab ───────────────────────────────────────────────────────────────
 
   private renderBagTab() {
@@ -585,7 +687,10 @@ export class MenuScene extends Phaser.Scene {
     const hasDex   = !!this.registry.get('hasPokedex');
 
     // Money
-    this.contentContainer.add(this.add.text(cx + 280, this.H / 2 - 210, `💰 ${formatMoney(Inventory.money(this.registry))}`,
+    this.contentContainer.add(this.add.text(
+      this.mobileMenu ? cx + this.winW / 2 - 24 : cx + 280,
+      this.mobileMenu ? this.H / 2 - this.winH / 2 + 82 : this.H / 2 - 210,
+      `💰 ${formatMoney(Inventory.money(this.registry))}`,
       { fontSize: '15px', color: '#ffe44e' }).setOrigin(1, 0.5));
 
     type Row = { key?: string; name: string; desc: string; icon: string; count?: number; onClick?: () => void };
@@ -650,15 +755,28 @@ export class MenuScene extends Phaser.Scene {
       this.registry.remove('bagFocusItem');
     }
     this.bagScroll = Phaser.Math.Clamp(this.bagScroll, 0, this.bagMaxScroll);
+    // Mobile: fill the enlarged window with wider, taller rows so the (scaled-up)
+    // icon/name/desc read clearly instead of spilling out of a narrow strip.
+    const cy = this.H / 2;
+    const rowW = this.mobileMenu ? this.winW - 44 : 600;
+    const rowLeft = cx - rowW / 2;
+    const listTop = this.mobileMenu ? (cy - this.winH / 2 + 96) : (cy - 178);
+    const step = this.mobileMenu
+      ? Math.floor((cy + this.winH / 2 - 74 - listTop) / VISIBLE) : 50;
+    const rowH = this.mobileMenu ? Math.round(step * 0.84) : 44;
+    const iconX = this.mobileMenu ? rowLeft + 32 : cx - 282;
+    const textX = this.mobileMenu ? rowLeft + 66 : cx - 252;
+    const countX = this.mobileMenu ? cx + rowW / 2 - 22 : cx + 285;
     rows.slice(this.bagScroll, this.bagScroll + VISIBLE).forEach((item, i) => {
-      const y = this.H / 2 - 178 + i * 50;
-      const row = this.add.rectangle(cx, y, 600, 44, 0x111133).setStrokeStyle(1, 0x334466);
-      const icon = this.add.text(cx - 282, y, item.icon, { fontSize: '22px' }).setOrigin(0.5);
-      const nm   = this.add.text(cx - 252, y - 9, item.name, { fontSize: '14px', color: '#ffe44e', fontStyle: 'bold' });
-      const desc = this.add.text(cx - 252, y + 9, item.desc, { fontSize: '11px', color: '#aaaaaa' });
+      const y = this.mobileMenu ? (listTop + step / 2 + i * step) : (listTop + i * 50);
+      const row = this.add.rectangle(cx, y, rowW, rowH, 0x111133).setStrokeStyle(1, 0x334466);
+      const icon = this.add.text(iconX, y, item.icon, { fontSize: '22px' }).setOrigin(0.5);
+      const nm   = this.add.text(textX, y - Math.round(rowH * 0.2), item.name, { fontSize: '14px', color: '#ffe44e', fontStyle: 'bold' });
+      const desc = this.add.text(textX, y + Math.round(rowH * 0.1), item.desc,
+        { fontSize: '11px', color: '#aaaaaa', wordWrap: { width: rowW - (textX - rowLeft) - 70 } });
       this.contentContainer.add([row, icon, nm, desc]);
       if (item.count !== undefined) {
-        this.contentContainer.add(this.add.text(cx + 285, y, `×${item.count}`, { fontSize: '16px', color: '#fff', fontStyle: 'bold' }).setOrigin(1, 0.5));
+        this.contentContainer.add(this.add.text(countX, y, `×${item.count}`, { fontSize: '16px', color: '#fff', fontStyle: 'bold' }).setOrigin(1, 0.5));
       }
       if (item.onClick) {
         row.setInteractive({ useHandCursor: true })
@@ -671,7 +789,7 @@ export class MenuScene extends Phaser.Scene {
     // Large page controls remain usable after the Phaser canvas is scaled down
     // on an iPhone. Keyboard arrows and the mouse wheel call the same pager.
     if (this.bagMaxScroll > 0) {
-      const controlsY = this.H / 2 + 194;
+      const controlsY = this.mobileMenu ? (this.H / 2 + this.winH / 2 - 36) : (this.H / 2 + 194);
       const mkPageButton = (x: number, label: string, delta: number, enabled: boolean) => {
         const bg = this.add.rectangle(x, controlsY, 190, 38, enabled ? 0x315a9a : 0x1a2033, 1)
           .setStrokeStyle(1, enabled ? 0x77aaff : 0x30384d);

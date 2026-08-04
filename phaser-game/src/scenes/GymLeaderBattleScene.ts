@@ -15,10 +15,11 @@ import { ITEMS, Inventory, itemName, useItemOnSlot } from '../systems/Items';
 import { SaveManager } from '../utils/SaveManager';
 import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
-import { executeBattleMove, pendingMoveFor, willChargeThisTurn, isCharging } from '../systems/MoveEffects';
+import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
 import { runLevelUpLearning } from '../systems/MoveLearning';
 import { tr, pokeNameEn} from '../systems/i18n';
+import { fontScaleForScene } from '../systems/UiScale';
 import { genderedName } from '../data/PokemonGender';
 import { actsBefore } from '../systems/AbilitySystem';
 import { mergeLearnset } from '../data/Learnsets';
@@ -227,19 +228,22 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       (o as unknown as { setAlpha(n: number): void }).setAlpha(0);
       return o;
     };
-    track(this.add.rectangle(130, 52, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
+    // Widen the name boxes on mobile so enlarged names fit (enemy grows right,
+    // player grows left with its name/HP). ex = 0 on desktop → unchanged.
+    const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    track(this.add.rectangle(130 + ex / 2, 52, 260 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
     this.enemyNameText = track(this.add.text(14, 24, this.enemyHudName(), { fontSize: '14px', color: '#cc88ff', fontStyle: 'bold' }));
-    this.enemyLvText  = track(this.add.text(255, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
+    this.enemyLvText  = track(this.add.text(255 + ex, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(130, 52, HP_W + 8, 12, 0x333355));
     this.enemyHpBar   = track(this.add.rectangle(30, 52, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.enemyHpText  = track(this.add.text(14, 62, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
-    track(this.add.rectangle(this.W - 130, this.H - 175, 260, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
-    this.playerNameText = track(this.add.text(this.W - 258, this.H - 203, this.playerHudName(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
+    track(this.add.rectangle(this.W - (260 + ex) / 2, this.H - 175, 260 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
+    this.playerNameText = track(this.add.text(this.W - 258 - ex, this.H - 203, this.playerHudName(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(this.W - 12, this.H - 203, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
     track(this.add.rectangle(this.W - 130, this.H - 173, HP_W + 8, 12, 0x333355));
-    this.playerHpBar  = track(this.add.rectangle(this.W - 258, this.H - 173, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
-    this.playerHpText = track(this.add.text(this.W - 258, this.H - 161, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
+    this.playerHpBar  = track(this.add.rectangle(this.W - 258 - ex, this.H - 173, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    this.playerHpText = track(this.add.text(this.W - 258 - ex, this.H - 161, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
   }
 
   private createSprites() {
@@ -495,13 +499,9 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const avail = this.enemy.moves.filter(m => m.pp > 0);
     const enemyMove = pendingMoveFor(this.enemy)
       ?? (avail.length ? avail[Math.floor(Math.random() * avail.length)] : this.enemy.moves[0]);
-    // Two-turn move CHARGE turn: the charging side acts alone (opponent waits); the
-    // move resolves and the opponent acts once on the RELEASE turn.
-    if (willChargeThisTurn(this.player, move)) {
-      this.doPlayerMove(move, () => this.playerAction());
-      return;
-    }
-    const playerFirst = isCharging(this.player) || actsBefore(this.player, move, this.enemy, enemyMove);
+    // Two-turn moves span two FULL turns — the opponent acts on both the charge and
+    // release turns (its charge-turn move misses a dug-in/airborne target).
+    const playerFirst = actsBefore(this.player, move, this.enemy, enemyMove);
     if (playerFirst) {
       this.doPlayerMove(move, () => this.doEnemyMove(() => this.playerAction(), enemyMove));
     } else {

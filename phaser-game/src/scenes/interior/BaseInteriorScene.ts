@@ -66,6 +66,7 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
 
   update() {
     if (this.exiting) return;
+    if (this.scene.isActive('MenuScene')) return;   // frozen while the party/bag menu is open
     if (this.dialog.isOpen()) {
       this.handleDialogInput();
       return;
@@ -90,6 +91,16 @@ export abstract class BaseInteriorScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.upKey    = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
     this.downKey  = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+    // Open the party/bag menu (to check Pokémon status) from inside any interior —
+    // e.g. the Pokémon Center. Mirrors the overworld M/B shortcut (the mobile menu
+    // button dispatches M too).
+    const openMenu = () => {
+      if (!this.exiting && !this.dialog.isOpen() && !this.scene.isActive('MenuScene')) {
+        this.scene.launch('MenuScene');
+      }
+    };
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', openMenu);
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', openMenu);
   }
 
   private handleDialogInput() {
