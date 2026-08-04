@@ -31,6 +31,55 @@ export function toonMat(color: number, opts: { transparent?: boolean; opacity?: 
   });
 }
 
+/**
+ * Procedural 3D "Fog-Wraith" (Gengar / 안개 팬텀) for the Fogbound Manor boss —
+ * a volumetric version of the manor's painted purple grinning ghost. Built facing
+ * +Z (toward the camera), roughly 2 units tall with feet near y=0; the model loader
+ * normalizes it to height 1. No GLB / no generation credits required.
+ */
+export function makeGengar(): THREE.Group {
+  const g = new THREE.Group();
+  const PURPLE = 0x5a3a7a, DARKP = 0x452c60;
+  // Round squashed body.
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 22, 18), toonMat(PURPLE));
+  body.scale.set(1.02, 0.94, 0.9); body.position.y = 1.05; g.add(body);
+  // Jagged spikes over the back and crown.
+  const spikeMat = toonMat(DARKP);
+  for (const [x, y, z, s] of [
+    [0, 2.0, -0.15, 0.36], [-0.55, 1.8, -0.25, 0.32], [0.55, 1.8, -0.25, 0.32],
+    [-0.95, 1.35, -0.15, 0.28], [0.95, 1.35, -0.15, 0.28], [0, 1.25, -0.95, 0.3],
+  ] as [number, number, number, number][]) {
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(s, s * 2.5, 6), spikeMat);
+    sp.position.set(x, y, z); sp.rotation.x = -0.45; g.add(sp);
+  }
+  // Glowing red eyes + dark pupils.
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3a3a });
+  for (const ex of [-0.34, 0.34]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 12), eyeMat);
+    eye.position.set(ex, 1.2, 0.8); g.add(eye);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), toonMat(0x140018));
+    pupil.position.set(ex, 1.18, 0.96); g.add(pupil);
+  }
+  // Wide toothy grin.
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.3, 0.12), toonMat(0xf5f5ff));
+  mouth.position.set(0, 0.78, 0.84); g.add(mouth);
+  for (let i = -2; i <= 2; i++) {
+    const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.34, 0.14), toonMat(0x2a1a3a));
+    tooth.position.set(i * 0.19, 0.78, 0.88); g.add(tooth);
+  }
+  // Stubby arms + legs.
+  const limbMat = toonMat(DARKP);
+  for (const ax of [-1.02, 1.02]) {
+    const arm = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), limbMat);
+    arm.scale.set(1, 0.7, 0.7); arm.position.set(ax, 0.95, 0.12); g.add(arm);
+  }
+  for (const lx of [-0.5, 0.5]) {
+    const leg = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), limbMat);
+    leg.scale.set(1, 0.68, 1); leg.position.set(lx, 0.2, 0.22); g.add(leg);
+  }
+  return g;
+}
+
 // ── Blob shadow (shared geometry+material, cloned cheaply) ──────────────────
 let blobGeo: THREE.CircleGeometry | null = null;
 let blobMat: THREE.MeshBasicMaterial | null = null;

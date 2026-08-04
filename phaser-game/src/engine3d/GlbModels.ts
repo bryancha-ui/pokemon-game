@@ -1,6 +1,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { makeGengar } from './Props';
+
+// Procedural (code-built) creature models — no GLB and no generation credits, and
+// cheap enough to render even on mobile. Keyed by normalized species key; a battle
+// texture key like "te-94" / "wild-94" normalizes to "94".
+const PROCEDURAL: Record<string, () => THREE.Object3D> = {
+  '94': makeGengar,   // Fog-Wraith Gengar (안개 팬텀) — Fogbound Manor boss
+};
 
 // ── Generated 3D model registry ─────────────────────────────────────────────
 // True 3D creature models (generated from the game's own artwork) are listed in
@@ -55,7 +63,7 @@ export function allowsHeavy3DAssets(): boolean {
 
 /** Phaser texture keys sometimes carry a battle prefix (e.g. "wild-foxgeist"). */
 export function normalizeKey(key: string): string {
-  return key.toLowerCase().replace(/^(wild|enemy|foe|ally|player)-/, '');
+  return key.toLowerCase().replace(/^(wild|enemy|foe|ally|player|te)-/, '');
 }
 
 export function primeManifest(): void {
@@ -81,7 +89,9 @@ export function primeManifest(): void {
 }
 
 export function hasModel(key: string): boolean {
-  return allowsHeavy3DAssets() && !!manifest && manifest.has(normalizeKey(key));
+  const k = normalizeKey(key);
+  if (PROCEDURAL[k]) return true;   // code-built models are cheap — allowed on mobile too
+  return allowsHeavy3DAssets() && !!manifest && manifest.has(k);
 }
 
 /** The model's baked Y-orientation fix (manifest rotY) in radians, or 0. Callers
@@ -98,6 +108,21 @@ export function modelBaseYawRad(key: string): number {
  */
 export function getModel(key: string): LoadedModel | null {
   const k = normalizeKey(key);
+  // Procedural creatures are built synchronously (no async GLB fetch), then cached
+  // and cloned exactly like a loaded model.
+  if (PROCEDURAL[k]) {
+    const cached = models.get(k);
+    if (cached && cached !== 'loading' && cached !== 'failed') { modelUse.set(k, ++useClock); return cloneNormalized(cached); }
+    const inner = new THREE.Group();
+    inner.add(PROCEDURAL[k]());
+    if (!normalize(inner, 1) || !isRenderableModel(inner)) { models.set(k, 'failed'); return null; }
+    const root = new THREE.Group();
+    root.add(inner);
+    const loaded: LoadedModel = { group: root, animations: [] };
+    models.set(k, loaded);
+    modelUse.set(k, ++useClock);
+    return cloneNormalized(loaded);
+  }
   if (!allowsHeavy3DAssets() || !manifest || !manifest.has(k)) return null;
   const spec = manifest.get(k)!;
   const entry = models.get(k);
