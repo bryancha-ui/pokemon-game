@@ -10,6 +10,7 @@ import { caughtOriginForDexKey, dexEntry, dexKeyFor } from '../data/Pokedex';
 import { fetchPokemon, fetchPokemonSpeciesInfo, fetchPokemonAbilityInfo } from '../data/PokeAPI';
 import { genderForPokemon, genderSymbol } from '../data/PokemonGender';
 import { deckHideLeadPicker, deckShowLeadPicker } from '../systems/TouchControls';
+import { fontScaleForScene } from '../systems/UiScale';
 
 // Battle data for HM field moves, so teaching one on a full moveset can offer the
 // same "which move to forget?" picker that TMs use.
@@ -32,6 +33,11 @@ export class MenuScene extends Phaser.Scene {
   private bagScroll = 0;       // first row of the current bag page
   private bagMaxScroll = 0;    // first row of the final bag page
   private readonly BAG_PAGE_SIZE = 7;
+  // The menu window grows on mobile (where the font is scaled up) so party cards
+  // aren't cramped; desktop keeps the compact 780×540 panel.
+  private winW = 780;
+  private winH = 540;
+  private mobileMenu = false;
 
   private get W() { return this.scale.width; }
   private get H() { return this.scale.height; }
@@ -74,33 +80,42 @@ export class MenuScene extends Phaser.Scene {
       }
     }
 
+    // On mobile the on-canvas font is scaled up, so grow the window to fit; the
+    // chrome (header/tabs/buttons) is then positioned relative to the window edges.
+    this.mobileMenu = fontScaleForScene(this) > 1;
+    this.winW = this.mobileMenu ? Math.min(this.W - 16, 1248) : 780;
+    this.winH = this.mobileMenu ? Math.min(this.H - 12, 704) : 540;
+    const winTop = this.H / 2 - this.winH / 2;
+    const winLeft = this.W / 2 - this.winW / 2;
+    const winRight = this.W / 2 + this.winW / 2;
+
     // Dim overlay (covers full canvas)
     this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x000000, 0.65);
 
     // Main panel
-    this.add.rectangle(this.W / 2, this.H / 2, 780, 540, 0x0d0d2e, 0.97)
+    this.add.rectangle(this.W / 2, this.H / 2, this.winW, this.winH, 0x0d0d2e, 0.97)
       .setStrokeStyle(2, 0x5577aa);
 
     // ── Header ──────────────────────────────────────────────────────────────
-    this.add.text(this.W / 2, this.H / 2 - 248, t('— MENU —', '— 메뉴 —'), {
+    this.add.text(this.W / 2, winTop + 22, t('— MENU —', '— 메뉴 —'), {
       fontSize: '18px', color: '#ffe44e', fontStyle: 'bold',
     }).setOrigin(0.5);
 
     // ── Tab buttons ──────────────────────────────────────────────────────────
-    this.tabPokemon = this.add.text(this.W / 2 - 80, this.H / 2 - 218, t('POKÉMON', '포켓몬'), {
+    this.tabPokemon = this.add.text(this.W / 2 - 80, winTop + 52, t('POKÉMON', '포켓몬'), {
       fontSize: '14px', color: '#ffffff', backgroundColor: '#1a3a6a',
       padding: { x: 12, y: 6 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.switchTab('pokemon'));
 
-    this.tabBag = this.add.text(this.W / 2 + 60, this.H / 2 - 218, t('BAG', '가방'), {
+    this.tabBag = this.add.text(this.W / 2 + 60, winTop + 52, t('BAG', '가방'), {
       fontSize: '14px', color: '#aaaaaa', backgroundColor: '#111133',
       padding: { x: 12, y: 6 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.switchTab('bag'));
 
     // ── Save button ──────────────────────────────────────────────────────────
-    const saveBtn = this.add.text(this.W / 2 - 340, this.H / 2 - 248, t('💾 SAVE', '💾 저장'), {
+    const saveBtn = this.add.text(winLeft + 50, winTop + 22, t('💾 SAVE', '💾 저장'), {
       fontSize: '13px', color: '#ffe44e', backgroundColor: '#1a3a1a',
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -117,7 +132,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // ── Close button ─────────────────────────────────────────────────────────
-    this.add.text(this.W / 2 + 370, this.H / 2 - 248, t('✕ CLOSE', '✕ 닫기'), {
+    this.add.text(winRight - 20, winTop + 22, t('✕ CLOSE', '✕ 닫기'), {
       fontSize: '13px', color: '#aaaaaa',
     }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.closeMenu())
@@ -179,6 +194,28 @@ export class MenuScene extends Phaser.Scene {
         { fontSize: '14px', color: '#cccccc', align: 'center', lineSpacing: 8 },
       ).setOrigin(0.5);
       this.contentContainer.add(t);
+      return;
+    }
+
+    // ── Mobile: single-column, roomy cards sized to fit the enlarged font ──
+    if (this.mobileMenu) {
+      const winTop = cy - this.winH / 2, winBottom = cy + this.winH / 2;
+      const gridTop = winTop + 88, gridBottom = winBottom - 40;
+      const gap = 10;
+      const n = Math.max(1, party.length);
+      const cardH = Math.min(152, (gridBottom - gridTop - gap * (n - 1)) / n);
+      const cardW = this.winW - 40;
+      party.forEach((entry, i) => {
+        const y = gridTop + cardH / 2 + i * (cardH + gap);
+        this.drawPartyCardMobile(entry, cx, y, cardW, cardH, i === 0, i);
+      });
+      deckShowLeadPicker(party.map((entry, index) => ({
+        name: this.partyName(entry), level: entry.level,
+        hp: entry.hp, maxHp: entry.maxHp, isLead: index === 0,
+      })), index => this.setPartyLead(index));
+      this.contentContainer.add(this.add.text(cx, winBottom - 18,
+        t('Tap a Pokémon for details · SET LEAD changes your first battler', '포켓몬을 누르면 상세 정보 · 선두 변경으로 첫 포켓몬 지정'),
+        { fontSize: '11px', color: '#8899bb', align: 'center', wordWrap: { width: cardW } }).setOrigin(0.5));
       return;
     }
 
@@ -308,6 +345,65 @@ export class MenuScene extends Phaser.Scene {
     this.contentContainer.add(this.add.text(lx + 72, y + 40, statLine, {
       fontSize: '7px', color: '#9fb6d8',
     }));
+  }
+
+  /** Roomy single-column party card for mobile: only essentials (sprite, name,
+   *  Lv, HP, and types when there's height), so the enlarged font never spills.
+   *  Full stats/moves live in the tap-to-open detail view; lead is set on the deck. */
+  private drawPartyCardMobile(entry: PartyEntry, x: number, y: number, w: number, h: number, isLead: boolean, index = 0) {
+    const left = x - w / 2, right = x + w / 2, top = y - h / 2, bottom = y + h / 2;
+    const pad = 16;
+    const bg = this.add.rectangle(x, y, w, h, 0x111133, 1)
+      .setStrokeStyle(isLead ? 3 : 1, isLead ? 0xffe44e : 0x3355aa)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => bg.setStrokeStyle(3, isLead ? 0xffe44e : 0x77aaff))
+      .on('pointerout',  () => bg.setStrokeStyle(isLead ? 3 : 1, isLead ? 0xffe44e : 0x3355aa))
+      .on('pointerdown', () => this.showPokemonDetails(index));
+    this.contentContainer.add(bg);
+
+    // Sprite (left) — or a type-coloured square if its texture isn't cached.
+    const sprSize = h * 0.74;
+    const sprX = left + h * 0.54;
+    if (this.textures.exists(entry.spriteKey)) {
+      const img = this.add.image(sprX, y, entry.spriteKey);
+      const tex = this.textures.get(entry.spriteKey).getSourceImage();
+      const dim = Math.max((tex.width as number) || 1, (tex.height as number) || 1);
+      img.setScale(sprSize / dim);
+      this.contentContainer.add(img);
+    } else {
+      const typeCol = TYPE_COLORS[entry.type1 as keyof typeof TYPE_COLORS] ?? 0x555577;
+      this.contentContainer.add(this.add.rectangle(sprX, y, sprSize, sprSize, typeCol, 0.5).setStrokeStyle(1, typeCol));
+    }
+
+    const lx = left + h + 14;
+    // Row 1: name (★ marks the lead) + level, well apart across the wide card.
+    this.contentContainer.add(this.add.text(lx, top + 12, (isLead ? '★ ' : '') + this.partyName(entry), {
+      fontSize: '18px', color: isLead ? '#ffe44e' : '#ffffff', fontStyle: 'bold',
+    }));
+    this.contentContainer.add(this.add.text(right - pad, top + 12, `Lv.${entry.level}`,
+      { fontSize: '15px', color: '#aaccff' }).setOrigin(1, 0));
+
+    // Bottom row: HP bar + HP text.
+    const ratio = Math.max(0, entry.hp / entry.maxHp);
+    const hpY = bottom - 24;
+    const barW = Math.max(60, (right - 160) - lx);
+    const barColor = ratio > 0.5 ? 0x44cc44 : ratio > 0.25 ? 0xddcc00 : 0xcc4444;
+    this.contentContainer.add(this.add.rectangle(lx + barW / 2, hpY, barW, 12, 0x222244));
+    this.contentContainer.add(this.add.rectangle(lx, hpY, Math.max(0, barW * ratio), 12, barColor).setOrigin(0, 0.5));
+    this.contentContainer.add(this.add.text(right - pad, hpY, `${entry.hp}/${entry.maxHp}`,
+      { fontSize: '12px', color: '#cfe0ff' }).setOrigin(1, 0.5));
+
+    // Type pills on the middle line — only when the card is tall enough to spare it.
+    if (h >= 112) {
+      const midY = (top + 12 + hpY) / 2 + 6;
+      ([entry.type1, entry.type2].filter(Boolean) as string[]).forEach((tp, ti) => {
+        const px = lx + 6 + ti * 118;
+        const col = TYPE_COLORS[tp as keyof typeof TYPE_COLORS] ?? 0x334466;
+        this.contentContainer.add(this.add.rectangle(px + 52, midY, 104, 30, col, 1).setOrigin(0.5));
+        this.contentContainer.add(this.add.text(px + 52, midY, typeName(tp),
+          { fontSize: '11px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+      });
+    }
   }
 
   private partyName(entry: PartyEntry): string {
