@@ -116,6 +116,9 @@ const OVERRIDES: Record<string, LearnEntry[]> = {
   feldaconda: [{ level: 38, move: M('Earth Power', 'ground', 'special', 90, 100) }], // extra Ground coverage
   thanatoat:  [{ level: 38, move: M('Ice Beam', 'ice', 'special', 90, 100) }],
   banderado:  [{ level: 38, move: M('Stone Edge', 'rock', 'physical', 95, 80) }],
+  // 화투루미 (Onnujang) — a proper Ghost STAB in its early 20s, before it evolves
+  // into Thanatoat at Lv.36 (fills the gap between Shadow Sneak @15 and Hex @25).
+  onnujang:   [{ level: 21, move: M('Ominous Wind', 'ghost', 'special', 60, 100) }],
   // New custom lines — signature moves on top of the generic type kit.
   jakdangchi: [{ level: 20, move: M('Sucker Punch', 'dark', 'physical', 70, 100) }],
   kkaakdang:  [{ level: 36, move: M('Brave Bird', 'flying', 'physical', 95, 100) }, { level: 40, move: M('Foul Play', 'dark', 'physical', 95, 100) }],

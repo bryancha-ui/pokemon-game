@@ -294,6 +294,7 @@ export const KO_STRINGS: Record<string, string> = {
   'Scratch': '할퀴기',
   'Screech': '이상한소리',
   'Shadow Sneak': '그림자기습',
+  'Ominous Wind': '이상한바람',
   'Shock Wave': '전기쇼크',
   'Silver Wind': '은빛바람',
   'Smokescreen': '연막',
