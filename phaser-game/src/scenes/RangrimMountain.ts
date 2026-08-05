@@ -19,7 +19,7 @@ const T = { GROUND: 0, PATH: 1, ROCK: 2, CAVE: 3, BOULDER: 4, LEDGE: 5, SNOW: 6,
 type Tile = typeof T[keyof typeof T];
 const TILE = 32, COLS = 24, ROWS = 28, MIDCOL = 11;
 const COLORS: Record<Tile, number> = {
-  [T.GROUND]: 0x6b6455, [T.PATH]: 0xc2b592, [T.ROCK]: 0x4f4940, [T.CAVE]: 0x2c2a34,
+  [T.GROUND]: 0x6b6455, [T.PATH]: 0xc2b592, [T.ROCK]: 0x4f4940, [T.CAVE]: 0x3d3a4a,
   [T.BOULDER]: 0x6f665a, [T.LEDGE]: 0x8a7a58, [T.SNOW]: 0xe8eef2, [T.TALLGRASS]: 0x3f7a35, [T.STREAM]: 0x66b0e0,
 };
 const SOLID = new Set<Tile>([T.ROCK, T.BOULDER, T.STREAM, T.LEDGE]);
@@ -118,7 +118,7 @@ export class RangrimBaseScene extends Phaser.Scene {
 
   private drawDarkness() {
     const d = this.add.graphics().setDepth(15);
-    d.fillStyle(0x05060c, 0.5); d.fillRect(0, 0, COLS * TILE, ROWS * TILE);
+    d.fillStyle(0x05060c, 0.28); d.fillRect(0, 0, COLS * TILE, ROWS * TILE);   // dim, not pitch-black — the cavern must stay readable
   }
 
   private drawMap() {
@@ -129,7 +129,10 @@ export class RangrimBaseScene extends Phaser.Scene {
       if (t === T.GROUND) { g.fillStyle(0x585444, 0.5); g.fillRect(x + 6, y + 8, 4, 3); g.fillRect(x + 18, y + 20, 5, 3); }
       if (t === T.PATH) { g.fillStyle(0xa89a76, 0.6); g.fillRect(x + 5, y + 10, 5, 3); g.fillRect(x + 18, y + 20, 5, 3); }
       if (t === T.ROCK) { g.fillStyle(0x413c34); g.fillRect(x + 3, y + 4, 10, 10); g.fillRect(x + 16, y + 15, 11, 11); g.fillStyle(0x6a6356, 0.5); g.fillRect(x + 4, y + 5, 4, 3); }
-      if (t === T.CAVE) { g.fillStyle(0x000000, 0.3); g.fillRect(x, y, TILE, TILE); g.fillStyle(0x3a3648, 0.5); g.fillRect(x + 7, y + 9, 5, 4); g.fillRect(x + 19, y + 22, 4, 3); }
+      // Keep the cave floor lightness above the 0.18 cave-floor threshold so the 3D
+      // mirror flattens it (caveFloorHint) instead of extruding the whole dark floor
+      // into a field of tall black tiles that bury the player.
+      if (t === T.CAVE) { g.fillStyle(0x000000, 0.1); g.fillRect(x, y, TILE, TILE); g.fillStyle(0x565270, 0.5); g.fillRect(x + 7, y + 9, 5, 4); g.fillRect(x + 19, y + 22, 4, 3); }
       if (t === T.BOULDER) { g.fillStyle(0x554d42); g.fillEllipse(x + 16, y + 18, 26, 22); g.fillStyle(0x7a7060, 0.6); g.fillEllipse(x + 12, y + 13, 9, 7); }
       if (t === T.LEDGE) { g.fillStyle(0x6a5c3e); g.fillRect(x, y + 20, TILE, 12); g.fillStyle(0x3a2f1a); g.fillRect(x, y + 30, TILE, 2); g.fillStyle(0xbfae82); g.fillTriangle(x + 12, y + 24, x + 20, y + 24, x + 16, y + 30); }
       if (t === T.SNOW) { g.fillStyle(0xffffff, 0.7); g.fillCircle(x + 9, y + 11, 3); g.fillCircle(x + 21, y + 22, 3); g.fillStyle(0xcdd8e0, 0.5); g.fillRect(x, y + 26, TILE, 6); }
@@ -554,9 +557,11 @@ export class RangrimFoothillsScene extends RangrimBaseScene {
 export class RangrimCavernScene extends RangrimBaseScene {
   // The pitch-dark lower cavern is cramped, so even height-capped walls block the
   // view — flatten every raised tile here so no black rock ever hides the player.
+  // interiorTerrain3D also suppresses stray foliage/water in the cave.
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
   public clearSight3D = true;
+  public interiorTerrain3D = true;
   constructor() { super(CAVERN); }
 }
 export class RangrimAltarScene extends RangrimBaseScene {
@@ -566,6 +571,7 @@ export class RangrimAltarScene extends RangrimBaseScene {
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
   public clearSight3D = true;
+  public interiorTerrain3D = true;
   constructor() { super(ALTAR); }
 }
 export class RangrimSnowfieldScene extends RangrimBaseScene {
