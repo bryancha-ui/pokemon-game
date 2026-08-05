@@ -72,6 +72,7 @@ export const OUTDOOR_ENCOUNTERS: EncounterEntry[] = [
   { id: 74,          weight: 22, minLevel: 3, maxLevel: 7, isCustom: false, catchRate: 255 }, // Geodude
   { id: 66,          weight: 12, minLevel: 4, maxLevel: 7, isCustom: false, catchRate: 180 }, // Machop
   { id: 21,          weight: 10, minLevel: 3, maxLevel: 6, isCustom: false, catchRate: 255 }, // Spearow
+  { id: 25,          weight: 14, minLevel: 3, maxLevel: 7, isCustom: false, catchRate: 190 }, // Pikachu
   { id: 246,         weight:  6, minLevel: 4, maxLevel: 6, isCustom: false, catchRate: 45  }, // Larvitar
 ];
 

@@ -67,6 +67,12 @@ function buildMap(): Tile[][] {
 }
 
 export class SinuijuIceCaveScene extends Phaser.Scene {
+  // Render the cavern with interior-style terrain in 3D — low visible walls (the
+  // player is never hidden behind tall black tiles), and NO outdoor foliage/water,
+  // so no stray trees or transparent structures block the ice path. The outdoor
+  // follow-camera + daylight are kept (this map scrolls 50 rows deep) so it reads
+  // bright rather than a dark cave.
+  public interiorTerrain3D = true;
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -145,7 +151,8 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
     // heart. The 3D mirror derives a billboard's world position from the object's
     // x/y — drawing at absolute coords on an unpositioned (0,0) object snapped the
     // 3D shape to the map corner. Positioning it puts the boss centred in the heart.
-    g.setPosition(BEAR_COL * TILE + 16, BEAR_ROW * TILE + 18);
+    g.setPosition(BEAR_COL * TILE + 16, BEAR_ROW * TILE - 6);
+    g.setScale(1.9);   // a looming 우두머리 boss — the raw drawing reads too small in 3D
     const cx = 0, cy = 0;
     g.fillStyle(0x000000, 0.2); g.fillEllipse(cx, cy + 20, 46, 12);
     g.fillStyle(0xeaf6ff, 1); g.fillEllipse(cx, cy, 34, 40);

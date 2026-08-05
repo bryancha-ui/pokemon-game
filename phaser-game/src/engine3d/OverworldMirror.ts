@@ -274,13 +274,19 @@ export class OverworldMirror {
       grassTileIds3D?: number[];
       grassDensity3D?: number;
       grassTone3D?: number;
+      interiorTerrain3D?: boolean;
     };
     const known = sc.buildingPlots ?? [];
     const useFreeCityBuildings = sc.freeBuildings ?? (
       !this.isInterior && !sc.onlyNamedBuildings && isUrbanMapScene(this.scene.scene.key)
     );
+    // interiorTerrain3D: give a scene interior-style TERRAIN (low visible walls, no
+    // outdoor foliage/water) while keeping the outdoor follow-camera + daylight — used
+    // by tall stylized scenes like the ice cave that must scroll but shouldn't grow
+    // trees, tall black walls or transparent water planes.
+    const interiorTerrain = this.isInterior || (sc.interiorTerrain3D ?? false);
     const t = buildTerrain(
-      this.groundCanvas!, this.worldW, this.worldH, this.isInterior,
+      this.groundCanvas!, this.worldW, this.worldH, interiorTerrain,
       this.readTileMap(), known, this.scene.scene.key,
       sc.onlyNamedBuildings ?? isWildFieldScene(this.scene.scene.key), sc.vehiclePlots ?? [],
       sc.caveFloorHint ?? false, sc.noVehicles ?? false, useFreeCityBuildings,
