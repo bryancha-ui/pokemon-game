@@ -276,6 +276,7 @@ export class OverworldMirror {
       grassTone3D?: number;
       interiorTerrain3D?: boolean;
       flatTerrain3D?: boolean;
+      treeTileIds3D?: number[];
     };
     const known = sc.buildingPlots ?? [];
     const useFreeCityBuildings = sc.freeBuildings ?? (
@@ -294,6 +295,7 @@ export class OverworldMirror {
       sc.propPlots ?? [], sc.clearSight3D ?? false, sc.grass3D ?? false,
       sc.grassTileIds3D ?? [], sc.grassDensity3D ?? 1.45, sc.grassTone3D ?? 0x49b23a,
       sc.flatTerrain3D ?? false,
+      sc.treeTileIds3D ?? [],
     );
     this.terrain = t;
     this.groundTex = ((t.group.children[0] as THREE.Mesh).material as THREE.MeshToonMaterial).map as THREE.CanvasTexture;

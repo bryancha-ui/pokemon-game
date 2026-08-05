@@ -225,6 +225,8 @@ export class WorldMapScene extends Phaser.Scene {
   buildingPlots!: { x: number; y: number; w: number; h: number; model: string }[];
   /** Only the named landmark buildings rise in 3D (no generic filler boxes). */
   onlyNamedBuildings = true;
+  /** The painted forest/boundary trees grow as real 3D trees, not flat ground art. */
+  treeTileIds3D = [T.TREE];
   /** The city's namesake waterfall at the head of the river (col 15) as a 3D
    *  cascading water curtain. */
   propPlots = [{ x: 15, y: 6, kind: 'waterfall' as const, len: 3 }];

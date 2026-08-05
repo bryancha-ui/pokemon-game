@@ -329,6 +329,8 @@ export function buildTerrain(
   // is stronger than clearSight3D (which Task-17 turned into low 3D mountains)
   // and interiorTerrain3D (which still raises height-capped walls).
   flatTerrain3D = false,
+  // Tile ids the scene paints as trees — forced to grow real 3D trees (see above).
+  treeTileIds3D: number[] = [],
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -434,11 +436,15 @@ export function buildTerrain(
   // though wild encounters could never happen there.
   if (tileMap) {
     const grassIds = new Set(grassTileIds3D);
+    const treeIds = new Set(treeTileIds3D);
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const i = r * cols + c;
         const tileId = tileMap[r]?.[c];
-        if (tileId !== undefined && grassIds.has(tileId)) cells[i] = 'grass';
+        // Scenes can publish their painted tree tiles so they grow real 3D trees
+        // instead of being flattened to painted ground by the grass suppression below.
+        if (tileId !== undefined && treeIds.has(tileId)) cells[i] = snowy ? 'pine' : 'tree';
+        else if (tileId !== undefined && grassIds.has(tileId)) cells[i] = 'grass';
         else if (cells[i] === 'grass') cells[i] = 'flat';
       }
     }
