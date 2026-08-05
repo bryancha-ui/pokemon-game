@@ -70,9 +70,11 @@ function buildMap(): Tile[][] {
   fill(30, 32, 4, 20, T.WATER);
   fill(30, 32, 11, 13, T.PATH);  // bridge
 
-  // Roadside Pavilion (rows 20-23, cols 16-19)
-  fill(20, 23, 16, 19, T.PAVILION);
-  m[22][17] = T.PATH; // pavilion entrance
+  // Roadside rest spot (rows 20-22, cols 16-18): an OPEN stone clearing where the
+  // 할아버지 stands. Uses walkable PATH instead of solid PAVILION tiles so nothing
+  // boxes him in with a 3D wall, and clears the pines right beside him.
+  fill(20, 23, 16, 19, T.PATH);
+  fill(19, 23, 18, 20, T.GRASS);   // breathing room to the east (was pine)
 
   // Wider grassy clearings (encounter zones)
   fill(10, 16, 6, 9, T.GRASS);
