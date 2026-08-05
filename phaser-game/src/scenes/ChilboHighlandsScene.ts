@@ -125,7 +125,7 @@ export class ChilboHighlandsScene extends Phaser.Scene {
 
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.steps = 0;
-    playBgm(this, 'northroute');
+    playBgm(this, 'chilbo');
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('chilboReturnX') as number | undefined;
     const ry = this.registry.get('chilboReturnY') as number | undefined;

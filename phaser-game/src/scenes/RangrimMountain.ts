@@ -422,7 +422,7 @@ function summit(): Tile[][] {
 
 // ── The five connected maps (south = Binghagwan foot, north = Samho peak) ─────────
 const FOOTHILLS: RgConfig = {
-  key: 'RangrimFoothillsScene', returnKey: 'rgFoot', title: '⛰ 온성산 기슭 (Onseong Foothills)', bgm: 'baekdupass',
+  key: 'RangrimFoothillsScene', returnKey: 'rgFoot', title: '⛰ 온성산 기슭 (Onseong Foothills)', bgm: 'rangrimfoothills',
   southLabel: '↓ Binghagwan', northLabel: '↑ 하부 동굴 (Lower Cavern)',
   encTiles: [T.TALLGRASS], enc: [
     { id: 75, weight: 14, minLevel: 73, maxLevel: 74, isCustom: false, catchRate: 120 },
@@ -442,7 +442,7 @@ const FOOTHILLS: RgConfig = {
   decorate: (s) => s.label('▲ 동굴 입구 (cave mouth)', MIDCOL, 4),
 };
 const CAVERN: RgConfig = {
-  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 온성 하부 동굴 (Lower Cavern)', bgm: 'baekdupass', darkCave: true,
+  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 온성 하부 동굴 (Lower Cavern)', bgm: 'rangrimcavern', darkCave: true,
   southLabel: '↓ 기슭 (Foothills)', northLabel: '↑ 제단의 방 (Altar Hall)',
   encTiles: [T.CAVE], enc: [
     { id: 42, weight: 15, minLevel: 73, maxLevel: 75, isCustom: false, catchRate: 120 },
@@ -508,7 +508,7 @@ const ALTAR: RgConfig = {
   },
 };
 const SNOWFIELD: RgConfig = {
-  key: 'RangrimSnowfieldScene', returnKey: 'rgSnow', title: '⛰ 온성 설원 능선 (Snow Ridge)', bgm: 'baekdupass',
+  key: 'RangrimSnowfieldScene', returnKey: 'rgSnow', title: '⛰ 온성 설원 능선 (Snow Ridge)', bgm: 'rangrimsnow',
   southLabel: '↓ 제단의 방 (Altar Hall)', northLabel: '↑ 정상 (Summit)',
   encTiles: [T.SNOW], enc: [
     { id: 461, weight: 13, minLevel: 74, maxLevel: 76, isCustom: false, catchRate: 90 },

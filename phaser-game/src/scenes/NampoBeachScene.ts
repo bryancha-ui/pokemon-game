@@ -103,7 +103,7 @@ export class NampoBeachScene extends Phaser.Scene {
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.whirlG = [];
     this.mobileActionAt = -Infinity;
-    playBgm(this, 'nampo');
+    playBgm(this, 'nampobeach');
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('NampoBeachSceneReturnX') as number | undefined;
     const ry = this.registry.get('NampoBeachSceneReturnY') as number | undefined;

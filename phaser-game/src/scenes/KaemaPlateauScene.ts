@@ -129,7 +129,7 @@ export class KaemaPlateauScene extends Phaser.Scene {
 
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.steps = 0;
-    playBgm(this, 'northroute');
+    playBgm(this, 'kaema');
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('kaemaReturnX') as number | undefined;
     const ry = this.registry.get('kaemaReturnY') as number | undefined;

@@ -97,7 +97,7 @@ export class WonsanBeachScene extends Phaser.Scene {
 
   create() {
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0; this.steps = 0;
-    playBgm(this, 'wonsan');
+    playBgm(this, 'wonsanbeach');
     this.input.keyboard?.resetKeys();
     const rx = this.registry.get('WonsanBeachSceneReturnX') as number | undefined;
     const ry = this.registry.get('WonsanBeachSceneReturnY') as number | undefined;

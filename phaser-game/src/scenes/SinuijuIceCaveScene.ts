@@ -90,7 +90,7 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
 
   create() {
     this.stepping = false; this.cutscene = false;
-    playBgm(this, 'baekdupass');
+    playBgm(this, 'icecave');
     this.input.keyboard?.resetKeys();
     this.beaten = !!this.registry.get(`trainerDefeated_${THREAT_KEY}`);
 

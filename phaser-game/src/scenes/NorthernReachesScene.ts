@@ -148,7 +148,7 @@ export class NorthernReachesScene extends Phaser.Scene {
 
   create() {
 
-    playBgm(this, 'baekak');
+    playBgm(this, 'northreaches');
     this.cutsceneActive = false; this.walkFrame = 0; this.walkTimer = 0;
     this.input.keyboard?.resetKeys();
     this.spawnGuard = true;

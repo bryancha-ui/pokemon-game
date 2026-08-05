@@ -37,7 +37,7 @@ export const TRACKS: Record<string, string> = {
   northroute: BASE + 'bgm_northroute.mp3',  // northern field routes
   railnorth:  BASE + 'bgm_railnorth.mp3',   // the rail north
   baekducheck: BASE + 'bgm_baekducheck.mp3',// Baekdu checkpoint
-  northreaches: BASE + 'bgm_northreaches.mp3', // Northern Reaches
+  northreaches: BASE + 'NorthernReachesScene.mp3', // Northern Reaches (dedicated theme)
   sacredpeak: BASE + 'bgm_sacredpeak.mp3',  // Sacred Peak
   // Northern (post-game) cities
   seolhwa:    BASE + 'bgm_seolhwa.mp3',     // Seolhwa City (gate of the north)
@@ -46,6 +46,18 @@ export const TRACKS: Record<string, string> = {
   baekak:     BASE + 'bgm_baekak.mp3',      // Baekak City (어사대 HQ)
   hauntedhouse: BASE + 'bgm_hauntedhouse.mp3', // Haunted House
   headquarternorth: BASE + 'bgm_headquarternorth%20(2).mp3', // 노스단 아지트 (Team North HQ)
+  // ── Dedicated Northern-region map themes (one file per map; filename = scene name) ──
+  ryesong:          BASE + 'ryesongvalleyscene.mp3',    // Ryesong Valley
+  ahobiryong:       BASE + 'AhobiryongPassScene.mp3',   // Ahobiryong Pass
+  sijung:           BASE + 'SijungCoastScene.mp3',      // Sijung Coast
+  chilbo:           BASE + 'ChilboHighlandsScene.mp3',  // Chilbo Highlands
+  kaema:            BASE + 'KaemaPlateauScene.mp3',     // Kaema Plateau
+  nampobeach:       BASE + 'NampoBeachScene.mp3',       // Parangpo Beach
+  wonsanbeach:      BASE + 'WonsanBeachScene.mp3',      // Haesol Beach
+  icecave:          BASE + 'SinuijuIceCaveScene.mp3',   // Binghagwan Ice Cave
+  rangrimfoothills: BASE + 'RangrimFoothillsScene.mp3', // Onseong Foothills
+  rangrimcavern:    BASE + 'RangrimCavernScene.mp3',    // Onseong Lower Cavern
+  rangrimsnow:      BASE + 'RangrimSnowfieldScene.mp3', // Onseong Snow Ridge
   // ── Routes & field ──
   route1:     BASE + 'bgm_route1.mp3',
   route2:     BASE + 'bgm_route2.mp3',
