@@ -141,7 +141,12 @@ export class SinuijuIceCaveScene extends Phaser.Scene {
 
   private drawBeartic() {
     const g = this.add.graphics().setDepth(7);
-    const cx = BEAR_COL * TILE + 16, cy = BEAR_ROW * TILE + 18;
+    // Draw the Beartic LOCALLY around (0,0) and POSITION the graphics object at the
+    // heart. The 3D mirror derives a billboard's world position from the object's
+    // x/y — drawing at absolute coords on an unpositioned (0,0) object snapped the
+    // 3D shape to the map corner. Positioning it puts the boss centred in the heart.
+    g.setPosition(BEAR_COL * TILE + 16, BEAR_ROW * TILE + 18);
+    const cx = 0, cy = 0;
     g.fillStyle(0x000000, 0.2); g.fillEllipse(cx, cy + 20, 46, 12);
     g.fillStyle(0xeaf6ff, 1); g.fillEllipse(cx, cy, 34, 40);
     g.fillStyle(0xf6fcff, 1); g.fillCircle(cx, cy - 20, 16);

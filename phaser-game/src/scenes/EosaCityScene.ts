@@ -124,13 +124,15 @@ function buildMap(cols: number, rows: number, skipDefaultTrees = false): Tile[][
   fill(9, 11, 1, cols - 1, T.ROAD);      // main road
   fill(0, rows, 13, 15, T.ROAD);         // circuit road (N-S)
   for (const b of BUILDINGS) { fill(b.y, b.y + b.h, b.x, b.x + b.w, T.BUILDING); set(b.y + b.h, b.doorCol, T.ROAD); }
-  // themed accents + greenery
-  for (const [r,c] of [[13,4],[14,7],[16,5],[13,22],[15,24],[17,21]] as [number,number][]) set(r, c, T.ACCENT);
-  // Cities that design their own 3D trees (cfg.trees, e.g. Parangpo's palms) skip
-  // these flat 2D tree tiles so they don't leave a painted blob on the 3D ground.
-  if (!skipDefaultTrees)
+  // themed accents + greenery. Cities that design their own scenery (cfg.trees,
+  // e.g. Parangpo's palms, or Binghagwan which wants a clean frozen ground) skip
+  // ALL the flat decoration tiles so nothing renders as a stray bush/blob near the
+  // buildings, gates and paths in 3D.
+  if (!skipDefaultTrees) {
+    for (const [r,c] of [[13,4],[14,7],[16,5],[13,22],[15,24],[17,21]] as [number,number][]) set(r, c, T.ACCENT);
     for (const [r,c] of [[3,2],[3,25],[16,2],[16,25],[12,9],[12,18]] as [number,number][]) set(r, c, T.TREE);
-  for (const [r,c] of [[12,11],[12,16],[15,12],[15,16]] as [number,number][]) set(r, c, T.FLOWER);
+    for (const [r,c] of [[12,11],[12,16],[15,12],[15,16]] as [number,number][]) set(r, c, T.FLOWER);
+  }
   return m;
 }
 
