@@ -658,9 +658,15 @@ export function buildTerrain(
       };
       for (const b of buildings) {
         const fillStyle = sampleGround(b);
-        const padTop = 2.2;                       // 2D roofs overhang upward
-        const x0 = b.x * sx, y0 = Math.max(0, (b.z - padTop) * sy);
-        const w0 = b.w * sx, h0 = (b.d + padTop) * sy;
+        // 2D roofs overhang upward; the painted DOOR / steps / red-cross sign sits
+        // at the bottom edge and often spills a tile below and to the sides. Pad the
+        // wipe in every direction so no "ghost entrance" of the old flat art peeks
+        // out around the 3D building (Pokémon Centers were showing a second doorway).
+        const padTop = 2.2, padBottom = 1.2, padSide = 0.7;
+        const x0 = Math.max(0, (b.x - padSide) * sx);
+        const y0 = Math.max(0, (b.z - padTop) * sy);
+        const w0 = (b.w + padSide * 2) * sx;
+        const h0 = (b.d + padTop + padBottom) * sy;
         gctx.fillStyle = fillStyle;
         gctx.fillRect(x0, y0, w0, h0);
       }
