@@ -7,7 +7,10 @@ import { AVATAR_URL, rivalAvatarKey } from './PlayerAvatar';
 export interface Portrait { key: string; url: string; }
 
 const NPC = 'assets/npc/';
-const P = (file: string): Portrait => ({ key: file.replace(/\.\w+$/, ''), url: NPC + file });
+// encodeURI so filenames with spaces / Korean characters (e.g. "gym trainer Haedo.png",
+// "노스단 courier Cheol.png") load correctly from GitHub Pages. The texture key keeps the
+// human-readable raw name; only the fetched URL is percent-encoded.
+const P = (file: string): Portrait => ({ key: file.replace(/\.\w+$/, ''), url: encodeURI(NPC + file) });
 
 export const PORTRAITS: Record<string, Portrait> = {
   // ── Onnuri League — Elite Four + Champion ──
@@ -35,7 +38,7 @@ export const PORTRAITS: Record<string, Portrait> = {
   'suri-director':     P('npc_suri.png'),
   // ── Northern 어사대 (Inspectorate Chiefs) — the 마패 circuit ──
   'eosa-kaesong':      P('npc_eosajang.png'),   // Songhyeon — 어사대장 Hyeon
-  'eosa-nampo':        P('npc_salmu.png'),      // Parangpo — 어사대장 Haemin
+  'eosa-nampo':        P('어사대장 해민.png'),   // Parangpo — 어사대장 Haemin
   'eosa-wonsan':       P('npc_jito.png'),       // Haesol — 어사대장 Haegang
   'eosa-hamhung':      P('npc_gapcheol.webp'),  // Gangcheoldo — 어사대장 Cheolju (Steel)
   'eosa-chongjin':     P('npc_dosadae.png'),    // Muyeonhang — 어사대장 Mukyeong
@@ -66,10 +69,94 @@ export const PORTRAITS: Record<string, Portrait> = {
   'nosdan-samjiyon-boss': P('npc_sovereign.png'),   // Sovereign Clemont — atop the Samho 아지트
   'prof-song':         P('npc_song.webp'),
 
-  // ── Named regular trainers with an existing class sprite ──
-  // "Snow" would otherwise classify Deok as a skier. Pin him to the worker
-  // artwork requested for his 2D battle intro.
-  'pass-deok': { key: 'trncls-worker', url: 'assets/trainers/worker.png' },
+  // ── Named regular trainers with dedicated 2D battle art (assets/npc) ──
+  // Filename ↔ trainer name matched to the trainer's `key` in each scene.
+  'pass-deok':        P('snow worker deok.png'),   // Seorae Pass — Snow Worker Deok
+
+  // Gym trainers
+  'haean-haedo':      P('gym trainer Haedo.png'),
+  'haean-byungchan':  P('gym_trainer_Byungchan.png'),
+  'geum-junho':       P('gym trainer Junho.png'),
+  'seorae-nunsong':   P('gym trainer Nunsong.png'),
+  'sunrise-daehwi':   P('gym trainer daehwi.png'),
+  'sunrise-seongwoo': P('gym trainer seongwoo.png'),
+  'dolmoe-doran':     P('gym trainer doran.png'),
+  'baekdu-taeguk':    P('gym trainer taeguk.png'),
+  'baekdu-nari':      P('gym_trainer_nari.png'),
+  'forest-minho':     P('gym trainer minho.png'),
+  'forest-chungha':   P('gym_traner_chungha.png'),
+  'seorae-baram':     P('Gym trainer baram.png'),   // Attendant Baram (Seorae gym)
+
+  // 어사대 disciples (Haesol/Wonsan)
+  'wonsan-disciple-1': P('disciple baekho.png'),
+  'wonsan-disciple-2': P('disciple miru.png'),
+  'wonsan-disciple-3': P('disciple cheon.png'),
+
+  // Hikers
+  'rg-daljae':   P('hiker_daljae.png'),
+  'cb-baekcheol': P('hiker_baekcheol.png'),
+  'rv-bawoo':    P('hiker_bawoo.png'),
+  'ab-cheolho':  P('hiker_cheolho.png'),
+  'rg-cheol':    P('hiker_Cheol.png'),
+
+  // Miners / diggers / workers
+  'mine-gapdol': P('miner_gapdol.png'),
+  'mine-gwang':  P('miner_gwang.png'),
+  'mine-baru':   P('Digger_baru.png'),
+  'mine-cheol':  P('worker_cheol.png'),
+  'sj-cheolsu':  P('steelworker cheolsu.png'),
+
+  // Fishers / anglers
+  'rv-miyeon':   P('angler_miyeon.png'),
+  'kalma-fisher': P('fisher Baram.png'),
+  'sj-bora':     P('fisher_bora.png'),
+  'nampo-dohun': P('fisher_dohun.png'),
+  'r4-dalsu':    P('fisherman_dalsu.png'),
+
+  // Paddy farmers
+  'sj-deok':     P('paddy farmer deok.png'),
+  'rv-deoksu':   P('paddy farmer deoksu.png'),
+
+  // Sailors
+  'ocean-baek':    P('sailor Baek.png'),
+  'nampo-manho':   P('sailor Manho.png'),
+  'ferry-geumdol': P('sailor_geumdol.png'),
+
+  // Skiers
+  'rg-nunbyeol': P('skier nunbyeol.png'),
+  'pass-yuna':   P('skier yuna.png'),
+
+  // Swimmers
+  'kalma-swimmer': P('swimmer_haram.png'),
+  'ocean-miho':    P('swimmer_miho.png'),
+  'nampo-yura':    P('swimmer_yura.png'),
+
+  // Ace trainers
+  'road-dawon':  P('ace_trainer_Dawon.png'),
+  'rg-hakryun':  P('ace_trainer_Hakryun.png'),
+  'cb-jihu':     P('ace_trainer_jihu.png'),
+  'km-seorin':   P('ace_trainer_seorin.png'),
+
+  // Rangers, black belts, dragon tamer, bug catcher
+  'r3-hyunwoo':  P('ranger_hyunwoo.png'),
+  'rg-museon':   P('black belt museon.png'),
+  'ab-muljin':   P('Black belt mujin.png'),
+  'r6-yunho':    P('dragon tamer yunho.png'),
+  'r5-beomseok': P('bug_catcher_bumseok.png'),
+
+  // 노스단 / villain operatives
+  'km-cheol':    P('노스단 courier Cheol.png'),
+  'rv-scout':    P('노스단 scout garam.png'),
+  'rg-hyeol':    P('노스단 scout hyeol.png'),
+  'cb-ryun':     P('노스단 scout ryun.png'),
+  'ruins-nosdan-1': P('노스단 digger.png'),
+  'ruins-nosdan-2': P('노스단 digger.png'),
+  'nosdan-ajit-road-1': P('노스단 sentry.png'),
+  'nosdan-ajit-road-2': P('노스단 sentry.png'),
+  'baekdu-sentry-w': P('Watchtower Sentry.png'),
+  'baekdu-sentry-e': P('Watchtower Sentry.png'),
+  'jeju-suri-1': P('team suri grunt.png'),
+  'jeju-suri-2': P('team suri grunt.png'),
 };
 
 export function portraitFor(trainerKey: string): Portrait | undefined {
