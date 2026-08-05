@@ -735,7 +735,11 @@ export function buildTerrain(
         // walls, so the player vanishes behind them. Keep interior/cave walls
         // low (a diorama look) so the character is always visible.
         if (interior || classifyCavey) h = Math.min(h, isEdge ? 1.0 : 0.7);
-        if (!clearSight3D) walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
+        // clearSight3D outdoor scenes now raise hills/mountains in 3D too (user opted into
+        // "trees + mountains everywhere"); cap the height a little so the character stays
+        // visible against the static camera even where the painted terrain is a tall ridge.
+        else if (clearSight3D) h = Math.min(h, isEdge ? 2.2 : 1.5);
+        walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
         c = run;
         continue;
       }
@@ -747,7 +751,9 @@ export function buildTerrain(
         continue;
       }
       const cx = c + 0.5, cz = r + 0.5;
-      if (clearSight3D) { c++; continue; }
+      // Formerly clearSight3D scenes skipped ALL foliage, leaving flat painted trees on the
+      // 3D ground. They now grow real 3D trees/grass/flowers/rocks like every other scene
+      // (user opted into "trees everywhere"), trading a little sight-line for a fuller world.
       switch (cell) {
         case 'tree': case 'pine':
           if (interior) break;

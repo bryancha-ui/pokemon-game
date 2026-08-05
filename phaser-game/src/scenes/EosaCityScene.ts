@@ -770,8 +770,11 @@ export abstract class EosaCityScene extends Phaser.Scene {
     const cfg = this.cfg;
     const nearCentre = this.px > 12 * TILE && this.px < 16 * TILE;
     const be = cfg.sideExit;
-    if (be && this.py > (this.rows - 1) * TILE && this.px > (be.col - 1.5) * TILE && this.px < (be.col + 1.5) * TILE) {
-      // walk off the south edge along the side path → the beach / mine / ajit road
+    const onSidePath = !!be && this.px > (be.col - 1.5) * TILE && this.px < (be.col + 1.5) * TILE;
+    // Enter the side scene by walking off the south edge OR by stepping onto the marked
+    // path just under its ❄/🏖 sign (row ~11). The sign-level trigger keeps it reachable
+    // in large cities (e.g. Binghagwan) where the map edge is a long slog south.
+    if (be && onSidePath && (this.py > (this.rows - 1) * TILE || (this.py > 10.5 * TILE && this.py < 13 * TILE))) {
       this.cutsceneActive = true;
       this.registry.set(cfg.key + 'ReturnX', be.col * TILE + 16);
       this.registry.set(cfg.key + 'ReturnY', (this.rows - 3) * TILE + 16);   // return inland on the path

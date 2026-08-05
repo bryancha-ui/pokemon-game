@@ -256,6 +256,7 @@ const SINUIJU: EosaCity = {
     cleared: ['어사대장 Amrok: ...The cracking has stopped. The crossing holds. You slid blind through that frozen maze and faced the beast in its own lair.',
               'That is the coldest kind of courage. The gate is yours to earn. Begin.'],
   },
+  trees: [],   // no generic tree tiles — one landed in front of the gate/paths in this large frozen city
   sideExit: { col: 18, scene: 'SinuijuIceCaveScene', label: '얼음 동굴 (Ice Cave)', icon: '❄', road: true },   // right of the circuit road so it never collides with the Seolun route
   // A wide frozen-border city on the Amrok river — expanded east into an open railway plaza.
   size: { cols: 48, rows: 24 },
