@@ -133,6 +133,7 @@ export class TrainerBattleScene extends Phaser.Scene {
   private dialogText!: Phaser.GameObjects.Text;
   private playerHpBar!: Phaser.GameObjects.Rectangle;
   private enemyHpBar!: Phaser.GameObjects.Rectangle;
+  private hpW = HP_W;   // actual bar width — widened on mobile to fill the enlarged name box
   private playerHpText!: Phaser.GameObjects.Text;
   private enemyHpText!: Phaser.GameObjects.Text;
   private playerLvText!: Phaser.GameObjects.Text;
@@ -402,18 +403,21 @@ export class TrainerBattleScene extends Phaser.Scene {
     // leftward with its left-anchored name/HP. Lv stays right-anchored. ex = 0 on
     // desktop, so that layout is unchanged.
     const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    // Grow the HP bar alongside the box so a wide mobile box isn't mostly empty behind
+    // a stubby bar. Leave a small right margin (36) for the Lv label.
+    this.hpW = HP_W + Math.max(0, ex - 36);
     this.add.rectangle(5 + (220 + ex) / 2, 50, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.enemyNameText = this.add.text(12, 24, this.enemyHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.enemyLvText  = this.add.text(220 + ex, 24, `Lv.${this.enemy.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
-    this.add.rectangle(115, 52, HP_W + 6, 10, 0x333355);
-    this.enemyHpBar   = this.add.rectangle(25, 52, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
+    this.add.rectangle(25 + this.hpW / 2, 52, this.hpW + 6, 10, 0x333355);
+    this.enemyHpBar   = this.add.rectangle(25, 52, this.hpW, 8, 0x44cc44).setOrigin(0, 0.5);
     this.enemyHpText  = this.add.text(12, 60, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '10px', color: '#aaa' });
 
     this.add.rectangle(1140 - (220 + ex) / 2, 545, 220 + ex, 60, 0x0d0d2e, 0.92).setStrokeStyle(1, 0x5577aa);
     this.playerNameText = this.add.text(922 - ex, 519, this.playerHudName(), { fontSize: '13px', color: '#fff', fontStyle: 'bold' });
     this.playerLvText = this.add.text(1100, 519, `Lv.${this.player.level}`, { fontSize: '12px', color: '#ffe44e' }).setOrigin(1, 0);
-    this.add.rectangle(1030, 547, HP_W + 6, 10, 0x333355);
-    this.playerHpBar  = this.add.rectangle(940 - ex, 547, HP_W, 8, 0x44cc44).setOrigin(0, 0.5);
+    this.add.rectangle(940 - ex + this.hpW / 2, 547, this.hpW + 6, 10, 0x333355);
+    this.playerHpBar  = this.add.rectangle(940 - ex, 547, this.hpW, 8, 0x44cc44).setOrigin(0, 0.5);
     this.playerHpText = this.add.text(922 - ex, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '10px', color: '#aaa' });
   }
 
@@ -845,7 +849,7 @@ export class TrainerBattleScene extends Phaser.Scene {
       this.animateHpBar('enemy', () => {});
       this.enemyNameText?.setText(this.enemyHudName());
       this.enemyLvText.setText(`Lv.${this.enemy.level}`);
-      this.enemyHpBar.width = HP_W;
+      this.enemyHpBar.width = this.hpW;
       this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
       playBallSendOut(this, this.enemySprite, {
         side: 'enemy', targetX: ENEMY_STAGE_X, targetY: ENEMY_STAGE_Y,
@@ -1098,7 +1102,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
-    this.playerHpBar.width = HP_W;
+    this.playerHpBar.width = this.hpW;
     this.animateHpBar('player', () => {});
 
     if (this.textures.exists(entry.spriteKey)) {
@@ -1132,7 +1136,7 @@ export class TrainerBattleScene extends Phaser.Scene {
 
     this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
-    this.playerHpBar.width = HP_W;
+    this.playerHpBar.width = this.hpW;
     this.animateHpBar('player', () => {});
 
     if (this.textures.exists(entry.spriteKey)) {
@@ -1207,7 +1211,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     this.playerHpBar.fillColor = 0x44cc44;
-    this.playerHpBar.width     = HP_W;
+    this.playerHpBar.width     = this.hpW;
     this.playerHpText.setText(`${this.player.hp}/${this.player.maxHp}`);
 
     // Swap sprite
@@ -1238,7 +1242,7 @@ export class TrainerBattleScene extends Phaser.Scene {
     const ratio = mon.hp / mon.maxHp;
     bar.fillColor = ratio > 0.5 ? 0x44cc44 : ratio > 0.25 ? 0xddcc00 : 0xcc4444;
     this.tweens.add({
-      targets: bar, width: Math.max(0, ratio * HP_W), duration: 260, ease: 'Linear',
+      targets: bar, width: Math.max(0, ratio * this.hpW), duration: 260, ease: 'Linear',
       onComplete: () => { label.setText(`${mon.hp}/${mon.maxHp}`); onDone(); },
     });
   }

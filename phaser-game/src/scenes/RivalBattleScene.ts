@@ -57,7 +57,7 @@ export class RivalBattleScene extends Phaser.Scene {
 
   private W = 1280;
   private H = 720;
-  private readonly HP_BAR_W = 200;
+  private HP_BAR_W = 200;   // widened on mobile to fill the enlarged name box
   private activeSlot = 0;
   private participants = new Set<number>([0]);
 
@@ -188,11 +188,14 @@ export class RivalBattleScene extends Phaser.Scene {
     // Widen the name boxes on mobile so enlarged names fit (rival grows right,
     // player grows left with its name/HP). ex = 0 on desktop → unchanged.
     const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    // Grow the HP bar with the box (leaving 36px for the Lv label) so it isn't a stub
+    // in a wide mobile box. ex = 0 on desktop → width unchanged.
+    this.HP_BAR_W = 200 + Math.max(0, ex - 36);
     // Rival HUD — top left
     track(this.add.rectangle(130 + ex / 2, 52, 248 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
     this.rivalNameText = track(this.add.text(14, 24, this.rivalHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
     this.rivalLvText = track(this.add.text(249 + ex, 24, `Lv.${this.rival.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(130, 52, this.HP_BAR_W + 8, 12, 0x333355));
+    track(this.add.rectangle(30 + this.HP_BAR_W / 2, 52, this.HP_BAR_W + 8, 12, 0x333355));
     this.rivalHpBar  = track(this.add.rectangle(30, 52, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.rivalHpText = track(this.add.text(14, 62, `${this.rival.hp}/${this.rival.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
@@ -200,7 +203,7 @@ export class RivalBattleScene extends Phaser.Scene {
     track(this.add.rectangle(1154 - (248 + ex) / 2, 545, 248 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x5577aa));
     this.playerNameText = track(this.add.text(910 - ex, 517, this.playerHudName(), { fontSize: '14px', color: '#fff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(1090, 517, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(1030, 547, this.HP_BAR_W + 8, 12, 0x333355));
+    track(this.add.rectangle(930 - ex + this.HP_BAR_W / 2, 547, this.HP_BAR_W + 8, 12, 0x333355));
     this.playerHpBar  = track(this.add.rectangle(930 - ex, 547, this.HP_BAR_W, 10, 0x44cc44).setOrigin(0, 0.5));
     this.playerHpText = track(this.add.text(910 - ex, 557, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 

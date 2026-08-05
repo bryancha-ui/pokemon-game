@@ -44,6 +44,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
   private dialogText!: Phaser.GameObjects.Text;
   private playerHpBar!: Phaser.GameObjects.Rectangle;
   private enemyHpBar!:  Phaser.GameObjects.Rectangle;
+  private hpW = HP_W;   // bar width — widened on mobile to fill the enlarged name box
   private playerHpText!: Phaser.GameObjects.Text;
   private enemyHpText!:  Phaser.GameObjects.Text;
   private playerLvText!: Phaser.GameObjects.Text;
@@ -231,18 +232,21 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     // Widen the name boxes on mobile so enlarged names fit (enemy grows right,
     // player grows left with its name/HP). ex = 0 on desktop → unchanged.
     const ex = Math.round(150 * (fontScaleForScene(this) - 1));
+    // Grow the HP bar with the box (leaving 36px for the Lv label) so it isn't a stub
+    // in a wide mobile box. ex = 0 on desktop → hpW = HP_W, layout unchanged.
+    this.hpW = HP_W + Math.max(0, ex - 36);
     track(this.add.rectangle(130 + ex / 2, 52, 260 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
     this.enemyNameText = track(this.add.text(14, 24, this.enemyHudName(), { fontSize: '14px', color: '#cc88ff', fontStyle: 'bold' }));
     this.enemyLvText  = track(this.add.text(255 + ex, 24, `Lv.${this.enemy.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(130, 52, HP_W + 8, 12, 0x333355));
-    this.enemyHpBar   = track(this.add.rectangle(30, 52, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    track(this.add.rectangle(30 + this.hpW / 2, 52, this.hpW + 8, 12, 0x333355));
+    this.enemyHpBar   = track(this.add.rectangle(30, 52, this.hpW, 10, 0x44cc44).setOrigin(0, 0.5));
     this.enemyHpText  = track(this.add.text(14, 62, `${this.enemy.hp}/${this.enemy.maxHp}`, { fontSize: '11px', color: '#aaa' }));
 
     track(this.add.rectangle(this.W - (260 + ex) / 2, this.H - 175, 260 + ex, 68, 0x0d0d2e, 0.9).setStrokeStyle(1, 0x9933cc));
     this.playerNameText = track(this.add.text(this.W - 258 - ex, this.H - 203, this.playerHudName(), { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }));
     this.playerLvText = track(this.add.text(this.W - 12, this.H - 203, `Lv.${this.player.level}`, { fontSize: '13px', color: '#ffe44e' }).setOrigin(1, 0));
-    track(this.add.rectangle(this.W - 130, this.H - 173, HP_W + 8, 12, 0x333355));
-    this.playerHpBar  = track(this.add.rectangle(this.W - 258 - ex, this.H - 173, HP_W, 10, 0x44cc44).setOrigin(0, 0.5));
+    track(this.add.rectangle(this.W - 258 - ex + this.hpW / 2, this.H - 173, this.hpW + 8, 12, 0x333355));
+    this.playerHpBar  = track(this.add.rectangle(this.W - 258 - ex, this.H - 173, this.hpW, 10, 0x44cc44).setOrigin(0, 0.5));
     this.playerHpText = track(this.add.text(this.W - 258 - ex, this.H - 161, `${this.player.hp}/${this.player.maxHp}`, { fontSize: '11px', color: '#aaa' }));
   }
 
@@ -570,7 +574,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.updateEnemySprite();
     this.enemyNameText.setText(this.enemyHudName());
     this.enemyLvText.setText(`Lv.${this.enemy.level}`);
-    this.enemyHpBar.width = HP_W; this.enemyHpBar.fillColor = 0x44cc44;
+    this.enemyHpBar.width = this.hpW; this.enemyHpBar.fillColor = 0x44cc44;
     this.enemyHpText.setText(`${this.enemy.hp}/${this.enemy.maxHp}`);
 
     const names = ['', '', 'Corrpanda'];
@@ -691,7 +695,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     const r    = mon.hp / mon.maxHp;
     bar.fillColor = r > 0.5 ? 0x44cc44 : r > 0.25 ? 0xddcc00 : 0xcc4444;
     this.tweens.add({
-      targets: bar, width: Math.max(0, r * HP_W), duration: 260,
+      targets: bar, width: Math.max(0, r * this.hpW), duration: 260,
       onComplete: () => { lbl.setText(`${mon.hp}/${mon.maxHp}`); onDone(); },
     });
   }
@@ -731,7 +735,7 @@ export class GymLeaderBattleScene extends Phaser.Scene {
     this.playerNameText.setText(this.playerHudName());
     this.playerLvText.setText(`Lv.${this.player.level}`);
     const r = this.player.hp / this.player.maxHp;
-    this.playerHpBar.width = Math.max(0, r * HP_W);
+    this.playerHpBar.width = Math.max(0, r * this.hpW);
     this.playerHpBar.fillColor = r > 0.5 ? 0x44cc44 : r > 0.25 ? 0xddcc00 : 0xcc4444;
     this.playerHpText.setText(`${this.player.hp}/${this.player.maxHp}`);
   }
