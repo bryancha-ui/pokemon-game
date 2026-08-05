@@ -233,25 +233,33 @@ export function makeMountainRange(width: number, depth: number): THREE.Group {
   const g = new THREE.Group();
   const rock = toonMat(0x8a7a6a), rockDark = toonMat(0x6b5f54);
   const snow = toonMat(0xeef3f8), forest = toonMat(0x3f7a45);
-  const peaks = Math.max(3, Math.round(width / 6));
+  // Run the peaks along the LONGER axis so the range fills tall/narrow plots (an
+  // east-edge range) as well as wide/shallow ones (a north-edge range).
+  const horizontal = width >= depth;
+  const along = horizontal ? width : depth;
+  const across = horizontal ? depth : width;
+  const peaks = Math.max(3, Math.round(along / 6));
   const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  const place = (mesh: THREE.Mesh, a: number, y: number, o: number) => {
+    mesh.position.set(horizontal ? a : o, y, horizontal ? o : a);
+  };
   for (let i = 0; i < peaks; i++) {
     const t = peaks === 1 ? 0.5 : i / (peaks - 1);
-    const x = (t - 0.5) * width * 0.9;
+    const a = (t - 0.5) * along * 0.9;
     const r1 = hash(i + 1), r2 = hash(i + 7), r3 = hash(i + 13);
     const h = 2.6 + r1 * 2.8;            // 2.6–5.4 tiles tall
     const rad = 1.3 + r2 * 1.1;
-    const z = (r3 - 0.5) * depth * 0.5;
+    const o = (r3 - 0.5) * across * 0.5;
     const cone = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 7), i % 2 ? rock : rockDark);
-    cone.position.set(x, h / 2, z); cone.rotation.y = r1 * Math.PI;
+    place(cone, a, h / 2, o); cone.rotation.y = r1 * Math.PI;
     g.add(cone);
     const capH = h * 0.34;
     const cap = new THREE.Mesh(new THREE.ConeGeometry(rad * 0.44, capH, 7), snow);
-    cap.position.set(x, h - capH / 2, z); cap.rotation.y = cone.rotation.y;
+    place(cap, a, h - capH / 2, o); cap.rotation.y = cone.rotation.y;
     g.add(cap);
-    const fh = 0.9 + r2 * 0.8;           // forested foothill toward the town (+z)
+    const fh = 0.9 + r2 * 0.8;           // a forested foothill tucked beside each peak
     const hill = new THREE.Mesh(new THREE.ConeGeometry(rad * 0.85, fh, 7), forest);
-    hill.position.set(x + (r3 - 0.5) * rad, fh / 2, z + depth * 0.42);
+    place(hill, a + (r2 - 0.5) * rad, fh / 2, o + (r3 - 0.5) * rad * 1.4);
     g.add(hill);
   }
   return g;
