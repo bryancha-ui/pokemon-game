@@ -720,6 +720,11 @@ export function buildTerrain(
     wait: number;
   }[] = [];
   let communityNatureCount = 0;
+  // How many authored Kenney nature models a single map may place (trees, rocks and
+  // the rocks/pines that dress mountain ridges all draw from this shared budget).
+  // Each is its own draw call, so this trades a fuller Pokémon-style world against
+  // mobile frame-rate — bump it up on desktop-only builds.
+  const NATURE_BUDGET = 120;
 
   const rnd = mulberry(12345);
 
@@ -747,6 +752,24 @@ export function buildTerrain(
         // flatTerrain3D scenes (cramped dark caves) raise NOTHING — the painted 2D
         // tile stays on the ground so no black wall ever hides the player.
         if (!flatTerrain3D) walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
+        // Crown mountain & hill ridges with a scatter of authored Kenney rocks — and
+        // the odd pine on lower slopes — so they read as natural Pokémon peaks rather
+        // than flat coloured blocks. Rocks sit on top of the ridge (y = h). Outdoor
+        // only, and never on cramped/flattened caves.
+        if (!flatTerrain3D && !interior && !classifyCavey) {
+          for (let wc = c; wc < run && communityNatureCount < NATURE_BUDGET; wc++) {
+            const wantRock = rnd() > 0.78 && natureRockDefs.length > 0;
+            const wantPine = !wantRock && kind === 'wall-low' && rnd() > 0.86 && natureTreeDefs.length > 0;
+            const def = wantRock ? pickProp(natureRockDefs, wc * 23 + r * 41)
+              : wantPine ? pickProp(natureTreeDefs, wc * 17 + r * 29) : null;
+            if (!def) continue;
+            const holder = new THREE.Group();
+            holder.position.set(wc + 0.5 + (rnd() - 0.5) * 0.4, h, r + 0.5 + (rnd() - 0.5) * 0.4);
+            group.add(holder);
+            pendingScenery.push({ group: holder, def, scale: wantRock ? 0.55 + rnd() * 0.55 : 1.1 + rnd() * 0.5, rot: rnd() * Math.PI * 2, wait: 0 });
+            communityNatureCount++;
+          }
+        }
         c = run;
         continue;
       }
@@ -769,7 +792,9 @@ export function buildTerrain(
             const x = cx + (rnd() - 0.5) * 0.3;
             const z = cz + (rnd() - 0.5) * 0.3;
             const rot = rnd() * Math.PI * 2;
-            const natureDef = communityNatureCount < 64 && rnd() > 0.82
+            // Prefer an authored Kenney tree for most trees (clean, Pokémon-style
+            // silhouettes); fall back to the cheap instanced blob for the rest.
+            const natureDef = communityNatureCount < NATURE_BUDGET && rnd() > 0.42
               ? pickProp(natureTreeDefs, c * 31 + r * 17)
               : null;
             if (natureDef) {
@@ -817,7 +842,7 @@ export function buildTerrain(
             const x = cx + (rnd() - 0.5) * 0.4;
             const z = cz + (rnd() - 0.5) * 0.4;
             const rot = rnd() * Math.PI * 2;
-            const natureDef = communityNatureCount < 80 && rnd() > 0.62
+            const natureDef = communityNatureCount < NATURE_BUDGET && rnd() > 0.4
               ? pickProp(natureRockDefs, c * 19 + r * 37)
               : null;
             if (natureDef) {
