@@ -85,7 +85,7 @@ export const PORTRAITS: Record<string, Portrait> = {
   'baekdu-nari':      P('gym_trainer_nari.png'),
   'forest-minho':     P('gym trainer minho.png'),
   'forest-chungha':   P('gym_traner_chungha.png'),
-  'seorae-baram':     P('Gym trainer baram.png'),   // Attendant Baram (Seorae gym)
+  'seorae-baram':     P('attendant Baram.png'),   // Attendant Baram (Seorae gym)
 
   // 어사대 disciples (Haesol/Wonsan)
   'wonsan-disciple-1': P('disciple baekho.png'),
@@ -157,6 +157,50 @@ export const PORTRAITS: Record<string, Portrait> = {
   'baekdu-sentry-e': P('Watchtower Sentry.png'),
   'jeju-suri-1': P('team suri grunt.png'),
   'jeju-suri-2': P('team suri grunt.png'),
+  // Generic 노스단 rank-and-file (same authored art for every grunt/admin/soldier)
+  'baekdu-grunt-1':  P('노스단 Grunt.png'),
+  'nosdan-ajit-1a':  P('노스단 Grunt.png'),
+  'nosdan-ajit-2a':  P('노스단 Grunt.png'),
+  'nosdan-ajit-2b':  P('노스단 Grunt.png'),
+  'nosdan-ajit-3a':  P('노스단 Grunt.png'),
+  'nosdan-ajit-3b':  P('노스단 Grunt.png'),
+  'nosdan-ajit-4a':  P('노스단 Grunt.png'),
+  'baekdu-admin-1':  P('노스단 admin.png'),
+  'nosdan-admin':    P('노스단 admin.png'),
+  'baekdu-soldier-1': P('노스단 soldier.png'),
+  'baekdu-soldier-2': P('노스단 soldier.png'),
+
+  // Bird keepers, campers, herders & outdoor classes
+  'sj-sora':     P('Bird keeper Sora.png'),
+  'ab-sora':     P('Bird keeper Sora.png'),
+  'r6-sora':     P('Bird keeper Sora.png'),
+  'cb-suna':     P('bird keeper Suna.png'),
+  'cb-doha':     P('camper Doha.png'),
+  'ab-dohyeon':  P('Camper Dohyeon.png'),
+  'rg-boksun':   P('camper Boksun.png'),
+  'km-poksil':   P('Herder Poksil.png'),
+  'ab-yena':     P('picknicker Yena.png'),
+  'mine-sunny':  P('prospector Sunny.png'),
+
+  // Psychic / ghost / medium classes (Fogbound Manor, Rangrim)
+  'manor-boryeong': P('Hex Maniac Boryeong.png'),
+  'manor-yeong':    P('Medium Yeong.png'),
+  'rg-myoja':       P('Psychic Myoja.png'),
+
+  // Town / road classes
+  'ferry-hojun': P('Rich Boy Hojun.png'),
+  'road-hyeonu': P('Scholar-Trainer Hyeonu.png'),
+  'road-munseok': P('veteran munseok.png'),
+  'rg-seolla':   P('veteran Seolla.png'),
+  'r5-jiyeon':   P('aroma lady Jiyeon.png'),
+  'r3-seulgi':   P('photographer seulgi.png'),
+  'r2-yujin':    P('school kid yujin.png'),
+  'rv-jinho':    P('youngter Jinho.png'),   // Youngster Jinho
+
+  // Capitol gym shade/shadow trainers
+  'shade-yuna':    P('shade trainer yuna.png'),
+  'shadow-jaemin': P('shadow trainer Jaemin.png'),
+  'shadow-miso':   P('shadow trainer miso.png'),
 };
 
 export function portraitFor(trainerKey: string): Portrait | undefined {
