@@ -442,7 +442,7 @@ const FOOTHILLS: RgConfig = {
   decorate: (s) => s.label('▲ 동굴 입구 (cave mouth)', MIDCOL, 4),
 };
 const CAVERN: RgConfig = {
-  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 온성 하부 동굴 (Lower Cavern)', bgm: 'rangrimcavern', darkCave: true,
+  key: 'RangrimCavernScene', returnKey: 'rgCave', title: '⛰ 온성 하부 동굴 (Lower Cavern)', bgm: 'rangrimcavern',
   southLabel: '↓ 기슭 (Foothills)', northLabel: '↑ 제단의 방 (Altar Hall)',
   encTiles: [T.CAVE], enc: [
     { id: 42, weight: 15, minLevel: 73, maxLevel: 75, isCustom: false, catchRate: 120 },
