@@ -758,24 +758,6 @@ export function buildTerrain(
         // flatTerrain3D scenes (cramped dark caves) raise NOTHING — the painted 2D
         // tile stays on the ground so no black wall ever hides the player.
         if (!flatTerrain3D) walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
-        // Crown mountain & hill ridges with a scatter of authored Kenney rocks — and
-        // the odd pine on lower slopes — so they read as natural Pokémon peaks rather
-        // than flat coloured blocks. Rocks sit on top of the ridge (y = h). Outdoor
-        // only, and never on cramped/flattened caves.
-        if (!flatTerrain3D && !interior && !classifyCavey) {
-          for (let wc = c; wc < run && communityNatureCount < NATURE_BUDGET; wc++) {
-            const wantRock = rnd() > 0.78 && natureRockDefs.length > 0;
-            const wantPine = !wantRock && kind === 'wall-low' && rnd() > 0.86 && natureTreeDefs.length > 0;
-            const def = wantRock ? pickProp(natureRockDefs, wc * 23 + r * 41)
-              : wantPine ? pickProp(natureTreeDefs, wc * 17 + r * 29) : null;
-            if (!def) continue;
-            const holder = new THREE.Group();
-            holder.position.set(wc + 0.5 + (rnd() - 0.5) * 0.4, h, r + 0.5 + (rnd() - 0.5) * 0.4);
-            group.add(holder);
-            pendingScenery.push({ group: holder, def, scale: wantRock ? 0.55 + rnd() * 0.55 : 1.1 + rnd() * 0.5, rot: rnd() * Math.PI * 2, wait: 0 });
-            communityNatureCount++;
-          }
-        }
         c = run;
         continue;
       }

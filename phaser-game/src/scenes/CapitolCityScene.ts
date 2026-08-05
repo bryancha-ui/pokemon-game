@@ -60,7 +60,7 @@ const CAPITAL_LANDMARKS: CapitalLandmark[] = [
 
 function buildCityMap(): CTile[][] {
   const R = C.ROAD, SW = C.SIDEWALK, B = C.BUILDING, T = C.TOWER,
-        W = C.WATER, PK = C.PARK, PA = C.PALACE, WL = C.WALL,
+        W = C.WATER, PK = C.PARK, PA = C.PALACE,
         TR = C.TREE, PL = C.PLAZA, BR = C.BRIDGE, G = C.GRASS;
 
   const map: CTile[][] = Array.from({ length: CROWS }, () =>
@@ -120,7 +120,7 @@ function buildCityMap(): CTile[][] {
   fill(18, 46, 34, CCOLS - 2, PL);
 
   // ── Ancient Palace (rows 18-30, cols 3-21) ───────────────────────────────
-  fill(18, 3, 31, 21, WL);           // outer palace wall
+  fill(18, 3, 31, 21, PL);           // palace forecourt — flat stone plaza (no 3D brown mountain block)
   fill(19, 4, 30, 20, PA);           // palace grounds
   for (let c = 11; c < 13; c++) map[30][c] = SW;  // palace gate
 
