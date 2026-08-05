@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {
   InstancedProp, WallBuilder, makeBronzeStatue, makeFlowers, makeGrandObelisk,
   makeCherryTree, makeGrassTufts, makeIceStatue, makeMineCart, makePineTree, makePines, makePot, makeRailTrack,
-  makeRocks, makeHanokPalace, makeNosdanHQ, makePalmTree, makePokemonCenter, makePokeMart, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
+  makeRocks, makeHanokPalace, makeMountainRange, makeNosdanHQ, makePalmTree, makePokemonCenter, makePokeMart, makeStall, makeStoneLantern, makeStoreFixture, makeStreetlamp, makeTrees, makeTriumphalArch, makeWater, makeWaterfall, toonRamp,
   type StoreFixtureKind,
 } from './Props';
 
@@ -946,6 +946,15 @@ export function buildTerrain(
       holder.add(makeHanokPalace(b.w, b.d));
       group.add(holder);
       blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
+      continue;
+    }
+    // A scenic 3D mountain range backdrop in place of flat painted 2D mountains.
+    // No fade-blocker: it sits at the map edge, behind all gameplay.
+    if (b.model === 'mountainrange') {
+      const holder = new THREE.Group();
+      holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
+      holder.add(makeMountainRange(b.w, b.d));
+      group.add(holder);
       continue;
     }
     const def = b.model ? propById(b.model) : null;

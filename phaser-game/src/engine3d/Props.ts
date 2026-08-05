@@ -225,6 +225,38 @@ export function makePines(max: number, needles = 0x2e6b46, trunk = 0x5a4030): In
   ], max);
 }
 
+/** A wide low-poly toon mountain range used as a scenic 3D backdrop behind a
+ *  town's edge (replaces flat painted 2D mountains). Faceted rock peaks with snow
+ *  caps and forested foothills toward the town side. 1 unit = 1 tile; built to fill
+ *  a `width`×`depth` footprint. Deterministic (seeded by peak index). */
+export function makeMountainRange(width: number, depth: number): THREE.Group {
+  const g = new THREE.Group();
+  const rock = toonMat(0x8a7a6a), rockDark = toonMat(0x6b5f54);
+  const snow = toonMat(0xeef3f8), forest = toonMat(0x3f7a45);
+  const peaks = Math.max(3, Math.round(width / 6));
+  const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  for (let i = 0; i < peaks; i++) {
+    const t = peaks === 1 ? 0.5 : i / (peaks - 1);
+    const x = (t - 0.5) * width * 0.9;
+    const r1 = hash(i + 1), r2 = hash(i + 7), r3 = hash(i + 13);
+    const h = 2.6 + r1 * 2.8;            // 2.6–5.4 tiles tall
+    const rad = 1.3 + r2 * 1.1;
+    const z = (r3 - 0.5) * depth * 0.5;
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 7), i % 2 ? rock : rockDark);
+    cone.position.set(x, h / 2, z); cone.rotation.y = r1 * Math.PI;
+    g.add(cone);
+    const capH = h * 0.34;
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(rad * 0.44, capH, 7), snow);
+    cap.position.set(x, h - capH / 2, z); cap.rotation.y = cone.rotation.y;
+    g.add(cap);
+    const fh = 0.9 + r2 * 0.8;           // forested foothill toward the town (+z)
+    const hill = new THREE.Mesh(new THREE.ConeGeometry(rad * 0.85, fh, 7), forest);
+    hill.position.set(x + (r3 - 0.5) * rad, fh / 2, z + depth * 0.42);
+    g.add(hill);
+  }
+  return g;
+}
+
 /** Rocks / boulders. */
 export function makeRocks(max: number, color = 0x8d8578): InstancedProp {
   const g = new THREE.IcosahedronGeometry(0.34, 1);

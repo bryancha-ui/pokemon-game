@@ -284,6 +284,10 @@ export class WorldMapScene extends Phaser.Scene {
     // to the 3D engine so each gets its own distinct GLB on its exact footprint,
     // instead of blurring together as generic extruded boxes.
     this.buildingPlots = BUILDINGS.map(b => ({ x: b.col, y: b.row, w: b.w, h: b.h, model: b.id }));
+    // Replace the flat painted 2D mountain range along the north edge with a real 3D
+    // mountain backdrop. The plot footprint erases the painted mountain art and stops
+    // it extruding as blocky walls; the foothill trees just below (rows 6+) stay 3D.
+    this.buildingPlots.push({ x: 2, y: 0, w: 60, h: 6, model: 'mountainrange' });
     // Only those named landmarks should rise in 3D — the filler residential
     // blocks looked like stray red-brick boxes, so drop them from the 3D view.
     this.onlyNamedBuildings = true;
