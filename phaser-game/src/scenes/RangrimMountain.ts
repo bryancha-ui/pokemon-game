@@ -561,7 +561,7 @@ export class RangrimCavernScene extends RangrimBaseScene {
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
   public clearSight3D = true;
-  public interiorTerrain3D = true;
+  public flatTerrain3D = true;   // cramped dark cavern: raise NOTHING so no black tile hides the player
   constructor() { super(CAVERN); }
 }
 export class RangrimAltarScene extends RangrimBaseScene {
@@ -571,7 +571,7 @@ export class RangrimAltarScene extends RangrimBaseScene {
   public caveFloorHint = true;
   public onlyNamedBuildings = true;
   public clearSight3D = true;
-  public interiorTerrain3D = true;
+  public flatTerrain3D = true;   // altar hall stays on the ground plane — no raised black rock towers
   constructor() { super(ALTAR); }
 }
 export class RangrimSnowfieldScene extends RangrimBaseScene {

@@ -324,6 +324,11 @@ export function buildTerrain(
   // legacy behaviour was one tuft plus a 45% chance of a second.
   grassDensity3D = 1.45,
   grassTone3D = 0x49b23a,
+  // Fully flat: skip EVERY raised wall/rock volume and all foliage so a cramped
+  // dark cave / puzzle room never buries the player behind extruded tiles. This
+  // is stronger than clearSight3D (which Task-17 turned into low 3D mountains)
+  // and interiorTerrain3D (which still raises height-capped walls).
+  flatTerrain3D = false,
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -739,7 +744,9 @@ export function buildTerrain(
         // "trees + mountains everywhere"); cap the height a little so the character stays
         // visible against the static camera even where the painted terrain is a tall ridge.
         else if (clearSight3D) h = Math.min(h, isEdge ? 2.2 : 1.5);
-        walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
+        // flatTerrain3D scenes (cramped dark caves) raise NOTHING — the painted 2D
+        // tile stays on the ground so no black wall ever hides the player.
+        if (!flatTerrain3D) walls.add(c, r, run, r + 1, h, color === 0 ? 0x1c1a24 : color);
         c = run;
         continue;
       }
@@ -751,6 +758,7 @@ export function buildTerrain(
         continue;
       }
       const cx = c + 0.5, cz = r + 0.5;
+      if (flatTerrain3D) { c++; continue; }   // cramped caves stay flat: no props/foliage either
       // Formerly clearSight3D scenes skipped ALL foliage, leaving flat painted trees on the
       // 3D ground. They now grow real 3D trees/grass/flowers/rocks like every other scene
       // (user opted into "trees everywhere"), trading a little sight-line for a fuller world.
