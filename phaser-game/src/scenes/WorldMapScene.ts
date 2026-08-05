@@ -282,6 +282,11 @@ export class WorldMapScene extends Phaser.Scene {
     // to the 3D engine so each gets its own distinct GLB on its exact footprint,
     // instead of blurring together as generic extruded boxes.
     this.buildingPlots = BUILDINGS.map(b => ({ x: b.col, y: b.row, w: b.w, h: b.h, model: b.id }));
+    // Nestle the imported Pokémon-village model into the northern slope, immediately
+    // WEST of the namesake waterfall (kept at col 15) so the falls read as "next to"
+    // the village. The lab, waterfall, homes, Pokémon Center and the Songhyeon bus
+    // all stay untouched — this is a scenic centrepiece, not a replacement.
+    this.buildingPlots.push({ x: 5, y: 2, w: 9, h: 7, model: 'pokemonvillage' });
     // Only those named landmarks should rise in 3D — the filler residential
     // blocks looked like stray red-brick boxes, so drop them from the 3D view.
     this.onlyNamedBuildings = true;
