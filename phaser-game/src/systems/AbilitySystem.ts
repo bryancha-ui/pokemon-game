@@ -146,8 +146,19 @@ export function applySwitchOutAbility(mon: Pokemon): string | undefined {
   return undefined;
 }
 
+// Priority (선공기) by move name. Moves built by the Learnset/custom factories
+// don't carry a `priority` field (it stays undefined → 0), so a Quick Attack user
+// only moved first if it was already faster. PokéAPI moves DO carry priority, so
+// this is a fallback used only when the move data didn't specify one.
+const MOVE_PRIORITY: Record<string, number> = {
+  'quick attack': 1, 'shadow sneak': 1, 'sucker punch': 1, 'aqua jet': 1,
+  'bullet punch': 1, 'mach punch': 1, 'ice shard': 1, 'vacuum wave': 1,
+  'accelerock': 1, 'water shuriken': 1, 'jet punch': 1, 'baby-doll eyes': 1,
+  'extreme speed': 2, 'first impression': 2, 'feint': 2, 'fake out': 3,
+};
+
 export function abilityPriority(mon: Pokemon, move: Move): number {
-  let priority = move.data.priority ?? 0;
+  let priority = move.data.priority ?? MOVE_PRIORITY[move.data.name.toLowerCase()] ?? 0;
   if (mon.hasAbility('Prankster') && move.data.category === 'status') priority += 1;
   if (mon.hasAbility('Gale Wings') && move.data.type === 'flying' && mon.hp === mon.maxHp) priority += 1;
   return priority;
