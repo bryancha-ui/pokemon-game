@@ -151,11 +151,12 @@ export class CapitolGymScene extends Phaser.Scene {
     // Entry door
     g.fillStyle(0x6633aa); g.fillRect(7 * IT, H - IT, 2 * IT, IT);
 
-    // "GYM" text
-    this.add.text(W / 2, IT, tr('CAPITOL GYM'), {
+    // "GYM" title — pinned to the very top edge so it clears LEADER JIN's
+    // nameplate (both are centred on the leader's column; at y=IT they overlapped).
+    this.add.text(W / 2, 12, tr('CAPITOL GYM'), {
       fontSize: '11px', color: '#cc88ff', fontStyle: 'bold',
       stroke: '#000', strokeThickness: 3,
-    }).setOrigin(0.5).setDepth(5);
+    }).setOrigin(0.5).setDepth(11);
 
     const texKey = '__gymMap__';
     if (this.textures.exists(texKey)) this.textures.remove(texKey);
