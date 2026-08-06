@@ -68,6 +68,10 @@ function buildMap(): Tile[][] {
 
 export class Route3Scene extends Phaser.Scene {
   public grassTileIds3D = [T.TALLGRASS];
+  // Diamond Gorge: the granite canyon walls (cliffs) and boulders rise as real 3D
+  // mountain ranges instead of flat 2D art baked into the ground; pines grow 3D too.
+  public mountainTileIds3D = [T.CLIFF, T.ROCK];
+  public treeTileIds3D = [T.PINE];
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;

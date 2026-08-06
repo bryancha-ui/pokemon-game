@@ -59,6 +59,9 @@ export class PineNeedleTownScene extends Phaser.Scene {
   // the village's generated hanok-style house GLB. Only these named plots rise.
   public buildingPlots = BUILDINGS.map((b, i) => ({ x: b.x, y: b.y, w: b.w, h: b.h, model: ['pokecenter', 'pinehouse', 'pinehouse'][i] }));
   public onlyNamedBuildings = true;
+  // The painted 2D village trees grow as real 3D trees (their flat art is erased
+  // from the ground beneath the 3D canopy).
+  public treeTileIds3D = [T.TREE];
   // The 떡볶이 (tteokbokki) street stall as a 3D vendor stand.
   public propPlots = [{ x: 21, y: 17, kind: 'stall' as const }];
   private playerG!: Phaser.GameObjects.Graphics;

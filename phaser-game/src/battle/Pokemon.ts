@@ -208,6 +208,13 @@ export class Pokemon {
 
     let effectiveness = getEffectiveness(moveType, this.data.type1, this.data.type2);
     // Exact type immunities and absorbing abilities resolve before damage.
+    // Flying types are categorically immune to Ground moves — enforce it explicitly
+    // (belt-and-suspenders over the type chart) so nothing, e.g. a mis-built form or
+    // a stray effectiveness rounding, can ever let an Earthquake through on a flyer.
+    // Grounding effects (Roost / Smack Down / Gravity) are not modelled here.
+    if (moveType === 'ground' && (this.data.type1 === 'flying' || this.data.type2 === 'flying')) {
+      return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };
+    }
     if (moveType === 'ground' && this.hasAbility('Levitate')) {
       messages.push(`${this.name} is immune through Levitate!`);
       return { dmg: 0, critical: false, effectiveness: 0, abilityMessages: messages };

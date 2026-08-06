@@ -712,6 +712,45 @@ export function buildTerrain(
     }
   }
 
+  // ── Erase the flat 2D tree art under opted-in tree tiles ──
+  // treeTileIds3D grows real 3D trees, but (unlike mountains) the scene's painted
+  // pine/tree sprites stay baked into the ground and peek out from under the 3D
+  // canopy. Wipe each such cell to the surrounding ground tone: street trees on
+  // pavement sample the road; a dense forest whose neighbours are all trees falls
+  // back to a forest-floor tone (snow on frosted passes).
+  if (!interior && treeTileIds3D.length && tileMap) {
+    const gctx = ground.getContext('2d');
+    if (gctx) {
+      const treeIds = new Set(treeTileIds3D);
+      const isTreeCell = (cc: number, rr: number) =>
+        cc >= 0 && rr >= 0 && cc < cols && rr < rows && treeIds.has(tileMap[rr]?.[cc] as number);
+      const floorFallback = snowy ? '#dfe7ec' : '#40632f';
+      const sampleFloor = (c: number, r: number): string => {
+        for (let k = 1; k <= 2; k++) {
+          for (const [cc, rr] of [[c - k, r], [c + k, r], [c, r + k], [c, r - k], [c + k, r + k], [c - k, r + k]] as [number, number][]) {
+            if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+            const cell = cells[rr * cols + cc];
+            if (isTreeCell(cc, rr) || cell === 'building') continue;
+            const [r0, g0, b0] = cellColors[rr * cols + cc];
+            return `rgb(${Math.round(r0)},${Math.round(g0)},${Math.round(b0)})`;
+          }
+        }
+        return floorFallback;
+      };
+      // Pad the wipe slightly upward: painted pines are drawn taller than their
+      // tile, so their crown overhangs the cell above along a forest edge.
+      const padTop = 0.55;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (!treeIds.has(tileMap[r]?.[c] as number)) continue;
+          gctx.fillStyle = sampleFloor(c, r);
+          gctx.fillRect(c * sx, Math.max(0, (r - padTop) * sy), sx + 1, (1 + padTop) * sy + 1);
+        }
+      }
+      tex.needsUpdate = true;
+    }
+  }
+
   // Suppress overlapping plots — known plots come first, so heuristic
   // re-detections of the same building (or fragments inside it) are dropped.
   {

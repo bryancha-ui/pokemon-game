@@ -105,6 +105,10 @@ function buildMap(): Tile[][] {
 
 export class BaekduPassScene extends Phaser.Scene {
   public grassTileIds3D = [T.SNOWGRASS];
+  // Seolbong Highland Pass: the 2D rock/cliff mountains engraved in the snow rise as
+  // real 3D mountain ranges (their flat art is erased); the pines grow as 3D snow-pines.
+  public mountainTileIds3D = [T.ROCK, T.CLIFF];
+  public treeTileIds3D = [T.PINE];
   private map!: Tile[][];
   /** A mountain pass, not a town: suppress any building the terrain heuristics
    *  hallucinate from cliff/rock shading (no named plots → nothing rises). */

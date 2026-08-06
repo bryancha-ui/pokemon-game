@@ -19,6 +19,14 @@ const TILE = 32;
 const COLS = 24;
 const ROWS = 60;
 
+// Stone-lantern positions (tile col,row) lining the path — now placed as real 3D
+// props instead of painted 2D tiles. Shared by the map builder and propPlots.
+const LANTERNS: [number, number][] = (() => {
+  const out: [number, number][] = [];
+  for (let r = 4; r < ROWS - 2; r += 6) { out.push([8, r], [15, r]); }
+  return out;
+})();
+
 const COLORS: Record<Tile, number> = {
   [T.STONE]:   0x8a8278,
   [T.PATH]:    0xc9b98f,
@@ -59,8 +67,8 @@ function buildMap(): Tile[][] {
   fill(0, ROWS, 6, 9, T.GRASS);
   fill(0, ROWS, 15, 18, T.GRASS);
 
-  // Stone lanterns lining the path every 6 rows
-  for (let r = 4; r < ROWS - 2; r += 6) { m[r][8] = T.LANTERN; m[r][15] = T.LANTERN; }
+  // Stone lanterns are grown as 3D props (see propPlots); their tiles stay walkable
+  // grass shoulders so no flat 2D lantern art is baked into the ground.
 
   // Rocky cliffs on the far sides
   fill(0, ROWS, 0, 4, T.ROCK);
@@ -86,6 +94,12 @@ function buildMap(): Tile[][] {
 
 export class Route2Scene extends Phaser.Scene {
   public grassTileIds3D = [T.GRASS];
+  // The painted pine forest grows as real 3D trees (2D pine art is erased under them);
+  // the far-side rocky cliffs rise as 3D mountain ranges; the stone lanterns become
+  // 3D props. No flat 2D scenery is left baked into the ground.
+  public treeTileIds3D = [T.PINE];
+  public mountainTileIds3D = [T.ROCK];
+  public propPlots = LANTERNS.map(([c, r]) => ({ x: c + 0.5, y: r + 0.5, kind: 'lantern' as const, scale: 0.9 }));
   private map!: Tile[][];
   private playerG!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -162,7 +176,6 @@ export class Route2Scene extends Phaser.Scene {
       const t = this.map[r][c];
       g.fillStyle(COLORS[t], 1); g.fillRect(c * TILE, r * TILE, TILE, TILE);
       if (t === T.PINE)    this.drawPine(g, c * TILE + 16, r * TILE + 16);
-      if (t === T.LANTERN) this.drawLantern(g, c * TILE, r * TILE);
       if (t === T.GRASS)   this.drawGrass(g, c * TILE, r * TILE);
       if (t === T.ROCK)    this.drawRock(g, c * TILE, r * TILE);
       if (t === T.WATER)   { g.fillStyle(0x66aadd, 0.5); g.fillRect(c*TILE+4, r*TILE+8, 12, 3); }
@@ -187,11 +200,6 @@ export class Route2Scene extends Phaser.Scene {
     g.fillStyle(0x14401f); g.fillTriangle(x, y - 14, x - 9, y + 2, x + 9, y + 2);
     g.fillTriangle(x, y - 6, x - 11, y + 8, x + 11, y + 8);
     g.fillStyle(0x4a3020); g.fillRect(x - 2, y + 8, 4, 5);
-  }
-  private drawLantern(g: Phaser.GameObjects.Graphics, x: number, y: number) {
-    g.fillStyle(0x777066); g.fillRect(x + 12, y + 6, 8, 20);
-    g.fillStyle(0xffdd88); g.fillRect(x + 11, y + 4, 10, 8);
-    g.fillStyle(0x555049); g.fillRect(x + 9, y + 24, 14, 5);
   }
   private drawGrass(g: Phaser.GameObjects.Graphics, x: number, y: number) {
     g.fillStyle(0x2e7a22, 0.6);
