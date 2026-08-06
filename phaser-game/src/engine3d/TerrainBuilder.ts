@@ -331,6 +331,9 @@ export function buildTerrain(
   flatTerrain3D = false,
   // Tile ids the scene paints as trees — forced to grow real 3D trees (see above).
   treeTileIds3D: number[] = [],
+  // Tile ids the scene paints as 2D mountains — auto-covered by 3D mountain-range
+  // models (their painted art is erased), instead of flat blocky wall extrusions.
+  mountainTileIds3D: number[] = [],
 ): TerrainResult {
   const group = new THREE.Group();
   const cols = Math.max(1, Math.round(worldW / PX));
@@ -474,6 +477,32 @@ export function buildTerrain(
       const tint = new THREE.Color(mr / n / 255, mg / n / 255, mb / n / 255)
         .lerp(new THREE.Color(0xffffff), 0.45).getHex();
       buildings.push({ x: p.x, z: p.y, w: p.w, d: p.h, tint, model: p.model });
+    }
+  }
+
+  // Auto-cover painted 2D mountain tiles with 3D mountain-range models. Greedily
+  // decompose the mountain mass into maximal rectangles; each becomes a
+  // 'mountainrange' plot (its flat art is erased, no blocky wall extrusion).
+  if (!interior && mountainTileIds3D.length && tileMap) {
+    const mtn = new Set(mountainTileIds3D);
+    const taken = new Uint8Array(cols * rows);
+    const isMtn = (x: number, z: number) =>
+      x >= 0 && z >= 0 && x < cols && z < rows && !taken[z * cols + x] &&
+      cells[z * cols + x] !== 'building' && mtn.has(tileMap[z]?.[x] ?? -1);
+    for (let z = 0; z < rows; z++) {
+      for (let x = 0; x < cols; x++) {
+        if (!isMtn(x, z)) continue;
+        let w = 1;
+        while (isMtn(x + w, z)) w++;
+        let d = 1;
+        outer: while (z + d < rows) {
+          for (let xx = x; xx < x + w; xx++) if (!isMtn(xx, z + d)) break outer;
+          d++;
+        }
+        for (let zz = z; zz < z + d; zz++)
+          for (let xx = x; xx < x + w; xx++) { taken[zz * cols + xx] = 1; cells[zz * cols + xx] = 'building'; }
+        buildings.push({ x, z, w, d, tint: 0x8a7a6a, model: 'mountainrange' });
+      }
     }
   }
 
@@ -663,7 +692,10 @@ export function buildTerrain(
         return '#9a9484';
       };
       for (const b of buildings) {
-        const fillStyle = sampleGround(b);
+        // Mountain footprints sit inside a sea of other mountain tiles, so sampling a
+        // neighbour would just repaint mountain (leaving the 2D mountain visible). Wipe
+        // them to a neutral earthy ground so only the 3D range shows.
+        const fillStyle = b.model === 'mountainrange' ? '#6f7a5c' : sampleGround(b);
         // 2D roofs overhang upward; the painted DOOR / steps / red-cross sign sits
         // at the bottom edge and often spills a tile below and to the sides. Pad the
         // wipe in every direction so no "ghost entrance" of the old flat art peeks

@@ -238,7 +238,7 @@ export function makeMountainRange(width: number, depth: number): THREE.Group {
   const horizontal = width >= depth;
   const along = horizontal ? width : depth;
   const across = horizontal ? depth : width;
-  const peaks = Math.max(3, Math.round(along / 6));
+  const peaks = Math.max(1, Math.round(along / 5));
   const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
   const place = (mesh: THREE.Mesh, a: number, y: number, o: number) => {
     mesh.position.set(horizontal ? a : o, y, horizontal ? o : a);

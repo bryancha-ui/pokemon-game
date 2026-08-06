@@ -192,13 +192,10 @@ export class RouteScene extends Phaser.Scene {
   /** Tell the 3D engine this route has a dark cave section whose floor must stay
    *  walkable ground (not extrude into walls that bury the player). */
   caveFloorHint = true;
-  /** The route is a path carved through mountain — flank the OUTDOOR stretch
-   *  (rows 0-36, before the cave) with real 3D mountain ranges instead of flat
-   *  painted 2D mountain walls. Their footprints erase that art. */
-  buildingPlots = [
-    { x: 0,  y: 0, w: 8, h: 37, model: 'mountainrange' },   // left range
-    { x: 18, y: 0, w: 8, h: 37, model: 'mountainrange' },   // right range
-  ];
+  /** The whole route is a path carved through mountain. Auto-cover EVERY painted
+   *  mountain tile (outdoor stretch AND the mountains around the cave) with 3D
+   *  mountain-range models, and erase the flat 2D mountain art from the floor. */
+  mountainTileIds3D = [RT.MOUNTAIN];
   onlyNamedBuildings = true;
   private cutsceneActive = false;
   private get cycling(): boolean { return isBikeRiding(this.registry); }
