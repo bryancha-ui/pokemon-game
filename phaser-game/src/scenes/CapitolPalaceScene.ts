@@ -7,37 +7,43 @@ export class CapitolPalaceScene extends BaseInteriorScene {
 
   protected drawRoom() {
     const g = this.add.graphics().setDepth(0);
-    this.drawFloor(g, 0, 0, this.COLS - 1, this.ROWS - 1, 0x8a6020);
-    this.drawFloor(g, 1, 1, this.COLS - 2, this.ROWS - 2, 0xd4a060);
-    // Traditional floor tiles
-    for (let r = 1; r < this.ROWS - 1; r += 2)
-      this.drawFloor(g, 1, r, this.COLS - 2, r, 0xc89050);
+    // Pale marble hall with a dark stone skirting; extrudes into a grand 3D throne room.
+    this.drawFloor(g, 0, 0, this.COLS - 1, this.ROWS - 1, 0x6b4a1c);   // wall skirting band
+    this.drawFloor(g, 1, 1, this.COLS - 2, this.ROWS - 2, 0xe6c98a);   // pale marble floor
+    // Royal red carpet runner from the door up to the throne dais.
+    this.drawFloor(g, 8, 4, 9, this.ROWS - 2, 0x9a2b2b);
+    this.drawFloor(g, 7, 4, 10, 4, 0x7a2020);   // carpet head under the dais
 
-    // Central throne area
-    this.drawRect(g, 7, 1, 4, 3, 0xaa6600, 0x884400);
-    this.label('Ancient\nThrone', 8, 2, 9, '#ffe44e');
-    this.addSolid(7, 1, 10, 3);
+    // ── Grand throne dais (three stacked tiers → a stepped pyramid in 3D) ──
+    this.drawRect(g, 5, 1, 8, 3, 0xb98a3a, 0x8a6420);   // wide base tier
+    this.drawRect(g, 6, 1, 6, 2, 0xcfa24a, 0xa07c2c);   // middle tier
+    this.drawRect(g, 8, 1, 2, 2, 0xd4af37, 0x9a7b1a);   // the golden throne
+    this.label('👑 Ancient\nThrone', 8, 1, 9, '#fff0b0');
+    this.addSolid(5, 1, 12, 3);
 
-    // Pillars
-    [[2,2],[2,6],[2,10],[15,2],[15,6],[15,10]].forEach(([c,r]) => {
-      this.drawRect(g, c, r, 1, 2, 0x885522, 0x664400);
-      this.addSolid(c, r, c, r + 1);
-    });
+    // ── Colonnade — matched pillars marching down both sides of the aisle ──
+    for (const r of [3, 5, 7, 9, 11]) {
+      this.drawRect(g, 3, r, 1, 1, 0xd8cba0, 0x9a8a66);
+      this.drawRect(g, 14, r, 1, 1, 0xd8cba0, 0x9a8a66);
+      this.addSolid(3, r, 3, r); this.addSolid(14, r, 14, r);
+    }
 
-    // Artifacts
-    this.drawRect(g, 5, 6, 2, 2, 0xcc9933, 0xaa7722);
-    this.label('Ancient\nArtifact', 5, 6, 8, '#ffe44e');
-    this.drawRect(g, 11, 6, 2, 2, 0xcc9933, 0xaa7722);
-    this.label('Royal\nSword', 11, 6, 8, '#ffe44e');
-    this.addSolid(5, 6, 6, 7); this.addSolid(11, 6, 12, 7);
+    // ── Wall banners flanking the tall arched windows ──
+    this.drawRect(g, 2, 0, 1, 1, 0x8a2b2b, 0x5a1a1a);
+    this.drawRect(g, 15, 0, 1, 1, 0x8a2b2b, 0x5a1a1a);
+    this.drawRect(g, 4, 0, 2, 1, 0x9fd8ff, 0xffffff);
+    this.drawRect(g, 12, 0, 2, 1, 0x9fd8ff, 0xffffff);
 
-    // Windows
-    this.drawRect(g, 3, 0, 3, 1, 0x88ccff, 0xffffff);
-    this.drawRect(g, 12, 0, 3, 1, 0x88ccff, 0xffffff);
+    // Relic plinths.
+    this.drawRect(g, 5, 7, 2, 2, 0xcc9933, 0xaa7722);
+    this.label('Ancient\nArtifact', 5, 7, 8, '#ffe44e');
+    this.drawRect(g, 11, 7, 2, 2, 0xcc9933, 0xaa7722);
+    this.label('Royal\nSword', 11, 7, 8, '#ffe44e');
+    this.addSolid(5, 7, 6, 8); this.addSolid(11, 7, 12, 8);
 
     // Door
     const dp = this.tile(8, this.ROWS - 1);
-    g.fillStyle(0x885522); g.fillRect(dp.x + 4, dp.y, 64, 32);
+    g.fillStyle(0x6b4a1c); g.fillRect(dp.x + 4, dp.y, 64, 32);
 
     // Walls
     this.addSolid(0, 0, this.COLS - 1, 0);
