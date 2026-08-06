@@ -168,10 +168,10 @@ export class SudoLabScene extends Phaser.Scene {
     this.registry.set('trainerName', 'Rival');
     this.registry.set('trainerKey', 'rival-3');
     this.registry.set('trainerPokemon', JSON.stringify([
-      { id: 0, level: 34, custom: 'martbadger' },   // Dark/Steel (evolved)
-      { id: 0, level: 35, custom: 'squirrel2' },     // Soarrel — Normal/Flying (evolved)
-      { id: 0, level: 36, custom: 'tokkigongju' },   // Dark/Fairy ace support
-      { id: 0, level: 37, custom: rivalFinal },       // Starter FINAL evo (opposite type)
+      { id: 0, level: 32, custom: 'martbadger' },   // Dark/Steel (evolved)
+      { id: 0, level: 33, custom: 'squirrel2' },     // Soarrel — Normal/Flying (evolved)
+      { id: 0, level: 33, custom: 'tokkigongju' },   // Dark/Fairy ace support
+      { id: 0, level: 36, custom: rivalFinal },       // Starter FINAL evo (opposite type)
     ]));
     this.registry.set('trainerExpPool', 1500);
     this.registry.set('trainerReturnScene', 'SudoLabScene');

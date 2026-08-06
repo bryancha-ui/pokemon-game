@@ -357,10 +357,10 @@ export class GeumgangCityScene extends Phaser.Scene {
       : rivalKey === 'vipour' ? 'scorpent'
       : 'onnujang';
     this.registry.set('trainerPokemon', JSON.stringify([
-      { id: 0, level: 29, custom: 'chattyscream' },   // Normal/Dark
-      { id: 0, level: 30, custom: 'squirrel2' },       // Soarrel (Normal/Flying)
-      { id: 0, level: 32, custom: 'palmcockatoo' },    // Dark/Flying
-      { id: 0, level: 32, custom: rivalEvoKey },        // Rival's evolved starter (opposite type)
+      { id: 0, level: 26, custom: 'chattyscream' },   // Normal/Dark
+      { id: 0, level: 27, custom: 'squirrel2' },       // Soarrel (Normal/Flying)
+      { id: 0, level: 29, custom: 'palmcockatoo' },    // Dark/Flying
+      { id: 0, level: 29, custom: rivalEvoKey },        // Rival's evolved starter (opposite type)
     ]));
     this.registry.set('trainerExpPool', 1000);
     this.registry.set('trainerReturnScene', 'GeumgangCityScene');

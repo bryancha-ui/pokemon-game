@@ -1306,7 +1306,7 @@ export const KO_STRINGS: Record<string, string> = {
   // ── Intro (Prof. Song's welcome) ──
   'Hello there! Welcome to the world of Pokémon!': '안녕! 포켓몬의 세계에 온 걸 환영해!',
   'My name is Song. Song Nam-woo. But everyone in the region simply calls me the Professor.':
-    '내 이름은 송. 송남우란다. 하지만 이 지방 사람들은 모두 나를 박사님이라 부르지.',
+    '내 이름은 송남우란다. 하지만 이 지방 사람들은 모두 나를 송 박사님이라 부르지.',
   'But first — tell me a little about yourself. Are you a boy? Or are you a girl?':
     '하지만 먼저 — 너에 대해 조금 알려주렴. 남자아이니? 아니면 여자아이니?',
   'This world is inhabited far and wide by wonderful creatures called Pokémon. We live alongside them — as friends, as partners, and sometimes as rivals in battle.':
