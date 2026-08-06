@@ -6,7 +6,8 @@ import {
 } from '../systems/TouchControls';
 import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
-import { runLevelUpLearning } from '../systems/MoveLearning';
+import { runLevelUpLearning, runBenchLevelUpLearning } from '../systems/MoveLearning';
+import type { BenchLevelUp } from '../systems/BattleExp';
 import { Pokemon, Move, MoveData } from '../battle/Pokemon';
 import { getEffectiveness } from '../battle/TypeChart';
 import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
@@ -880,8 +881,10 @@ export class TrainerBattleScene extends Phaser.Scene {
       this.player.level, this.player.exp, this.player.hp, this.player.maxHp,
     );
     // Every other Pokémon that participated also gains EXP.
-    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount);
-    const after = () => this.playBenchLines(benchLines, onDone);
+    const bench: BenchLevelUp[] = [];
+    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount, bench);
+    const after = () => this.playBenchLines(benchLines, () =>
+      runBenchLevelUpLearning(this, bench, (t, cb) => this.typeDialog(t, cb), onDone));
     const msg = `${pokeNameEn(this.player.name).toUpperCase()} gained ${amount} EXP!`;
     if (levelled) {
       this.playerLvText.setText(`Lv.${this.player.level}`);

@@ -6,7 +6,8 @@ import {
 } from '../systems/TouchControls';
 import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
-import { runLevelUpLearning } from '../systems/MoveLearning';
+import { runLevelUpLearning, runBenchLevelUpLearning } from '../systems/MoveLearning';
+import type { BenchLevelUp } from '../systems/BattleExp';
 import { Pokemon, Move } from '../battle/Pokemon';
 import { STARTERS, TYPE_COLORS, findForm } from '../data/StarterData';
 import { DISGUIJAR_DATA, DISGUIJAR_MOVES } from '../data/CustomPokemon';
@@ -835,8 +836,12 @@ export class WildBattleScene extends Phaser.Scene {
     );
 
     // Every other Pokémon that participated also gains EXP.
-    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, expGained);
-    const after = () => this.playBenchLines(benchLines, onDone);
+    const bench: BenchLevelUp[] = [];
+    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, expGained, bench);
+    // After the bench-EXP notices, prompt for any benched Pokémon that leveled up
+    // so a shared-EXP level never silently swaps one of their moves.
+    const after = () => this.playBenchLines(benchLines, () =>
+      runBenchLevelUpLearning(this, bench, (msg, cb) => this.typeDialog(msg, cb), onDone));
 
     // Show message
     const expMsg = `${pokeNameEn(this.player.name).toUpperCase()} gained ${expGained} EXP!`;

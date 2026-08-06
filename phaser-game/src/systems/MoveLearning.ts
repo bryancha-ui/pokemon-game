@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Pokemon, MoveData } from '../battle/Pokemon';
 import { PartySystem } from './PartySystem';
+import { buildFromEntry } from './PartyBattle';
 import { levelUpMoves } from '../data/Learnsets';
 import { TYPE_COLORS } from '../data/StarterData';
 import { t, tr, typeName } from './i18n';
@@ -69,6 +70,33 @@ export function runLevelUpLearning(
         say(`${mon.name} forgot ${forgot} and learned ${move.name}!`, step);
       });
     });
+  };
+  step();
+}
+
+/**
+ * Run the level-up move-learning prompt for BENCHED Pokémon that gained levels
+ * via shared EXP (from awardBenchExp's leveledOut list). Each is rebuilt at its
+ * PRE-level-up level so its old 4-move set is offered against the new move — the
+ * same "forget which move?" flow the active battler gets — so no EXP-share level
+ * silently swaps a move. Runs them one after another, then `onDone`.
+ */
+export function runBenchLevelUpLearning(
+  scene: Phaser.Scene,
+  leveled: { slot: number; from: number; to: number }[],
+  say: (text: string, cb: () => void) => void,
+  onDone: () => void,
+): void {
+  let i = 0;
+  const step = () => {
+    if (i >= leveled.length) { onDone(); return; }
+    const { slot, from, to } = leveled[i++];
+    const entry = PartySystem.get(scene.registry)[slot];
+    if (!entry) { step(); return; }
+    // Build the mon at its OLD level so its moveset is the pre-level-up set; the
+    // learning routine then offers the newly-crossed moves against it and commits.
+    const mon = buildFromEntry({ ...entry, level: from });
+    runLevelUpLearning(scene, slot, mon, from, to, say, step);
   };
   step();
 }

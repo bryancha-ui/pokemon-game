@@ -17,7 +17,8 @@ import { portraitFor, fitPortrait } from '../data/BattlePortraits';
 import { pushBgm, popBgm, stopBgm, playJingle } from '../systems/Music';
 import { executeBattleMove, pendingMoveFor } from '../systems/MoveEffects';
 import { spriteScale } from '../data/SpriteScale';
-import { runLevelUpLearning } from '../systems/MoveLearning';
+import { runLevelUpLearning, runBenchLevelUpLearning } from '../systems/MoveLearning';
+import type { BenchLevelUp } from '../systems/BattleExp';
 import { tr, pokeNameEn} from '../systems/i18n';
 import { fontScaleForScene } from '../systems/UiScale';
 import { genderedName } from '../data/PokemonGender';
@@ -708,8 +709,10 @@ export class GymLeaderBattleScene extends Phaser.Scene {
       this.registry, this.activeSlot,
       this.player.level, this.player.exp, this.player.hp, this.player.maxHp,
     );
-    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount);
-    const after = () => this.playBenchLines(benchLines, onDone);
+    const bench: BenchLevelUp[] = [];
+    const benchLines = awardBenchExp(this.registry, this.participants, this.activeSlot, amount, bench);
+    const after = () => this.playBenchLines(benchLines, () =>
+      runBenchLevelUpLearning(this, bench, (t, cb) => this.typeDialog(t, cb), onDone));
     const msg = `${pokeNameEn(this.player.name).toUpperCase()} gained ${amount} EXP!`;
     if (levelled) {
       this.refreshPlayerHud();
