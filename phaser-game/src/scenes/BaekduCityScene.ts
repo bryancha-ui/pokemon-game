@@ -23,6 +23,7 @@ const BUILDINGS: Building[] = [
   { label: 'Center & Rescue Station', scene: 'BaekduPCScene', x: 3, y: 7, w: 6, h: 5, doorCol: 5, doorRow: 11, roof: 0xcc2244 },
   { label: 'Summit Dojo (정상 도장)',  scene: 'BaekduGymScene', x: 21, y: 6, w: 6, h: 6, doorCol: 23, doorRow: 11, roof: 0x4a3a8a },
   { label: 'Mountain Gear Shop',      scene: '__SHOP__',      x: 12, y: 18, w: 5, h: 4, doorCol: 14, doorRow: 21, roof: 0x2a6a9a },
+  { label: '♨ Hot Spring Inn (온천여관)', scene: 'SeolbongInnScene', x: 4, y: 16, w: 5, h: 3, doorCol: 6, doorRow: 15, roof: 0x9a4a3a },
 ];
 
 function buildMap(): Tile[][] {
@@ -42,8 +43,8 @@ function buildMap(): Tile[][] {
   fill(1, 6, 9, 21, T.LAKE);
   for (let c = 8; c <= 21; c++) { if (m[6]?.[c] === T.SNOW) m[6][c] = T.ROCK; }
   m[1][8] = T.ROCK; m[1][21] = T.ROCK;
-  // Hot-spring steam patch (inn area, lower-left)
-  fill(18, 22, 4, 9, T.STEAM);
+  // Hot-spring steam patch — the open-air bath just south of the inn building.
+  fill(19, 23, 4, 9, T.STEAM);
   // Snowy pines + stone lanterns
   for (const [r,c] of [[8,11],[8,18],[16,5],[16,24],[22,11],[22,18],[7,2]] as [number,number][]) m[r][c] = T.PINE;
   m[10][11] = T.LANTERN; m[10][18] = T.LANTERN;
