@@ -201,9 +201,24 @@ export function playHitSfx(scene: Phaser.Scene, effectiveness: number): void {
   const mgr = scene.sound as Phaser.Sound.WebAudioSoundManager;
   const ac = mgr && mgr.context;
   if (!ac) return;                                       // non-WebAudio (e.g. HTML5) — skip
-  if (ac.state === 'suspended') { try { ac.resume(); } catch { /* ignore */ } }
-  const now = ac.currentTime;
   const superEff = effectiveness > 1;
+
+  // The WebAudio context auto-suspends after silent gaps (mobile power-saving,
+  // long battles). resume() is async, so scheduling on a still-suspended context
+  // silently drops that hit — the classic "some hits have no sound" symptom.
+  // Wait for the resume to land, THEN synthesise, so no impact is ever lost.
+  if (ac.state === 'suspended') {
+    ac.resume().then(() => synthHit(ac, superEff)).catch(() => { /* gesture-locked */ });
+  } else {
+    synthHit(ac, superEff);
+  }
+}
+
+function synthHit(ac: AudioContext, superEff: boolean): void {
+  // Small lookahead so nodes never start "in the past": under the heavy 3D
+  // battle scenes a frame hitch can leave ac.currentTime behind the audio clock,
+  // and a past start time glitches to silence on some browsers.
+  const now = ac.currentTime + 0.02;
 
   // Impact "thud" — a short decaying noise burst through a low-pass filter.
   const dur = superEff ? 0.16 : 0.11;
