@@ -674,7 +674,15 @@ export class BattleMirror {
           // Enemy Pokémon present their front to the battle camera. The old
           // fixed zero yaw only followed the world axis, so models such as
           // Cerrapin appeared side-on in the diagonal battle composition.
-          model.rotation.y = cb.side === 'player' ? Math.PI : this.cameraFacingYaw(cb.holder);
+          // The player's own model should FACE THE OPPONENT across the field
+          // (not a fixed yaw that left it looking at the camera): aim its +Z front
+          // at the enemy anchor, cancelling the holder's flat-relief billboard yaw.
+          if (cb.side === 'player') {
+            const dir = ANCHORS.enemy[0].clone().sub(ANCHORS.player[cb.slot]);
+            model.rotation.y = Math.atan2(dir.x, dir.z) - cb.holder.rotation.y;
+          } else {
+            model.rotation.y = this.cameraFacingYaw(cb.holder);
+          }
           cb.glb = model;
           cb.holder.add(model);
           // Any clips inside the GLB drive the model; otherwise the animator
