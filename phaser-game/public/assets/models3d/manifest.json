@@ -30,7 +30,7 @@
       "key": "bookbug",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/6e42a122-3bc8-4795-9c23-6b9dd8e31f53.glb",
       "scale": 0.5,
-      "rotY":270
+      "rotY": 270
     },
     {
       "key": "bookmoth",
@@ -175,7 +175,7 @@
     {
       "key": "kingfisher",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b178296c-5028-438b-9d90-eecf21b6c974.glb",
-      "scale": 0.50
+      "scale": 0.5
     },
     {
       "key": "liondance",
@@ -201,6 +201,54 @@
     {
       "key": "nabiguni",
       "url": "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/8ead3229-61dc-467f-b88e-f048355c01f0.glb"
+    },
+    {
+      "key": "bosongnun",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231624_d2e9c705-6cc1-491b-9f7a-6b24edb03d59.glb"
+    },
+    {
+      "key": "camerghoost",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231635_1a405365-dced-4239-8f5b-767446fcf3b9.glb"
+    },
+    {
+      "key": "hambillet",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231641_50c67596-686e-46f9-ac9d-2abe58c04d09.glb"
+    },
+    {
+      "key": "kkaakdang",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231649_523375fb-5a5d-41aa-8c55-cdf3a821cab2.glb"
+    },
+    {
+      "key": "luninari",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231657_e35c0ca0-3bdf-47b4-aa1c-a00a88a4a368.glb"
+    },
+    {
+      "key": "samdumae",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231705_6562f198-8b81-44aa-93de-9b6da129a8fd.glb"
+    },
+    {
+      "key": "silicutis",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231714_a77b258c-1ee4-4b7b-ac10-a14e40e31f9e.glb"
+    },
+    {
+      "key": "snoqueen",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231720_7962cc4d-1155-41e7-b61f-c84c00da4df4.glb"
+    },
+    {
+      "key": "supiryeong",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231728_876d9b1b-ea5b-4d23-847c-79435b4e632e.glb"
+    },
+    {
+      "key": "unsilgami",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231736_d8981944-1f9f-45fc-a446-71e018067843.glb"
+    },
+    {
+      "key": "pipetiger",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231749_838020c4-8db8-465e-b3f3-e14cc6ea239c.glb"
+    },
+    {
+      "key": "yeomtaeja",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HAttAq5NLEY0hUhCEfsEIPpJwD/hf_20260806_231806_0e375263-679d-472b-816c-82024f6d15ca.glb"
     }
   ]
 }
