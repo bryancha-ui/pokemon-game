@@ -110,6 +110,7 @@
     { "id": "nature_rock_a", "role": "scenery", "tags": ["naturefree", "rock"], "url": "assets/map3d/kenney-nature/rock_largeA.obj", "mtl": "assets/map3d/kenney-nature/rock_largeA.mtl" },
     { "id": "nature_rock_c", "role": "scenery", "tags": ["naturefree", "rock"], "url": "assets/map3d/kenney-nature/rock_largeC.obj", "mtl": "assets/map3d/kenney-nature/rock_largeC.mtl" },
     { "id": "pokemonvillage", "role": "building", "tags": ["village"], "url": "assets/map3d/original_pokemon_village.glb" },
+    { "id": "jongmyo", "role": "building", "tags": ["shrine"], "url": "assets/map3d/jongmyo.glb" },
     {
       "id": "bus",
       "role": "vehicle",

@@ -52,8 +52,7 @@ interface CapitalLandmark {
  *  published to the overworld mirror, which fits the named GLB to the plot. */
 const CAPITAL_LANDMARKS: CapitalLandmark[] = [
   { label: 'Onnuri National Museum', x: 52, y: 44, w: 10, h: 7,  model: 'contesthall', wallColor: 0xd8d1c5, roofColor: 0x4b6078 },
-  { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'shrine',      wallColor: 0xcaa574, roofColor: 0x314d3a },
-  { label: 'National Library',       x: 35, y: 72, w: 10, h: 7,  model: 'palace',      wallColor: 0xe0cfaa, roofColor: 0x315a70 },
+  { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'jongmyo',     wallColor: 0xcaa574, roofColor: 0x314d3a },
   { label: 'So-ol Central Station',  x: 52, y: 72, w: 9,  h: 7,  model: 'tower',       wallColor: 0xbfcbd5, roofColor: 0x334d70 },
 ];
 
@@ -215,6 +214,20 @@ function buildCityMap(): CTile[][] {
   fill(4, 52, 14, 61, B);
   map[13][56] = SW;
 
+  // National Assembly Hall + National Library are enterable — solid footprints.
+  fill(20, 52, 32, 62, B);   // Assembly (door faces the square, row 32)
+  fill(72, 35, 79, 45, B);   // Library (door faces the forecourt, row 71)
+
+  // Clear every enterable building's doorway: carve the door tile, one step into
+  // the building, and the approach tile just outside — so no solid tile is ever
+  // wedged between the character and the door (you can walk straight in).
+  for (const loc of LOCATIONS) {
+    const dr = loc.doorRow, dc = loc.doorCol;
+    for (const [rr, cc] of [[dr, dc], [dr, dc - 1], [dr, dc + 1], [dr + 1, dc], [dr - 1, dc]] as [number, number][]) {
+      if (rr >= 0 && rr < CROWS && cc >= 0 && cc < CCOLS && (map[rr][cc] === B || map[rr][cc] === C.TOWER)) map[rr][cc] = SW;
+    }
+  }
+
   void G; void T;
   return map;
 }
@@ -246,6 +259,9 @@ const LOCATIONS: CityLocation[] = [
   { label: 'National Assembly Hall', scene: 'CapitolAssemblyScene', model: 'league',
     doorRow: 32, doorCol: 56,
     x: 52, y: 20, w: 10, h: 12, roofColor: 0x8f2e2e, wallColor: 0xe3d5b8 },
+  { label: 'National Library', scene: 'CapitolLibraryScene', model: 'palace',
+    doorRow: 71, doorCol: 40,
+    x: 35, y: 72, w: 10, h: 7, roofColor: 0x315a70, wallColor: 0xe0cfaa },
   { label: "Central Market",   scene: 'CapitolMarketScene', model: 'mart',
     doorRow: 51, doorCol: 17,
     x: 15, y: 44, w: 6, h: 8, roofColor: 0xee8833, wallColor: 0xffcc88 },
