@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { tr, t } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
-import { drawTrainerBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
+import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName, playerTrainerName } from '../data/CharacterSprite';
+import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { markRivalPortrait } from '../data/BattlePortraits';
 import { DialogBox } from '../ui/DialogBox';
 import { findForm } from '../data/StarterData';
@@ -240,6 +241,8 @@ export class WorldMapScene extends Phaser.Scene {
 
   private readonly BASE_SPEED = 120;
   private readonly RUN_SPEED  = 260;
+  private get cycling(): boolean { return isBikeRiding(this.registry); }
+  private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private readonly PW = 14;
   private readonly PH = 18;
 
@@ -391,7 +394,7 @@ export class WorldMapScene extends Phaser.Scene {
   }
 
   private drawCharacter() {
-    drawTrainerBody(this.playerSprite, this.facing, this.walkFrame, playerDesign(this.registry));
+    (this.cycling ? drawRiderBody : drawTrainerBody)(this.playerSprite, this.facing, this.walkFrame, playerDesign(this.registry));
     this.playerSprite.setPosition(this.px, this.py);
   }
 
@@ -473,6 +476,10 @@ export class WorldMapScene extends Phaser.Scene {
     };
     this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.shiftKey    = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    // C hops on/off the bike (once obtained) — same control as the routes/cities.
+    this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
+      if (!this.cutsceneActive && hasBike(this.registry)) { this.cycling = !this.cycling; this.drawCharacter(); }
+    });
     this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M).on('down', () => {
       if (!this.cutsceneActive) this.scene.launch('MenuScene');
     });
@@ -556,7 +563,7 @@ export class WorldMapScene extends Phaser.Scene {
 
     const hasShoes = !!this.registry.get('hasRunningShoes');
     const running  = hasShoes && this.shiftKey.isDown && this.isMoving;
-    const speed    = running ? this.RUN_SPEED : this.BASE_SPEED;
+    const speed    = this.cycling ? BIKE_SPEED : (running ? this.RUN_SPEED : this.BASE_SPEED);
     this.shoesText.setVisible(running);
 
     if (this.isMoving) {

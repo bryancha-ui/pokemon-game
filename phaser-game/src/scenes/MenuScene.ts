@@ -120,11 +120,15 @@ export class MenuScene extends Phaser.Scene {
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     saveBtn.on('pointerdown', () => {
-      // Save into the scene the player is actually in (tracked by SaveManager),
-      // not the WorldMap default — otherwise resume drops them in the wrong map.
-      const scene = (this.registry.get('lastScene') as string) ?? 'WorldMapScene';
-      const px = (this.registry.get('lastX') as number) ?? (this.registry.get('returnX') as number) ?? 22 * 32 + 16;
-      const py = (this.registry.get('lastY') as number) ?? (this.registry.get('returnY') as number) ?? 24 * 32 + 16;
+      // Save into the scene the player is ACTUALLY in right now, read live from the
+      // running gameplay scene (it has px/py). lastScene/lastX/lastY go stale for any
+      // scene that doesn't autosave, which warped resumes back to Waterfall City.
+      const active = this.game.scene.getScenes(true).find(s =>
+        s.scene.key !== 'MenuScene' && typeof (s as unknown as { px?: number }).px === 'number',
+      ) as unknown as { scene: { key: string }; px: number; py: number } | undefined;
+      const scene = active?.scene.key ?? (this.registry.get('lastScene') as string) ?? 'WorldMapScene';
+      const px = active?.px ?? (this.registry.get('lastX') as number) ?? (this.registry.get('returnX') as number) ?? 22 * 32 + 16;
+      const py = active?.py ?? (this.registry.get('lastY') as number) ?? (this.registry.get('returnY') as number) ?? 24 * 32 + 16;
       const ok = SaveManager.save(this.registry, px, py, scene);
       if (ok) saveBtn.setText(tr('💾 SAVED!')).setColor('#aaffaa');
       else    saveBtn.setText(tr('⚠ SAVE FAILED')).setColor('#ff8888');
