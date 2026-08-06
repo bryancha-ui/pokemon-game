@@ -260,9 +260,45 @@ const PORTRAIT_SCALE: Record<string, number> = {
   'trncls-worker': 1.35, // Snow Worker Deok's 80px source needs more stage presence
 };
 
-export function fitPortrait(img: Phaser.GameObjects.Image, maxW = 200, maxH = 290): void {
-  const src = img.texture.getSourceImage() as { width: number; height: number };
+// Cache of the opaque (non-transparent) bounding box per texture key, so we only
+// scan pixels once. Newer AI-generated trainer art is a wide 1408×768 canvas with
+// the character floating small and centred in transparent padding; fitting the
+// PADDED canvas made those trainers render tiny next to the tightly-cropped
+// legacy portraits. Fit the character's actual pixels instead.
+const OPAQUE_BBOX = new Map<string, { w: number; h: number }>();
+
+function opaqueBBox(src: CanvasImageSource & { width: number; height: number }, key: string): { w: number; h: number } {
+  const cached = OPAQUE_BBOX.get(key);
+  if (cached) return cached;
   const w = src.width || 1, h = src.height || 1;
+  let box = { w, h };
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (ctx) {
+      ctx.drawImage(src, 0, 0);
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] > 16) {
+            found = true;
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (found) box = { w: maxX - minX + 1, h: maxY - minY + 1 };
+    }
+  } catch { /* CORS-tainted source → fall back to full-frame fit */ }
+  OPAQUE_BBOX.set(key, box);
+  return box;
+}
+
+export function fitPortrait(img: Phaser.GameObjects.Image, maxW = 200, maxH = 290): void {
+  const src = img.texture.getSourceImage() as CanvasImageSource & { width: number; height: number };
+  const box = opaqueBBox(src, img.texture.key);
   const s = (PORTRAIT_SCALE[img.texture.key] ?? 1) * GLOBAL_PORTRAIT_SCALE;
-  img.setScale(Math.min(maxW / w, maxH / h) * s);
+  img.setScale(Math.min(maxW / box.w, maxH / box.h) * s);
 }

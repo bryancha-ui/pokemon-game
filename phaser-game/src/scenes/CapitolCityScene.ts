@@ -292,7 +292,6 @@ export class CapitolCityScene extends Phaser.Scene {
   private get cycling(): boolean { return isBikeRiding(this.registry); }
   private set cycling(value: boolean) { setBikeRiding(this.registry, value); }
   private spawnGuard = false;
-  private spawnPx = 0; private spawnPy = 0;   // exits arm once the player has stepped away from here
 
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
@@ -322,8 +321,10 @@ export class CapitolCityScene extends Phaser.Scene {
     ...([[44, 63], [48, 64], [55, 63], [59, 65], [3, 75], [18, 75]] as [number, number][])
       .map(([x, y]) => ({ x, y, kind: 'cherry' as const, scale: 0.95 })),
   ];
-  private northArmed = false;   // north gate → Route 2 (arms once stepped inward)
-  private eastArmed = false;    // east avenue → Han River Park
+  // Edge exits stay locked until the player has released all movement keys once
+  // after arriving. A key held through the transition can't bounce us back out,
+  // but a fresh, deliberate press toward the boundary returns immediately.
+  private freshInput = false;
   private readonly SPEED = 120;
   private readonly RUN_SPEED = 260;
 
@@ -342,8 +343,7 @@ export class CapitolCityScene extends Phaser.Scene {
     // Grace period: ignore edge exits briefly after spawning so we never bounce
     // straight back out through the boundary we just entered from.
     this.spawnGuard = true;
-    this.northArmed = false;
-    this.eastArmed = false;
+    this.freshInput = false;
     this.time.delayedCall(600, () => { this.spawnGuard = false; });
     this.input.keyboard?.resetKeys();
 
@@ -352,7 +352,6 @@ export class CapitolCityScene extends Phaser.Scene {
     const ry = this.registry.get('capitalReturnY') as number | undefined;
     if (rx !== undefined) { this.px = rx; this.py = ry as number; }
     this.registry.remove('capitalReturnX'); this.registry.remove('capitalReturnY');
-    this.spawnPx = this.px; this.spawnPy = this.py;
 
     this.map = buildCityMap();
     this.drawCity();
@@ -928,6 +927,7 @@ export class CapitolCityScene extends Phaser.Scene {
     if (this.cursors.down.isDown  || this.wasd.down.isDown)  { dy =  1; this.facing = 0; }
 
     const moving = dx !== 0 || dy !== 0;
+    if (!moving) this.freshInput = true;   // released keys → edge exits go live
     const running = moving && !!this.registry.get('hasRunningShoes') && this.shiftKey.isDown;
     const speed   = this.cycling ? BIKE_SPEED : (running ? this.RUN_SPEED : this.SPEED);
 
@@ -963,10 +963,8 @@ export class CapitolCityScene extends Phaser.Scene {
     if (this.spawnGuard) return;
     // North gate opens after the gym is defeated → Route 2 (Scholar's Road)
     if (!this.registry.get('route2Unlocked')) return;
-    // Arm only once the player has stepped down into the city, so arriving from
-    // Route 2 (which spawns near this gate) can't immediately bounce them back.
-    if (this.py > 4 * TILE) this.northArmed = true;
-    if (!this.northArmed) return;
+    // A key held through the transition can't bounce us back; a fresh press does.
+    if (!this.freshInput) return;
     if (this.py < 1.2 * TILE && !this.cutsceneActive) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
@@ -1011,10 +1009,8 @@ export class CapitolCityScene extends Phaser.Scene {
 
   private checkEastExit() {
     if (this.spawnGuard) return;
-    // Arm only once the player has stepped west into the city, so returning from the
-    // park (which spawns near this gate) doesn't immediately bounce them back.
-    if (this.px < (CCOLS - 6) * TILE) this.eastArmed = true;
-    if (!this.eastArmed) return;
+    // A key held through the transition can't bounce us back; a fresh press does.
+    if (!this.freshInput) return;
     const row = Math.floor(this.py / TILE);
     if (this.px > (CCOLS - 1.2) * TILE && row >= 60 && row <= 62 && !this.cutsceneActive) {
       this.cutsceneActive = true;
@@ -1031,7 +1027,7 @@ export class CapitolCityScene extends Phaser.Scene {
   private checkWestExit() {
     if (this.spawnGuard) return;
     if (!this.registry.get('sunriseGymDefeated')) return;
-    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.5 * TILE) return;
+    if (!this.freshInput) return;
     const row = Math.floor(this.py / TILE);
     if (this.px < 1.2 * TILE && row >= 33 && row <= 36 && !this.cutsceneActive) {
       this.cutsceneActive = true;
@@ -1043,10 +1039,8 @@ export class CapitolCityScene extends Phaser.Scene {
 
   private checkSouthExit() {
     if (this.spawnGuard) return;
-    // Only fire once the player has stepped away from where they spawned, so arriving
-    // from Route 1 (which spawns you near this exit) can't bounce you back — but you can
-    // still leave in one continuous walk toward the gate.
-    if (Math.hypot(this.px - this.spawnPx, this.py - this.spawnPy) < 1.5 * TILE) return;
+    // A key held through the transition can't bounce us back; a fresh press does.
+    if (!this.freshInput) return;
     if (this.py > (CROWS - 2) * TILE && !this.cutsceneActive) {
       this.cutsceneActive = true;
       this.cameras.main.fadeOut(400, 0, 0, 0, () => {
