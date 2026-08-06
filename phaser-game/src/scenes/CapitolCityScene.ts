@@ -296,10 +296,18 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Authoritative building rectangles (tiles) for the 3D renderer — includes
    *  the Gym and every landmark, so none depend on color detection. */
   public buildingPlots = [...LOCATIONS, ...CAPITAL_LANDMARKS]
-    .map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }));
-  /** Landmarks use their named GLBs; the residential district's apartment blocks
-   *  still rise as procedural 3D buildings (keep the district's 3D design). */
-  public onlyNamedBuildings = false;
+    .map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h, model: l.model }))
+    // The residential apartment blocks are procedural (no GLB) but must be named
+    // plots too, so heuristic building-detection can be turned OFF — otherwise it
+    // hallucinated stray brown boxes (e.g. beside the Ancient Palace). Same
+    // footprints the map paints as B tiles at rows 59-67.
+    .concat([
+      { x: 3, y: 59, w: 5, h: 8 }, { x: 10, y: 59, w: 5, h: 8 },
+      { x: 28, y: 63, w: 6, h: 4 }, { x: 36, y: 63, w: 6, h: 4 },
+    ].map(p => ({ ...p, model: undefined })));
+  /** Every real building is now a named plot (landmarks + apartments), so the
+   *  color/variance heuristic is off — no more phantom boxes around the palace. */
+  public onlyNamedBuildings = true;
   /** Keep tall capital landmarks visible while allowing the camera to fade any
    *  structure that moves between the player and the view. */
   public clearSight3D = true;

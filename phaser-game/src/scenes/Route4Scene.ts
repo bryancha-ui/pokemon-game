@@ -26,16 +26,16 @@ const BARRIER_COLS = [9, 10, 11, 12, 13, 14];
 
 // Coastal cliffside encounters — seabirds, cliff goats, shallows fish (mostly new)
 const R4_ENCOUNTERS: EncounterEntry[] = [
-  { id: 'frysm',       weight: 14, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 170 }, // Water/Psychic
-  { id: 'roundtailor', weight: 16, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 200 }, // Water
-  { id: 'ottershaman', weight: 12, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 190 }, // Water
-  { id: 'gorcobat',    weight: 12, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 170 }, // Grass/Fighting (cliffs)
-  { id: 'kingfisher',  weight: 12, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 190 }, // Flying/Electric
-  { id: 'disguijar',   weight: 10, minLevel: 29, maxLevel: 31, isCustom: true,  catchRate: 190 }, // Rock/Flying
-  { id: 278, weight: 14, minLevel: 29, maxLevel: 31, isCustom: false, catchRate: 225 }, // Wingull
-  { id: 98,  weight: 10, minLevel: 29, maxLevel: 31, isCustom: false, catchRate: 225 }, // Krabby
-  { id: 'twinkluppy', weight: 12, minLevel: 27, maxLevel: 30, isCustom: true, catchRate: 190 }, // Water/Fairy pup
-  { id: 'kelpoxin',   weight: 10, minLevel: 29, maxLevel: 31, isCustom: true, catchRate: 170 }, // Poison/Water
+  { id: 'frysm',       weight: 14, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 170 }, // Water/Psychic
+  { id: 'roundtailor', weight: 16, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 200 }, // Water
+  { id: 'ottershaman', weight: 12, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 190 }, // Water
+  { id: 'gorcobat',    weight: 12, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 170 }, // Grass/Fighting (cliffs)
+  { id: 'kingfisher',  weight: 12, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 190 }, // Flying/Electric
+  { id: 'disguijar',   weight: 10, minLevel: 27, maxLevel: 29, isCustom: true,  catchRate: 190 }, // Rock/Flying
+  { id: 278, weight: 14, minLevel: 27, maxLevel: 29, isCustom: false, catchRate: 225 }, // Wingull
+  { id: 98,  weight: 10, minLevel: 27, maxLevel: 29, isCustom: false, catchRate: 225 }, // Krabby
+  { id: 'twinkluppy', weight: 12, minLevel: 27, maxLevel: 29, isCustom: true, catchRate: 190 }, // Water/Fairy pup
+  { id: 'kelpoxin',   weight: 10, minLevel: 27, maxLevel: 28, isCustom: true, catchRate: 170 }, // Poison/Water
 ];
 
 function buildMap(): Tile[][] {
@@ -85,13 +85,13 @@ export class Route4Scene extends Phaser.Scene {
     {
       key: 'r4-mansik', name: 'Sailor Mansik', col: 6, row: 44, color: 0x2266bb, label: 'Sailor',
       line: "Ahoy! Salt in my beard, salt in my blood. My sea-Pokémon will wash you right off this cliff!",
-      pokemon: JSON.stringify([{ id: 0, level: 30, custom: 'paratoxin' }, { id: 0, level: 31, custom: 'ottermudang' }]),
+      pokemon: JSON.stringify([{ id: 0, level: 27, custom: 'paratoxin' }, { id: 0, level: 27, custom: 'ottermudang' }]),
       expPool: 760,
     },
     {
       key: 'r4-dalsu', name: 'Fisherman Dalsu', col: 16, row: 12, color: 0x227755, label: 'Fisher-\nman',
       line: "Been castin' this stretch forty years. Reel one in with me — winner keeps their pride!",
-      pokemon: JSON.stringify([{ id: 0, level: 31, custom: 'roundtailor' }, { id: 0, level: 30, custom: 'frysm' }]),
+      pokemon: JSON.stringify([{ id: 0, level: 27, custom: 'roundtailor' }, { id: 0, level: 28, custom: 'frysm' }]),
       expPool: 740,
     },
   ] as const;
@@ -194,9 +194,12 @@ export class Route4Scene extends Phaser.Scene {
   private drawRival() {
     if (this.rivalG) return;
     const g = this.add.graphics().setDepth(20);
-    drawTrainerBody(g, 1, 0, rivalDesign(this.registry));   // facing up, toward Ryeo
+    drawTrainerBody(g, 1, 0, rivalDesign(this.registry));   // 2D: facing up, toward Ryeo
     g.setPosition(this.px - 34, this.py + 2);
     markRivalPortrait(g, this.registry);
+    // In 3D the model's facing is independent of the 2D sprite — hold eye contact
+    // with Commander Ryeo (his fixed Phaser position) so the rival squares up to him.
+    g.setData('characterLookAt3D', { x: 12 * TILE + 16, y: 25 * TILE + 16 });
     this.rivalG = g;
     this.add.text(this.px - 34, this.py - 22, rivalTrainerName(this.registry), {
       fontSize: '9px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
