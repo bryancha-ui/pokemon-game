@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { tr, speakerName } from '../systems/i18n';
 import { playBgm } from '../systems/Music';
 import { vanishesAfterDefeat } from '../data/Villains';
-import { drawTrainerBody, drawRiderBody, playerDesign } from '../data/CharacterSprite';
+import { drawTrainerBody, drawRiderBody, playerDesign, rivalDesign, rivalTrainerName } from '../data/CharacterSprite';
+import { markRivalPortrait } from '../data/BattlePortraits';
 import { hasBike, BIKE_SPEED, isBikeRiding, setBikeRiding } from '../data/Bike';
 import { DialogBox } from '../ui/DialogBox';
 import { SaveManager } from '../utils/SaveManager';
@@ -186,6 +187,22 @@ export class Route4Scene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(9);
   }
 
+  /** The rival appears beside the player for the Commander Ryeo confrontation.
+   *  Marked with the gender-based rival avatar so the 3D mirror renders a real 3D
+   *  character (previously the "Rival:" lines had no on-screen figure at all). */
+  private rivalG?: Phaser.GameObjects.Graphics;
+  private drawRival() {
+    if (this.rivalG) return;
+    const g = this.add.graphics().setDepth(20);
+    drawTrainerBody(g, 1, 0, rivalDesign(this.registry));   // facing up, toward Ryeo
+    g.setPosition(this.px - 34, this.py + 2);
+    markRivalPortrait(g, this.registry);
+    this.rivalG = g;
+    this.add.text(this.px - 34, this.py - 22, rivalTrainerName(this.registry), {
+      fontSize: '9px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 3, y: 1 },
+    }).setOrigin(0.5).setDepth(21);
+  }
+
   // ── Player / camera / input ──────────────────────────────────────────────
   private createPlayer() { this.playerG = this.add.graphics().setDepth(20); this.drawChar(); }
   private drawChar() {
@@ -299,6 +316,7 @@ export class Route4Scene extends Phaser.Scene {
     if (this.ryeoDone) return;
     if (this.py > 29 * TILE) return;
     this.cutsceneActive = true;
+    this.drawRival();   // the rival steps up beside you to confront Ryeo (3D character)
     const launch = () => {
       this.registry.set('trainerName', 'Commander Ryeo');
       this.registry.set('trainerKey', 'nosdan-ryeo-2');
