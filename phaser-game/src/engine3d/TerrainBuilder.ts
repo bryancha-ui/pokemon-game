@@ -1034,7 +1034,9 @@ export function buildTerrain(
         const holder = new THREE.Group();
         holder.position.set(b.x + b.w / 2, 0, b.z + b.d / 2);
         group.add(holder);
-        pendingProps.push({ group: holder, def: fdef, b, h: plotHeight(b.w, b.d), wait: 0 });
+        // Face every free city building the same way — facade toward the camera (+z)
+        // like the named landmarks — instead of a random per-tile hash rotation.
+        pendingProps.push({ group: holder, def: fdef, b, h: plotHeight(b.w, b.d), wait: 0, rot: 0 });
         blockers.push({ node: holder, r: Math.max(b.w, b.d) / 2 + 0.6, fade: 0 });
         continue;
       }
