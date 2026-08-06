@@ -56,6 +56,15 @@ const GYM_KEY: Record<string, string> = {
   'seorae-yeona': 'seorae',
 };
 
+// The 노스단 아지트 (Nosdan hideout/base at the head of the Samjiyon mountain road):
+// a dark steel bunker with the 노스단 red banners, so its battles read as being
+// fought inside the enemy fortress rather than on an open route.
+const NOSDAN_THEME: BattleArenaTheme = {
+  family: 'northern', motif: 'fortress',
+  floor: 0x2b2f3a, floorAlt: 0x343a48, wall: 0x14161e, trim: 0x3d4450, accent: 0xd8324a,
+};
+const NOSDAN_RETURN_SCENES = new Set(['NosdanHideoutScene', 'SamjiyonAjitRoadScene']);
+
 const GYM_RETURN_SCENE: Record<string, string> = {
   CapitolGymScene: 'capitol',
   BaekduGymScene: 'baekdu',
@@ -85,6 +94,8 @@ export function resolveBattleArenaTheme(scene: Phaser.Scene): BattleArenaTheme |
   // Gym trainers share their building's interior even though their keys are
   // personal names rather than the leader's city-prefixed key.
   const returnScene = String(scene.registry.get('trainerReturnScene') ?? '');
+  // Any battle fought inside the 노스단 아지트 uses the fortress arena.
+  if (NOSDAN_RETURN_SCENES.has(returnScene)) return NOSDAN_THEME;
   const returnGym = GYM_RETURN_SCENE[returnScene];
   return returnGym ? GYM_THEMES[returnGym] : undefined;
 }
