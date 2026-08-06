@@ -51,7 +51,6 @@ interface CapitalLandmark {
 /** Non-enterable civic monuments. Each footprint is solid in 2D and is also
  *  published to the overworld mirror, which fits the named GLB to the plot. */
 const CAPITAL_LANDMARKS: CapitalLandmark[] = [
-  { label: 'National Assembly Hall', x: 52, y: 20, w: 10, h: 12, model: 'league',      wallColor: 0xe3d5b8, roofColor: 0x8f2e2e },
   { label: 'Onnuri National Museum', x: 52, y: 44, w: 10, h: 7,  model: 'contesthall', wallColor: 0xd8d1c5, roofColor: 0x4b6078 },
   { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'shrine',      wallColor: 0xcaa574, roofColor: 0x314d3a },
   { label: 'National Library',       x: 35, y: 72, w: 10, h: 7,  model: 'palace',      wallColor: 0xe0cfaa, roofColor: 0x315a70 },
@@ -118,6 +117,7 @@ function buildCityMap(): CTile[][] {
   // The national assembly faces a ceremonial stone square opposite the old
   // palace and modern Capitol Tower.
   fill(18, 46, 34, CCOLS - 2, PL);
+  fill(20, 52, 32, 62, B);   // National Assembly Hall footprint (now enterable)
 
   // ── Ancient Palace (rows 18-30, cols 3-21) ───────────────────────────────
   fill(18, 3, 31, 21, PL);           // palace forecourt — flat stone plaza (no 3D brown mountain block)
@@ -243,6 +243,9 @@ const LOCATIONS: CityLocation[] = [
   { label: "Ancient Palace",   scene: 'CapitolPalaceScene', model: 'palace',
     doorRow: 30, doorCol: 11,
     x: 3, y: 18, w: 18, h: 13, roofColor: 0x8a4a1a, wallColor: 0xd4a870 },
+  { label: 'National Assembly Hall', scene: 'CapitolAssemblyScene', model: 'league',
+    doorRow: 32, doorCol: 56,
+    x: 52, y: 20, w: 10, h: 12, roofColor: 0x8f2e2e, wallColor: 0xe3d5b8 },
   { label: "Central Market",   scene: 'CapitolMarketScene', model: 'mart',
     doorRow: 51, doorCol: 17,
     x: 15, y: 44, w: 6, h: 8, roofColor: 0xee8833, wallColor: 0xffcc88 },
