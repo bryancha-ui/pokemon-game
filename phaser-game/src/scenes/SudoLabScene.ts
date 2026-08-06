@@ -22,6 +22,9 @@ export class SudoLabScene extends Phaser.Scene {
   private playerG!: Phaser.GameObjects.Graphics;
   private dialog!: DialogBox;
   private spaceKey!: Phaser.Input.Keyboard.Key;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
+  private px = 0; private py = 0; private facing = 1; private walkFrame = 0; private walkTimer = 0;
   private busy = false;
   private ending = false;
 
@@ -46,6 +49,12 @@ export class SudoLabScene extends Phaser.Scene {
     this.drawLab();
     this.dialog = new DialogBox(this, this.scale.width, this.scale.height);
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.wasd = {
+      up: this.input.keyboard!.addKey('W'), down: this.input.keyboard!.addKey('S'),
+      left: this.input.keyboard!.addKey('A'), right: this.input.keyboard!.addKey('D'),
+    };
+    this.px = this.scale.width * 0.5; this.py = this.scale.height * 0.82;
 
     const rivalDone = !!this.registry.get('trainerDefeated_rival-3');
     const partyPending = !!this.registry.get('sudoPartyPending');
@@ -173,9 +182,12 @@ export class SudoLabScene extends Phaser.Scene {
   private drawLab() {
     const W = this.scale.width, H = this.scale.height;
     const g = this.add.graphics();
-    // Lab walls / floor
-    g.fillStyle(0x1a2233, 1); g.fillRect(0, 0, W, H);
-    g.fillStyle(0x223047, 1); g.fillRect(0, H * 0.62, W, H * 0.38);
+    // Bright research-lab walls / floor
+    g.fillStyle(0xdfe6f2, 1); g.fillRect(0, 0, W, H);                  // pale walls
+    g.fillStyle(0xf3f7fc, 0.55); g.fillRect(0, 0, W, H * 0.14);        // ceiling light glow
+    g.fillStyle(0xb8c2d4, 1); g.fillRect(0, H * 0.62, W, H * 0.38);    // light tiled floor
+    g.lineStyle(1, 0xa4afc2, 0.6);
+    for (let fx = 64; fx < W; fx += 64) g.lineBetween(fx, H * 0.62, fx, H);
     // Map boards with red + black pins
     g.fillStyle(0x0e1626, 1); g.fillRect(W * 0.10, H * 0.12, W * 0.34, H * 0.34);
     g.fillStyle(0x0e1626, 1); g.fillRect(W * 0.56, H * 0.12, W * 0.34, H * 0.34);
@@ -183,11 +195,23 @@ export class SudoLabScene extends Phaser.Scene {
     for (let i = 0; i < 9; i++) g.fillCircle(W * 0.12 + Math.random() * W * 0.30, H * 0.14 + Math.random() * H * 0.30, 4);
     g.fillStyle(0x111111, 1);
     for (let i = 0; i < 9; i++) g.fillCircle(W * 0.58 + Math.random() * W * 0.30, H * 0.14 + Math.random() * H * 0.30, 4);
-    // Lab bench
-    g.fillStyle(0x33415a, 1); g.fillRect(0, H * 0.58, W, 14);
+    // Lab bench + equipment
+    g.fillStyle(0x9aa6ba, 1); g.fillRect(0, H * 0.58, W, 14);
+    // Healing machine (right)
+    g.fillStyle(0xeef2f8, 1); g.fillRect(W * 0.80, H * 0.47, W * 0.12, H * 0.13);
+    g.fillStyle(0xcc3344, 1); g.fillRect(W * 0.855, H * 0.505, 18, 6); g.fillRect(W * 0.855 + 6, H * 0.505 - 6, 6, 18);
+    // Bookshelves (far left)
+    g.fillStyle(0x8a6a44, 1); g.fillRect(W * 0.015, H * 0.22, W * 0.055, H * 0.36);
+    g.fillStyle(0x5f4630, 1); for (let by = 1; by < 6; by++) g.fillRect(W * 0.015, H * 0.22 + by * (H * 0.06), W * 0.055, 3);
+    // Research terminal on the bench (between the map boards)
+    g.fillStyle(0x14202e, 1); g.fillRect(W * 0.46, H * 0.50, W * 0.08, H * 0.08);
+    g.fillStyle(0x55ddcc, 0.9); g.fillRect(W * 0.47, H * 0.51, W * 0.06, H * 0.05);
+    // Potted plant
+    g.fillStyle(0x6a4a2a, 1); g.fillRect(W * 0.15, H * 0.53, 22, 20);
+    g.fillStyle(0x3a8a4a, 1); g.fillCircle(W * 0.15 + 11, H * 0.51, 15);
 
     this.add.text(W / 2, 28, tr("🔬 Professor Song's Lab — Sudo City (수도 시티)"), {
-      fontSize: '15px', color: '#cfe3ff', fontStyle: 'bold',
+      fontSize: '15px', color: '#12325a', fontStyle: 'bold', backgroundColor: '#ffffffaa', padding: { x: 6, y: 3 },
     }).setOrigin(0.5).setDepth(5);
 
     // Professor Song (white-coat figure)
@@ -216,8 +240,8 @@ export class SudoLabScene extends Phaser.Scene {
       fontSize: '11px', color: '#88ccff', backgroundColor: '#00000099', padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(7);
 
-    this.add.text(W / 2, H - 12, tr('SPACE to continue'), {
-      fontSize: '11px', color: '#7f93b5',
+    this.add.text(W / 2, H - 12, tr('Arrows / WASD: move   ·   SPACE: exit'), {
+      fontSize: '11px', color: '#2a3f60', backgroundColor: '#ffffffaa', padding: { x: 4, y: 1 },
     }).setOrigin(0.5).setDepth(8);
 
     // A concrete player anchor lets the overworld 3D mirror build this room as
@@ -243,7 +267,7 @@ export class SudoLabScene extends Phaser.Scene {
     });
   }
 
-  update() {
+  update(_t: number, dt: number) {
     if (this.ending) {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.endGame();
       return;
@@ -252,10 +276,28 @@ export class SudoLabScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.dialog.advance();
       return;
     }
-    // Outside story dialogue, SPACE exits to whichever city entrance was used.
-    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-      this.leaveLab();
+    // Free to walk the lab (arrows / WASD); SPACE leaves by the door.
+    this.walkLab(dt);
+    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) this.leaveLab();
+  }
+
+  private walkLab(dt: number) {
+    const W = this.scale.width, H = this.scale.height;
+    let dx = 0, dy = 0;
+    if (this.cursors.left.isDown  || this.wasd.left.isDown)  { dx = -1; this.facing = 2; }
+    else if (this.cursors.right.isDown || this.wasd.right.isDown) { dx = 1; this.facing = 3; }
+    if (this.cursors.up.isDown    || this.wasd.up.isDown)    { dy = -1; this.facing = 1; }
+    else if (this.cursors.down.isDown  || this.wasd.down.isDown) { dy = 1; this.facing = 0; }
+    if (dx || dy) {
+      const len = Math.hypot(dx, dy) || 1, speed = 0.24 * dt;
+      this.px = Phaser.Math.Clamp(this.px + (dx / len) * speed, 60, W - 60);
+      this.py = Phaser.Math.Clamp(this.py + (dy / len) * speed, H * 0.60, H * 0.92);
+      this.walkTimer += dt;
+      if (this.walkTimer > 130) { this.walkTimer = 0; this.walkFrame = (this.walkFrame + 1) % 4; }
     }
+    this.playerG.clear();
+    drawTrainerBody(this.playerG, this.facing, this.walkFrame, playerDesign(this.registry));
+    this.playerG.setPosition(this.px, this.py);
   }
 
   /** Scroll the ending credits over a starfield, then return to the title. */
