@@ -53,7 +53,7 @@ interface CapitalLandmark {
 const CAPITAL_LANDMARKS: CapitalLandmark[] = [
   { label: 'Onnuri National Museum', x: 52, y: 44, w: 10, h: 7,  model: 'contesthall', wallColor: 0xd8d1c5, roofColor: 0x4b6078 },
   { label: 'State Shrine',           x: 5,  y: 72, w: 12, h: 7,  model: 'jongmyo',     wallColor: 0xcaa574, roofColor: 0x314d3a },
-  { label: 'So-ol Central Station',  x: 52, y: 72, w: 9,  h: 7,  model: 'tower',       wallColor: 0xbfcbd5, roofColor: 0x334d70 },
+  { label: 'So-ol Central Station',  x: 52, y: 72, w: 9,  h: 7,  model: 'soolstation', wallColor: 0xbfcbd5, roofColor: 0x334d70 },
 ];
 
 function buildCityMap(): CTile[][] {
