@@ -285,6 +285,8 @@ export class CapitolCityScene extends Phaser.Scene {
   /** Keep tall capital landmarks visible while allowing the camera to fade any
    *  structure that moves between the player and the view. */
   public clearSight3D = true;
+  /** The painted street trees (가로수) grow as real 3D trees, not flat ground art. */
+  public treeTileIds3D = [C.TREE];
   /** Procedural 3D monuments complete the civic spaces between named GLBs. */
   public propPlots = [
     { x: 22.5, y: 80, kind: 'arch' as const, scale: 1.35 },

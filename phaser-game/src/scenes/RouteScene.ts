@@ -134,6 +134,12 @@ function buildRouteMap(): RTile[][] {
   // Carve a shallow room that opens directly onto the c12 main passage.
   fill(43, 47, 10, 13, CP);
 
+  // Enclose the cave: every tile still left as open MOUNTAIN inside the cave rows
+  // becomes CAVE_WALL, so the 3D engine renders low cave rock here (via
+  // caveFloorHint) instead of growing 3D mountain peaks INSIDE the cave. The
+  // outdoor mountains (the cave mouth above, and the second stretch below) stay 3D.
+  for (let r = 37; r < 56; r++) for (let c = 0; c < RCOLS; c++) if (map[r][c] === M) map[r][c] = CW;
+
   // ── SECTION 7: Cave exit to valley (rows 56-62) ───────────────────────────
   fill(55, 57, 8, 20, P);  // cave exit widens
   fill(56, 62, 8, 14, P);
