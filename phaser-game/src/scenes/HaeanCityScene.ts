@@ -106,30 +106,10 @@ export class HaeanCityScene extends Phaser.Scene {
           'Gulls wheel over the masts. The Tidal Arena juts out over the harbour.',
         ], () => { this.cutsceneActive = false; });
       });
-    } else if (this.registry.get('haeanGymDefeated') && !this.registry.get('chapter7Done')) {
-      // CHAPTER 7 — after the Tidekeeper Badge (the 4th badge), Professor Song calls
-      // you back to 소올. You now arrive OUTSIDE her lab in Capitol City rather than
-      // straight into the Rival battle, so you can heal at the Pokémon Center first,
-      // then walk into the lab to trigger the fight.
-      // (Re-triggers until the chapter is finished, so a mid-chapter save can't soft-lock.)
-      this.time.delayedCall(600, () => {
-        this.cutsceneActive = true;
-        this.dialog.show([
-          "Your Pokédex buzzes — it's Professor Song.",
-          "Prof. Song: You earned the Tidekeeper Badge — well done. But drop everything and come back to 소올 (So-ol).",
-          "Prof. Song: I've pieced together what Team Suri and 노스단 are really after. You need to hear this in person.",
-          "Prof. Song: Heal your team at the Pokémon Center first, then come to my lab — you'll want to be at full strength.",
-          "Rival: Express boat's at the dock. I'll meet you at the lab. Let's move.",
-        ], () => {
-          // Arrive in 소올 just south of Professor Song's lab door (col 56 / row 13),
-          // so the player can head to the Pokémon Center and heal before entering the
-          // lab, where the Rival battle (#3) is waiting.
-          this.registry.set('capitalReturnX', 56 * 32 + 16);
-          this.registry.set('capitalReturnY', 16 * 32 + 16);
-          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('CapitolCityScene'));
-        });
-      });
     } else {
+      // CHAPTER 7 (Professor Song's revelation + Rival battle #3) now triggers after
+      // the FIFTH badge, from Forest City — see ForestCityScene. Nothing fires here
+      // after the Tidekeeper Badge beyond the usual evolution check.
       this.time.delayedCall(300, () => maybeLaunchEvolution(this));
     }
   }

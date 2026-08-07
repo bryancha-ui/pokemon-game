@@ -125,8 +125,8 @@ export class SudoLabScene extends Phaser.Scene {
     }
 
     // The lab is now a normal, revisitable Capitol building. Do not start the
-    // Chapter 7 rival battle before the Tidekeeper Badge, or repeat it later.
-    if (!this.registry.get('haeanGymDefeated') || this.registry.get('chapter7Done')) {
+    // Chapter 7 rival battle before the Ancient Keeper Badge (the 5th), or repeat it later.
+    if (!this.registry.get('forestGymDefeated') || this.registry.get('chapter7Done')) {
       this.busy = true;
       this.dialog.show([
         'Prof. Song: Welcome back. The lab is always open when you need a place to review your journey.',
@@ -138,7 +138,7 @@ export class SudoLabScene extends Phaser.Scene {
     // First arrival → the revelation.
     this.busy = true;
     this.dialog.show([
-      'You take the express boat back to Sudo City and hurry to Professor Song\'s lab.',
+      'You hurry across 소올 to Professor Song\'s lab.',
       '(Two maps cover the wall: red pins mark Team Suri digs, black pins mark 노스단 installations.)',
       "Prof. Song: Thank you for coming so fast. I finally understand what we're facing.",
       "Prof. Song: Team Suri wants to wake the Spirit of Cheonji and control it — to heal the region. Misguided, dangerous.",

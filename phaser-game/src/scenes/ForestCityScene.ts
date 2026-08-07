@@ -115,6 +115,27 @@ export class ForestCityScene extends Phaser.Scene {
           'Prof. Song (over the Pokédex): There she is. She never truly left you — the bond holds.',
         ], () => { this.cutsceneActive = false; });
       });
+    } else if (this.registry.get('forestGymDefeated') && !this.registry.get('chapter7Done')) {
+      // CHAPTER 7 — after the Ancient Keeper Badge (the 5th badge), Professor Song calls
+      // you back to 소올. You arrive OUTSIDE her lab in Capitol City (not straight into the
+      // fight), so you can heal at the Pokémon Center first, then walk into the lab to
+      // trigger Rival battle #3. Re-triggers until the chapter is done so a mid-chapter
+      // save can't soft-lock.
+      this.time.delayedCall(600, () => {
+        this.cutsceneActive = true;
+        this.dialog.show([
+          "Your Pokédex buzzes — it's Professor Song.",
+          "Prof. Song: The Ancient Keeper Badge — your fifth. Well done. But drop everything and come back to 소올 (So-ol).",
+          "Prof. Song: I've pieced together what Team Suri and 노스단 are really after. You need to hear this in person.",
+          "Prof. Song: Heal your team at the Pokémon Center first, then come to my lab — you'll want to be at full strength.",
+          "Rival: I'll meet you at the lab. Let's move.",
+        ], () => {
+          // Arrive in 소올 just south of Professor Song's lab door (col 56 / row 13).
+          this.registry.set('capitalReturnX', 56 * 32 + 16);
+          this.registry.set('capitalReturnY', 16 * 32 + 16);
+          this.cameras.main.fadeOut(500, 0, 0, 0, () => this.scene.start('CapitolCityScene'));
+        });
+      });
     } else if (this.registry.get('forestGymDefeated') && !this.registry.get('forestOnwardHintShown')) {
       // After the Forest gym the road climbs NORTH up Route 6 to Dolmoe (no Jeju detour here).
       this.registry.set('forestOnwardHintShown', true);
